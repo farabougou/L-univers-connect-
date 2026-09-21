@@ -15,13 +15,16 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: paios
-          POSTGRES_PASSWORD: paios_dev_password
+          # "postgres" est le compte d'administration, utilisé seulement pour
+          # créer le rôle applicatif non superutilisateur (voir l'étape
+          # dédiée ci-dessous). L'API et les tests utilisent ensuite ce rôle
+          # applicatif "paios", jamais le compte administrateur.
+          POSTGRES_PASSWORD: postgres_admin_dev_password
           POSTGRES_DB: paios
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U paios -d paios"
+          --health-cmd "pg_isready -d paios"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 5
@@ -41,6 +44,11 @@ jobs:
         run: |
           ruff check .
           ruff format --check .
+
+      - name: Créer le rôle applicatif non superutilisateur
+        env:
+          PGPASSWORD: postgres_admin_dev_password
+        run: psql -h localhost -U postgres -d paios -f ../../infra/init-db/01-create-app-role.sql
 
       - name: Migrer la base de données (Alembic)
         run: alembic upgrade head

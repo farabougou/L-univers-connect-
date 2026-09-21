@@ -3,15 +3,19 @@ services:
     image: postgres:16
     restart: unless-stopped
     environment:
-      POSTGRES_USER: paios
-      POSTGRES_PASSWORD: paios_dev_password
+      # "postgres" reste le compte d'administration utilisé uniquement à
+      # l'initialisation (voir init-db/01-create-app-role.sql). L'API se
+      # connecte avec le rôle applicatif "paios", non superutilisateur, pour
+      # que la sécurité RLS s'applique réellement.
+      POSTGRES_PASSWORD: postgres_admin_dev_password
       POSTGRES_DB: paios
     ports:
       - "5432:5432"
     volumes:
       - paios_db_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U paios -d paios"]
+      test: ["CMD-SHELL", "pg_isready -d paios"]
       interval: 5s
       timeout: 5s
       retries: 5
