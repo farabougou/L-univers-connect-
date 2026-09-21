@@ -1,0 +1,1229 @@
+Physical Asset Intelligence OS — Cahier des charges maître v1.1
+PHYSICAL ASSET INTELLIGENCE OS
+
+Cahier des charges maître — Produit, architecture, sécurité et exploitation
+
+Version 1.1 • Architecture mondiale • Cloud + Edge • Multi-constructeurs • Long terme
+
+Révision du 21 septembre 2026 : ajouts d’ingénierie (Partie II, sections 25 à 39) et amendements signalés [v1.1] dans la Partie I
+
+Mission : construire une infrastructure logicielle industrielle capable de connecter, comprendre, surveiller et orchestrer des équipements hétérogènes sans dépendre d'une marque, d'un pays ou d'une génération technologique.
+
+Principe
+
+Décision
+
+Sécurité
+
+Aucune IA générative ne commande directement un équipement critique.
+
+Interopérabilité
+
+Modèle d'actifs universel + connecteurs versionnés.
+
+Résilience
+
+Edge autonome, store-and-forward, fonctionnement dégradé hors ligne.
+
+Longévité
+
+Versioning des twins, schémas, événements, connecteurs et modèles ML.
+
+Échelle
+
+Data tiering Hot/Warm/Cold/Archive et architecture multi-régions.
+
+Auditabilité
+
+Traçabilité de la donnée, des décisions, des modèles et des actions.
+
+Historique des révisions
+
+Version
+Date
+Contenu
+1.0
+Version initiale
+Cahier des charges maître : vision, architecture, sécurité, données, Edge, ML, phasage, gouvernance.
+1.1
+21 septembre 2026
+Ajouts d’ingénierie : wedge CVC, modèle d’actifs à trois niveaux, bitemporalité, sémantique Brick, Edge détaillé, niveaux de commande C0–C4, règles de diagnostic CVC, application technicien, réglementation, tests, plan MVP, risques et ADR. Amendements signalés [v1.1] aux sections 3, 4, 13 et 17.
+ 
+
+ 
+
+
+
+1. Vision et périmètre
+La plateforme est un Physical Asset Intelligence OS mondial. Elle supervise des flottes d'équipements, exécute des analyses localement et dans le cloud, gère la maintenance, explique les anomalies, orchestre les interventions, suit l'énergie et la durabilité, et intègre progressivement de nouvelles marques et familles d'équipements.
+
+1.1 Objectifs non négociables
+• Architecture indépendante des fabricants et extensible par connecteurs.
+• Multi-tenant, multi-site, multi-pays, multi-langues, multi-devises, fuseaux horaires et unités.
+• Cloud + Edge : continuité de service lorsque la connectivité WAN est indisponible.
+• Séparation stricte entre observation, recommandation et contrôle physique.
+• Historisation complète : reconstruire l'état logique et physique d'un actif à une date passée.
+• Sécurité et auditabilité intégrées dès le premier commit.
+• Compatibilité progressive : aucune promesse de compatibilité sans interface, capteur ou source de données exploitable.
+1.2 Équipements
+Domaines natifs : industrie, tertiaire, bâtiments publics, immobilier commercial, hôpitaux et établissements de santé, écoles et universités, hôtels, commerces, data centers, infrastructures d’eau et d’énergie, agriculture technique, réseaux distribués, immeubles résidentiels et maisons. Le noyau reste commun ; les interfaces, règles et automatisations sont spécialisées par Domain Pack.
+
+Hiérarchie universelle : Organization → Portfolio → Site → Facility → Building / Plant / Infrastructure → Floor / Zone → System → Equipment → Component → Sensor / Actuator. Un actif peut exister sans télémétrie ; la capacité de contrôle est déclarée séparément de la capacité d’observation.
+
+Le modèle doit représenter solaire, batteries, onduleurs, groupes électrogènes, moteurs, pompes, compresseurs, HVAC, froid, convoyeurs, presses, CNC, turbines, transformateurs, tableaux électriques, eau, bâtiments, mines et lignes de production. La taxonomie reste extensible.
+
+2. Architecture de référence
+Plan
+
+Responsabilités
+
+Global Control Plane
+
+Tenants, identité, politiques, licences, configuration, registre de modèles, flotte Edge, catalogue de connecteurs.
+
+Data & Intelligence Plane
+
+Ingestion, séries temporelles, digital twins, knowledge graph, règles, anomalies, ML, énergie, ESG, analytics.
+
+Edge / OT Plane
+
+Collecte locale, protocoles, cache, règles, inférence ML, store-and-forward, frontière de sécurité.
+
+Experience Plane
+
+Web, mobile technicien, opérations, maintenance, administration, API développeur.
+
+ 
+
+2.1 Flux
+Équipement → connecteur → Edge → validation/normalisation → événements → stockage Hot → règles/anomalies → incident/recommandation → workflow autorisé → intervention → vérification → apprentissage. Les données sont agrégées puis déplacées vers Warm/Cold/Archive.
+
+3. Modèle universel d'actifs et Digital Twin
+Entité
+
+Contenu minimal
+
+Tenant
+
+Organisation, région, politiques, contrats, paramètres.
+
+Site
+
+Localisation, fuseau, zones, contraintes, gateways.
+
+Asset
+
+Constructeur, modèle, série, classe, criticité, cycle de vie.
+
+Component
+
+Sous-composants et relations physiques/fonctionnelles.
+
+Sensor / Signal
+
+Mesure, unité, fréquence, qualité, calibration, source.
+
+Digital Twin Revision
+
+Schéma et composition valides sur une période.
+
+Event
+
+Fait horodaté immuable : alarme, remplacement, configuration, intervention.
+
+Work Order
+
+Priorité, procédure, compétences, pièces, preuves.
+
+Part
+
+Référence, compatibilité, stock, fournisseur, consommation.
+
+Document
+
+Manuel, schéma, procédure, version, droits.
+
+ 
+
+3.1 Versioning temporel
+Chaque modification significative crée une nouvelle révision du twin sans écraser l'ancienne. Une requête historique résout la révision valable à l'instant demandé. Les migrations doivent préserver la lecture des données anciennes.
+
+[v1.1] Le versioning est bitemporel (temps de validité et temps de saisie) et l’identité d’un actif est répartie en ProductModel, PhysicalUnit et FunctionalLocation : voir sections 27.1 et 27.2.
+
+3.2 Knowledge Graph
+Relations extensibles : contains, powered_by, drives, monitored_by, located_in, depends_on, compatible_with, replaced_by, maintained_by. Le graphe sert au diagnostic, à l'analyse d'impact et aux pièces/procédures.
+
+4. Connectivité et Connector SDK
+• OPC UA, MQTT et Modbus via adaptateurs isolés.
+• REST/API constructeurs, webhooks et imports structurés.
+• Connecteurs propriétaires sandboxés avec permissions minimales.
+• Découverte et mapping assistés, mais validation humaine pour les capacités sensibles.
+• [v1.1] Protocoles bâtiment prioritaires : BACnet/IP et BACnet/SC (ISO 16484-5), Modbus TCP/RTU, M-Bus et Wireless M-Bus pour les compteurs, KNX et LoRaWAN selon les sites. OPC UA et MQTT (dont Sparkplug B) restent prioritaires pour l’industrie. Lecture seule garantie par liste blanche de fonctions au niveau de l’adaptateur : section 28.3.
+• [v1.1] Statut de mapping en trois états (proposé, vérifié, validé physiquement) et score de confiance des données : section 27.6.
+Contrat
+
+Exigence
+
+Manifest
+
+ID, éditeur, version, protocoles, permissions, équipements.
+
+Mapping
+
+Tags constructeur → propriétés universelles, unités, qualité.
+
+Capabilities
+
+Read, diagnostics, configuration et commande séparées.
+
+Validation
+
+Schémas, limites, unités, timestamps, valeurs impossibles.
+
+Lifecycle
+
+Install, upgrade, rollback, disable, revoke.
+
+Security
+
+Signature, provenance, secrets externalisés, journalisation.
+
+Compatibility
+
+Matrice modèle/firmware/version + tests automatisés.
+
+ 
+
+5. Edge Computing actif
+• Buffer local chiffré et store-and-forward idempotent.
+• Règles déterministes, agrégations et inférence ML approuvée en local.
+• Health monitoring, watchdog, métriques et diagnostic distant.
+• Déploiements signés de configurations/modèles, canary rollout et rollback.
+• Gestion des données tardives, doublons et horloges désynchronisées.
+• Mode offline prolongé avec quotas disque et politiques d'éviction.
+• Le réseau OT n'est jamais rendu directement accessible à un agent cloud.
+6. Data Platform et stockage multiniveau
+Tier
+
+Usage
+
+Rôle
+
+Hot
+
+Secondes/minutes récentes
+
+Dashboards, alertes, faible latence.
+
+Warm
+
+Agrégats et tendances
+
+Analyses opérationnelles.
+
+Cold
+
+Historique compressé
+
+Analytique longue durée à coût réduit.
+
+Archive
+
+Conservation longue durée
+
+Conformité, legal hold, restauration.
+
+ 
+
+Rétention configurable par tenant, classe de signal et criticité. Downsampling, compression, TTL, legal hold et restauration sont natifs. Les données brutes ne sont pas conservées indéfiniment par défaut.
+
+6.1 Qualité et provenance
+• Timestamp source + ingestion, source, qualité et version de mapping pour chaque donnée.
+• Détection des trous, doublons, valeurs impossibles, dérive de capteur et horloge fausse.
+• Lineage : source → transformation → feature → modèle → prédiction → action.
+7. Intelligence, règles et ML
+Niveau
+
+Mécanisme
+
+Usage
+
+L0
+
+Contrôleur/sûreté locale
+
+Protection physique déterministe.
+
+L1
+
+Rules Engine
+
+Seuils, états interdits, corrélations.
+
+L2
+
+Statistiques
+
+Tendances, change points, dérives.
+
+L3
+
+ML
+
+Anomalies, classification, pronostic validé.
+
+L4
+
+Fleet Intelligence
+
+Comparaison avec cohortes compatibles.
+
+L5
+
+LLM / Agent
+
+Recherche, synthèse, orchestration, explication ; jamais arbitre de sûreté.
+
+ 
+
+7.1 Model Governance
+• Model Registry : version, dataset, métriques, limites, approbation.
+• Shadow mode avant activation opérationnelle.
+• Détection de drift et mesure faux positifs/faux négatifs.
+• Rollback et kill switch.
+• Chaque prédiction conserve version du modèle, contexte, confiance et éléments explicatifs.
+8. Maintenance et opérations
+• Détection → incident → triage → diagnostic → recommandation → work order → affectation → exécution → preuve → vérification → clôture.
+• Priorité selon criticité, sécurité, impact production, pièces disponibles et confiance analytique.
+• Application technicien offline : checklist, photos, mesures, commentaires, pièces utilisées.
+• SLA, escalades, calendrier, compétences et historique.
+• Procédures versionnées liées au modèle et à la révision du twin.
+9. Sécurité OT/IoT/Bâtiment, Zero Trust et sûreté
+Une défaillance logicielle ou une compromission peut avoir un impact physique. Le système privilégie prévention, limitation du rayon d'impact, traçabilité et récupération.
+
+• Deny-by-default, moindre privilège, MFA et identité forte des services/appareils.
+• Isolation stricte des tenants et séparation régionale lorsque requise.
+• OT non exposé directement à Internet ; connexions sortantes contrôlées lorsque possible.
+• Credentials de lecture séparés des credentials de commande.
+• Commandes sensibles soumises à politiques, limites, contexte, audit et approbation adaptée.
+• Aucun LLM ne peut contourner les contrôleurs de sûreté.
+• Secrets dans un coffre dédié, rotation et révocation.
+• Artefacts Edge et connecteurs signés.
+9.1 Audit immuable
+Journal append-only des authentifications, changements de politiques, déploiements Edge, modèles, connecteurs, actions administratives, commandes et validations. Pour les événements critiques, stockage immuable/WORM ou mécanisme équivalent.
+
+9.2 Menaces prioritaires
+Menace
+
+Contrôle
+
+Compte compromis
+
+MFA, sessions limitées, détection, moindre privilège.
+
+Gateway compromise
+
+Identité device, segmentation, signature, révocation, blast-radius limité.
+
+Connecteur malveillant
+
+Sandbox, permissions, signature, revue, kill switch.
+
+Prompt/document injection
+
+RAG cloisonné, sources non fiables marquées, outils allowlistés, validation.
+
+Fuite inter-tenant
+
+RLS/ABAC, isolation, tests continus.
+
+Commande dangereuse
+
+Safety boundary, règles déterministes, limites, approbations.
+
+Ransomware/perte
+
+Backups isolés/immuables et restaurations testées.
+
+ 
+
+10. Sustainability / ESG Engine
+Sous-système versionné associant activité, consommation, carburants, facteurs d'émission, production et contexte géographique. Les méthodologies et facteurs sont datés afin qu'un rapport historique reste reproductible.
+
+• Énergie et carburants par actif/site/période.
+• Facteurs d'émission versionnés avec provenance.
+• Intensité par unité produite ou heure de fonctionnement.
+• Exports/API sans figer le produit sur une réglementation unique.
+11. Expérience produit
+Surface
+
+Fonctions
+
+Command Center
+
+Sites, santé flotte, incidents, disponibilité, énergie, risques.
+
+Asset Explorer
+
+Twin, composants, signaux, historique, documents, événements.
+
+Maintenance Center
+
+Work orders, planning, techniciens, pièces, procédures, SLA.
+
+Intelligence Center
+
+Anomalies, explications, modèles, cohortes, tendances.
+
+Edge Fleet
+
+Gateways, versions, connectivité, déploiements, stockage local.
+
+Connector Hub
+
+Catalogue, installation, mapping, validation, compatibilité.
+
+Security Center
+
+Identités, rôles, politiques, audit, devices, sessions.
+
+Sustainability
+
+Énergie, émissions, méthodologies, exports.
+
+Developer Portal
+
+API, SDK, webhooks, clés, sandbox, documentation.
+
+ 
+
+12. API et événements
+• API-first : interfaces découplées des tables.
+• Asset, Telemetry, Twin, Event, Maintenance, Parts, Identity, Edge, Connector et Model APIs.
+• Webhooks sortants signés, quotas et rate limits.
+• Événements versionnés, idempotents, avec correlation ID.
+• Dépréciation contrôlée et rétrocompatibilité planifiée.
+13. Architecture logicielle de départ
+Couche
+
+Choix
+
+Web
+
+Next.js + TypeScript
+
+Mobile
+
+React Native + stockage offline chiffré
+
+Backend
+
+Monolithe modulaire ; Python/FastAPI et services spécialisés si nécessaire
+
+Transactionnel
+
+PostgreSQL
+
+Time-series
+
+TimescaleDB au départ derrière abstraction
+
+Cache
+
+Redis
+
+Streaming
+
+Redpanda/Kafka lorsque le volume le justifie
+
+Object storage
+
+S3-compatible + formats columnaires
+
+ML
+
+Python + scikit-learn/PyTorch selon besoin
+
+Edge
+
+Runtime durci/conteneurisé + adapters isolés
+
+ 
+
+Les microservices ne sont introduits que lorsque charge, disponibilité, sécurité ou organisation l'exigent.
+
+[v1.1] Pour le MVP, la pile est simplifiée (une seule instance PostgreSQL avec TimescaleDB, file de tâches sur PostgreSQL, pas de Kafka, services managés) : section 36.1.
+
+14. Multi-région, souveraineté et disponibilité
+• Région de données attribuée au tenant ; réplication contrôlée.
+• Prévoir cloud public, cloud privé et on-premise selon contrats.
+• RPO/RTO définis par classe de service et testés.
+• Perte cloud ≠ perte immédiate des fonctions Edge essentielles.
+• Backups automatiques, isolation et restauration régulièrement testée.
+15. Qualité, tests et prévention des défaillances
+Test
+
+Exigence
+
+Unitaires
+
+Domaines, règles, mappings, unités.
+
+Contrats
+
+API, événements, connecteurs, schémas.
+
+Intégration
+
+Protocoles, stockage, auth, workflows.
+
+Simulation
+
+Machines simulées, perte réseau, données corrompues, horloge fausse.
+
+Sécurité
+
+SAST/DAST, dépendances, secrets, isolation tenant, permissions.
+
+Résilience
+
+Panne DB/queue/gateway/cloud, disque plein, réseau instable.
+
+ML
+
+Backtests, drift, calibration, limites.
+
+Restauration
+
+Backups réellement restaurés en environnement isolé.
+
+ 
+
+15.1 Observabilité
+• Logs structurés, métriques, traces et correlation IDs.
+• Mesurer latence ingestion, retard télémétrie, pertes, backlog Edge et génération d'incidents.
+• Alertes sur saturation, erreurs de mapping, drift, sécurité et capacité disque.
+• Runbooks et post-mortems pour incidents significatifs.
+16. Gouvernance du changement
+• Feature flags pour modules, clients et régions.
+• Migrations backward-compatible : expand/migrate/contract.
+• Canary releases cloud et Edge ; rollback automatisable.
+• ADR pour les décisions structurantes.
+• Dépréciation annoncée et mesurée avant suppression.
+17. Phasage de construction
+Phase
+
+Livrables
+
+Gate de sortie
+
+0 — Fondation
+
+Domain model, threat model, ADR, CI/CD, identité, tenancy, audit.
+
+Isolation tenant et sécurité de base testées.
+
+1 — Core Assets
+
+Sites, assets, components, twins versionnés, events, documents.
+
+Historique reconstructible.
+
+2 — Ingestion
+
+MQTT/OPC UA/Modbus, normalisation, Hot storage.
+
+Simulateur → cloud fiable.
+
+3 — Edge
+
+Buffer, offline, sync, règles locales, fleet management.
+
+Coupure WAN testée.
+
+4 — Maintenance
+
+Incidents, work orders, mobile offline, pièces.
+
+Workflow bout-en-bout.
+
+5 — Intelligence
+
+Rules, anomalies, model registry, explainability.
+
+Shadow mode + métriques.
+
+6 — Tiering
+
+Warm/Cold/Archive, downsampling, lineage.
+
+Restauration + historique.
+
+7 — Sustainability
+
+Energy/ESG, facteurs versionnés.
+
+Rapport reproductible.
+
+8 — Ecosystem
+
+Connector SDK, developer portal, gouvernance marketplace.
+
+Connecteur tiers sandboxé.
+
+9 — Global Scale
+
+Multi-region, sovereignty, enterprise controls.
+
+DR/failover validés.
+
+ 
+
+[v1.1] Le séquencement recommandé pour démarrer est décrit en section 36 : registre d’actifs et application technicien d’abord (phases 1 et 4 en version réduite), puis squelette de bout en bout, puis télémétrie en lecture seule sur un site pilote, puis Edge durci. Les critères de sortie mesurables de la section 36 complètent les gates ci-dessus.
+
+18. Garde-fous obligatoires
+• Refuser toute fonctionnalité permettant à un LLM de contourner une politique de sécurité ou un contrôleur de sûreté.
+• Refuser un connecteur sensible non versionné, non signé ou sans matrice de compatibilité.
+• Ne jamais présenter une prédiction probabiliste comme une certitude.
+• Ne pas mélanger les données de tenants pour l'entraînement sans base contractuelle, gouvernance et protections explicites.
+• Pas de migration destructive sans rollback et sauvegarde vérifiée.
+• Pas de dépendance constructeur dans le cœur métier : toujours derrière un adaptateur.
+• Pas de conservation infinie de données par défaut.
+19. Definition of Done — fonctionnalité critique
+• Spécification fonctionnelle + menaces documentées.
+• Permissions et audit définis.
+• Tests unitaires, intégration et scénarios de panne.
+• Logs, métriques, traces et alertes.
+• Migration/rollback documentés.
+• Comportement offline évalué si concerné.
+• Documentation opérateur/développeur.
+• Revue sécurité avant toute capacité de commande.
+20. Registre des risques structurants
+Risque
+
+Réponse
+
+Explosion télémétrique
+
+Tiering, agrégation, quotas, compression, rétention.
+
+Hétérogénéité fabricants
+
+Universal Asset Model + Connector SDK.
+
+Mauvaise qualité données
+
+Quality flags, validation, calibration, lineage.
+
+Faux positifs ML
+
+Shadow mode, confiance, feedback, mesure continue.
+
+Perte Internet
+
+Edge actif, store-and-forward.
+
+Cyberattaque OT
+
+Zero Trust, segmentation, safety boundary.
+
+Évolution 10+ ans
+
+Versioning twins/schemas/events/connectors/models.
+
+Vendor lock-in
+
+Interfaces abstraites + formats portables.
+
+Complexité prématurée
+
+Monolithe modulaire + extraction progressive.
+
+ 
+
+21. Gouvernance technique
+Toute évolution majeure suit : problème → exigences → analyse de risques → ADR → prototype/simulation → tests → revue sécurité → déploiement progressif → observation → généralisation. Les incidents alimentent des post-mortems et actions correctives suivies.
+
+• Safety before autonomy.
+• Evidence before prediction.
+• Compatibility through adapters.
+• Version everything that can change.
+• Assume networks fail and devices can be compromised.
+• Make important actions explainable and auditable.
+• Design for replacement: protocoles, modèles, bases et clouds évolueront.
+22. Domain Packs et expériences sectorielles
+Le produit expose un noyau commun et des Domain Packs indépendants : Industry, Smart Building, Public Facilities, Healthcare Facilities, Hospitality, Retail, Data Center, Energy, Water, Agriculture et Residential. Un pack apporte taxonomie, tableaux de bord, règles, KPIs, workflows et connecteurs adaptés sans forker le cœur.
+
+22.1 Smart Building / tertiaire / public
+Fonctions natives : bâtiments, étages, zones, HVAC, éclairage, ascenseurs via interfaces autorisées, énergie, compteurs/sous-compteurs, qualité environnementale, groupes de secours, solaire, batteries, eau, maintenance, contrats prestataires et portfolio immobilier. Les protocoles bâtiment sont ajoutés par adaptateurs dédiés, sans couplage au domaine central.
+
+22.2 Résidentiel et confidentialité
+Le résidentiel utilise une expérience simplifiée et une politique de confidentialité renforcée. La plateforme privilégie les données techniques des équipements et du bâtiment ; elle évite par défaut les fonctions de surveillance individuelle. Les utilisateurs disposent de contrôles clairs sur collecte, conservation, partage et automatisations.
+
+22.3 Propriété, exploitation et responsabilités
+Le modèle d’autorisation distingue propriétaire, occupant, exploitant, facility manager, mainteneur, intégrateur, fabricant et administrateur. Les droits sont attachés à des scopes précis : portfolio, site, bâtiment, zone, système ou équipement. Un prestataire ne voit et ne contrôle que ce qui lui est explicitement délégué.
+
+22.4 IT / OT / IoT / Building separation
+Les réseaux et identités IT, OT, IoT et systèmes de gestion technique du bâtiment sont traités comme zones de confiance distinctes. Les passerelles assurent la médiation ; aucune intégration ne doit créer un pont implicite entre réseaux sensibles.
+
+22.5 Universal Capability Model
+Chaque actif déclare séparément ses capacités : identifiable, documentable, observable, mesurable, configurable, automatisable et contrôlable. Les permissions, risques et validations augmentent avec le niveau de capacité. Ainsi une chaudière domestique, un ascenseur, une pompe industrielle et un compteur peuvent partager le même modèle sans être traités comme s’ils avaient le même niveau de sûreté.
+
+23. Décision finale du cahier maître
+Le produit est désormais défini comme un Physical Asset Intelligence OS : une infrastructure mondiale, multi-tenant et edge-first destinée à tout actif physique identifiable, observable ou connectable. L’industrie n’est qu’un domaine parmi plusieurs. Le noyau comprend modèle universel, digital twins versionnés, événements, connecteurs, Edge, maintenance, énergie, intelligence, sécurité, data tiering et gouvernance ; les Domain Packs spécialisent l’expérience sans fragmenter la plateforme.
+
+24. Héritage de l’architecture industrielle
+Le produit sera une plateforme universelle mondiale de gestion et d’intelligence des actifs physiques, multi-tenant et edge-first, avec modèle d'actifs universel, jumeaux numériques versionnés, historique événementiel, connecteurs isolés, stockage multiniveau, gouvernance ML, Zero Trust OT et séparation ferme entre intelligence logicielle et sûreté physique. Les capacités commerciales pourront être activées verticalement sans fragmenter le cœur technique.
+
+
+
+Partie II — Compléments d’ingénierie (v1.1)
+Cette partie ajoute au cahier maître les décisions d’ingénierie qui manquaient pour passer de la vision à un produit constructible : stratégie de démarrage, modèle de données, edge, sécurité de commande, diagnostic CVC, réglementation, tests, plan MVP et risques. Elle ne remplace rien de la Partie I : elle la précise, la priorise et signale les points où la lecture linéaire du v1.0 doit être ajustée. Les chiffres marqués « cible » ou « hypothèse » sont des points de départ à valider par prototype ou pilote, pas des engagements.
+
+25. Synthèse : diagnostic et décisions d’ingénierie
+25.1 Diagnostic
+Le v1.0 est solide sur les principes : séparation observation / recommandation / contrôle, versioning, Zero Trust, Edge autonome, monolithe modulaire. Trois risques structurants demeurent. (1) Le périmètre « tout actif, partout » ne peut pas être construit d’un bloc : un modèle universel écrit avant d’avoir vu des cas réels sera faux. (2) La valeur immédiate (maintenance terrain, traçabilité, conformité) arrive en phase 4, après l’ingestion et l’Edge. (3) Il manque le client : personas, problème précis, preuve de valeur, modèle économique. La v1.1 traite ces trois points sans réduire l’ambition long terme : les principes qui coûtent peu à poser maintenant (versioning, adaptateurs, séparation lecture/commande) restent dans le socle dès le premier jour.
+
+25.2 Décisions recommandées
+Sujet
+Décision v1.1
+Raison
+Démarrage
+Wedge CVC / froid / chaud du tertiaire. Le noyau universel est extrait après trois cas réels distincts (règle des trois).
+Expertise terrain disponible, marché réglementé, complexité maîtrisable.
+Modèle d’actifs
+Trois niveaux : ProductModel (catalogue), PhysicalUnit (n° de série), FunctionalLocation (position dans l’installation).
+Remplacer un compresseur ne doit pas casser l’historique de la position fonctionnelle.
+Temps
+Modèle bitemporel : temps de validité (quand c’était vrai) et temps de saisie (quand on l’a su).
+Corriger le passé sans détruire ce qui était connu à l’époque : audit et reproductibilité.
+Sémantique
+Adopter Brick Schema (import/export Project Haystack, IFC pour la structure du bâtiment) au lieu d’inventer une taxonomie.
+Les règles de diagnostic deviennent réutilisables d’un site à l’autre.
+Ingestion
+Écriture sur changement de valeur (COV) ou deadband + battement de cœur ; TimescaleDB ; pas de Kafka avant besoin prouvé.
+Réduit fortement le volume et la complexité opérationnelle.
+Edge
+Agent en Go ou Rust ; mises à jour OTA A/B avec retour arrière ; connexions sortantes mTLS ; configuration en état désiré (pull).
+Fiabilité sur site sans accès entrant au réseau OT du client.
+Contrôle
+Lecture seule au départ ; niveaux de commande C0 à C4 ; liste « jamais depuis la plateforme » ; commandes à bail (TTL) réversibles par défaut.
+Limite le rayon d’impact d’une erreur ou d’une compromission.
+Autorisations
+ReBAC sur le graphe (OpenFGA, SpiceDB ou équivalent) + RLS PostgreSQL.
+Les droits suivent la hiérarchie site / bâtiment / zone / système et les délégations aux prestataires.
+Audit
+Journal chaîné par hachage + horodatage RFC 3161 ; WORM réservé aux événements critiques.
+Preuve d’intégrité à coût maîtrisé.
+Diagnostic
+Bibliothèque de règles FDD versionnée et testée avant tout ML supervisé.
+Résultats explicables et fiables dès les premiers mois de données.
+Apprentissage
+Taxonomie de clôture d’ordre de travail (défaut, cause, action, pièce) dès le premier jour.
+C’est la source des étiquettes qui rendront le ML utile plus tard.
+Séquencement
+Registre d’actifs + application technicien avant la télémétrie ; squelette de bout en bout (walking skeleton) tôt.
+Valeur immédiate et risque technique réduit.
+Conformité
+CRA, Data Act, F-gas, OPERAT/BACS, RGPD traités par conception (section 34).
+Ce sont à la fois des contraintes et des arguments commerciaux.
+ 
+
+26. Stratégie produit : wedge, personas et règle des trois
+26.1 Wedge recommandé
+Premier produit : maintenance et suivi des installations CVC, froid et chaud du tertiaire (pompes à chaleur, groupes froids, dry coolers, centrales de traitement d’air, pompes, sous-stations de réseaux urbains de chaleur et de froid). Ce choix s’appuie sur trois faits : l’expertise métier disponible dès le départ, l’existence d’obligations réglementaires qui créent de la demande (section 34), et une GTB existante souvent hétérogène, donc un vrai besoin d’intégration neutre vis-à-vis des constructeurs.
+
+Décision. Le noyau reste universel dans ses principes (versioning, capacités, adaptateurs) mais ses abstractions ne sont généralisées qu’après trois cas réels distincts : par exemple une PAC, un groupe froid et une sous-station. Avant cela, on copie plutôt qu’on abstrait.
+26.2 Personas et tâches à accomplir
+Persona
+Tâche principale
+Preuve de valeur attendue
+Technicien de maintenance
+Intervenir vite, tracer sans paperasse, retrouver l’historique et la procédure sur place, même hors ligne.
+Moins de temps de saisie, moins de retours pour cause d’information manquante.
+Responsable d’exploitation multi-sites (mainteneur)
+Planifier, prouver le service rendu au client, réduire les interventions correctives.
+Ratio préventif/correctif, respect des délais, rapports automatiques.
+Facility manager / exploitant du site
+Savoir si l’installation fonctionne, ce qui coûte, ce qui est conforme.
+Alertes utiles, consommation expliquée, dossier réglementaire prêt.
+Propriétaire / foncière
+Piloter un portefeuille, anticiper les investissements, respecter les objectifs de réduction de consommation.
+Tableaux de bord de portefeuille, exports de conformité.
+ 
+
+26.3 Indicateurs produit (à mesurer dès le pilote)
+• Temps d’intervention utile : part du temps passée sur l’équipement par rapport à la saisie et à la recherche d’information.
+• Taux de résolution au premier passage et taux de retour sous 30 jours sur le même équipement.
+• Temps moyen de réparation (MTTR) et rapport préventif/correctif.
+• Temps d’onboarding d’un site : de la signature à des données fiables affichées (cible : moins d’une journée de travail sur site pour un site type ; à valider).
+• Précision des alertes : part des alertes jugées utiles par les techniciens (retour en un geste dans l’application).
+• Énergie : dérive détectée en kWh et en euros, comparée à la ligne de base météo-normalisée.
+27. Architecture de données : recommandations détaillées
+27.1 Trois niveaux d’identité d’un actif
+Le v1.0 modélise Asset et Component. Pour survivre au remplacement de matériel, distinguer : ProductModel (référence constructeur, caractéristiques nominales, courbes, procédures), PhysicalUnit (numéro de série, date de fabrication, garantie, étiquette QR/NFC) et FunctionalLocation (« pompe de circulation n°2 du circuit primaire du bâtiment B »). Les signaux, règles, procédures et historiques s’attachent à la position fonctionnelle ; la PhysicalUnit y est affectée sur des périodes de temps. Remplacer un compresseur crée une nouvelle affectation, pas une nouvelle installation. Cette séparation est classique en gestion d’actifs (position fonctionnelle contre équipement) et évite de perdre l’historique.
+
+27.2 Bitemporalité
+Deux axes de temps sur les révisions du twin, du mapping et des procédures : validité (l’intervalle pendant lequel un fait est vrai dans le monde) et transaction (l’intervalle pendant lequel le système le croyait). Cela permet deux questions distinctes : « quel était l’état de l’actif le 3 mars ? » et « qu’en savions-nous le 3 mars ? ». En PostgreSQL : colonnes tstzrange et contraintes d’exclusion (extension btree_gist) pour interdire les chevauchements. Une correction ajoute une ligne, elle n’écrase jamais.
+
+27.3 Sémantique et interopérabilité
+• Brick Schema comme vocabulaire de référence des classes d’équipements et de points (par exemple température de départ d’air, vanne d’eau glacée) et de leurs relations ; import/export Project Haystack pour l’échange avec les GTB existantes ; IFC/BIM pour importer la structure des bâtiments quand elle existe.
+• Stockage : tables relationnelles et tables d’arêtes dans PostgreSQL, requêtes récursives pour le graphe. Une base de graphe dédiée n’est justifiée qu’après mesure d’un besoin réel.
+• Unités : stocker la valeur d’origine et l’unité d’origine (UCUM/QUDT), plus une valeur canonique SI. Ne jamais convertir sans conserver la source.
+• Identifiants : UUIDv7 (ordonnés dans le temps) pour toutes les entités ; identifiants externes séparés et jamais réutilisés.
+27.4 Ingestion et séries temporelles
+• Trois horodatages par mesure : temps source, temps de réception par la passerelle, temps d’ingestion. La dérive d’horloge de chaque passerelle est estimée et surveillée ; une mesure trop éloignée est marquée, pas supprimée.
+• Clé d’idempotence : (source, point, temps source, séquence). Livraison au moins une fois côté transport + déduplication côté stockage = effet équivalent à une fois.
+• Écriture sur changement (COV) ou deadband, avec battement de cœur périodique pour distinguer « inchangé » de « muet ». Les signaux lents (température de salle) échantillonnés à 5 minutes plutôt qu’à 1 minute divisent le volume par cinq.
+• TimescaleDB : hypertables, compression, agrégats continus par pas (1 min, 15 min, 1 h, 1 jour). La compression atteint souvent 90 % ou plus selon le profil des données ; à mesurer sur données réelles.
+• Outbox transactionnelle pour publier les événements depuis PostgreSQL, enveloppe CloudEvents, schémas dans un registre avec règles de compatibilité. Le passage à Redpanda/Kafka ne se décide que sur des mesures de débit ou de découplage.
+Hypothèse de dimensionnement
+Valeur
+Conséquence
+Points par site tertiaire type
+≈ 1 000
+Ordre de grandeur pour une GTB de bâtiment moyen.
+Échantillonnage brut à 1 min
+1,44 M mesures/jour/site
+≈ 526 M mesures/an/site
+Sans COV ni agrégation, le volume explose vite.
+Portefeuille de 100 sites
+≈ 144 M mesures/jour
+Justifie COV, agrégats continus et rétention par classe de signal.
+Tampon Edge (40 octets/mesure, avant compression)
+≈ 58 Mo/jour/site
+≈ 1,7 Go pour 30 jours
+Un disque industriel de 32 Go suffit largement ; quotas et éviction par priorité quand même.
+ 
+
+27.5 Multi-tenance et cellules
+• RLS PostgreSQL avec tenant_id dans chaque table et clés étrangères composites ; tests automatisés qui rejouent chaque requête avec un mauvais tenant et exigent un résultat vide.
+• Option d’isolation renforcée (schéma ou base dédiée) pour les clients à exigences fortes ; décision par ADR.
+• Architecture en cellules pour la phase Global Scale : chaque région/groupe de tenants dans une cellule indépendante, avec un plan de contrôle mince au-dessus. Une panne ou une fuite reste confinée à sa cellule.
+• Chiffrement par enveloppe : une clé par tenant protège les clés de données. Supprimer la clé rend les données irrécupérables (crypto-shredding), utile pour l’effacement RGPD et la fin de contrat.
+27.6 Qualité et confiance des données
+Chaque actif affiche un score de confiance des données calculé à partir de la complétude, de la fraîcheur, de l’âge de calibration et du statut de mapping. Le mapping d’un point suit trois états : proposé (suggestion automatique), vérifié (validation humaine) et validé physiquement (test fonctionnel sur site, comme en réception CVC : le technicien agit ou observe et confirme que le point correspond). Les règles de diagnostic ne s’exécutent que sur des points d’un niveau de confiance suffisant.
+
+28. Edge : conception détaillée
+28.1 Matériel et système
+• Pilote : mini-PC industriel sans ventilateur ou passerelle sur rail DIN ; disque eMMC/SSD industriel, pas de carte SD grand public en production.
+• Système : système de fichiers racine en lecture seule, partitions A/B, mises à jour signées via RAUC, Mender ou SWUpdate, contrôle de santé après mise à jour et retour automatique en cas d’échec.
+• Identité : certificat X.509 par appareil, si possible dans un module sécurisé (TPM ou élément sécurisé) ; enrôlement par jeton à usage unique (QR code) ; rotation automatique de certificats courts.
+• Heure : synchronisation NTP (chrony) et drapeau explicite quand l’horloge est douteuse.
+28.2 Logiciel
+• Agent en Go ou Rust (binaire statique, faible empreinte). Python reste adapté au cloud et à l’inférence ML ; l’inférence Edge se fait via ONNX Runtime avec modèles signés et quantifiés.
+• Adaptateurs de protocole isolés (un processus par protocole, privilèges minimaux) : BACnet/IP, Modbus TCP/RTU, OPC UA, MQTT, M-Bus. Bibliothèques éprouvées à évaluer : BACnet Stack, libmodbus, open62541 ou asyncua.
+• Tampon local chiffré (SQLite en mode WAL avec chiffrement, ou journal séquentiel) avec numéros de séquence et acquittements. Files à priorités : alarmes, puis événements, puis télémétrie, puis lots volumineux.
+• Éviction par classe : supprimer d’abord le brut haute fréquence, conserver agrégats et événements, ne jamais évincer les événements critiques sans marquer la perte.
+• Transport : connexion sortante MQTT 5 ou gRPC sur TLS 1.3 avec authentification mutuelle. Sparkplug B est une option pour les environnements industriels.
+• État désiré : la passerelle tire sa configuration signée depuis le cloud et réconcilie en boucle (comme un GitOps de flotte). Elle reste fonctionnelle avec la dernière configuration valide si le cloud est indisponible.
+28.3 Règles d’or de l’acquisition sur équipements existants
+Interrogation polie. Les vieux contrôleurs BACnet et Modbus sont fragiles. L’agent limite le nombre de requêtes simultanées par appareil, applique des délais et des reprises exponentielles, et coupe un appareil qui ne répond plus (disjoncteur logiciel) au lieu d’insister. Un polling mal réglé peut faire tomber un régulateur.
+• Liste blanche de fonctions au niveau de l’adaptateur : en Modbus, seules les fonctions de lecture (0x03, 0x04 et lectures d’état) sont activées tant que la capacité de commande n’est pas déclarée et approuvée. La lecture seule est ainsi garantie par le code, pas par la bonne volonté.
+• Découverte BACnet (Who-Is/I-Am, lecture de la liste d’objets et des noms) puis suggestion de mapping sémantique par règles de nommage et, en aide, par un modèle de langage. Le modèle propose ; un humain valide (cohérent avec le niveau L5 du section 7).
+• Mode d’observation passif quand c’est possible (miroir de port, lecture d’un concentrateur) pour ne rien ajouter à la charge du réseau du client.
+• Règles locales dans un langage d’expression restreint et déterministe (par exemple CEL) plutôt que du code arbitraire ; chaque règle est versionnée, testée sur simulateur et signée.
+• Diagnostic distant via un tunnel ouvert depuis l’Edge, limité dans le temps et approuvé par un opérateur (accès juste-à-temps), journalisé.
+28.4 Déploiement progressif de la flotte
+Anneaux de déploiement : anneau 0 (banc de laboratoire), anneau 1 (passerelles internes), anneau 2 (site pilote), anneau 3 (flotte). Passage à l’anneau suivant conditionné à des indicateurs de santé (redémarrages, retard de données, erreurs d’adaptateur). Kill switch par version.
+
+29. Sécurité OT : compléments
+29.1 Référentiels et méthode
+• Zones et conduits selon IEC 62443 et modèle en couches type Purdue/ISA-95 pour la segmentation ; viser d’abord IEC 62443-4-1 (cycle de développement sécurisé), qui est un référentiel réaliste pour une petite équipe, avant toute certification produit.
+• Modélisation des menaces par flux de données (STRIDE) et arbres d’attaque, complétée par une analyse conjointe sûreté/sécurité des chemins de commande (que peut-il arriver au procédé si ce message est falsifié, rejoué ou retardé ?).
+• Chaîne d’approvisionnement : SBOM (CycloneDX ou SPDX) à chaque version, signature des artefacts (cosign/sigstore), dépendances épinglées, suivi des vulnérabilités avec déclarations VEX, objectif SLSA progressif.
+• Politique de divulgation de vulnérabilités publique (fichier security.txt) dès le premier client : elle prépare aussi les obligations du CRA (section 34).
+29.2 Niveaux de commande C0 à C4
+Extension du modèle de capacités (22.5) : le niveau de commande détermine les preuves, approbations et limites exigées.
+
+Niveau
+Nature
+Exemples
+Exigences
+C0
+Aucune commande
+Toute installation au démarrage
+Lecture seule ; identifiants de commande inexistants.
+C1
+Action réversible sans risque
+Relancer un relevé, forcer une acquisition, acquitter une alarme côté plateforme
+Rôle autorisé, journal.
+C2
+Modification de consigne dans une enveloppe validée
+Consigne de départ d’eau, horaire de programmation
+Bornes définies dans le twin (pas par le client), bail avec TTL : la valeur revient automatiquement si elle n’est pas renouvelée, relecture après écriture, limitation de débit.
+C3
+Marche/arrêt d’équipement non critique
+Circulateur, ventilateur de confort
+Approbation humaine adaptée, conditions préalables sur l’état de l’installation, contrôle après action, plan de retour.
+C4
+Sûreté de vie ou procédé critique
+Désenfumage, détection incendie, ascenseurs, gaz médicaux, sûretés machines
+Jamais commandé depuis la plateforme. Observation seule via interfaces autorisées.
+ 
+
+Règle de déploiement : aucune commande au cours des premiers mois de production réelle. La première capacité C2 est introduite sur une classe d’équipement unique, en site pilote, après revue sécurité, essai sur banc, mode fantôme (la plateforme calcule la commande sans l’envoyer) et accord écrit du client.
+
+29.3 Identité, autorisations et audit
+• Authentification : OpenID Connect, passkeys/WebAuthn pour le MFA, identités de service par certificat ou identité de charge de travail.
+• Autorisations : socle RBAC pour les rôles, ReBAC pour les relations (« ce mainteneur a délégation sur ce système jusqu’à cette date »), évalué par un moteur dédié (OpenFGA, SpiceDB, Cedar ou OPA) ; jamais de logique d’autorisation dispersée dans le code applicatif.
+• Secrets : coffre dédié (Vault, OpenBao ou service cloud), rotation automatique, aucun secret dans l’image ni dans le dépôt.
+• Journal d’audit : entrées chaînées par hachage (chaque entrée référence l’empreinte de la précédente), ancrage périodique par horodatage qualifié RFC 3161, copie dans un stockage à écriture unique pour les événements critiques.
+29.4 Modèles de langage : sûreté opérationnelle
+• Le modèle propose, un exécuteur déterministe applique après validation de schéma, de politique et d’approbation. Aucune clé de commande dans le contexte du modèle.
+• Tout texte externe est non fiable : noms de points, libellés d’alarmes, contenus de PDF, notes de techniciens. Marquage de provenance, récupération cloisonnée par tenant, outils en liste blanche, sorties contraintes.
+• Jeu d’évaluation adverse (injections de consignes dans des manuels ou des libellés) exécuté en intégration continue ; journalisation des invites et sorties selon la politique de confidentialité.
+30. Intelligence : diagnostic CVC, alarmes et boucle d’apprentissage
+30.1 Règles avant ML
+Pendant les six à douze premiers mois de données, la valeur vient de règles de diagnostic de défauts (FDD) écrites par des experts métier, pas d’apprentissage automatique. Sources d’inspiration : règles APAR pour les centrales de traitement d’air, séquences de la ASHRAE Guideline 36, pratiques de mesure et vérification IPMVP et ASHRAE Guideline 14 pour les lignes de base énergétiques. Chaque règle est un objet versionné, testé et rattaché à des classes sémantiques (donc réutilisable sur tous les sites).
+
+Champ d’une règle
+Contenu
+Identité
+Identifiant, version, auteur, date, statut (brouillon, fantôme, actif, retiré).
+Justification physique
+Pourquoi cette condition indique un défaut ; références.
+Entrées
+Classes sémantiques de points requises et niveau de confiance minimal.
+Paramètres
+Seuils, durées, hystérésis, conditions de régime stable, par classe ou par actif.
+Sortie
+Sévérité, cause probable, éléments de preuve (courbes, valeurs), actions recommandées, pièces et procédures liées.
+Qualité
+Jeux de données de test (cas positifs, négatifs, limites), risque de faux positifs, historique de précision mesurée.
+ 
+
+30.2 Gestion des alarmes
+Appliquer les principes ISA-18.2 et EEMUA 191 : rationalisation (chaque alarme a une action attendue), priorités, suppression des avalanches, mise en sommeil avec expiration, regroupement par cause. Indicateurs : alarmes par heure et par opérateur, alarmes obsolètes, temps d’acquittement. Une alarme qu’aucun technicien ne sait quoi faire est un défaut de conception.
+
+30.3 Énergie
+• Ligne de base par régression sur les degrés-jours et l’occupation (modèles à points de rupture), cartes de contrôle CUSUM pour détecter la dérive.
+• Normalisation météo à partir de données ouvertes ; validation par les indicateurs CV(RMSE) et NMBE de la Guideline 14.
+• Calcul de puissance thermique à partir de débit, écart de température et capacité calorifique, puis EER/COP mesuré confronté aux courbes constructeur.
+30.4 Boucle d’apprentissage
+La valeur cumulée du produit vient de la qualité des clôtures d’ordres de travail. Dès la première version, imposer une clôture structurée à choix fermé : symptôme constaté, cause, action réalisée, pièce remplacée, temps passé, résultat de la vérification (inspirée de la codification des défaillances de l’ISO 14224, simplifiée pour le terrain). Ces données deviennent les étiquettes de futurs modèles et servent à mesurer les règles existantes.
+
+30.5 Machine learning : quand et comment
+• Quand : au moins plusieurs mois de données de bonne qualité, plusieurs cas étiquetés par classe d’équipement, et des règles déjà en production pour servir de référence.
+• Comment : d’abord détection d’anomalies non supervisée par équipement, en mode fantôme ; ensuite pronostic sur les défauts fréquents et bien étiquetés.
+• Métriques : précision sur les k premières alertes, délai d’anticipation, coût pondéré des faux positifs et négatifs, calibration. Pas d’AUC seule.
+• Cohortes (niveau L4) : comparer un équipement à ses pairs compatibles seulement quand les données sont normalisées par régime de charge et météo.
+30.6 Jumeau numérique : périmètre
+Le twin est d’abord sémantique, d’état et d’historique. La simulation physique (Modelica, EnergyPlus) est un module optionnel ultérieur, utile pour la validation de règles et l’optimisation, pas un prérequis.
+
+30.7 Rôle des modèles de langage
+• Recherche dans les manuels et procédures avec citations vers le document et la page.
+• Aide au mapping sémantique et à la normalisation des noms de points, sous validation humaine.
+• Brouillon de rapport d’intervention à partir de la clôture structurée, des photos et de la dictée.
+• Interrogation en langage naturel du graphe par génération de requêtes en lecture seule, validées par schéma.
+31. Premier Domain Pack : CVC, froid et chaud tertiaire
+Le pack contient : taxonomie (classes Brick étendues), points types, checklists d’intervention, règles, tableaux de bord, indicateurs et connecteurs. Format du pack : archive versionnée et signée, activable par tenant, jamais de fork du noyau.
+
+31.1 Familles d’équipements couvertes au départ
+Pompes à chaleur air/eau et eau/eau, groupes de production d’eau glacée, dry coolers et aéroréfrigérants, centrales de traitement d’air, pompes et circulateurs à vitesse variable, échangeurs, sous-stations de réseaux urbains de chaleur et de froid (type CPCU, Climespace), compteurs d’énergie thermique et électrique.
+
+31.2 Règles initiales de diagnostic
+Règle
+Signaux
+Logique
+Conséquence / action
+Cyclage court compresseur
+État marche, comptage démarrages
+Démarrages par heure au-delà du seuil et durées de marche inférieures au minimum constructeur.
+Usure, surdimensionnement, réglage de régulation ou de pressostat.
+Chaud et froid simultanés
+Positions des vannes chaud et froid, températures
+Deux batteries ouvertes au-delà d’un seuil pendant plus de 15 min en régime établi.
+Gaspillage énergétique, régulation à corriger.
+ΔT eau glacée faible
+Températures départ/retour, débit
+Écart inférieur à la valeur nominale sous charge.
+Débit excessif, vannes ou échangeurs encrassés.
+Approche dry cooler élevée
+Température fluide sortie, température air extérieur, vitesse ventilateurs
+Écart supérieur au seuil de la classe à charge comparable.
+Encrassement des batteries, ventilateur défaillant, mauvaise régulation.
+Surchauffe / sous-refroidissement hors plage
+Pressions et températures frigorifiques
+Valeurs hors plage constructeur en régime stable.
+Charge de fluide, détendeur ; déclenche un contrôle d’étanchéité tracé.
+EER/COP dégradé
+Puissance thermique, puissance électrique, températures
+Écart supérieur à un seuil sur 7 jours glissants par rapport à la courbe attendue.
+Encrassement, fuite, dérive de régulation.
+Dégivrage anormal
+Cycles de dégivrage, température et humidité
+Fréquence hors profil pour les conditions.
+Givre, sonde, ventilateur, batterie.
+Filtre encrassé
+ΔP filtre, débit
+Tendance de ΔP à débit comparable.
+Remplacement planifié plutôt que d’urgence.
+Pompe à sec ou désamorçée
+Courant moteur, état de marche, ΔP
+Courant très inférieur au nominal alors que la marche est commandée.
+Protection de la pompe, purge, vérification du circuit.
+Régulation instable
+Position de vanne ou de variateur, consigne
+Inversions de sens par heure au-delà du seuil.
+Réglage PID, jeu mécanique.
+Capteur figé ou hors plage
+Tout signal
+Écart type nul sur la durée alors que des signaux corrélés varient ; valeur hors plage physique.
+Baisse de confiance ; règles dépendantes suspendues.
+Consommation hors occupation
+Puissance, calendrier d’occupation
+Puissance nocturne ou de week-end au-dessus de la ligne de base plus k écarts types.
+Programmation horaire, équipement resté en marche.
+Sous-station réseau urbain
+Températures primaires, puissance, débit
+Température de retour primaire élevée ; dépassement de puissance souscrite (selon clauses du contrat de fourniture).
+Réglage des échangeurs et de la régulation, évitement de pénalités contractuelles.
+Appareil muet
+Battement de cœur, qualité
+Absence de mise à jour au-delà d’un délai par classe.
+Diagnostic de communication ; suspension des règles dépendantes.
+ 
+
+Ces règles sont des candidates : les seuils dépendent de l’équipement, du régime et du contrat. Elles se règlent en mode fantôme sur données réelles avant toute notification.
+
+31.3 Indicateurs du pack
+Disponibilité par équipement, MTBF et MTTR, ratio préventif/correctif, respect des visites planifiées, kWh par m² et par an, EER saisonnier, heures de fonctionnement, taux de retour sous 30 jours, pénalités évitées sur réseaux urbains.
+
+32. Application technicien : hors ligne d’abord et conformité de terrain
+32.1 Architecture hors ligne
+• Base locale chiffrée contenant le périmètre du technicien (sites, équipements, procédures, historique récent) et moteur de synchronisation basé sur un journal d’opérations : fusion par champ pour les données descriptives, transitions d’état arbitrées par le serveur pour les ordres de travail, conflits signalés plutôt que résolus en silence.
+• Photos et pièces jointes : compression, envoi reprenable (protocole tus), empreinte de hachage pour l’intégrité, horodatage et géolocalisation seulement si la politique du client l’autorise.
+• Étiquettes QR et NFC sur les équipements (matériaux résistants), lecture hors ligne grâce au cache local, lien direct vers la fiche de la position fonctionnelle.
+• Contexte temps réel quand la connexion existe : tendance des signaux de l’équipement en cours d’intervention, alarmes actives, dernières interventions.
+32.2 Conformité intégrée au geste métier
+• Fluides frigorigènes : traçabilité des charges, récupérations, contrôles d’étanchéité et registre par équipement, en cohérence avec le règlement (UE) 2024/573 et les obligations nationales ; génération de la fiche d’intervention.
+• Habilitations : suivi des habilitations électriques (NF C 18-510) et de l’attestation d’aptitude aux fluides frigorigènes par technicien ; l’affectation d’un ordre de travail tient compte des compétences et des dates de validité.
+• Sécurité d’intervention : checklist de consignation avant action sur des circuits électriques, visible et horodatée.
+• Preuve : rapport d’intervention signé, avec avant/après, mesures et pièces, exportable pour le client.
+32.3 Ergonomie
+Conçue pour des gants, une seule main, la lumière du soleil, des téléphones Android d’entrée de gamme et des zones sans réseau : gros contrôles, trois gestes maximum pour les actions courantes, dictée vocale en français, saisie assistée, valeurs mesurées contrôlées (unité et plage physique).
+
+32.4 Vie privée des techniciens
+La géolocalisation et le suivi d’activité des salariés sont encadrés (RGPD, information et consultation des représentants du personnel selon les cas). Par défaut : pas de suivi continu ; la position n’est utilisée que sur action explicite (arrivée sur site) et est configurable par employeur.
+
+33. Fiabilité, exploitation et coûts
+33.1 Classes de service et cibles initiales
+Classe
+Contenu
+Objectif de service (cible)
+RPO / RTO (cible)
+0 — Local
+Sûretés et règles Edge
+Indépendante du cloud
+Sans objet : autonome
+1 — Cœur
+Identité, actifs, ordres de travail, audit
+Disponibilité 99,5 % au MVP, 99,9 % ensuite
+RPO ≤ 5 min (archivage continu) / RTO ≤ 4 h
+2 — Télémétrie et alertes
+Ingestion, règles, notifications
+Retard d’ingestion p95 < 30 s ; notification d’alerte critique p95 < 60 s
+RPO ≤ 15 min (le tampon Edge comble) / RTO ≤ 4 h
+3 — Analytique
+Rapports, ML, exports
+Meilleur effort
+RPO 24 h / RTO 72 h
+ 
+
+Ces cibles sont des hypothèses de départ. Elles deviennent des engagements (SLO) seulement après mesure et budget d’erreur.
+
+33.2 Exploitation à petite échelle
+• Services managés d’abord (PostgreSQL/TimescaleDB, stockage objet, coffre de secrets) plutôt que d’exploiter soi-même Kafka ou Kubernetes ; l’exploitation ne doit pas dévorer la capacité de développement.
+• Infrastructure as code (OpenTofu ou Terraform), environnements reproductibles, déploiements automatisés, migrations en trois temps (élargir, migrer, contracter).
+• Observabilité avec OpenTelemetry (journaux, métriques, traces) et corrélation par identifiant de bout en bout, depuis la passerelle jusqu’à l’interface.
+• Hébergement : région de l’UE dès le départ ; prestataires européens (par exemple OVHcloud, Scaleway, Outscale) et, pour les clients qui l’exigent, offres qualifiées SecNumCloud. Éviter les services propriétaires non portables dans le noyau.
+• Exercices : restauration mensuelle de sauvegarde en environnement isolé, jeux de simulation de pannes (base, file, passerelle, réseau), revue post-incident sans recherche de coupable.
+• Maîtrise des coûts : coût cloud par tenant, site et actif ; plafonds de télémétrie par contrat ; alertes de dépassement.
+34. Réglementation et normes : veille au 21 septembre 2026
+Avertissement. Cette section est une veille technique, pas un avis juridique. Les dates évoluent ; chaque point doit être validé avec un juriste avant décision commerciale.
+Texte ou norme
+Pertinence pour le produit
+Point d’attention
+Dispositif Éco Énergie Tertiaire (décret tertiaire) et plateforme OPERAT
+Réduction progressive des consommations des bâtiments tertiaires concernés (objectifs de −40 % en 2030, −50 % en 2040 et −60 % en 2050 par rapport à une référence).
+Fonction produit : collecte de données de consommation fiables et export prêt pour OPERAT.
+Décret BACS (n° 2020-887)
+Obligation d’automatisation et de contrôle des bâtiments tertiaires. Selon les sources consultées : bâtiments existants au-dessus de 290 kW au 1er janvier 2025 ; tranche 70 à 290 kW initialement au 1er janvier 2027, report à 2030 annoncé par un projet de décret de novembre 2025.
+Vérifier l’état final du texte. Fonction produit : preuves de suivi, d’enregistrement et d’analyse continus.
+Règlement (UE) 2024/573 (gaz fluorés)
+Contrôles d’étanchéité, registres et traçabilité des fluides frigorigènes.
+Fonctionnalité de l’application technicien (section 32) ; forte valeur métier.
+Data Act (règlement (UE) 2023/2854)
+Applicable depuis le 12 septembre 2025. Obligation d’accès aux données par conception pour les produits connectés mis sur le marché après le 12 septembre 2026. Les utilisateurs peuvent demander l’accès à leurs données et leur partage avec un tiers.
+Argument commercial pour une plateforme neutre : le propriétaire peut exiger les données de ses équipements. À confirmer sur les modalités pratiques. La plateforme doit aussi prévoir sa propre portabilité.
+Cyber Resilience Act (règlement (UE) 2024/2847)
+Obligations de signalement des vulnérabilités activement exploitées et des incidents graves applicables depuis le 11 septembre 2026 (alerte précoce sous 24 h, notification sous 72 h, rapport final sous 14 jours pour les vulnérabilités ou un mois pour les incidents graves). L’essentiel des obligations s’applique à partir du 11 décembre 2027.
+La passerelle Edge et ses logiciels sont probablement un produit comportant des éléments numériques : conception sécurisée, SBOM, gestion des vulnérabilités, mises à jour de sécurité pendant la durée de support. Le SaaS pur est largement hors champ, sauf traitement à distance intégré au produit : avis juridique requis.
+Directive NIS2 (UE) 2022/2555
+À la date de la source consultée (31 août 2026), la transposition française n’était pas adoptée et la Commission avait saisi la CJUE en juillet 2026. Secteurs visés : énergie, eau, santé, administration publique, infrastructures numériques, entre autres.
+Les clients de ces secteurs imposeront déjà des exigences par contrat. Prévoir une posture alignée ISO/IEC 27001 à moyen terme.
+Règlement (UE) 2024/1689 (IA)
+Les systèmes d’IA utilisés comme composants de sûreté dans la gestion d’infrastructures critiques (dont chauffage, eau, électricité) peuvent relever du haut risque.
+L’architecture L0 à L5, où l’IA n’est jamais un composant de sûreté, est aussi un choix de conformité. Calendrier d’application à suivre.
+RGPD
+Données de techniciens, d’occupants (résidentiel), d’utilisateurs.
+Minimisation, base légale, durées de conservation, droits des personnes, crypto-shredding par tenant.
+IEC 62443 (notamment 4-1, 3-3, 4-2, 2-4)
+Sécurité des systèmes de contrôle et des produits ; référentiel commun avec les industriels et exploitants.
+Viser d’abord 4-1 (développement sécurisé).
+ISO 16484-5 / BACnet
+Protocole central des GTB tertiaires ; BACnet/SC ajoute une couche sécurisée.
+Ajouté à la liste des connecteurs prioritaires (section 4).
+ISO 50001, ISO 55000, EN ISO 52120
+Management de l’énergie, gestion d’actifs, contribution des systèmes d’automatisation à la performance énergétique.
+Vocabulaire et livrables attendus par les clients.
+ISO 14224, ISA-18.2, EEMUA 191
+Codification des défaillances et gestion des alarmes.
+Inspiration de la clôture d’ordre de travail et de la rationalisation des alarmes.
+CSRD / ESRS et normes de reporting carbone
+Cadre de reporting durable en évolution.
+Ne pas figer le produit sur une version ; garder les facteurs et méthodes versionnés (section 10).
+ 
+
+35. Simulation et stratégie de test
+• Simulateurs de protocole (BACnet, Modbus, OPC UA, MQTT) exécutés en conteneurs dans l’intégration continue : la passerelle est testée sans matériel.
+• Générateur de données CVC : modèles thermiques simples (résistances-capacités, courbes de PAC) avec bibliothèque d’injection de défauts (capteur figé, dérive, décalage, encrassement, vanne qui fuit, fuite de fluide). Il produit des jeux étiquetés pour valider les règles avant tout site réel.
+• Rejeu : enregistrer des données réelles (avec autorisation) et les rejouer dans toute la chaîne pour comparer les versions de règles et de pipelines (« machine à remonter le temps »).
+• Tests par propriétés et fuzzing des analyseurs de protocole, des conversions d’unités et de la gestion du temps : ce sont des surfaces d’attaque et de bugs subtils.
+• Tests de contrat pour les API, événements et connecteurs ; migrations rejouées sur une copie de taille réelle avant production.
+• Banc matériel (hardware-in-the-loop) : une passerelle réelle, un automate ou contrôleur BACnet d’entrée de gamme, un compteur Modbus, un réseau instable simulé. Il valide la coupure WAN, le disque plein et la perte d’alimentation.
+36. Plan MVP et re-séquencement des phases
+Principe : la valeur d’abord, la plomberie juste à temps. Le v1.0 place la maintenance en phase 4, après l’ingestion et l’Edge. Or le v1.0 précise lui-même qu’un actif peut exister sans télémétrie : l’application terrain et le registre d’actifs apportent de la valeur dès la première étape et fournissent les étiquettes dont le diagnostic aura besoin. Ce séquencement remplace la lecture linéaire de la section 17 pour le démarrage ; les phases 0 à 9 restent la carte long terme.
+
+Étape
+Durée indicative
+Livrables
+Critère de sortie mesurable
+On ne fait pas
+M0 — Découverte
+2 à 4 semaines
+Entretiens (8 environ), accompagnement de 3 interventions, cartographie concurrentielle, choix du site pilote, indicateurs de base, maquettes papier.
+Pilote accepté par écrit ; trois parcours utilisateur priorisés.
+Aucun code de production.
+M1 — Registre et terrain
+8 à 10 semaines
+Authentification, tenancy avec RLS, audit de base, registre d’actifs à trois niveaux, QR, application technicien hors ligne, ordres de travail, clôture structurée, fluides frigorigènes, rapport PDF.
+Un technicien réel réalise 20 interventions hors ligne sans aide du développeur ; l’historique d’un actif est reconstructible.
+Capteurs, ML, multi-région, commandes.
+M2 — Squelette de bout en bout
+4 à 6 semaines
+Simulateur, passerelle minimale, cloud, tableau de bord, alerte, création d’ordre de travail, chaîne CI/CD.
+Scénario complet rejoué automatiquement ; coupure réseau simulée sans perte de données.
+Protocoles réels, tiering, ESG.
+M3 — Lecture seule sur site pilote
+6 à 8 semaines
+Adaptateurs Modbus/BACnet en lecture seule, mapping assisté et statuts de confiance, TimescaleDB, 10 règles en mode fantôme, tableaux de bord.
+30 jours de données avec complétude supérieure à 99 % sur les points validés ; précision des règles mesurée avec les techniciens.
+Toute écriture vers l’équipement.
+M4 — Edge durci
+6 à 8 semaines
+Mises à jour A/B, tampon chiffré, gestion de flotte, kill switch, banc matériel.
+Coupure WAN de 72 h sans perte ; mise à jour et retour arrière validés sur le banc.
+Marketplace de connecteurs.
+M5 — Énergie et conformité
+4 à 6 semaines
+Lignes de base météo-normalisées, exports prêts pour OPERAT, dossier de preuve BACS.
+Rapport reproductible à date passée.
+Autres réglementations.
+M6+ — Extension
+Selon résultats
+Deuxième et troisième site ou classe d’équipement, extraction du noyau, SDK de connecteurs interne, ML en mode fantôme.
+Règle des trois satisfaite ; indicateurs produit en progression.
+Commandes C2 avant revue sécurité complète.
+ 
+
+Durées indicatives pour un développeur expérimenté à temps plein, soit environ 8 à 11 mois au total. Pour un développeur qui débute et travaille à temps partiel, prévoir de multiplier par deux à trois et de réduire le périmètre de chaque étape plutôt que de sauter des étapes. Les outils d’assistance par IA accélèrent l’écriture mais ne remplacent ni la revue de sécurité, ni les tests, ni l’avis d’un pair sur les choix d’architecture.
+
+36.1 Pile technique simplifiée pour le MVP
+• Web : Next.js + TypeScript. Mobile : React Native avec Expo, base locale chiffrée et synchronisation par journal d’opérations.
+• Backend : monolithe modulaire FastAPI, une instance PostgreSQL avec extension TimescaleDB, file de tâches sur PostgreSQL, stockage objet compatible S3. Redis seulement si une mesure le justifie.
+• Identité : OpenID Connect via un fournisseur managé ou Keycloak ; autorisations par moteur dédié dès que les délégations à des prestataires apparaissent.
+• Qualité : intégration continue avec tests de tenancy, analyse statique, analyse de dépendances, SBOM, signature des artefacts.
+• Hors périmètre 12 mois : Kubernetes multi-cluster, Kafka, multi-région, marketplace, ML supervisé, résidentiel, commandes actives.
+36.2 Squelette de bout en bout
+Avant de perfectionner un composant, faire fonctionner tout le chemin de manière rudimentaire : point simulé, passerelle, cloud, stockage, règle, alerte, ordre de travail, application technicien, clôture. Chaque amélioration ultérieure se mesure sur ce chemin. C’est la meilleure protection contre les intégrations tardives et les surprises.
+
+37. Modèle économique et mise sur le marché (hypothèses à valider)
+• Premier segment : entreprises de maintenance et de services multitechniques du CVC, proches du wedge et payeuses : elles gagnent en productivité, en preuve de service et en renouvellement de contrats.
+• Deuxième segment : exploitants multi-sites et foncières, une fois les rapports et la conformité éprouvés.
+• Entrée : pilote de trois mois sur un ou deux sites, cadre contractuel explicite sur les données (propriété, usage, anonymisation), étude de cas à la clé.
+• Tarification à tester : abonnement par site avec paliers selon nombre d’actifs ou de points connectés, location de passerelle, frais d’intégration initiaux. Formule de rentabilité à renseigner avec les mesures réelles : coût cloud par site, coût de support, coût d’installation, coût d’acquisition.
+• Avantages défendables : neutralité constructeur, application terrain hors ligne, bibliothèques de règles sémantiques, données structurées de clôture, automatisation de la conformité (OPERAT, BACS, fluides frigorigènes).
+• Concurrence à cartographier en M0 : supervision et GTB des constructeurs, logiciels de GMAO, plateformes IoT et de diagnostic de défauts, couches d’intégration de type Niagara.
+• Frein principal : cycles de vente et d’intégration longs. Réponse : trousse d’onboarding standardisée et indicateur « temps d’onboarding d’un site ».
+38. Risques complémentaires et ADR à ouvrir
+38.1 Risques complémentaires
+Risque
+Réponse
+Dérive de périmètre (plateforme universelle avant premier client)
+Wedge, règle des trois, liste de non-objectifs à 12 mois, revue de périmètre mensuelle.
+Dépendance à une personne (facteur camion)
+Documentation exécutable, ADR, automatisation, revue par pair externe pour les décisions de sécurité.
+Dépendance à un pilote unique
+Deux pilotes dès M3 dans la mesure du possible ; contrats de pilote avec critères de succès.
+Qualité de données réelle très inférieure à l’attendu (noms incohérents, capteurs non étalonnés)
+Statuts de confiance, validation physique, règles suspendues sur données douteuses, temps d’onboarding budgété.
+Refus du service informatique du client (accès réseau)
+Connexions sortantes uniquement, dossier d’architecture et de sécurité prêt à remettre, mode passif.
+Responsabilité en cas d’alerte manquée ou erronée
+Périmètre contractuel clair (aide à la décision, pas système de sûreté), traçabilité, assurance responsabilité civile professionnelle et cyber.
+Évolution réglementaire
+Section 34 relue tous les trimestres ; facteurs et exports versionnés.
+Coûts cloud non maîtrisés
+COV, agrégation, rétention par classe, plafonds contractuels, tableau de coûts par tenant.
+Épuisement du porteur de projet
+Étapes courtes avec sortie mesurable, périmètre réduit plutôt que délai allongé, pauses planifiées.
+ 
+
+38.2 ADR à ouvrir en priorité
+ADR
+Question à trancher
+Échéance
+001
+Modèle sémantique : Brick comme cœur ou modèle propriétaire avec import/export ?
+M0/M1
+002
+Bitemporalité : périmètre exact des tables concernées.
+M1
+003
+Autorisations : ReBAC dès M1 ou RBAC puis migration ?
+M1
+004
+Stratégie de synchronisation hors ligne de l’application technicien.
+M1
+005
+Hébergement et souveraineté : fournisseur, région, niveau de qualification.
+M1
+006
+Langage et cadre de l’agent Edge ; transport MQTT ou gRPC.
+M2
+007
+Politique de commande : critères d’entrée en C2, liste C4, bail et retour arrière.
+Avant M4
+008
+Journal d’audit : chaînage, ancrage, stockage à écriture unique.
+M2
+009
+Politique de données clients : propriété, anonymisation, entraînement de modèles.
+M0
+010
+Licence et stratégie de code (propriétaire, noyau ouvert, connecteurs ouverts).
+M5
+ 
+
+Étape suivante : transformer ce document maître en spécifications exécutables — schéma de données, contrats API/événements, matrice RBAC/ABAC, écrans, threat models, ADR et backlog d'implémentation.
+
+Étape suivante recommandée (v1.1). Une seule action pour commencer : M0 — mener cinq entretiens avec des mainteneurs et des facility managers, accompagner trois interventions, puis choisir le site pilote et l’équipement de départ. Aucune ligne de code avant que le pilote et les trois parcours prioritaires soient écrits. Ensuite seulement : ADR 001 (modèle sémantique) et démarrage de M1.
+39. Sources et références
+Sources consultées le 21 septembre 2026 pour les points de calendrier réglementaire (à revalider avant décision) :
+
+• Cyberwatch — Cyber Resilience Act : les premières obligations entrent en application. https://cyberwatch.fr/actualite/cyber-resilience-act-les-premieres-obligations-entrent-en-application/
+• Nextiim — Décret BACS : report 2025/2030. https://www.nextiim.com/blog/reglementation/report-decret-bacs-gtb-tertiaire/
+• Gaming Tech Law — Data Act : accès par conception à partir du 12 septembre 2026. https://www.gamingtechlaw.com/2026/08/data-act-access-by-design/
+• Sildaro — NIS2 en France : état des lieux d’août 2026. https://sildaro.com/cyber-attaque/nis2-france-transposition-etat-des-lieux-aout-2026/
