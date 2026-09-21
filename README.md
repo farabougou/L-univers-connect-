@@ -16,28 +16,63 @@ tertiaire. Le cahier des charges complet est dans `docs/spec/`.
 /infra/           docker compose, scripts, configuration
 ```
 
-## Démarrer en local (API)
+## Démarrer en local
 
-```bash
-cd services/api
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt -r requirements-dev.txt
-uvicorn app.main:app --reload
-```
+1. Démarrer la base de données PostgreSQL :
 
-L'API est alors disponible sur http://localhost:8000, avec une route de santé sur
-`/health`.
+   ```bash
+   cd infra
+   docker compose up -d
+   ```
+
+2. Copier les variables d'environnement et installer l'API :
+
+   ```bash
+   cd services/api
+   cp ../../.env.example ../../.env   # à adapter si besoin
+   python3 -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt -r requirements-dev.txt
+   ```
+
+3. Appliquer les migrations de base de données :
+
+   ```bash
+   alembic upgrade head
+   ```
+
+4. Démarrer l'API :
+
+   ```bash
+   uvicorn app.main:app --reload
+   ```
+
+L'API est alors disponible sur http://localhost:8000 :
+- `/health` : l'API répond.
+- `/health/db` : l'API répond ET arrive à parler à la base de données.
 
 ## Tests et qualité de code
 
-Depuis `/services/api` (avec l'environnement virtuel activé) :
+Depuis `/services/api` (avec l'environnement virtuel activé, et la base de données
+démarrée) :
 
 ```bash
 pytest
 ruff check .
 ruff format .
 ```
+
+## Migrations de base de données (Alembic)
+
+Après avoir modifié les modèles de données, créer une nouvelle migration :
+
+```bash
+cd services/api
+alembic revision --autogenerate -m "description du changement"
+alembic upgrade head
+```
+
+Toujours relire une migration générée automatiquement avant de l'appliquer.
 
 ## Variables d'environnement
 

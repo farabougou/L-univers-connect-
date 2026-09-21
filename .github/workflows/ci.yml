@@ -11,6 +11,22 @@ jobs:
     defaults:
       run:
         working-directory: services/api
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: paios
+          POSTGRES_PASSWORD: paios_dev_password
+          POSTGRES_DB: paios
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U paios -d paios"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql+psycopg://paios:paios_dev_password@localhost:5432/paios
     steps:
       - uses: actions/checkout@v4
 
@@ -25,6 +41,9 @@ jobs:
         run: |
           ruff check .
           ruff format --check .
+
+      - name: Migrer la base de données (Alembic)
+        run: alembic upgrade head
 
       - name: Tests (pytest)
         run: pytest
