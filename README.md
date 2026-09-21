@@ -18,12 +18,14 @@ tertiaire. Le cahier des charges complet est dans `docs/spec/`.
 
 ## Démarrer en local
 
-1. Démarrer la base de données PostgreSQL :
+1. Démarrer la base de données PostgreSQL et le serveur d'authentification (Keycloak) :
 
    ```bash
    cd infra
    docker compose up -d
    ```
+
+   Détails et identifiants de démonstration dans `infra/README.md`.
 
 2. Copier les variables d'environnement et installer l'API :
 
@@ -50,6 +52,9 @@ tertiaire. Le cahier des charges complet est dans `docs/spec/`.
 L'API est alors disponible sur http://localhost:8000 :
 - `/health` : l'API répond.
 - `/health/db` : l'API répond ET arrive à parler à la base de données.
+- `/me` : nécessite un jeton d'authentification valide (voir `infra/README.md` pour en
+  obtenir un de test).
+- `/admin/ping` : nécessite en plus le rôle `admin_tenant`.
 
 ## Tests et qualité de code
 

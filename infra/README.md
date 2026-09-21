@@ -1,13 +1,16 @@
 # Infrastructure locale
 
-Démarrer la base de données PostgreSQL pour le développement local :
+Démarrer la base de données PostgreSQL et le serveur d'authentification pour le
+développement local :
 
 ```bash
 cd infra
 docker compose up -d
 ```
 
-Cela lance un PostgreSQL 16 accessible sur `localhost:5432`, avec deux comptes :
+## Base de données (PostgreSQL)
+
+Accessible sur `localhost:5432`, avec deux comptes :
 
 - `postgres` : compte d'administration, utilisé uniquement à l'initialisation (voir
   `init-db/01-create-app-role.sql`). L'API ne s'en sert jamais.
@@ -16,7 +19,40 @@ Cela lance un PostgreSQL 16 accessible sur `localhost:5432`, avec deux comptes :
   (isolation entre clients) à un superutilisateur, donc l'API doit toujours se connecter
   avec ce rôle applicatif, jamais avec le compte d'administration.
 
+## Authentification (Keycloak)
+
+Accessible sur `localhost:8080`. Au premier démarrage, Keycloak importe automatiquement
+le realm `paios` défini dans `keycloak/realm-export.json` : les rôles de base
+(`technicien`, `responsable_exploitation`, `admin_tenant`) et deux utilisateurs de
+démonstration (`demo.technicien` / `demo.admin`, mot de passe `demo-dev-only`).
+
+- Console d'administration : http://localhost:8080/admin (identifiants `admin` /
+  `admin_dev_password`, définis dans `docker-compose.yml`).
+- Pour obtenir un vrai jeton et tester l'API à la main :
+
+  ```bash
+  curl -s -X POST http://localhost:8080/realms/paios/protocol/openid-connect/token \
+    -d "client_id=paios-api" \
+    -d "grant_type=password" \
+    -d "username=demo.technicien" \
+    -d "password=demo-dev-only" \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])"
+  ```
+
+  Puis, avec l'API démarrée (`uvicorn app.main:app --reload`) :
+
+  ```bash
+  curl -s http://localhost:8000/me -H "Authorization: Bearer <le jeton copié ci-dessus>"
+  ```
+
+  Avec `demo.technicien`, `/me` doit répondre et `/admin/ping` doit renvoyer une erreur
+  403 (rôle insuffisant). Avec `demo.admin`, les deux routes doivent répondre.
+
+Ce mode de connexion par mot de passe (`grant_type=password`) est pratique pour tester en
+local, mais ne doit jamais être utilisé par la future application web ou mobile : elles
+utiliseront le flux standard "Authorization Code + PKCE", plus sûr (voir docs/adr/002).
+
 Ce sont des identifiants de développement local uniquement, jamais utilisés en production.
 
-Pour arrêter la base de données : `docker compose down` (les données restent dans le
-volume Docker). Pour tout effacer et repartir de zéro : `docker compose down -v`.
+Pour arrêter les services : `docker compose down` (les données restent dans le volume
+Docker). Pour tout effacer et repartir de zéro : `docker compose down -v`.
