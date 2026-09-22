@@ -102,6 +102,7 @@ export default function HomeScreen() {
         title="Nouvelle intervention"
         onPress={() => router.push("/nouvelle-intervention")}
       />
+      <Button title="Historique" onPress={() => router.push("/historique")} />
 
       <Text>
         {pendingCount > 0
