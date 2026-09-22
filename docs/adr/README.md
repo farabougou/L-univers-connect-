@@ -2,11 +2,8 @@
 
 Un fichier par décision.
 
+- [001 — Modèle sémantique](./001-modele-semantique.md)
 - [002 — Fournisseur d'authentification OpenID Connect](./002-fournisseur-authentification-oidc.md)
-
-Les ADR suivants seront ajoutés à l'étape 0.6 de la Phase 0 :
-
-- 001 — modèle sémantique
-- 003 — autorisations
-- 005 — hébergement
-- 009 — données clients
+- [003 — Autorisations](./003-autorisations.md)
+- [005 — Hébergement](./005-hebergement.md)
+- [009 — Données clients](./009-donnees-clients.md)
