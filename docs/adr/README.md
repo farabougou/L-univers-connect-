@@ -7,4 +7,5 @@ Un fichier par décision.
 - [003 — Autorisations](./003-autorisations.md)
 - [004 — Vision cible et feuille de route d'extension](./004-vision-cible-et-feuille-de-route.md)
 - [005 — Hébergement](./005-hebergement.md)
+- [006 — Stockage des photos](./006-stockage-des-photos.md)
 - [009 — Données clients](./009-donnees-clients.md)

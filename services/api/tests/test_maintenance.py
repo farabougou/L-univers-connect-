@@ -11,6 +11,7 @@ from app.maintenance import (
     create_work_order,
     log_intervention,
     raise_alarm,
+    record_photo,
 )
 from app.tenancy import set_tenant_context
 from tests.db_helpers import purge_audit_log_for_tenant
@@ -39,6 +40,7 @@ def two_tenants():
         with engine.begin() as connection:
             set_tenant_context(connection, tenant_id)
             for table in (
+                "intervention_photos",
                 "interventions",
                 "alarm_status_history",
                 "alarms",
@@ -290,9 +292,47 @@ def test_log_intervention_defaults_to_intervention_type_with_empty_checklist(two
     assert row.checklist == {}
 
 
+def test_record_photo_links_to_intervention(two_tenants) -> None:
+    tenant_a, _tenant_b = two_tenants
+
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_a)
+        intervention_id = log_intervention(
+            connection,
+            tenant_id=tenant_a,
+            technician="technicien-1",
+            started_at=datetime.now(UTC),
+        )
+        photo_id = record_photo(
+            connection,
+            tenant_id=tenant_a,
+            intervention_id=intervention_id,
+            storage_key=f"{tenant_a}/{intervention_id}/abc-photo.jpg",
+            taken_at=datetime.now(UTC),
+            caption="Filtre encrassé",
+        )
+
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_a)
+        row = connection.execute(
+            text("SELECT intervention_id, caption FROM intervention_photos WHERE id = :id"),
+            {"id": photo_id},
+        ).one()
+
+    assert row.intervention_id == intervention_id
+    assert row.caption == "Filtre encrassé"
+
+
 @pytest.mark.parametrize(
     "table",
-    ["work_orders", "work_order_status_history", "interventions", "alarms", "alarm_status_history"],
+    [
+        "work_orders",
+        "work_order_status_history",
+        "interventions",
+        "alarms",
+        "alarm_status_history",
+        "intervention_photos",
+    ],
 )
 def test_tenant_isolation_on_maintenance_tables(two_tenants, table) -> None:
     tenant_a, tenant_b = two_tenants
@@ -302,11 +342,18 @@ def test_tenant_isolation_on_maintenance_tables(two_tenants, table) -> None:
         work_order_a = create_work_order(
             connection, tenant_id=tenant_a, created_by="responsable-a", title="Tâche A"
         )
-        log_intervention(
+        intervention_a = log_intervention(
             connection, tenant_id=tenant_a, technician="technicien-a", started_at=datetime.now(UTC)
         )
         raise_alarm(
             connection, tenant_id=tenant_a, raised_by="technicien-a", severity="info", message="A"
+        )
+        record_photo(
+            connection,
+            tenant_id=tenant_a,
+            intervention_id=intervention_a,
+            storage_key=f"{tenant_a}/{intervention_a}/a.jpg",
+            taken_at=datetime.now(UTC),
         )
 
     with engine.begin() as connection:
@@ -314,11 +361,18 @@ def test_tenant_isolation_on_maintenance_tables(two_tenants, table) -> None:
         create_work_order(
             connection, tenant_id=tenant_b, created_by="responsable-b", title="Tâche B"
         )
-        log_intervention(
+        intervention_b = log_intervention(
             connection, tenant_id=tenant_b, technician="technicien-b", started_at=datetime.now(UTC)
         )
         raise_alarm(
             connection, tenant_id=tenant_b, raised_by="technicien-b", severity="info", message="B"
+        )
+        record_photo(
+            connection,
+            tenant_id=tenant_b,
+            intervention_id=intervention_b,
+            storage_key=f"{tenant_b}/{intervention_b}/b.jpg",
+            taken_at=datetime.now(UTC),
         )
 
     with engine.begin() as connection:

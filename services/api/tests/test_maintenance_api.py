@@ -29,6 +29,7 @@ def tenant_id():
     with engine.begin() as connection:
         set_tenant_context(connection, tenant_id)
         for table in (
+            "intervention_photos",
             "interventions",
             "alarm_status_history",
             "alarms",
@@ -148,6 +149,58 @@ def test_create_ronde_with_checklist(tenant_id) -> None:
     body = response.json()
     assert body["intervention_type"] == "ronde"
     assert body["checklist"] == checklist
+
+
+def test_photo_upload_url_then_confirm_returns_download_url(tenant_id) -> None:
+    """La génération d'URL pré-signée (boto3) est une opération de signature
+    locale : elle ne demande aucune connexion réelle au stockage (MinIO n'a
+    donc pas besoin de tourner pour ce test, voir ADR 006)."""
+    headers = _auth_headers(tenant_id, ["technicien"])
+
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        intervention_response = client.post(
+            "/interventions", json={"summary": "Contrôle filtre"}, headers=headers
+        )
+        assert intervention_response.status_code == 201
+        intervention_id = intervention_response.json()["id"]
+
+        upload_url_response = client.post(
+            f"/interventions/{intervention_id}/photos/upload-url",
+            json={"filename": "filtre.jpg", "content_type": "image/jpeg"},
+            headers=headers,
+        )
+        assert upload_url_response.status_code == 200
+        body = upload_url_response.json()
+        assert body["upload_url"].startswith("http")
+        assert str(tenant_id) in body["object_key"]
+        assert intervention_id in body["object_key"]
+
+        create_photo_response = client.post(
+            f"/interventions/{intervention_id}/photos",
+            json={"object_key": body["object_key"], "caption": "Avant nettoyage"},
+            headers=headers,
+        )
+        assert create_photo_response.status_code == 201
+        photo = create_photo_response.json()
+        assert photo["caption"] == "Avant nettoyage"
+        assert photo["download_url"].startswith("http")
+
+        list_response = client.get(f"/interventions/{intervention_id}/photos", headers=headers)
+        assert [p["id"] for p in list_response.json()] == [photo["id"]]
+
+
+def test_photo_upload_url_on_unknown_intervention_returns_404(tenant_id) -> None:
+    headers = _auth_headers(tenant_id, ["technicien"])
+    random_intervention_id = uuid.uuid4()
+
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        response = client.post(
+            f"/interventions/{random_intervention_id}/photos/upload-url",
+            json={"filename": "photo.jpg", "content_type": "image/jpeg"},
+            headers=headers,
+        )
+
+    assert response.status_code == 404
 
 
 def test_work_order_on_unknown_functional_location_returns_404(tenant_id) -> None:

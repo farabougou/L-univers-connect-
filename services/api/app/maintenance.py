@@ -155,6 +155,37 @@ def log_intervention(
     return intervention_id
 
 
+def record_photo(
+    connection: Connection,
+    *,
+    tenant_id: uuid.UUID,
+    intervention_id: uuid.UUID,
+    storage_key: str,
+    taken_at: datetime,
+    caption: str | None = None,
+) -> uuid.UUID:
+    """Enregistre la référence d'une photo déjà envoyée au stockage (voir
+    ADR 006). Le contenu de la photo n'est jamais manipulé ici, seule la clé
+    de stockage l'est."""
+    photo_id = uuid.uuid4()
+    connection.execute(
+        text(
+            "INSERT INTO intervention_photos "
+            "(id, tenant_id, intervention_id, storage_key, caption, taken_at) "
+            "VALUES (:id, :tenant_id, :intervention_id, :storage_key, :caption, :taken_at)"
+        ),
+        {
+            "id": photo_id,
+            "tenant_id": tenant_id,
+            "intervention_id": intervention_id,
+            "storage_key": storage_key,
+            "caption": caption,
+            "taken_at": taken_at,
+        },
+    )
+    return photo_id
+
+
 def raise_alarm(
     connection: Connection,
     *,

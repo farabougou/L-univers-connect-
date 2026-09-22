@@ -34,5 +34,29 @@ services:
     volumes:
       - ./keycloak:/opt/keycloak/data/import:ro
 
+  storage:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      # Compte admin MinIO. Développement local uniquement (voir ADR 006 :
+      # en production, un fournisseur compatible S3 sera choisi séparément,
+      # sans changer le code applicatif).
+      MINIO_ROOT_USER: paios-storage
+      MINIO_ROOT_PASSWORD: storage_dev_password
+      # Crée automatiquement le panier de stockage des photos au démarrage.
+      MINIO_DEFAULT_BUCKETS: paios-photos
+    ports:
+      - "9000:9000" # API compatible S3
+      - "9001:9001" # console web d'administration
+    volumes:
+      - paios_storage_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 volumes:
   paios_db_data:
+  paios_storage_data:

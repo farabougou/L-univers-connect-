@@ -13,5 +13,14 @@ class Settings(BaseSettings):
     oidc_issuer: str = "http://localhost:8080/realms/paios"
     oidc_audience: str = "paios-api"
 
+    # Stockage des photos, compatible S3 (MinIO en local, voir docs/adr/006).
+    # Changer de fournisseur en production ne demande que ces variables,
+    # jamais une modification du code applicatif.
+    storage_endpoint_url: str = "http://localhost:9000"
+    storage_access_key: str = "paios-storage"
+    storage_secret_key: str = "storage_dev_password"
+    storage_bucket: str = "paios-photos"
+    storage_region: str = "us-east-1"
+
 
 settings = Settings()

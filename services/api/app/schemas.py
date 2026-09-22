@@ -169,3 +169,28 @@ class AlarmStatusHistoryOut(BaseModel):
     changed_by: str
     note: str | None
     changed_at: datetime
+
+
+class PhotoUploadUrlRequest(BaseModel):
+    filename: str = Field(min_length=1, max_length=255)
+    content_type: str = Field(min_length=1, max_length=100)
+
+
+class PhotoUploadUrlOut(BaseModel):
+    upload_url: str
+    object_key: str
+
+
+class PhotoCreate(BaseModel):
+    object_key: str = Field(min_length=1, max_length=500)
+    caption: str | None = Field(default=None, max_length=500)
+    taken_at: datetime | None = None
+
+
+class PhotoOut(BaseModel):
+    id: uuid.UUID
+    intervention_id: uuid.UUID
+    download_url: str
+    caption: str | None
+    taken_at: datetime
+    uploaded_at: datetime

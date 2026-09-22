@@ -285,3 +285,25 @@ class AlarmStatusHistory(Base):
     changed_by: Mapped[str] = mapped_column(String(200), nullable=False)
     note: Mapped[str | None] = mapped_column(String(2000), nullable=True)
     changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class InterventionPhoto(Base):
+    """Une photo rattachée à une intervention, stockée hors base (voir
+    ADR 006). Seule la référence de stockage est conservée ici : le contenu
+    de la photo n'entre jamais dans PostgreSQL ni dans Git."""
+
+    __tablename__ = "intervention_photos"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    intervention_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("interventions.id"), nullable=False
+    )
+    storage_key: Mapped[str] = mapped_column(String(500), nullable=False)
+    caption: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    taken_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    uploaded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )

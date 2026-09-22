@@ -15,6 +15,7 @@ from app.maintenance import (
     create_work_order,
     log_intervention,
     raise_alarm,
+    record_photo,
 )
 from app.schemas import (
     AlarmCreate,
@@ -23,11 +24,16 @@ from app.schemas import (
     AlarmStatusUpdate,
     InterventionCreate,
     InterventionOut,
+    PhotoCreate,
+    PhotoOut,
+    PhotoUploadUrlOut,
+    PhotoUploadUrlRequest,
     WorkOrderCreate,
     WorkOrderOut,
     WorkOrderStatusHistoryOut,
     WorkOrderStatusUpdate,
 )
+from app.storage import build_object_key, create_presigned_download_url, create_presigned_upload_url
 
 router = APIRouter()
 
@@ -293,6 +299,128 @@ def list_interventions(
         .all()
     )
     return [InterventionOut(**row) for row in rows]
+
+
+# --- Photos d'intervention ------------------------------------------------
+
+
+def _check_intervention_exists(connection: Connection, intervention_id: uuid.UUID) -> None:
+    exists = connection.execute(
+        text("SELECT 1 FROM interventions WHERE id = :id"), {"id": intervention_id}
+    ).scalar()
+    if not exists:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="intervention introuvable"
+        )
+
+
+@router.post(
+    "/interventions/{intervention_id}/photos/upload-url",
+    response_model=PhotoUploadUrlOut,
+)
+def create_photo_upload_url(
+    intervention_id: uuid.UUID,
+    body: PhotoUploadUrlRequest,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
+    _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> PhotoUploadUrlOut:
+    """Donne au client mobile une URL temporaire pour envoyer une photo
+    directement au stockage (voir ADR 006), sans jamais lui transmettre les
+    identifiants d'accès. L'API n'enregistre la photo en base qu'une fois
+    l'envoi terminé, via POST .../photos."""
+    _check_intervention_exists(connection, intervention_id)
+
+    object_key = build_object_key(
+        tenant_id=tenant_id, intervention_id=intervention_id, filename=body.filename
+    )
+    upload_url = create_presigned_upload_url(object_key, content_type=body.content_type)
+    return PhotoUploadUrlOut(upload_url=upload_url, object_key=object_key)
+
+
+@router.post(
+    "/interventions/{intervention_id}/photos",
+    response_model=PhotoOut,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_photo(
+    intervention_id: uuid.UUID,
+    body: PhotoCreate,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
+    claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> PhotoOut:
+    _check_intervention_exists(connection, intervention_id)
+
+    photo_id = record_photo(
+        connection,
+        tenant_id=tenant_id,
+        intervention_id=intervention_id,
+        storage_key=body.object_key,
+        taken_at=body.taken_at or datetime.now(UTC),
+        caption=body.caption,
+    )
+    append_audit_entry(
+        connection,
+        tenant_id=tenant_id,
+        actor=_actor(claims),
+        action="intervention.photo_added",
+        entity_type="intervention_photo",
+        entity_id=str(photo_id),
+        payload={"intervention_id": str(intervention_id)},
+    )
+    return _read_photo(connection, photo_id)
+
+
+@router.get(
+    "/interventions/{intervention_id}/photos",
+    response_model=list[PhotoOut],
+)
+def list_photos(
+    intervention_id: uuid.UUID,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> list[PhotoOut]:
+    _check_intervention_exists(connection, intervention_id)
+
+    rows = (
+        connection.execute(
+            text(
+                "SELECT id, intervention_id, storage_key, caption, taken_at, uploaded_at "
+                "FROM intervention_photos WHERE intervention_id = :id ORDER BY taken_at"
+            ),
+            {"id": intervention_id},
+        )
+        .mappings()
+        .all()
+    )
+    return [_to_photo_out(row) for row in rows]
+
+
+def _read_photo(connection: Connection, photo_id: uuid.UUID) -> PhotoOut:
+    row = (
+        connection.execute(
+            text(
+                "SELECT id, intervention_id, storage_key, caption, taken_at, uploaded_at "
+                "FROM intervention_photos WHERE id = :id"
+            ),
+            {"id": photo_id},
+        )
+        .mappings()
+        .one()
+    )
+    return _to_photo_out(row)
+
+
+def _to_photo_out(row: Any) -> PhotoOut:
+    return PhotoOut(
+        id=row["id"],
+        intervention_id=row["intervention_id"],
+        download_url=create_presigned_download_url(row["storage_key"]),
+        caption=row["caption"],
+        taken_at=row["taken_at"],
+        uploaded_at=row["uploaded_at"],
+    )
 
 
 # --- Alarmes ------------------------------------------------
