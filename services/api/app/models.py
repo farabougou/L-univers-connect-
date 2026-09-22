@@ -200,7 +200,15 @@ class WorkOrderStatusHistory(Base):
 
 class Intervention(Base):
     """Un passage terrain d'un technicien, rattaché ou non à un ordre de
-    travail, sur une position fonctionnelle et/ou un exemplaire physique."""
+    travail, sur une position fonctionnelle et/ou un exemplaire physique.
+
+    Deux styles de saisie coexistent, souvent mélangés :
+    - `intervention` : réparation ou incident, décrit surtout en texte libre
+      (`summary`).
+    - `ronde` : contrôle de routine, décrit surtout par une liste de
+      vérifications structurée (`checklist`), avec du texte libre en
+      complément si besoin.
+    """
 
     __tablename__ = "interventions"
 
@@ -218,9 +226,15 @@ class Intervention(Base):
         UUID(as_uuid=True), ForeignKey("physical_units.id"), nullable=True
     )
     technician: Mapped[str] = mapped_column(String(200), nullable=False)
+    intervention_type: Mapped[str] = mapped_column(
+        String(20), nullable=False, server_default="intervention"
+    )
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     summary: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    checklist: Mapped[dict] = mapped_column(
+        JSONB, nullable=False, server_default=text("'{}'::jsonb")
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

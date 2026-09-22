@@ -206,6 +206,56 @@ def test_log_intervention_without_work_order(two_tenants) -> None:
     assert row.technician == "technicien-1"
 
 
+def test_log_ronde_stores_checklist_and_type(two_tenants) -> None:
+    tenant_a, _tenant_b = two_tenants
+    checklist = {"pression_ok": True, "bruit_anormal": False, "filtre_propre": True}
+
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_a)
+        intervention_id = log_intervention(
+            connection,
+            tenant_id=tenant_a,
+            technician="technicien-1",
+            started_at=datetime.now(UTC),
+            intervention_type="ronde",
+            checklist=checklist,
+        )
+
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_a)
+        row = connection.execute(
+            text("SELECT intervention_type, checklist FROM interventions WHERE id = :id"),
+            {"id": intervention_id},
+        ).one()
+
+    assert row.intervention_type == "ronde"
+    assert row.checklist == checklist
+
+
+def test_log_intervention_defaults_to_intervention_type_with_empty_checklist(two_tenants) -> None:
+    tenant_a, _tenant_b = two_tenants
+
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_a)
+        intervention_id = log_intervention(
+            connection,
+            tenant_id=tenant_a,
+            technician="technicien-1",
+            started_at=datetime.now(UTC),
+            summary="Fuite réparée",
+        )
+
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_a)
+        row = connection.execute(
+            text("SELECT intervention_type, checklist FROM interventions WHERE id = :id"),
+            {"id": intervention_id},
+        ).one()
+
+    assert row.intervention_type == "intervention"
+    assert row.checklist == {}
+
+
 @pytest.mark.parametrize(
     "table",
     ["work_orders", "work_order_status_history", "interventions", "alarms", "alarm_status_history"],

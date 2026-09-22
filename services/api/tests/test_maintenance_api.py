@@ -129,6 +129,27 @@ def test_full_maintenance_flow(tenant_id) -> None:
         assert [a["id"] for a in alarms.json()] == [alarm_id]
 
 
+def test_create_ronde_with_checklist(tenant_id) -> None:
+    headers = _auth_headers(tenant_id, ["technicien"])
+    checklist = {"pression_ok": True, "bruit_anormal": False}
+
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        response = client.post(
+            "/interventions",
+            json={
+                "intervention_type": "ronde",
+                "checklist": checklist,
+                "summary": "RAS sinon",
+            },
+            headers=headers,
+        )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["intervention_type"] == "ronde"
+    assert body["checklist"] == checklist
+
+
 def test_work_order_on_unknown_functional_location_returns_404(tenant_id) -> None:
     headers = _auth_headers(tenant_id, ["admin_tenant"])
     random_location_id = uuid.uuid4()

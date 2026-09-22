@@ -1,5 +1,7 @@
+import json
 import uuid
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
@@ -115,8 +117,10 @@ def log_intervention(
     tenant_id: uuid.UUID,
     technician: str,
     started_at: datetime,
+    intervention_type: str = "intervention",
     ended_at: datetime | None = None,
     summary: str | None = None,
+    checklist: dict[str, Any] | None = None,
     work_order_id: uuid.UUID | None = None,
     functional_location_id: uuid.UUID | None = None,
     physical_unit_id: uuid.UUID | None = None,
@@ -126,9 +130,10 @@ def log_intervention(
         text(
             "INSERT INTO interventions "
             "(id, tenant_id, work_order_id, functional_location_id, physical_unit_id, "
-            "technician, started_at, ended_at, summary) "
+            "technician, intervention_type, started_at, ended_at, summary, checklist) "
             "VALUES (:id, :tenant_id, :work_order_id, :functional_location_id, "
-            ":physical_unit_id, :technician, :started_at, :ended_at, :summary)"
+            ":physical_unit_id, :technician, :intervention_type, :started_at, :ended_at, "
+            ":summary, CAST(:checklist AS JSONB))"
         ),
         {
             "id": intervention_id,
@@ -137,9 +142,11 @@ def log_intervention(
             "functional_location_id": functional_location_id,
             "physical_unit_id": physical_unit_id,
             "technician": technician,
+            "intervention_type": intervention_type,
             "started_at": started_at,
             "ended_at": ended_at,
             "summary": summary,
+            "checklist": json.dumps(checklist or {}, sort_keys=True, separators=(",", ":")),
         },
     )
     return intervention_id

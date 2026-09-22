@@ -116,9 +116,11 @@ class InterventionCreate(BaseModel):
     work_order_id: uuid.UUID | None = None
     functional_location_id: uuid.UUID | None = None
     physical_unit_id: uuid.UUID | None = None
+    intervention_type: Literal["intervention", "ronde"] = "intervention"
     started_at: datetime | None = None
     ended_at: datetime | None = None
     summary: str | None = Field(default=None, max_length=2000)
+    checklist: dict = Field(default_factory=dict)
 
 
 class InterventionOut(BaseModel):
@@ -127,9 +129,11 @@ class InterventionOut(BaseModel):
     functional_location_id: uuid.UUID | None
     physical_unit_id: uuid.UUID | None
     technician: str
+    intervention_type: str
     started_at: datetime
     ended_at: datetime | None
     summary: str | None
+    checklist: dict
     created_at: datetime
 
 

@@ -234,8 +234,10 @@ def create_intervention(
         tenant_id=tenant_id,
         technician=_actor(claims),
         started_at=body.started_at or datetime.now(UTC),
+        intervention_type=body.intervention_type,
         ended_at=body.ended_at,
         summary=body.summary,
+        checklist=body.checklist,
         work_order_id=body.work_order_id,
         functional_location_id=body.functional_location_id,
         physical_unit_id=body.physical_unit_id,
@@ -247,14 +249,17 @@ def create_intervention(
         action="intervention.logged",
         entity_type="intervention",
         entity_id=str(intervention_id),
-        payload={"work_order_id": str(body.work_order_id) if body.work_order_id else None},
+        payload={
+            "work_order_id": str(body.work_order_id) if body.work_order_id else None,
+            "intervention_type": body.intervention_type,
+        },
     )
     row = (
         connection.execute(
             text(
                 "SELECT id, work_order_id, functional_location_id, physical_unit_id, "
-                "technician, started_at, ended_at, summary, created_at "
-                "FROM interventions WHERE id = :id"
+                "technician, intervention_type, started_at, ended_at, summary, checklist, "
+                "created_at FROM interventions WHERE id = :id"
             ),
             {"id": intervention_id},
         )
@@ -273,8 +278,8 @@ def list_interventions(
         connection.execute(
             text(
                 "SELECT id, work_order_id, functional_location_id, physical_unit_id, "
-                "technician, started_at, ended_at, summary, created_at "
-                "FROM interventions ORDER BY started_at"
+                "technician, intervention_type, started_at, ended_at, summary, checklist, "
+                "created_at FROM interventions ORDER BY started_at"
             )
         )
         .mappings()
