@@ -20,6 +20,7 @@ export default function HomeScreen() {
       setMe(null);
       return;
     }
+    setApiError(null);
     fetch(`${config.apiUrl}/me`, {
       headers: { Authorization: `Bearer ${auth.accessToken}` },
     })
