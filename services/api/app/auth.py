@@ -79,3 +79,17 @@ def require_role(role: str):
         return claims
 
     return dependency
+
+
+def require_any_role(*allowed_roles: str):
+    """Dépendance FastAPI : n'autorise que les jetons portant au moins un de ces rôles."""
+
+    def dependency(
+        claims: Annotated[dict[str, Any], Depends(get_current_claims)],
+    ) -> dict[str, Any]:
+        roles = set(claims.get("realm_access", {}).get("roles", []))
+        if roles.isdisjoint(allowed_roles):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="rôle insuffisant")
+        return claims
+
+    return dependency

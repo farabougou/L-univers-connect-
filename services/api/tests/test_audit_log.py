@@ -7,14 +7,7 @@ from sqlalchemy.exc import DBAPIError
 from app.audit import append_audit_entry, verify_chain_integrity
 from app.db import engine
 from app.tenancy import set_tenant_context
-
-# Compte administrateur PostgreSQL local, utilisé uniquement dans ce test
-# pour simuler une falsification directe en base de données (bypass de
-# l'application). Voir infra/init-db/01-create-app-role.sql : ce compte
-# n'est jamais utilisé par l'API elle-même.
-_ADMIN_DATABASE_URL = (
-    "postgresql+psycopg://postgres:postgres_admin_dev_password@localhost:5432/paios"
-)
+from tests.db_helpers import ADMIN_DATABASE_URL, purge_audit_log_for_tenant
 
 
 @pytest.fixture
@@ -28,23 +21,7 @@ def tenant_id():
 
     yield tenant_id
 
-    with engine.begin() as connection:
-        set_tenant_context(connection, tenant_id)
-        connection.execute(
-            text("SELECT pg_advisory_xact_lock(hashtext(:key))"), {"key": str(tenant_id)}
-        )
-        admin_engine = create_engine(_ADMIN_DATABASE_URL)
-        with admin_engine.begin() as admin_connection:
-            admin_connection.execute(
-                text("ALTER TABLE audit_log DISABLE TRIGGER audit_log_no_delete")
-            )
-            admin_connection.execute(
-                text("DELETE FROM audit_log WHERE tenant_id = :id"), {"id": tenant_id}
-            )
-            admin_connection.execute(
-                text("ALTER TABLE audit_log ENABLE TRIGGER audit_log_no_delete")
-            )
-        admin_engine.dispose()
+    purge_audit_log_for_tenant(tenant_id)
     with engine.begin() as connection:
         connection.execute(text("DELETE FROM tenants WHERE id = :id"), {"id": tenant_id})
 
@@ -120,7 +97,7 @@ def test_tampering_directly_in_database_is_detected_by_verification(tenant_id) -
     # On simule une falsification par un accès direct et privilégié à la
     # base (contournant l'application et le trigger append-only), pour
     # prouver que la chaîne de hachage détecte quand même la fraude.
-    admin_engine = create_engine(_ADMIN_DATABASE_URL)
+    admin_engine = create_engine(ADMIN_DATABASE_URL)
     with admin_engine.begin() as admin_connection:
         admin_connection.execute(text("ALTER TABLE audit_log DISABLE TRIGGER audit_log_no_update"))
         admin_connection.execute(
