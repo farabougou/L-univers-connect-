@@ -11,7 +11,9 @@ Le 22 septembre 2026, Mohamed a précisé la vision long terme du produit : un
 capable de superviser, maintenir, optimiser, automatiser et, lorsque c'est autorisé et
 sûr, commander à distance des équipements physiques — au-delà du seul wedge CVC
 tertiaire, avec vocation à couvrir bâtiments publics, logements, industrie, énergie,
-eau, data centers et équipements distribués.
+eau, data centers et équipements distribués. Le texte complet, mot pour mot, est
+conservé dans
+[`docs/spec/vision-cible-physical-asset-intelligence-automation-os.md`](../spec/vision-cible-physical-asset-intelligence-automation-os.md).
 
 Cette vision ajoute 14 briques fonctionnelles à terme (modèle d'actifs universel et
 jumeaux numériques, GTB/GTC natif, moteur d'automatisation, commande distante
