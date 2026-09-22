@@ -6,7 +6,7 @@ import NetInfo from "@react-native-community/netinfo";
 import { config } from "../src/lib/config";
 import { useAuth } from "../src/lib/auth";
 import { countPendingInterventions } from "../src/lib/db";
-import { syncPendingInterventions } from "../src/lib/sync";
+import { refreshFunctionalLocationsCache, syncPendingInterventions } from "../src/lib/sync";
 
 type MeResponse = {
   sub: string;
@@ -45,6 +45,7 @@ export default function HomeScreen() {
   async function runSync() {
     if (!auth.accessToken) return;
     await syncPendingInterventions(config.apiUrl, auth.accessToken);
+    await refreshFunctionalLocationsCache(config.apiUrl, auth.accessToken).catch(() => {});
     await refreshPendingCount();
   }
 

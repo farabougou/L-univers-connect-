@@ -3,6 +3,7 @@ import {
   listPendingInterventions,
   markInterventionCreated,
   markPhotoUploaded,
+  replaceFunctionalLocationsCache,
   type PendingIntervention,
 } from "./db";
 
@@ -43,6 +44,31 @@ export async function syncPendingInterventions(
   return { synced, failed };
 }
 
+/**
+ * Rafraîchit la liste des positions fonctionnelles (équipements) disponibles
+ * hors ligne, pour que le technicien puisse choisir sur quel équipement il
+ * intervient même sans réseau au moment de créer l'intervention.
+ */
+export async function refreshFunctionalLocationsCache(
+  apiUrl: string,
+  accessToken: string,
+): Promise<void> {
+  const response = await fetch(`${apiUrl}/functional-locations`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) {
+    throw new Error(`liste des équipements : ${response.status}`);
+  }
+  const locations = await response.json();
+  await replaceFunctionalLocationsCache(
+    locations.map((location: { id: string; code: string; name: string }) => ({
+      id: location.id,
+      code: location.code,
+      name: location.name,
+    })),
+  );
+}
+
 async function ensureInterventionCreated(
   apiUrl: string,
   accessToken: string,
@@ -60,6 +86,7 @@ async function ensureInterventionCreated(
       summary: row.summary,
       checklist: JSON.parse(row.checklist),
       started_at: row.started_at,
+      functional_location_id: row.functional_location_id,
     }),
   });
   if (!response.ok) {

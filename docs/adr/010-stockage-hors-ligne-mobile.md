@@ -58,6 +58,11 @@ apparaît, cette ADR sera révisée pour introduire une vraie stratégie de fusi
 - Les rondes et interventions déjà créées côté serveur ne sont pas mises en cache
   localement pour consultation hors ligne : ce n'est pas le besoin exprimé (créer,
   pas relire), et l'ajouter maintenant serait prématuré.
+- Exception délibérée : la liste des positions fonctionnelles (équipements) est mise
+  en cache localement (`functional_locations_cache`), rafraîchie dès que le réseau est
+  disponible. Sans ça, un technicien arrivant sur un site sans réseau ne pourrait
+  choisir sur quel équipement il intervient — un besoin réel, contrairement à la
+  consultation d'un historique.
 - Si Keycloak ou l'API changent d'adresse réseau après une longue période hors ligne,
   la synchronisation échoue proprement (la ligne reste en attente, rien n'est perdu)
   jusqu'à ce que le technicien soit de nouveau sur un réseau qui les joint.

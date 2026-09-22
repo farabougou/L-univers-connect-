@@ -12,8 +12,15 @@ export type PendingIntervention = {
   checklist: string;
   started_at: string;
   photo_path: string;
+  functional_location_id: string | null;
   server_id: string | null;
   photo_uploaded: 0 | 1;
+};
+
+export type CachedFunctionalLocation = {
+  id: string;
+  code: string;
+  name: string;
 };
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
@@ -29,8 +36,14 @@ function getDb(): Promise<SQLite.SQLiteDatabase> {
           checklist TEXT NOT NULL,
           started_at TEXT NOT NULL,
           photo_path TEXT NOT NULL,
+          functional_location_id TEXT,
           server_id TEXT,
           photo_uploaded INTEGER NOT NULL DEFAULT 0
+        );
+        CREATE TABLE IF NOT EXISTS functional_locations_cache (
+          id TEXT PRIMARY KEY,
+          code TEXT NOT NULL,
+          name TEXT NOT NULL
         );
       `);
       return db;
@@ -46,16 +59,42 @@ export async function insertPendingIntervention(input: {
   checklist: Record<string, boolean>;
   startedAt: string;
   photoPath: string;
+  functionalLocationId: string | null;
 }): Promise<void> {
   const db = await getDb();
   await db.runAsync(
-    "INSERT INTO pending_interventions (id, intervention_type, summary, checklist, started_at, photo_path) VALUES (?, ?, ?, ?, ?, ?)",
+    "INSERT INTO pending_interventions (id, intervention_type, summary, checklist, started_at, photo_path, functional_location_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
     input.id,
     input.interventionType,
     input.summary,
     JSON.stringify(input.checklist),
     input.startedAt,
     input.photoPath,
+    input.functionalLocationId,
+  );
+}
+
+export async function replaceFunctionalLocationsCache(
+  locations: CachedFunctionalLocation[],
+): Promise<void> {
+  const db = await getDb();
+  await db.withExclusiveTransactionAsync(async (txn) => {
+    await txn.execAsync("DELETE FROM functional_locations_cache");
+    for (const location of locations) {
+      await txn.runAsync(
+        "INSERT INTO functional_locations_cache (id, code, name) VALUES (?, ?, ?)",
+        location.id,
+        location.code,
+        location.name,
+      );
+    }
+  });
+}
+
+export async function listCachedFunctionalLocations(): Promise<CachedFunctionalLocation[]> {
+  const db = await getDb();
+  return db.getAllAsync<CachedFunctionalLocation>(
+    "SELECT id, code, name FROM functional_locations_cache ORDER BY code",
   );
 }
 
