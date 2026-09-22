@@ -1,7 +1,7 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { config } from "@/lib/config";
-import { getAccessTokenCookie } from "@/lib/session";
+import { apiFetch, requireAccessToken } from "@/lib/api";
 
 type Me = {
   sub: string;
@@ -16,15 +16,11 @@ type FunctionalLocation = {
 };
 
 export default async function DashboardPage() {
-  const accessToken = await getAccessTokenCookie();
-  if (!accessToken) {
-    redirect("/login");
-  }
+  const accessToken = await requireAccessToken();
 
-  const headers = { Authorization: `Bearer ${accessToken}` };
   const [meResponse, locationsResponse] = await Promise.all([
-    fetch(`${config.apiUrl}/me`, { headers, cache: "no-store" }),
-    fetch(`${config.apiUrl}/functional-locations`, { headers, cache: "no-store" }),
+    apiFetch("/me", accessToken),
+    apiFetch("/functional-locations", accessToken),
   ]);
 
   if (!meResponse.ok) {
@@ -45,6 +41,10 @@ export default async function DashboardPage() {
       <p>
         Connecté en tant que <strong>{me.sub}</strong> — rôles : {me.roles.join(", ")}
       </p>
+
+      <nav style={{ margin: "16px 0" }}>
+        <Link href="/ordres-de-travail">Ordres de travail →</Link>
+      </nav>
 
       <h2>Positions fonctionnelles</h2>
       {locations.length === 0 ? (
