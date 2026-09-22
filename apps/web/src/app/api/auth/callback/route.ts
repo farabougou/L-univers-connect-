@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { config } from "@/lib/config";
-import { consumeOAuthFlowCookie, setAccessTokenCookie } from "@/lib/session";
+import { consumeOAuthFlowCookie, setTokensCookie } from "@/lib/session";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -43,8 +43,16 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${config.appUrl}/login?error=echange_jeton`);
   }
 
-  const tokens = (await tokenResponse.json()) as { access_token: string; expires_in: number };
-  await setAccessTokenCookie(tokens.access_token, tokens.expires_in);
+  const data = (await tokenResponse.json()) as {
+    access_token: string;
+    refresh_token: string;
+    expires_in: number;
+  };
+  await setTokensCookie({
+    accessToken: data.access_token,
+    refreshToken: data.refresh_token,
+    expiresAt: Date.now() + data.expires_in * 1000,
+  });
 
   return NextResponse.redirect(config.appUrl);
 }
