@@ -1,8 +1,10 @@
+import { Suspense } from "react";
 import Link from "next/link";
 
 import { apiFetch, requireAccessToken } from "@/lib/api";
 
 import { createWorkOrder } from "./actions";
+import { CreationError } from "./CreationError";
 
 type WorkOrder = {
   id: string;
@@ -52,6 +54,9 @@ export default async function WorkOrdersPage() {
       )}
 
       <h2>Créer un ordre de travail</h2>
+      <Suspense>
+        <CreationError />
+      </Suspense>
       <form action={createWorkOrder} style={{ maxWidth: 400 }}>
         <label>
           Titre

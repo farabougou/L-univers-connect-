@@ -10,3 +10,13 @@ export function generatePkcePair(): { codeVerifier: string; codeChallenge: strin
   const codeChallenge = createHash("sha256").update(codeVerifier).digest("base64url");
   return { codeVerifier, codeChallenge };
 }
+
+/**
+ * Valeur aléatoire imprévisible renvoyée telle quelle par Keycloak, comparée
+ * au retour pour se protéger d'une CSRF de connexion (un attaquant qui
+ * pousserait sa propre autorisation dans le navigateur de la victime) — une
+ * protection standard OAuth, complémentaire à PKCE, pas remplacée par lui.
+ */
+export function generateState(): string {
+  return randomBytes(16).toString("base64url");
+}

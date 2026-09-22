@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 
 const ACCESS_TOKEN_COOKIE = "paios_access_token";
-const PKCE_VERIFIER_COOKIE = "paios_pkce_verifier";
+const OAUTH_FLOW_COOKIE = "paios_oauth_flow";
 
 /**
  * Jeton d'accès Keycloak stocké dans un cookie httpOnly : jamais accessible
@@ -31,14 +31,20 @@ export async function clearAccessTokenCookie() {
   cookieStore.delete(ACCESS_TOKEN_COOKIE);
 }
 
+export type OAuthFlow = {
+  codeVerifier: string;
+  state: string;
+};
+
 /**
- * Le "code verifier" PKCE ne doit vivre que le temps de l'aller-retour vers
- * Keycloak (quelques secondes à quelques minutes) : jamais stocké plus
- * longtemps, jamais réutilisé pour une autre connexion.
+ * Le "code verifier" PKCE et le "state" anti-CSRF ne doivent vivre que le
+ * temps de l'aller-retour vers Keycloak (quelques secondes à quelques
+ * minutes) : jamais stockés plus longtemps, jamais réutilisés pour une
+ * autre connexion.
  */
-export async function setPkceVerifierCookie(codeVerifier: string) {
+export async function setOAuthFlowCookie(flow: OAuthFlow) {
   const cookieStore = await cookies();
-  cookieStore.set(PKCE_VERIFIER_COOKIE, codeVerifier, {
+  cookieStore.set(OAUTH_FLOW_COOKIE, JSON.stringify(flow), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -47,9 +53,14 @@ export async function setPkceVerifierCookie(codeVerifier: string) {
   });
 }
 
-export async function consumePkceVerifierCookie(): Promise<string | null> {
+export async function consumeOAuthFlowCookie(): Promise<OAuthFlow | null> {
   const cookieStore = await cookies();
-  const value = cookieStore.get(PKCE_VERIFIER_COOKIE)?.value ?? null;
-  cookieStore.delete(PKCE_VERIFIER_COOKIE);
-  return value;
+  const raw = cookieStore.get(OAUTH_FLOW_COOKIE)?.value;
+  cookieStore.delete(OAUTH_FLOW_COOKIE);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as OAuthFlow;
+  } catch {
+    return null;
+  }
 }

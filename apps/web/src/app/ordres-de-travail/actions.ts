@@ -1,5 +1,6 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 import { apiFetch, requireAccessToken } from "@/lib/api";
@@ -9,10 +10,10 @@ export async function createWorkOrder(formData: FormData) {
   const title = formData.get("title");
 
   if (typeof title !== "string" || title.trim().length === 0) {
-    return;
+    redirect("/ordres-de-travail?error=titre_requis");
   }
 
-  await apiFetch("/work-orders", accessToken, {
+  const response = await apiFetch("/work-orders", accessToken, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -21,6 +22,10 @@ export async function createWorkOrder(formData: FormData) {
       priority: formData.get("priority"),
     }),
   });
+
+  if (!response.ok) {
+    redirect(`/ordres-de-travail?error=creation_echouee_${response.status}`);
+  }
 
   revalidatePath("/ordres-de-travail");
 }

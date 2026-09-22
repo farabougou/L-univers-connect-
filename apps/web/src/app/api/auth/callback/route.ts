@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 
 import { config } from "@/lib/config";
-import { consumePkceVerifierCookie, setAccessTokenCookie } from "@/lib/session";
+import { consumeOAuthFlowCookie, setAccessTokenCookie } from "@/lib/session";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
+  const state = url.searchParams.get("state");
   const error = url.searchParams.get("error");
 
   if (error) {
@@ -15,9 +16,15 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${config.appUrl}/login?error=code_manquant`);
   }
 
-  const codeVerifier = await consumePkceVerifierCookie();
-  if (!codeVerifier) {
+  const flow = await consumeOAuthFlowCookie();
+  if (!flow) {
     return NextResponse.redirect(`${config.appUrl}/login?error=session_expiree`);
+  }
+  // Protection contre une CSRF de connexion : le "state" renvoyé par
+  // Keycloak doit correspondre exactement à celui généré pour CE
+  // navigateur au moment de la redirection (voir src/lib/pkce.ts).
+  if (state !== flow.state) {
+    return NextResponse.redirect(`${config.appUrl}/login?error=state_invalide`);
   }
 
   const tokenResponse = await fetch(`${config.oidcIssuer}/protocol/openid-connect/token`, {
@@ -28,7 +35,7 @@ export async function GET(request: Request) {
       client_id: config.oidcClientId,
       redirect_uri: `${config.appUrl}/api/auth/callback`,
       code,
-      code_verifier: codeVerifier,
+      code_verifier: flow.codeVerifier,
     }),
   });
 
