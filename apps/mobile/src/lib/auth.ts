@@ -31,7 +31,11 @@ export function useAuth() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const redirectUri = AuthSession.makeRedirectUri({ scheme: "paios" });
+  // Sans argument, Expo choisit automatiquement la bonne adresse de retour :
+  // une adresse de test dans Expo Go (utilisé maintenant), une adresse
+  // "paios://" dans l'application finale une fois publiée. Fixer un schéma en
+  // dur ici casserait les tests avec Expo Go.
+  const redirectUri = AuthSession.makeRedirectUri();
 
   const [request, response, promptAsync] = AuthSession.useAuthRequest(
     {
