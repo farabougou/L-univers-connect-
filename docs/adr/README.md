@@ -9,3 +9,4 @@ Un fichier par décision.
 - [005 — Hébergement](./005-hebergement.md)
 - [006 — Stockage des photos](./006-stockage-des-photos.md)
 - [009 — Données clients](./009-donnees-clients.md)
+- [010 — Stockage hors ligne de l'application technicien](./010-stockage-hors-ligne-mobile.md)

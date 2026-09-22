@@ -1,8 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Button, StyleSheet, Text, View } from "react-native";
+import { useFocusEffect, useRouter } from "expo-router";
+import NetInfo from "@react-native-community/netinfo";
 
 import { config } from "../src/lib/config";
 import { useAuth } from "../src/lib/auth";
+import { countPendingInterventions } from "../src/lib/db";
+import { syncPendingInterventions } from "../src/lib/sync";
 
 type MeResponse = {
   sub: string;
@@ -11,9 +15,11 @@ type MeResponse = {
 };
 
 export default function HomeScreen() {
+  const router = useRouter();
   const auth = useAuth();
   const [me, setMe] = useState<MeResponse | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
     if (!auth.accessToken) {
@@ -31,6 +37,34 @@ export default function HomeScreen() {
       .then(setMe)
       .catch((err: Error) => setApiError(err.message));
   }, [auth.accessToken]);
+
+  async function refreshPendingCount() {
+    setPendingCount(await countPendingInterventions());
+  }
+
+  async function runSync() {
+    if (!auth.accessToken) return;
+    await syncPendingInterventions(config.apiUrl, auth.accessToken);
+    await refreshPendingCount();
+  }
+
+  // Synchronise dès que le réseau revient, sans attendre une action du
+  // technicien : c'est tout l'intérêt du mode hors ligne (voir ADR 010).
+  useEffect(() => {
+    refreshPendingCount();
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      if (state.isConnected) {
+        runSync();
+      }
+    });
+    return unsubscribe;
+  }, [auth.accessToken]);
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshPendingCount();
+    }, []),
+  );
 
   if (auth.isLoading) {
     return (
@@ -62,6 +96,19 @@ export default function HomeScreen() {
         </>
       )}
       {apiError && <Text style={styles.error}>Erreur API : {apiError}</Text>}
+
+      <Button
+        title="Nouvelle intervention"
+        onPress={() => router.push("/nouvelle-intervention")}
+      />
+
+      <Text>
+        {pendingCount > 0
+          ? `${pendingCount} en attente d'envoi`
+          : "Rien en attente d'envoi"}
+      </Text>
+      {pendingCount > 0 && <Button title="Synchroniser" onPress={runSync} />}
+
       <Button title="Se déconnecter" onPress={auth.signOut} />
     </View>
   );
