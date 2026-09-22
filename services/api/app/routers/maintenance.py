@@ -86,6 +86,7 @@ def create_work_order_route(
         created_by=_actor(claims),
         title=body.title,
         description=body.description,
+        work_order_type=body.work_order_type,
         priority=body.priority,
         functional_location_id=body.functional_location_id,
         physical_unit_id=body.physical_unit_id,
@@ -97,7 +98,11 @@ def create_work_order_route(
         action="work_order.created",
         entity_type="work_order",
         entity_id=str(work_order_id),
-        payload={"title": body.title, "priority": body.priority},
+        payload={
+            "title": body.title,
+            "priority": body.priority,
+            "work_order_type": body.work_order_type,
+        },
     )
     return _read_work_order(connection, work_order_id)
 
@@ -111,7 +116,8 @@ def list_work_orders(
         connection.execute(
             text(
                 "SELECT id, functional_location_id, physical_unit_id, title, description, "
-                "priority, status, created_by, created_at FROM work_orders ORDER BY created_at"
+                "work_order_type, priority, status, created_by, created_at "
+                "FROM work_orders ORDER BY created_at"
             )
         )
         .mappings()
@@ -195,7 +201,8 @@ def _read_work_order(connection: Connection, work_order_id: uuid.UUID) -> WorkOr
         connection.execute(
             text(
                 "SELECT id, functional_location_id, physical_unit_id, title, description, "
-                "priority, status, created_by, created_at FROM work_orders WHERE id = :id"
+                "work_order_type, priority, status, created_by, created_at "
+                "FROM work_orders WHERE id = :id"
             ),
             {"id": work_order_id},
         )

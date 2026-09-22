@@ -151,9 +151,11 @@ class WorkOrder(Base):
     """Un ordre de travail (GMAO) : une tâche de maintenance à planifier et
     suivre, ciblant une position fonctionnelle et/ou un exemplaire physique.
 
-    Le champ `status` est une valeur courante dénormalisée, pratique à
-    lire ; la vérité historique vit dans WorkOrderStatusHistory, jamais
-    modifiée après coup (voir app.maintenance.change_work_order_status).
+    `work_order_type` reprend la catégorisation standard du secteur CMMS/EAM
+    (corrective, préventif, prédictif, inspection) : voir ADR 004 pour la
+    source. Le champ `status` est une valeur courante dénormalisée,
+    pratique à lire ; la vérité historique vit dans WorkOrderStatusHistory,
+    jamais modifiée après coup (voir app.maintenance.change_work_order_status).
     """
 
     __tablename__ = "work_orders"
@@ -170,6 +172,9 @@ class WorkOrder(Base):
     )
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     description: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    work_order_type: Mapped[str] = mapped_column(
+        String(20), nullable=False, server_default="corrective"
+    )
     priority: Mapped[str] = mapped_column(String(20), nullable=False, server_default="medium")
     status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="open")
     created_by: Mapped[str] = mapped_column(String(200), nullable=False)

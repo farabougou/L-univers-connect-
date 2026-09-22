@@ -7,6 +7,7 @@ from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
 WORK_ORDER_STATUSES = ("open", "in_progress", "completed", "cancelled")
+WORK_ORDER_TYPES = ("corrective", "preventive", "predictive", "inspection")
 ALARM_STATUSES = ("open", "acknowledged", "resolved")
 
 
@@ -17,6 +18,7 @@ def create_work_order(
     created_by: str,
     title: str,
     description: str | None = None,
+    work_order_type: str = "corrective",
     priority: str = "medium",
     functional_location_id: uuid.UUID | None = None,
     physical_unit_id: uuid.UUID | None = None,
@@ -26,9 +28,9 @@ def create_work_order(
         text(
             "INSERT INTO work_orders "
             "(id, tenant_id, functional_location_id, physical_unit_id, "
-            "title, description, priority, status, created_by) "
+            "title, description, work_order_type, priority, status, created_by) "
             "VALUES (:id, :tenant_id, :functional_location_id, :physical_unit_id, "
-            ":title, :description, :priority, 'open', :created_by)"
+            ":title, :description, :work_order_type, :priority, 'open', :created_by)"
         ),
         {
             "id": work_order_id,
@@ -37,6 +39,7 @@ def create_work_order(
             "physical_unit_id": physical_unit_id,
             "title": title,
             "description": description,
+            "work_order_type": work_order_type,
             "priority": priority,
             "created_by": created_by,
         },

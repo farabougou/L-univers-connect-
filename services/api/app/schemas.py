@@ -81,6 +81,7 @@ class CurrentOccupantOut(BaseModel):
 class WorkOrderCreate(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     description: str | None = Field(default=None, max_length=2000)
+    work_order_type: Literal["corrective", "preventive", "predictive", "inspection"] = "corrective"
     priority: Literal["low", "medium", "high", "urgent"] = "medium"
     functional_location_id: uuid.UUID | None = None
     physical_unit_id: uuid.UUID | None = None
@@ -92,6 +93,7 @@ class WorkOrderOut(BaseModel):
     physical_unit_id: uuid.UUID | None
     title: str
     description: str | None
+    work_order_type: str
     priority: str
     status: str
     created_by: str

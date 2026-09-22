@@ -128,6 +128,40 @@ def test_change_work_order_status_rejects_unknown_status(two_tenants) -> None:
             )
 
 
+def test_work_order_type_defaults_to_corrective(two_tenants) -> None:
+    tenant_a, _tenant_b = two_tenants
+
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_a)
+        work_order_id = create_work_order(
+            connection, tenant_id=tenant_a, created_by="responsable-1", title="Fuite constatée"
+        )
+        work_order_type = connection.execute(
+            text("SELECT work_order_type FROM work_orders WHERE id = :id"), {"id": work_order_id}
+        ).scalar()
+
+    assert work_order_type == "corrective"
+
+
+def test_work_order_type_can_be_set_explicitly(two_tenants) -> None:
+    tenant_a, _tenant_b = two_tenants
+
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_a)
+        work_order_id = create_work_order(
+            connection,
+            tenant_id=tenant_a,
+            created_by="responsable-1",
+            title="Révision trimestrielle",
+            work_order_type="preventive",
+        )
+        work_order_type = connection.execute(
+            text("SELECT work_order_type FROM work_orders WHERE id = :id"), {"id": work_order_id}
+        ).scalar()
+
+    assert work_order_type == "preventive"
+
+
 def test_alarm_lifecycle_keeps_full_history(two_tenants) -> None:
     tenant_a, _tenant_b = two_tenants
 
