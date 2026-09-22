@@ -56,6 +56,11 @@ L'API est alors disponible sur http://localhost:8000 :
   obtenir un de test).
 - `/admin/ping` : nécessite en plus le rôle `admin_tenant`.
 
+## Application mobile (technicien)
+
+Voir `apps/mobile/README.md` pour démarrer l'application (connexion via
+Keycloak, appel à l'API).
+
 ## Tests et qualité de code
 
 Depuis `/services/api` (avec l'environnement virtuel activé, et la base de données

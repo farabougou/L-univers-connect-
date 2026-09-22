@@ -19,6 +19,9 @@
       "directAccessGrantsEnabled": true,
       "protocol": "openid-connect",
       "redirectUris": ["*"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
       "protocolMappers": [
         {
           "name": "tenant_id",
