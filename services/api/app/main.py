@@ -5,10 +5,12 @@ from sqlalchemy import text
 
 from app.auth import get_current_claims, require_role
 from app.db import engine
-from app.routers import router as asset_registry_router
+from app.routers.assets import router as asset_registry_router
+from app.routers.maintenance import router as maintenance_router
 
 app = FastAPI(title="Physical Asset Intelligence OS API")
 app.include_router(asset_registry_router)
+app.include_router(maintenance_router)
 
 
 @app.get("/health")

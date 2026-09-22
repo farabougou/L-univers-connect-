@@ -145,3 +145,124 @@ class FunctionalLocationAssignment(Base):
     recorded_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+
+class WorkOrder(Base):
+    """Un ordre de travail (GMAO) : une tâche de maintenance à planifier et
+    suivre, ciblant une position fonctionnelle et/ou un exemplaire physique.
+
+    Le champ `status` est une valeur courante dénormalisée, pratique à
+    lire ; la vérité historique vit dans WorkOrderStatusHistory, jamais
+    modifiée après coup (voir app.maintenance.change_work_order_status).
+    """
+
+    __tablename__ = "work_orders"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    functional_location_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("functional_locations.id"), nullable=True
+    )
+    physical_unit_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("physical_units.id"), nullable=True
+    )
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    description: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    priority: Mapped[str] = mapped_column(String(20), nullable=False, server_default="medium")
+    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="open")
+    created_by: Mapped[str] = mapped_column(String(200), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class WorkOrderStatusHistory(Base):
+    """Historique des changements de statut d'un ordre de travail.
+
+    Une ligne par transition, jamais modifiée ni supprimée après coup :
+    c'est app.maintenance.change_work_order_status qui garantit cette
+    discipline (même principe que FunctionalLocationAssignment)."""
+
+    __tablename__ = "work_order_status_history"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    work_order_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("work_orders.id"), nullable=False
+    )
+    status: Mapped[str] = mapped_column(String(20), nullable=False)
+    changed_by: Mapped[str] = mapped_column(String(200), nullable=False)
+    note: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Intervention(Base):
+    """Un passage terrain d'un technicien, rattaché ou non à un ordre de
+    travail, sur une position fonctionnelle et/ou un exemplaire physique."""
+
+    __tablename__ = "interventions"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    work_order_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("work_orders.id"), nullable=True
+    )
+    functional_location_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("functional_locations.id"), nullable=True
+    )
+    physical_unit_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("physical_units.id"), nullable=True
+    )
+    technician: Mapped[str] = mapped_column(String(200), nullable=False)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    summary: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Alarm(Base):
+    """Une alarme ou un incident signalé sur une position fonctionnelle ou
+    un exemplaire physique. Pour le MVP, toutes les alarmes sont levées
+    manuellement (aucune détection automatique n'existe encore)."""
+
+    __tablename__ = "alarms"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    functional_location_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("functional_locations.id"), nullable=True
+    )
+    physical_unit_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("physical_units.id"), nullable=True
+    )
+    severity: Mapped[str] = mapped_column(String(20), nullable=False)
+    message: Mapped[str] = mapped_column(String(500), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="open")
+    raised_by: Mapped[str] = mapped_column(String(200), nullable=False)
+    raised_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class AlarmStatusHistory(Base):
+    """Historique des changements de statut d'une alarme (open → acknowledged
+    → resolved), jamais modifié ni supprimé après coup (voir
+    app.maintenance.change_alarm_status)."""
+
+    __tablename__ = "alarm_status_history"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    alarm_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("alarms.id"), nullable=False
+    )
+    status: Mapped[str] = mapped_column(String(20), nullable=False)
+    changed_by: Mapped[str] = mapped_column(String(200), nullable=False)
+    note: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
