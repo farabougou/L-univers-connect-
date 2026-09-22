@@ -61,6 +61,10 @@ L'API est alors disponible sur http://localhost:8000 :
 Voir `apps/mobile/README.md` pour démarrer l'application (connexion via
 Keycloak, appel à l'API).
 
+## Application web (responsable d'exploitation)
+
+Voir `apps/web/README.md` pour démarrer la console web.
+
 ## Tests et qualité de code
 
 Depuis `/services/api` (avec l'environnement virtuel activé, et la base de données
