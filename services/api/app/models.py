@@ -58,3 +58,90 @@ class AuditLog(Base):
     occurred_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+
+class ProductModel(Base):
+    """Référence catalogue d'un équipement, indépendante de tout exemplaire
+    physique (voir ADR 001 : modèle d'identité à trois niveaux)."""
+
+    __tablename__ = "product_models"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    manufacturer: Mapped[str] = mapped_column(String(200), nullable=False)
+    reference: Mapped[str] = mapped_column(String(200), nullable=False)
+    category: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class PhysicalUnit(Base):
+    """Un exemplaire physique précis d'un ProductModel, identifié par son
+    numéro de série (voir ADR 001)."""
+
+    __tablename__ = "physical_units"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    product_model_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("product_models.id"), nullable=False
+    )
+    serial_number: Mapped[str] = mapped_column(String(200), nullable=False)
+    commissioned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class FunctionalLocation(Base):
+    """Une position dans la hiérarchie d'une installation (ex. « sous-station
+    nord, circuit 2 »), qui peut changer d'occupant sans perdre son propre
+    historique (voir ADR 001, et FunctionalLocationAssignment ci-dessous)."""
+
+    __tablename__ = "functional_locations"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    site_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("sites.id"), nullable=False
+    )
+    parent_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("functional_locations.id"), nullable=True
+    )
+    code: Mapped[str] = mapped_column(String(200), nullable=False)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class FunctionalLocationAssignment(Base):
+    """Historique bitemporel : quel exemplaire physique occupe quelle
+    position fonctionnelle, et depuis quand (temps de validité, valid_from/
+    valid_to) et depuis quand la plateforme le sait (temps de saisie,
+    recorded_at). Voir ADR 001.
+
+    Remplacer un exemplaire ne modifie jamais une ligne existante : on clôt
+    l'affectation courante (valid_to) et on en insère une nouvelle. C'est
+    app.assets.assign_physical_unit qui applique cette règle.
+    """
+
+    __tablename__ = "functional_location_assignments"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    functional_location_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("functional_locations.id"), nullable=False
+    )
+    physical_unit_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("physical_units.id"), nullable=False
+    )
+    valid_from: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    valid_to: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    recorded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
