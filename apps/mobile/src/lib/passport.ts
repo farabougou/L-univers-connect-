@@ -13,6 +13,11 @@ export const QR_PREFIX = "paios:tag:";
 // Même alphabet que secrets.token_urlsafe côté serveur.
 const CODE_PATTERN = /^[A-Za-z0-9_-]{8,64}$/;
 
+/** Un QR lu par l'appareil photo est-il une étiquette de la plateforme ? */
+export function isPlatformTag(scanned: string): boolean {
+  return scanned.trim().startsWith(QR_PREFIX) && parseTagCode(scanned) !== null;
+}
+
 /** Accepte le contenu brut d'un QR ou le code tapé à la main. */
 export function parseTagCode(input: string): string | null {
   let code = input.trim();

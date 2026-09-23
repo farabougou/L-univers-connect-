@@ -12,7 +12,17 @@
       [
         "expo-image-picker",
         {
-          "cameraPermission": "Utilisée pour prendre la photo obligatoire avant chaque intervention."
+          "cameraPermission": "L’appareil photo sert à photographier les interventions et à lire les étiquettes QR des équipements.",
+          "photosPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "L’appareil photo sert à photographier les interventions et à lire les étiquettes QR des équipements.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
         }
       ]
     ],

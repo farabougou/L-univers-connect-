@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { fetchPassportByTag, parseTagCode, statusMessage } from "./passport";
+import { fetchPassportByTag, isPlatformTag, parseTagCode, statusMessage } from "./passport";
 
 describe("parseTagCode", () => {
   it("accepte le contenu brut d'un QR", () => {
@@ -112,4 +112,17 @@ describe("statusMessage", () => {
       "mobile.passport.status_no_measurement",
     );
   });
+});
+
+describe("isPlatformTag", () => {
+  it("reconnaît une étiquette de la plateforme lue par l'appareil photo", () => {
+    expect(isPlatformTag("paios:tag:Ab3_x-9Zk2LmN0pQ")).toBe(true);
+  });
+
+  it.each(["https://exemple.test/produit", "Ab3_x-9Zk2LmN0pQ", "paios:tag:", "WIFI:S:reseau;;"])(
+    "refuse un QR étranger à la plateforme : %s",
+    (scanned) => {
+      expect(isPlatformTag(scanned)).toBe(false);
+    },
+  );
 });

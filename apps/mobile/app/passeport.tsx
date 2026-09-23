@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { type BarcodeScanningResult, CameraView, useCameraPermissions } from "expo-camera";
 import {
   ActivityIndicator,
   Button,
@@ -18,22 +19,31 @@ import {
   type Passport,
   type PassportUnit,
   fetchPassportByTag,
+  isPlatformTag,
   parseTagCode,
   statusMessage,
 } from "../src/lib/passport";
 
-// Saisie manuelle du code imprimé sous le QR. La lecture par la caméra
-// viendra ensuite : elle remplira ce même champ.
+/**
+ * Lecture de l'étiquette par l'appareil photo, ou saisie du code imprimé sous
+ * le QR (même vérification dans les deux cas : `parseTagCode`). Le QR ne
+ * contient qu'un code opaque ; tout le contenu vient du serveur, selon les
+ * droits de la personne connectée.
+ */
 export default function PasseportScreen() {
   const auth = useAuth();
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [passport, setPassport] = useState<Passport | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const [permission, requestPermission] = useCameraPermissions();
+  // Un QR reste devant l'objectif plusieurs images de suite : une seule lecture.
+  const handled = useRef(false);
 
-  async function lookUp() {
+  async function lookUp(raw: string) {
     setPassport(null);
-    const code = parseTagCode(input);
+    const code = parseTagCode(raw);
     if (!code) {
       setMessage(t("mobile.passport.invalid_code"));
       return;
@@ -54,8 +64,45 @@ export default function PasseportScreen() {
     }
   }
 
+  async function startScan() {
+    setMessage(null);
+    const granted = permission?.granted || (await requestPermission()).granted;
+    if (!granted) {
+      setMessage(t("mobile.passport.camera_denied"));
+      return;
+    }
+    handled.current = false;
+    setScanning(true);
+  }
+
+  function onScanned({ data }: BarcodeScanningResult) {
+    if (handled.current) return;
+    handled.current = true;
+    setScanning(false);
+    if (!isPlatformTag(data)) {
+      setMessage(t("mobile.passport.foreign_qr"));
+      return;
+    }
+    setInput(data);
+    void lookUp(data);
+  }
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      {scanning ? (
+        <View style={styles.scanner}>
+          <CameraView
+            style={styles.camera}
+            facing="back"
+            barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
+            onBarcodeScanned={onScanned}
+          />
+          <Text style={styles.muted}>{t("mobile.passport.scan_hint")}</Text>
+          <Button title={t("mobile.passport.scan_cancel")} onPress={() => setScanning(false)} />
+        </View>
+      ) : (
+        <Button title={t("mobile.passport.scan")} onPress={startScan} disabled={loading} />
+      )}
       <Text style={styles.label}>{t("mobile.passport.tag_code")}</Text>
       <TextInput
         style={styles.input}
@@ -65,7 +112,7 @@ export default function PasseportScreen() {
         autoCorrect={false}
         placeholder={t("mobile.passport.tag_placeholder")}
       />
-      <Button title={t("mobile.passport.show")} onPress={lookUp} disabled={loading} />
+      <Button title={t("mobile.passport.show")} onPress={() => lookUp(input)} disabled={loading} />
       {loading && <ActivityIndicator />}
       {message && <Text style={styles.error}>{message}</Text>}
       {passport && <PassportView passport={passport} />}
@@ -233,6 +280,14 @@ const styles = StyleSheet.create({
   },
   error: {
     color: "#c0392b",
+  },
+  scanner: {
+    gap: 8,
+  },
+  camera: {
+    height: 280,
+    borderRadius: 8,
+    overflow: "hidden",
   },
   passport: {
     gap: 12,

@@ -118,6 +118,8 @@
 | Réseau coupé entre deux étapes d'envoi | Aucun | Chaque étape est notée localement ; la reprise ne recommence pas une étape confirmée | Automatique | ✅ testé |
 | Réponse du serveur perdue après création | Aucun | Chaque envoi porte l'identifiant local (`client_ref`, unique par tenant en base) : un renvoi identique rend l'intervention ou la photo déjà créée (200), un contenu différent est refusé (409) | Automatique | ✅ testé (corrigé le 23 septembre 2026, migration `c0b50f293eec`) |
 | Passeport consulté sans réseau | Message « le passeport se consulte en ligne » | Le passeport n'est pas mis en cache (données vivantes : alarmes, mesures) | Réessayer avec du réseau | ✅ testé |
+| Accès à l'appareil photo refusé | Message : autoriser dans les réglages ou saisir le code | La saisie du code imprimé sous le QR reste possible | Autoriser l'accès ou saisir le code | ✅ (non testé sur téléphone réel) |
+| QR étranger à la plateforme (autre usage, publicité) | Message « n'est pas une étiquette de la plateforme » | Aucun appel au serveur | — | ✅ testé |
 | Étiquette révoquée scannée | Message « scannez la nouvelle étiquette » (410) | Un code révoqué n'est jamais réattribué | Poser la nouvelle étiquette | ✅ testé |
 
 ## 9. Application web
