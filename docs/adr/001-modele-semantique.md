@@ -65,3 +65,13 @@ modèle ad hoc à l'étape M1 qu'il faudrait ensuite migrer.
   stratégie produit du cahier des charges.
 - Toute extension future du vocabulaire d'actifs doit d'abord chercher une
   correspondance dans Brick Schema avant de créer un champ ou une relation maison.
+
+## Complément (23 septembre 2026, ADR 012)
+
+L'Architecture Addendum V2 demande de ne pas faire dépendre le cœur d'un seul standard
+externe. Précision apportée à la décision ci-dessus, sans la contredire : le modèle
+d'actifs utilise un **vocabulaire interne versionné** (classes d'équipements et de
+points, prédicats de relations), **aligné sur Brick Schema** par défaut et accompagné de
+**correspondances versionnées** vers Brick, Project Haystack, ASHRAE 223P (encore à
+l'état de projet de norme), IFC et Asset Administration Shell. Brick reste la première
+référence consultée ; il n'est plus le format de stockage imposé du cœur.

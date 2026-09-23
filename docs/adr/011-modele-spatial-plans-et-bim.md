@@ -5,6 +5,12 @@
 Proposée (23 septembre 2026). Aucune ligne de code n'est écrite avant l'accord de
 Mohamed sur ce document.
 
+**Complétée par l'ADR 012 (même jour)** : les espaces, positions, exemplaires et points
+sont enregistrés dans le registre d'identité commun (`graph_nodes`) ; les zones
+transverses deviennent des relations `servedBy` dans la table `relations` ; l'étape S1
+ci-dessous devient l'étape F2 du plan de l'ADR 012, et les points (S5) remontent à
+l'étape F3, avant l'affichage temps réel.
+
 ## Contexte
 
 Le 23 septembre 2026, Mohamed a ajouté au cahier des charges une exigence **Spatial &

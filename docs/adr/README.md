@@ -11,3 +11,4 @@ Un fichier par décision.
 - [009 — Données clients](./009-donnees-clients.md)
 - [010 — Stockage hors ligne de l'application technicien](./010-stockage-hors-ligne-mobile.md)
 - [011 — Modèle spatial, plans 2D et BIM/IFC](./011-modele-spatial-plans-et-bim.md)
+- [012 — Fondations de l'architecture V2 : impact et plan de migration](./012-fondations-architecture-v2.md)

@@ -3,135 +3,174 @@
 ## But de ce document
 
 Comparer en continu notre plateforme aux solutions importantes du marché
-(GTB/GTC, GMAO, EMS, IoT/Edge, jumeaux numériques) pour viser progressivement
-un niveau fonctionnel de référence mondiale — **sans copier les concurrents
-ni réécrire ce qui existe déjà**. Ce document est vivant : il est mis à jour
-à chaque étape (M1, M2, M3...) et à chaque fois qu'une fonctionnalité
-importante est identifiée chez un concurrent.
+(GTB/GTC, GMAO, EMS, IoT/Edge, jumeaux numériques) et aux **standards** du secteur, pour
+viser progressivement un niveau fonctionnel de référence mondiale — **sans copier les
+concurrents ni réécrire ce qui existe déjà**. Le benchmark sert à apprendre du marché,
+pas à copier aveuglément. Ce document est vivant : il est mis à jour à chaque étape (M1,
+M2, M3…) et à chaque fois qu'une fonctionnalité importante est identifiée chez un
+concurrent.
 
-Directive d'origine : Mohamed, 23 septembre 2026.
+Directives d'origine : Mohamed, 23 septembre 2026 (directive initiale, puis
+Architecture Addendum V2, qui ajoute la colonne **Standard** et l'étiquette **DEFER**).
 
 ## Concurrents suivis
 
-- **Idealys** — GMAO/GTB pour le tertiaire (recherche web 2026 : peu de
-  documentation publique indépendante trouvée ; à réévaluer avec une fiche
-  produit officielle avant de fonder une décision dessus).
-- **UBBEE / IOTEVA** — plateforme IoT/GTB (idem : peu de documentation
-  publique indépendante trouvée lors de la recherche du 23/09/2026).
-- **Smart & Connective** — « GTB Light » SaaS sans travaux pour tertiaire
-  existant : pilotage CVC/éclairage par présence, plateforme multisite,
-  automates propriétaires. Positionnement : économies d'énergie rapides à
-  déployer, pas un GMAO ni un jumeau numérique complet.
-- **MaintForge** — GMAO SaaS « IA-native » pour l'industrie : recommandation
-  de stratégies de maintenance par IA, tournées techniciens optimisées,
-  génération automatique de documents réglementaires (CERFA chaudières),
-  packs IoT prêts à l'emploi.
-- **Schneider Electric (EcoStruxure Building)**, **Siemens (Building X /
-  Desigo)**, **Honeywell (Forge)**, **Johnson Controls (OpenBlue)** —
-  grands éditeurs BMS/EMS/GMAO intégrés, connaissance générale (pas de
-  fiche produit revérifiée ligne à ligne à cette date) : forces en
-  connectivité multi-protocoles (BACnet/Modbus/OPC-UA), automatisation et
-  contrôle actif, IA prédictive, reporting ESG à grande échelle ; faiblesses
-  connues du secteur : verrouillage fournisseur, coût et complexité
-  d'intégration, offline mobile souvent limité.
+- **Idealys** — GMAO/GTB pour le tertiaire (recherche web 2026 : peu de documentation
+  publique indépendante trouvée ; à réévaluer avec une fiche produit officielle avant de
+  fonder une décision dessus).
+- **UBBEE / IOTEVA** — plateforme IoT/GTB (idem : peu de documentation publique
+  indépendante trouvée lors de la recherche du 23/09/2026).
+- **Smart & Connective** — « GTB Light » SaaS sans travaux pour tertiaire existant :
+  pilotage CVC/éclairage par présence, plateforme multisite, automates propriétaires.
+  Positionnement : économies d'énergie rapides à déployer, pas un GMAO ni un jumeau
+  numérique complet.
+- **MaintForge** — GMAO SaaS « IA-native » pour l'industrie : recommandation de
+  stratégies de maintenance par IA, tournées techniciens optimisées, génération
+  automatique de documents réglementaires (CERFA chaudières), packs IoT prêts à
+  l'emploi.
+- **Schneider Electric (EcoStruxure Building)**, **Siemens (Building X / Desigo)**,
+  **Honeywell (Forge)**, **Johnson Controls (OpenBlue)** — grands éditeurs BMS/EMS/GMAO
+  intégrés, connaissance générale (pas de fiche produit revérifiée ligne à ligne à cette
+  date) : forces en connectivité multi-protocoles (BACnet/Modbus/OPC UA), automatisation
+  et contrôle actif, IA prédictive, reporting ESG à grande échelle ; faiblesses connues
+  du secteur : verrouillage fournisseur, coût et complexité d'intégration, hors ligne
+  mobile souvent limité.
+- **Outils spécialisés d'analytique et de mise en service continue** (par exemple
+  SkySpark, Clockworks, CopperTree Kaizen) — connaissance générale, non revérifiée.
 
-**Limite assumée** : les fiches des 4 acteurs « niche » restent
-volontairement prudentes (peu de sources fiables trouvées) — priorité
-donnée à ne pas inventer de fonctionnalités que je ne peux pas vérifier.
-Ce tableau doit être corrigé dès qu'une preuve concrète (démo, doc
-officielle, retour client) contredit une ligne.
+**Limite assumée** : les fiches des acteurs « niche » et les mentions marquées « non
+revérifiée » restent volontairement prudentes — priorité donnée à ne pas inventer de
+fonctionnalités que je ne peux pas vérifier. Ce tableau doit être corrigé dès qu'une
+preuve concrète (démo, doc officielle, retour client) contredit une ligne.
 
 ## Processus d'évaluation (à appliquer à chaque nouvelle fonctionnalité identifiée)
 
 1. Vérifier si elle existe déjà dans notre code.
-2. Si elle existe : évaluer si l'implémentation est assez robuste, sécurisée
-   et extensible (sinon → REFACTOR).
-3. Si elle manque : déterminer si elle apporte une vraie valeur à notre
-   vision (Physical Asset Intelligence & Automation OS, cœur universel
-   multi-secteurs).
-4. Si pertinente : l'ajouter à la roadmap et la concevoir proprement dans
-   l'architecture existante (ADD), sans dépendance propriétaire dans le
-   noyau (règle non négociable 8).
-5. Si notre approche est meilleure ou volontairement différente : la garder
-   et documenter pourquoi (colonne Justification).
+2. Si elle existe : évaluer si l'implémentation est assez robuste, sécurisée et
+   extensible (sinon → REFACTOR).
+3. Si elle manque : déterminer si elle apporte une vraie valeur à notre vision (Physical
+   Asset Intelligence & Automation OS, cœur universel multi-secteurs).
+4. Si pertinente : l'ajouter à la roadmap et la concevoir proprement dans l'architecture
+   existante (ADD), sans dépendance propriétaire dans le noyau (règle non négociable 8).
+   Si elle doit être prévue maintenant mais développée plus tard : DEFER.
+5. Si notre approche est meilleure ou volontairement différente : la garder et
+   documenter pourquoi (colonne Justification).
 6. Ne jamais ajouter une fonctionnalité uniquement pour gonfler le nombre de
    fonctionnalités.
 
-Chaque ligne reçoit une décision **KEEP / REFACTOR / REPLACE / ADD** —
-jamais de redémarrage du projet à zéro.
+Chaque ligne reçoit une décision **KEEP / REFACTOR / REPLACE / ADD / DEFER** — jamais de
+redémarrage du projet à zéro. Les étapes F1 à F6 renvoient au plan de migration de
+l'ADR 012.
 
 ## Matrice
 
-| Feature | Notre statut | Concurrent(s) | Priorité | Architecture concernée | Décision | Justification |
-|---|---|---|---|---|---|---|
-| Isolation multi-tenant stricte (RLS PostgreSQL forcée par table) | ✅ Fait — RLS forcée dès la première table, test d'isolation systématique | Rare chez les GTB/GMAO historiques (souvent isolation applicative seulement, pas au niveau base) | Critique | `services/api` (modèles + migrations Alembic) | KEEP | Isolation au niveau base de données = impossible à contourner par un bug applicatif. C'est plus robuste que ce que font la plupart des concurrents connus ; aucune raison de changer. |
-| Journal d'audit append-only chaîné par hachage | ✅ Fait | Standard chez les gros éditeurs (Schneider, Siemens...) sur les actions de sécurité ; rarement chaîné par hachage (intégrité vérifiable) chez les acteurs de niche | Haute | `services/api` (module audit) | KEEP | Le chaînage par hachage détecte une falsification a posteriori, pas seulement une trace — au-dessus du standard du marché. |
-| Modèle d'actifs à 3 niveaux (ProductModel / PhysicalUnit / FunctionalLocation) + révisions (jamais d'écrasement) | ✅ Fait (ADR 001) ; typage explicite de la hiérarchie Facility/Building/Zone/System **pas encore fait** | Les GMAO classiques ont souvent un modèle plat (« équipement » + « site ») ; les grands éditeurs ont des jumeaux numériques plus riches mais propriétaires | Haute | `services/api` modèles + migrations | KEEP le principe / REFACTOR l'étendue plus tard | Bonne base pour un vrai jumeau numérique universel. On ajoute le typage de hiérarchie seulement quand un vrai besoin multi-portefeuilles apparaît (règle des trois), pas par anticipation. |
-| GMAO de base (ordres de travail, interventions, alarmes) | ✅ Fait | Cœur de métier de MaintForge, Idealys et de tous les GMAO généralistes | Haute | `services/api/app/routers` | KEEP | Couvre le besoin M1. Les fonctions avancées (checklists réglementaires type CERFA, tournées optimisées) restent à évaluer plus bas. |
-| Application technicien mobile hors ligne (offline-first, file d'attente de synchro idempotente) | ✅ Fait (SQLite outbox, sync idempotente testée) | Point faible fréquent chez les grands éditeurs (apps souvent dégradées hors connexion) ; MaintForge met en avant le terrain mais sans détail vérifié sur le offline | Haute | `apps/mobile` | KEEP | Notre approche (outbox local + reprise sans double-création) est déjà robuste et testée — c'est un avantage concret, pas un retard à combler. |
-| Authentification OIDC (Keycloak) + rafraîchissement de jeton sécurisé, web et mobile | ✅ Fait (PKCE + state CSRF web, refresh mobile) | Standard chez les grands éditeurs ; variable chez les acteurs de niche | Haute | `apps/web/src/lib/session.ts`, `apps/mobile/src/lib/auth.ts` | KEEP | Conforme aux bonnes pratiques OAuth2/PKCE actuelles. |
-| Stockage photos d'intervention (upload sécurisé, URL pré-signée) | ✅ Fait (ADR 006) | Fonctionnalité courante en GMAO terrain | Moyenne | `services/api`, `apps/mobile/src/lib/photos.ts` | KEEP | — |
-| Génération automatique de documents réglementaires (ex. CERFA fluides frigorigènes, F-Gas) | ❌ Absent | MaintForge le met en avant explicitement pour le CVC | **Haute** — pertinent pour notre wedge CVC tertiaire (fluides frigorigènes = obligation réglementaire réelle en France/UE) | Nouveau module `services/api` (génération de documents) + template par type de document | ADD (roadmap M2/M3, après le squelette de bout en bout) | Valeur réelle et directement alignée avec notre wedge (CVC/froid) ; ne dépend d'aucune brique manquante (pas besoin de connecteurs GTB). Bon candidat pour un ADD relativement tôt. |
-| Tournées techniciens optimisées (planification géographique/temporelle) | ❌ Absent | MaintForge le met en avant | Basse pour le MVP | `services/api` (planification) + mobile | Pas de décision immédiate | Valeur réelle mais seulement utile une fois plusieurs techniciens/tournées réelles à gérer (règle des trois : pas de client actif avec ce besoin aujourd'hui). À réévaluer quand un client réel le demande. |
-| Connecteurs protocoles terrain (BACnet, Modbus, OPC-UA, MQTT) | ❌ Absent | Cœur de métier Schneider/Siemens/Honeywell/JCI ; Smart & Connective et UBBEE en dépendent aussi (automates propriétaires) | Haute (bloquant pour toute la suite : télémétrie, automatisation) | Nouvelle brique **Connector Layer**, à concevoir comme adaptateur générique (règle non négociable 8) | ADD (M3, un seul connecteur réel d'abord) | C'est la brique qui débloque le plus de valeur ensuite (télémétrie, EMS, automatisation). On commence par UN protocole réel avec un client pilote, jamais une couche d'abstraction générique inventée à l'avance sans cas réel. |
-| Télémétrie en lecture seule (courbes, historisation) | ⚠️ Fondations posées (23/09/2026) — table `measurements` avec RLS + test d'isolation, ingestion d'un point simulé, lecture par position fonctionnelle ; pas encore de vrai connecteur, ni de courbes/tableau de bord | Standard chez tous les grands éditeurs et chez Smart & Connective | Haute | `services/api/app/telemetry.py`, `app/routers/telemetry.py`, table `measurements` | ADD en cours (M2, squelette de bout en bout) | Première brique du squelette de bout en bout (cahier des charges 36.2). Le premier connecteur réel et l'historisation à grande échelle (TimescaleDB) restent prévus pour M3, pas avant. |
-| Edge runtime local (résilience coupure réseau, agrégation locale) | ❌ Absent | Schneider/Siemens ont des passerelles edge matures ; Smart & Connective a ses propres automates | Moyenne | Nouvelle brique **Edge Runtime** | ADD (M4) | Nécessaire pour un vrai produit « edge-first » mais dépend du Connector Layer — ordre respecté, pas de raccourci. |
-| GTB/GTC natif (pilotage centralisé de tous les lots techniques) | ❌ Absent | Cœur de Schneider/Siemens/Honeywell/JCI et de Smart & Connective (GTB Light) | Haute mais **postérieure** à la sûreté | Brique **Automation & Control Engine** | ADD, strictement après le pipeline de sûreté (voir ADR 004) | Toute commande active reste bloquée par la règle non négociable 1 tant que Mohamed ne l'amende pas explicitement. Aucune fonctionnalité de pilotage ne sera codée avant ce feu vert, même si des concurrents l'ont déjà. |
-| Commande distante sécurisée (write vers équipement) | ❌ Absent, **interdit par la règle non négociable 1** | Honeywell Forge, JCI OpenBlue, Schneider EcoStruxure le font | N/A tant que la règle 1 n'est pas levée | Brique **Remote Command**, derrière pipeline Observe→Understand→Decide→Simulate→Authorize→Execute→Verify→Learn | Pas de décision — explicitement hors périmètre sans accord écrit de Mohamed | Rappel direct de la règle non négociable 1 et de l'ADR 004 : aucun contournement, même partiel (pas de « juste un toggle simple »). |
-| Maintenance prédictive / IA-ML sur données de télémétrie | ❌ Absent | Mis en avant par MaintForge (« IA-native »), Honeywell Forge, Siemens | Moyenne, **postérieure** à la télémétrie | Brique **AI/ML**, jamais en amont d'une commande (LLM ne pilote jamais un équipement, cf. directive OUDSAEVL) | ADD, seulement une fois des données réelles de plusieurs cycles de maintenance accumulées | Sans données réelles, un modèle prédictif serait inventé et non validable — règle des trois appliquée aux données, pas seulement au code. |
-| Simulation (jumeau numérique prédictif, test de scénarios avant action) | ❌ Absent | Rare chez les acteurs de niche ; présent chez les grands éditeurs sous forme de « digital twin » avancé | Basse actuellement | Brique **Simulation Engine** | ADD (tardif, après automatisation) | Utile surtout une fois qu'il y a des commandes à tester avant exécution réelle — n'a pas de valeur isolée aujourd'hui. |
-| Reporting ESG / conformité énergétique (F-Gas, DPE, décret tertiaire) | ❌ Absent | Smart & Connective et les grands éditeurs le proposent (argument de vente fort en France : décret tertiaire) | Haute à moyen terme | Brique **Energy & Sustainability** (M5, cahier des charges) | ADD (M5), mais les documents réglementaires CVC (ligne plus haut) peuvent démarrer avant | Directement dans notre roadmap officielle (M5) ; pas de changement à faire, juste confirmer l'ordre. |
-| Intelligence de flotte (analyse comparative multi-sites/multi-clients) | ❌ Absent | Argument marketing fort chez Honeywell Forge et JCI OpenBlue (portefeuilles multi-bâtiments) | Basse actuellement | Brique **Fleet Intelligence**, s'appuie sur RLS multi-tenant existant | ADD (tardif) | Dépend d'un volume réel de sites/actifs pour être utile — prématuré avant plusieurs clients actifs avec plusieurs sites chacun. |
-| API/connecteurs ouverts pour intégrations tierces | ⚠️ Partiel — API FastAPI interne existe, pas encore pensée comme API publique versionnée pour des tiers | Marketplace de connecteurs chez les grands éditeurs (hors périmètre 12 mois chez nous, décision déjà actée) | Basse (déjà explicitement hors périmètre 12 mois) | `services/api` | Pas de décision — conforme à la portée déjà actée | Rien à faire : notre propre feuille de route exclut déjà la marketplace de connecteurs pour 12 mois. Pas de changement de cap pour suivre un concurrent. |
-| Web console responsable d'exploitation (registre d'actifs, planification d'ordres de travail) | ✅ Fait (vertical slice M1) | Équivalent chez tous les concurrents cités | Haute | `apps/web` | KEEP | — |
-| Hiérarchie spatiale (Portfolio → Site → Bâtiment → Étage → Zone/Pièce), équipement rattaché à son emplacement | ⚠️ Partiel — `sites` + arbre `functional_locations` sans notion spatiale | Standard chez Siemens, Schneider, Honeywell, Johnson Controls et dans les logiciels de gestion immobilière (connaissance générale, non revérifiée) | Haute | ADR 011 : nouvelle table `spaces` + `functional_locations.space_id` / `kind` | ADD (S1) + REFACTOR par ajout de colonnes | Notre approche sépare l'arbre spatial et l'arbre technique, comme IFC et Brick Schema : une CTA peut être au sous-sol et desservir cinq étages sans contorsion. Prépare aussi les périmètres du futur ReBAC (ADR 003). |
-| Plans 2D interactifs (visionneuse/éditeur, placement de pièces, équipements, capteurs, compteurs) | ❌ Absent | Synoptiques graphiques des GTB (Siemens Desigo CC, Schneider EcoStruxure Building Operation…) ; plateforme multisite de Smart & Connective (détail non vérifié) | Haute | ADR 011 : `floor_plans` (versionnés) + `plan_placements` | ADD (S3, S4) | Approche volontairement différente : dans une GTB classique, chaque synoptique est dessiné à la main et relié à des adresses de points, ce qui duplique la liste des équipements. Chez nous, le plan ne fait que référencer les identifiants du registre : aucune seconde base d'équipements. |
-| Aucun plan obligatoire (construction manuelle Bâtiment → Étage → Pièce → Équipement) | ❌ Absent (possible seulement via l'arbre technique, sans typage) | Variable selon les éditeurs | Haute | ADR 011 : `spaces`, console web | ADD (S1, S2) | Beaucoup de bâtiments tertiaires existants n'ont ni BIM ni plan à jour : c'est le cas le plus fréquent du wedge. |
-| Affichage temps réel sur plan (température, qualité d'air, alarmes, maintenance, énergie) | ❌ Absent | Standard dans les GTB et les plateformes des grands éditeurs | Haute, après les points | ADR 011 : `points` + mesures + alarmes/OT existants | ADD (S5, avec le premier connecteur réel M3) | Les alarmes et ordres de travail existants s'afficheront sans modification, via l'emplacement de leur position fonctionnelle. Occupation uniquement agrégée (vie privée). |
-| Import BIM/IFC vers le registre d'actifs | ❌ Absent | Jumeaux numériques fondés sur le BIM chez les grands éditeurs (connaissance générale, non revérifiée) | Moyenne | ADR 011 : `external_identifiers` + propositions à valider, adaptateur IFC | ADD (S6) | IFC est une norme ouverte (ISO 16739) ; la bibliothèque de lecture reste derrière un adaptateur. L'import produit des propositions, jamais des données considérées fiables sans validation. |
-| Analyse assistée par IA des plans et modèles BIM | ❌ Absent | Fonction émergente sur le marché (acteurs non vérifiés) | Basse | ADR 011 : même circuit de propositions que l'IFC | ADD (S7) | Toute détection reste une proposition vérifiable et corrigeable ; aucune automatisation ne peut s'appuyer sur une donnée non validée. |
-| Visualisation 3D / BIM | ❌ Absent | Grands éditeurs | Basse pour le lancement | ADR 011 : visionneuse IFC open source reliée à nos identifiants | ADD (S8) | Le modèle sépare identité et géométrie : la 3D s'ajoutera comme une vue, sans modifier le modèle fondamental. |
-| Zero-Trust / sécurité des accès (rôles, permissions fines) | ⚠️ Partiel — rôles Keycloak de base ; pas de modèle de permissions fin (ReBAC) | Modèle de permissions souvent plus fin chez les grands éditeurs (multi-niveaux d'organisation) | Moyenne | `services/api` (autorisations, ADR 003) | Pas de décision immédiate (REFACTOR différé) | Règle des trois déjà appliquée : un modèle ReBAC complet a été volontairement reporté faute de 3 cas réels distincts. Cette matrice confirme que ce report reste correct — à revoir dès qu'un vrai besoin (ex. sous-traitant avec accès limité) apparaît. |
+### Fondations : identité, isolation, audit, sécurité
 
-## Décisions techniques actuelles signalées comme à risque de blocage futur
+| Feature | Notre statut | Concurrent(s) | Standard | Priorité | Architecture concernée | Décision | Justification |
+|---|---|---|---|---|---|---|---|
+| Isolation multi-tenant stricte (RLS PostgreSQL forcée par table) | ✅ Fait — RLS forcée dès la première table, test d'isolation systématique | Rare chez les GTB/GMAO historiques (souvent isolation applicative seulement) | — | Critique | `services/api` (modèles + migrations) | KEEP + REFACTOR de renforcement (clés étrangères incluant le tenant) | Isolation au niveau base = impossible à contourner par un bug applicatif. Le renforcement rend aussi impossible un lien entre deux clients (ADR 012, risque 6). |
+| Journal d'audit append-only chaîné par hachage | ✅ Fait (chaînage par tenant, verrou anti-concurrence) ; ancrage externe à faire | Standard chez les gros éditeurs sur les actions de sécurité ; rarement chaîné par hachage chez les acteurs de niche | — | Haute | `services/api/app/audit.py` | KEEP + ADD ancrage externe | Le chaînage détecte une falsification a posteriori. Réservé aux actions sensibles : jamais les mesures ni les événements à fort volume. |
+| Identité universelle des actifs + registre commun (`graph_nodes`) | ⚠️ Partiel — UUID par table, pas de registre commun | Jumeaux numériques des grands éditeurs (non revérifié) | Brick, IFC GlobalId, AAS | Critique | ADR 012 §2.1 | ADD (F1) | Base commune du graphe, du passeport QR et de la mémoire opérationnelle, avec contrôle d'intégrité par la base. |
+| Authentification OIDC (Keycloak) + rafraîchissement de jeton sécurisé, web et mobile | ✅ Fait (PKCE + state CSRF web, refresh mobile) | Standard chez les grands éditeurs ; variable chez les acteurs de niche | OAuth 2.0, OIDC, RFC 7636 (PKCE) | Haute | `apps/web/src/lib/session.ts`, `apps/mobile/src/lib/auth.ts` | KEEP | Conforme aux bonnes pratiques actuelles. |
+| Autorisations fines (rôles, périmètres, ABAC) | ⚠️ Partiel — rôles Keycloak globaux par tenant | Modèles plus fins chez les grands éditeurs | — | Moyenne | ADR 003 ; arbre spatial (ADR 011) comme futurs périmètres | DEFER (ReBAC au premier vrai cas de délégation) | Règle des trois : pas de ReBAC sans cas réel. L'arbre spatial fournira les périmètres naturels (site, bâtiment, zone). |
+| Identité des appareils Edge / PKI | ❌ Absent | Passerelles des grands éditeurs (non revérifié) | X.509, mTLS, EST (RFC 7030), IEC 62443 | Haute à M3 | ADR 012 §2.10 | DEFER (M3), conçu | Identité des machines séparée de celle des personnes ; certificat lié au tenant et au site. |
+| Frontière de sûreté (lecture seule garantie) | ✅ Règle non négociable 1 | Les grands éditeurs commandent déjà | IEC 62443 (zones et conduits) | Critique | ADR 012 §2.6 | KEEP + ADD contrainte `is_writable = false` en base (F3) | Lever la règle 1 exigera une migration visible et relue, jamais une modification discrète. |
 
-Conformément à la demande explicite de Mohamed (« si une décision technique
-actuelle risque de bloquer une capacité future importante, signale-la avant
-de coder »), voici ce qui a été identifié en construisant cette matrice —
-**aucun de ces points ne bloque aujourd'hui**, mais chacun mérite d'être
-gardé en tête pour ne pas devoir réécrire plus tard :
+### Actifs, graphe, spatial, cycle de vie
 
-1. **Couche de connecteurs pas encore conçue.** Tant qu'elle n'existe pas,
-   c'est sans risque. Le risque apparaîtrait seulement si un premier
-   connecteur était codé directement contre un protocole précis sans
-   passer par un adaptateur générique (règle non négociable 8) — donc
-   vigilance à avoir explicitement au moment de M3, pas maintenant.
-2. **FunctionalLocation sans typage de hiérarchie.** Tranché le 23/09/2026
-   par l'ADR 011 : les bâtiments, étages, pièces et zones vont dans une
-   table `spaces` séparée ; `functional_locations` garde le rôle technique
-   (système → équipement → composant) et reçoit `space_id` et `kind`. À
-   appliquer dès maintenant : ne plus créer de nœud spatial comme position
-   fonctionnelle.
-3. **Modèle de permissions Keycloak actuel (rôles simples).** Suffisant
-   pour un seul niveau d'organisation par tenant. Si un client demande un
-   sous-traitant avec accès restreint à un sous-ensemble de sites avant
-   qu'un vrai modèle ReBAC soit conçu, ce sera un ADD, pas un blocage —
-   mais mieux vaut le concevoir dès qu'un deuxième cas réel se présente
-   plutôt qu'au moment où un client le réclame en urgence.
-4. **Aucune dépendance propriétaire engagée pour l'instant** envers un
-   fabricant ou un protocole précis — c'est une force, pas un risque : à
-   maintenir strictement quand le Connector Layer sera conçu.
+| Feature | Notre statut | Concurrent(s) | Standard | Priorité | Architecture concernée | Décision | Justification |
+|---|---|---|---|---|---|---|---|
+| Modèle d'actifs à 3 niveaux (ProductModel / PhysicalUnit / FunctionalLocation) + révisions | ✅ Fait (ADR 001) | GMAO classiques souvent plates ; grands éditeurs plus riches mais propriétaires | ISO 14224 | Haute | `services/api` modèles | KEEP | Un nouvel équipement a toujours une nouvelle identité, la position garde la sienne : exactement ce que demande le cycle de vie. |
+| Graphe de connaissances (feeds, poweredBy, servedBy, maintainedBy…) | ⚠️ Partiel — arbres de positions et affectations seulement | Jumeaux numériques des grands éditeurs (non revérifié) | Brick (relations), ASHRAE 223P (projet de norme) | Critique | ADR 012 §2.2 : `relations` | ADD (F1) | Arbres stricts gardés en colonnes, relations transverses dans une table bitemporelle avec origine et confiance ; permet l'analyse d'impact d'une panne. |
+| Hiérarchie spatiale (Portfolio → Site → Bâtiment → Étage → Zone/Pièce) | ⚠️ Partiel — `sites` + arbre `functional_locations` sans notion spatiale | Standard chez Siemens, Schneider, Honeywell, Johnson Controls et logiciels de gestion immobilière (non revérifié) | IFC (IfcSite, IfcBuilding, IfcBuildingStorey, IfcSpace), Brick Location | Haute | ADR 011 + ADR 012 : `spaces` (nœuds du graphe) | ADD (F2) + REFACTOR par ajout de colonnes | Arbre spatial séparé de l'arbre technique : une CTA peut être au sous-sol et desservir cinq étages sans contorsion. |
+| Aucun plan obligatoire (construction manuelle Bâtiment → Étage → Pièce → Équipement) | ❌ Absent | Variable selon les éditeurs | — | Haute | ADR 011 : `spaces`, console web | ADD (F2, puis console) | Beaucoup de bâtiments tertiaires existants n'ont ni BIM ni plan à jour. |
+| Plans 2D interactifs (visionneuse/éditeur) | ❌ Absent | Synoptiques des GTB (Siemens Desigo CC, Schneider EcoStruxure Building Operation…) ; Smart & Connective (non vérifié) | PDF, PNG, JPEG | Haute | ADR 011 : `floor_plans` versionnés + `plan_placements` | ADD (après F2) | Approche volontairement différente : le plan référence les identifiants du registre au lieu d'être un synoptique dessiné à la main qui duplique la liste des équipements. |
+| Import BIM/IFC vers le registre | ❌ Absent | Jumeaux fondés sur le BIM chez les grands éditeurs (non revérifié) | IFC 4.3 (ISO 16739-1), COBie | Moyenne | ADR 011 : `external_identifiers` + propositions à valider | ADD (après les plans 2D) | L'import produit des propositions, jamais des données fiables sans validation humaine. |
+| Visualisation 3D / BIM | ❌ Absent | Grands éditeurs | IFC | Basse pour le lancement | ADR 011 : visionneuse IFC open source reliée à nos identifiants | DEFER | Identité séparée de la géométrie : la 3D s'ajoutera comme une vue. |
+| Analyse assistée par IA des plans et modèles BIM | ❌ Absent | Fonction émergente (acteurs non vérifiés) | — | Basse | ADR 011 : même circuit de propositions que l'IFC | DEFER | Toute détection reste une proposition vérifiable et corrigeable. |
+| Cycle de vie de l'actif (commandé → installé → mis en service → déclassé) | ⚠️ Partiel — exemplaires + affectations bitemporelles + date de mise en service | GMAO et EAM classiques (IBM Maximo, SAP PM…) | ISO 55000, ISO 14224, COBie | Haute | ADR 012 §2.9 | KEEP + ADD états et événements (F5) | Réutilise le modèle « valeur courante + historique jamais modifié » déjà éprouvé. |
+| Passeport numérique / QR-NFC depuis le mobile | ❌ Absent (écart M1 du cahier) | Courant en GMAO terrain | GS1 Digital Link ; passeport numérique produit de l'UE (règlement ESPR) | Haute | ADR 012 : étiquettes révocables + écran mobile | ADD (F5) | Le QR ne contient qu'un code opaque ; tout le contenu dépend des droits de la personne connectée. |
+| Mémoire opérationnelle (pourquoi une configuration existe, des années après) | ⚠️ Partiel — audit, historiques, interventions existent séparément | Historique GMAO classique | — | Moyenne | ADR 012 §2.14 : chronologie par nœud | KEEP les briques + ADD la chronologie (F5-F6) | Pas de nouvelle base : un assemblage autour d'un même identifiant. |
+| Interopérabilité sémantique (import/export de standards) | ⚠️ Partiel — ADR 001 alignée Brick, aucun export | SkySpark (Haystack), grands éditeurs (non revérifié) | Brick, Project Haystack, ASHRAE 223P, IFC, AAS (IEC 63278) | Moyenne | Vocabulaire interne versionné + correspondances | REFACTOR (ADR 001 complétée) + ADD correspondances au fil des besoins | Aligné sur les standards sans dépendre d'un seul. |
 
-Aucun de ces points ne justifie un changement de code aujourd'hui. Ils sont
-listés ici pour que la vigilance soit explicite au bon moment, pas oubliée.
+### Maintenance et terrain
+
+| Feature | Notre statut | Concurrent(s) | Standard | Priorité | Architecture concernée | Décision | Justification |
+|---|---|---|---|---|---|---|---|
+| GMAO de base (ordres de travail, interventions, rondes, alarmes) | ✅ Fait | Cœur de MaintForge, Idealys et des GMAO généralistes | Catégories CMMS/EAM usuelles | Haute | `services/api/app/routers/maintenance.py` | KEEP | Couvre le besoin M1. |
+| Clôture structurée d'intervention (symptôme, cause, action, pièce, temps) | ❌ Absent (écart M1 du cahier) | GMAO matures | ISO 14224 (codification des défaillances) | Haute | ADR 012, étape F5 | ADD (F5) | Source des étiquettes dont dépendront FDD, ML et économie des actifs. |
+| Application technicien hors ligne (file d'envoi idempotente) | ✅ Fait (SQLite, synchronisation idempotente testée) | Point faible fréquent des grands éditeurs | — | Haute | `apps/mobile` | KEEP | Avantage concret, pas un retard à combler. |
+| Photos d'intervention (URL pré-signées) | ✅ Fait (ADR 006) | Courant en GMAO terrain | API S3 | Moyenne | `services/api`, `apps/mobile/src/lib/photos.ts` | KEEP | — |
+| Documents réglementaires (CERFA fluides frigorigènes, F-Gas) | ❌ Absent | MaintForge le met en avant | Règlement F-Gas (UE) | Haute | Propriétés techniques (F5) + génération de documents | ADD (après F5) | Obligation réglementaire réelle du wedge CVC/froid. |
+| Tournées techniciens optimisées | ❌ Absent | MaintForge | — | Basse pour le MVP | Planification | DEFER | Utile seulement avec plusieurs techniciens et tournées réelles à gérer. |
+| Console web responsable d'exploitation | ✅ Fait (M1) | Tous les concurrents cités | — | Haute | `apps/web` | KEEP | — |
+
+### Télémétrie, qualité des données, analytique
+
+| Feature | Notre statut | Concurrent(s) | Standard | Priorité | Architecture concernée | Décision | Justification |
+|---|---|---|---|---|---|---|---|
+| Télémétrie en lecture seule | ⚠️ Fondations posées (M2) — table `measurements`, point simulé | Standard chez tous les grands éditeurs et chez Smart & Connective | — | Critique | `app/telemetry.py`, ADR 012 §2.7 | REFACTOR (F3) : points, idempotence, clé compatible TimescaleDB | Le modèle actuel (nom libre, décimal seul, pas d'anti-doublon) bloquerait l'état réel, la qualité et l'envoi différé depuis l'Edge (ADR 012, risque 1). |
+| Points (capteurs, consignes, états, compteurs) | ❌ Absent | Standard GTB | Brick Point, BACnet objects, QUDT/UCUM (unités) | Critique | ADR 012 §2.7 | ADD (F3) | Unité de base de la télémétrie, de l'état réel/souhaité et de la qualité. |
+| Qualité des données et score de confiance par point | ❌ Absent | Outils d'analytique spécialisés (non revérifié) | OPC UA StatusCode, indicateurs d'état BACnet | Haute | ADR 012 §2.8 | ADD (F3 drapeaux, F4 score) | Une donnée douteuse n'est jamais utilisée aveuglément ; les règles le disent explicitement. |
+| État souhaité / état réel et détection d'écart | ❌ Absent | Jumeaux d'objets connectés des clouds (état souhaité/rapporté) | Tableau de priorités BACnet | Haute | ADR 012 §2.4 : `desired_states` | ADD (F3-F4) pour les attentes déclarées ; DEFER le cycle de commande | Utile dès la lecture seule : détection de gaspillage (« souhaité OFF, réel ON »). |
+| FDD (détection et diagnostic de défauts) | ❌ Absent (alarmes manuelles seulement) | Outils spécialisés, Siemens, Johnson Controls, Honeywell (non revérifié) | ASHRAE Guideline 36 (règles AFDD des CTA, issues des règles APAR du NIST) | Haute | ADR 012 §2.15 : `findings`, `diagnoses`, `recommendations` | ADD règles déterministes (F4) ; DEFER statistiques, modèles physiques, ML | Anomalie ≠ défaut ≠ diagnostic ≠ prédiction : natures séparées. Un LLM peut expliquer, jamais décider seul. |
+| Mise en service et recommissioning continu | ❌ Absent | Outils spécialisés de mise en service continue (non revérifié) | ASHRAE Guideline 0 / 1.1 | Haute | ADR 012 §2.15 : statuts de mapping, attentes, constats `commissioning` | ADD le modèle (F3-F4) ; DEFER le moteur (M3+) | Un équipement connecté n'est jamais considéré comme bien configuré par défaut. |
+| Maintenance prédictive / ML | ❌ Absent | MaintForge, Honeywell Forge, Siemens | — | Moyenne, après données réelles | Constats de nature `prediction` | DEFER | Sans données réelles de plusieurs cycles, un modèle serait invérifiable. |
+| Affichage temps réel sur plan | ❌ Absent | Standard dans les GTB | — | Haute, après les points | ADR 011 + points (F3) | ADD (après plans 2D) | Occupation uniquement agrégée (vie privée). |
+
+### Edge, connecteurs, commande
+
+| Feature | Notre statut | Concurrent(s) | Standard | Priorité | Architecture concernée | Décision | Justification |
+|---|---|---|---|---|---|---|---|
+| Connecteurs protocoles terrain (BACnet, Modbus, OPC UA, MQTT) | ❌ Absent | Cœur des grands éditeurs ; Smart & Connective et UBBEE via leurs automates | BACnet (ASHRAE 135), Modbus, OPC UA, MQTT 5 | Haute | ADR 012 §2.12 : SDK de connecteur | DEFER (M3, un connecteur réel d'abord) | Contrat fixé maintenant ; écriture présente dans le contrat mais désactivée. |
+| Certification des connecteurs (Experimental → Verified → Certified) | ❌ Absent | Programmes de certification des protocoles | BTL (BACnet), certification OPC Foundation | Moyenne | ADR 012 §2.12 | DEFER (M3) | Aucun connecteur tiers n'obtient automatiquement de droit de commande. |
+| Edge runtime (tampon hors ligne, envoi différé) | ❌ Absent | Passerelles matures chez Schneider/Siemens ; automates Smart & Connective | MQTT 5 (sessions persistantes, QoS 1) | Haute | Agent Edge ; ingestion idempotente (F3) | DEFER (M3-M4) ; l'idempotence est préparée en F3 | Lien Edge ↔ cloud à concevoir bidirectionnel dès M3 (ADR 012, risque 4). |
+| Gestion de flotte Edge (mises à jour signées, déploiement progressif, retour arrière) | ❌ Absent | Plateformes IoT des grands clouds (non revérifié) | TUF / Uptane (mises à jour sécurisées) | Moyenne | `config_versions` + identité des appareils | DEFER (M4) | Conçue pour une grande flotte, pas pour 10 passerelles. |
+| Commande distante sécurisée | ❌ Absent, **interdit par la règle non négociable 1** | Honeywell Forge, Johnson Controls OpenBlue, Schneider EcoStruxure | IEC 62443 | N/A tant que la règle 1 n'est pas levée | ADR 012 §2.5-2.6 | DEFER (aucune table ni code) | Chaîne Identity → Authorization → Policy → Safety → Arbitration → Edge → Controller → Verification ; sécurités locales toujours prioritaires. |
+| Arbitrage des commandes (priorités, dérogations temporaires, expiration) | ❌ Absent | Natif dans BACnet et les GTB | Tableau de priorités BACnet (16 niveaux) | N/A tant que la règle 1 n'est pas levée | ADR 012 §2.5 | DEFER, conçu | Arbitrage déterministe exécuté sur l'Edge pour fonctionner sans Internet ; anti-boucle par chaîne de causalité. |
+| Moteur d'automatisation / GTB native | ❌ Absent | Cœur des grands éditeurs et de Smart & Connective | — | Postérieure à la sûreté | ADR 004 | DEFER | Aucune fonction de pilotage avant le feu vert explicite de Mohamed. |
+| Retrofit léger (GTB non supposée, monitoring sans contrôle) | ✅ Principe respecté — registre et GMAO utilisables sans aucune connexion | Smart & Connective (GTB Light sans travaux) | LoRaWAN, EnOcean, Zigbee (capteurs sans fil de retrofit) | Haute | Profils d'intégration par site | KEEP + DEFER profils (M3) | Le client peut commencer par la maintenance seule, puis ajouter des capteurs. |
+
+### Configuration, exploitation de la plateforme
+
+| Feature | Notre statut | Concurrent(s) | Standard | Priorité | Architecture concernée | Décision | Justification |
+|---|---|---|---|---|---|---|---|
+| Configuration versionnée (version, auteur, raison, diff, retour arrière) | ❌ Absent | Variable | — | Haute | ADR 012 §2.11 : `config_versions` générique | ADD (F4) | Un seul mécanisme pour 12 types de configuration ; la première règle de seuil en sera la première utilisatrice. |
+| Gestion des changements (brouillon → validation → approbation → déploiement → retour arrière) | ❌ Absent | Variable | — | Moyenne | Statuts de `config_versions` | ADD statuts minimaux (F4) ; DEFER simulation préalable et déploiement progressif | Indispensable avant toute automatisation à impact physique. |
+| Observabilité (logs structurés, métriques, traces, fraîcheur) | ⚠️ Minimal — `/health`, `/health/db` | Plateformes des grands éditeurs | OpenTelemetry | Moyenne | Logs structurés (F6), OpenTelemetry (M3) | KEEP + ADD | Distinguer équipement, capteur, passerelle, connecteur et cloud en panne grâce aux relations `connectedTo`, pour éviter les avalanches d'alarmes. |
+| Résilience et modes de défaillance documentés | ⚠️ Partiel — outbox mobile idempotente, verrou d'audit | — | — | Moyenne | Document vivant (F6), ingestion idempotente (F3) | KEEP + ADD ; DEFER file des messages rejetés (M3) | « Que se passe-t-il si ce composant tombe ? » documenté pour chaque composant. |
+| API/connecteurs ouverts pour intégrations tierces | ⚠️ Partiel — API interne, pas encore publique et versionnée | Marketplace de connecteurs chez les grands éditeurs | OpenAPI | Basse | `services/api` | DEFER (marketplace hors périmètre 12 mois) | Pas de changement de cap pour suivre un concurrent. |
+| Domain Packs (bâtiment, industrie, énergie, eau…) | ❌ Absent — catégories en texte libre | Offres par verticale des grands éditeurs | — | Basse | Vocabulaires versionnés par pack (F1, F3) | REFACTOR progressif + DEFER le mécanisme | Un pack apporte vocabulaire, règles et tableaux de bord, jamais une copie des moteurs. |
+
+### Énergie, économie, simulation
+
+| Feature | Notre statut | Concurrent(s) | Standard | Priorité | Architecture concernée | Décision | Justification |
+|---|---|---|---|---|---|---|---|
+| Reporting ESG / conformité énergétique (décret tertiaire, BACS) | ❌ Absent | Smart & Connective et les grands éditeurs | Décret tertiaire (OPERAT), décret BACS | Haute à moyen terme | Energy & Sustainability (M5) | DEFER (M5) | Déjà dans la feuille de route officielle. |
+| Flexibilité énergétique / DER (solaire, batterie, bornes, effacement) | ❌ Absent | Grands éditeurs (non revérifié) | OpenADR, IEEE 2030.5, OCPP (bornes), SunSpec (solaire/batteries) | Basse | Classes d'équipements + points + relations `feeds`/`poweredBy` | DEFER | Le modèle générique suffit à les représenter ; aucun standard imposé au lancement. |
+| Économie des actifs (coûts, garantie, remplacement) | ❌ Absent | EAM/GMAO matures | ISO 15686-5 (coût global) | Basse | Clôture structurée (F5) comme prérequis | DEFER | Aide à comparer des stratégies, sans jamais décider à la place du client. |
+| Scénarios « what-if » / simulation | ❌ Absent | Grands éditeurs (jumeaux avancés) | EnergyPlus, Modelica | Basse | Espace de scénarios séparé ; origine `simulated`/`estimated` dès F3 | DEFER | Un résultat simulé n'est jamais présenté ni stocké comme une mesure. |
+| Intelligence de flotte (analyse multi-sites) | ❌ Absent | Honeywell Forge, Johnson Controls OpenBlue | — | Basse | S'appuie sur RLS et le graphe | DEFER | Dépend d'un volume réel de sites. |
+
+## Décisions techniques actuelles signalées comme risques de blocage
+
+La liste complète, classée par urgence, est tenue dans l'**ADR 012, section 5**. Rappel
+des deux risques élevés :
+
+1. **Modèle de télémétrie actuel** (nom libre, valeur décimale seule, pas
+   d'anti-doublon, clé incompatible TimescaleDB) → corrigé à l'étape F3, tant qu'il n'y
+   a que des données de test.
+2. **Pas de registre d'identité commun** → corrigé à l'étape F1.
+
+Convention proposée par l'ADR 011, à appliquer dès maintenant : les bâtiments, étages,
+pièces et zones ne sont plus créés comme positions fonctionnelles.
 
 ## Mise à jour de ce document
 
-- À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité
-  concurrente significative est identifiée (nouvelle recherche, démo,
-  retour client).
-- Toute nouvelle ligne suit le processus d'évaluation en 6 étapes ci-dessus
-  et reçoit une décision KEEP/REFACTOR/REPLACE/ADD explicite et justifiée.
-- Ne jamais ajouter une ligne juste pour « faire aussi bien » sur le nombre
-  de fonctionnalités : seule la valeur réelle pour la vision Physical Asset
-  Intelligence & Automation OS compte.
+- À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente
+  significative est identifiée (nouvelle recherche, démo, retour client).
+- Toute nouvelle ligne suit le processus d'évaluation en 6 étapes ci-dessus et reçoit
+  une décision KEEP / REFACTOR / REPLACE / ADD / DEFER explicite et justifiée.
+- Ne jamais ajouter une ligne juste pour « faire aussi bien » sur le nombre de
+  fonctionnalités : seule la valeur réelle pour la vision Physical Asset Intelligence &
+  Automation OS compte.
