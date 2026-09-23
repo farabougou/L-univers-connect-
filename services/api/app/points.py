@@ -13,6 +13,7 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
+from app.errors import DomainError
 from app.point_vocabulary import check_point_definition, check_point_ready_for_validation
 
 POINT_COLUMNS = (
@@ -36,11 +37,15 @@ _EDITABLE_FIELDS = (
 )
 
 
-class PointNotFound(LookupError):
-    pass
+class PointNotFound(DomainError, LookupError):
+    status = 404
 
 
-class PointConflict(ValueError):
+class PointConflict(DomainError, ValueError):
+    status = 409
+
+
+class PointInvalid(DomainError, ValueError):
     pass
 
 
@@ -58,7 +63,7 @@ def get_point(connection: Connection, point_id: uuid.UUID) -> dict[str, Any] | N
 def _require_point(connection: Connection, point_id: uuid.UUID) -> dict[str, Any]:
     point = get_point(connection, point_id)
     if point is None:
-        raise PointNotFound("point introuvable")
+        raise PointNotFound("POINT_NOT_FOUND")
     return point
 
 
@@ -77,7 +82,7 @@ def _check_anchors(
             {"id": functional_location_id},
         ).scalar()
         if location_site is None:
-            raise PointNotFound("position fonctionnelle introuvable")
+            raise PointNotFound("FUNCTIONAL_LOCATION_NOT_FOUND")
     if space_id is not None:
         space = (
             connection.execute(
@@ -87,12 +92,12 @@ def _check_anchors(
             .first()
         )
         if space is None:
-            raise PointNotFound("espace introuvable")
+            raise PointNotFound("SPACE_NOT_FOUND")
         if space["valid_to"] is not None:
-            raise PointConflict("cet espace est clos")
+            raise PointConflict("SPACE_ENDED")
         space_site = space["site_id"]
     if location_site and space_site and location_site != space_site:
-        raise PointConflict("la position et l'espace du point sont sur deux sites différents")
+        raise PointConflict("POINT_SITE_MISMATCH")
 
 
 def create_point(
@@ -121,7 +126,7 @@ def create_point(
         text("SELECT 1 FROM points WHERE code = :code"), {"code": code}
     ).scalar()
     if code_taken:
-        raise PointConflict(f"le code de point « {code} » est déjà utilisé")
+        raise PointConflict("POINT_CODE_ALREADY_USED", code=code)
 
     point_id = uuid.uuid4()
     connection.execute(
@@ -160,10 +165,10 @@ def identify_point(connection: Connection, *, point_id: uuid.UUID, changes: dict
     de la mise en service). Refusé une fois le point validé ou rejeté."""
     point = _require_point(connection, point_id)
     if point["mapping_status"] != "proposed":
-        raise PointConflict(f"ce point est {point['mapping_status']} : il n'est plus modifiable")
+        raise PointConflict("POINT_NOT_EDITABLE", status=point["mapping_status"])
     unknown = set(changes) - set(_EDITABLE_FIELDS)
     if unknown:
-        raise PointConflict(f"champs non modifiables : {', '.join(sorted(unknown))}")
+        raise PointConflict("POINT_FIELDS_NOT_EDITABLE", fields=sorted(unknown))
 
     merged = {**point, **changes}
     definition = check_point_definition(
@@ -192,10 +197,10 @@ def identify_point(connection: Connection, *, point_id: uuid.UUID, changes: dict
 def decide_point(connection: Connection, *, point_id: uuid.UUID, decision: str) -> None:
     """Valide (le point devient fiable) ou rejette un point proposé."""
     if decision not in ("validated", "rejected"):
-        raise ValueError(f"décision inconnue : {decision}")
+        raise PointInvalid("POINT_DECISION_UNKNOWN", decision=decision)
     point = _require_point(connection, point_id)
     if point["mapping_status"] != "proposed":
-        raise PointConflict(f"ce point est déjà {point['mapping_status']}")
+        raise PointConflict("POINT_ALREADY_DECIDED", status=point["mapping_status"])
     if decision == "validated":
         check_point_ready_for_validation(
             point_class=point["point_class"],

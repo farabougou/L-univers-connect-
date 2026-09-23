@@ -18,6 +18,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
+from app.errors import DomainError
 from app.point_vocabulary import PointVocabularyError, check_value
 from app.points import get_point
 
@@ -27,11 +28,11 @@ _COLUMNS = (
 )
 
 
-class DesiredStateNotFound(LookupError):
-    pass
+class DesiredStateNotFound(DomainError, LookupError):
+    status = 404
 
 
-class DesiredStateInvalid(ValueError):
+class DesiredStateInvalid(DomainError, ValueError):
     pass
 
 
@@ -39,9 +40,7 @@ def check_timezone(name: str) -> ZoneInfo:
     try:
         return ZoneInfo(name)
     except (ZoneInfoNotFoundError, ValueError) as exc:
-        raise DesiredStateInvalid(
-            f"fuseau horaire inconnu : {name} (ex. « Europe/Paris »)"
-        ) from exc
+        raise DesiredStateInvalid("TIMEZONE_UNKNOWN", timezone=name) from exc
 
 
 def in_daily_window(at: datetime, *, start: time, end: time, timezone: str) -> bool:
@@ -68,20 +67,20 @@ def declare_desired_state(
 ) -> uuid.UUID:
     point = get_point(connection, point_id)
     if point is None:
-        raise DesiredStateNotFound("point introuvable")
+        raise DesiredStateNotFound("POINT_NOT_FOUND")
     if point["mapping_status"] == "rejected":
-        raise DesiredStateInvalid("ce point a été rejeté lors de la mise en service")
+        raise DesiredStateInvalid("POINT_REJECTED")
     try:
         check_value(value, value_type=point["value_type"], states=point["states"])
     except PointVocabularyError as exc:
-        raise DesiredStateInvalid(str(exc)) from exc
+        raise DesiredStateInvalid.from_error(exc) from exc
     if (daily_start is None) != (daily_end is None):
-        raise DesiredStateInvalid("une plage horaire exige un début et une fin")
+        raise DesiredStateInvalid("DAILY_WINDOW_INCOMPLETE")
     if daily_start is not None:
         if timezone is None:
-            raise DesiredStateInvalid("une plage horaire exige son fuseau horaire")
+            raise DesiredStateInvalid("DAILY_WINDOW_TIMEZONE_REQUIRED")
         if daily_start == daily_end:
-            raise DesiredStateInvalid("le début et la fin de la plage sont identiques")
+            raise DesiredStateInvalid("DAILY_WINDOW_EMPTY")
     if timezone is not None:
         check_timezone(timezone)
 
@@ -120,11 +119,11 @@ def end_desired_state(
         .first()
     )
     if row is None:
-        raise DesiredStateNotFound("état souhaité introuvable")
+        raise DesiredStateNotFound("DESIRED_STATE_NOT_FOUND")
     if row["valid_to"] is not None:
-        raise DesiredStateInvalid("cet état souhaité est déjà clos")
+        raise DesiredStateInvalid("DESIRED_STATE_ALREADY_ENDED")
     if valid_to <= row["valid_from"]:
-        raise DesiredStateInvalid("la date de fin doit suivre la date de début")
+        raise DesiredStateInvalid("END_BEFORE_START")
     connection.execute(
         text("UPDATE desired_states SET valid_to = :valid_to WHERE id = :id"),
         {"valid_to": valid_to, "id": desired_state_id},

@@ -20,21 +20,23 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
+from app.errors import DomainError
+
 VERSION_COLUMNS = (
     "id, config_type, subject_key, version, content, content_hash, schema_version, status, "
     "author, reason, parent_version_id, created_at, activated_at, activated_by"
 )
 
 
-class ConfigNotFound(LookupError):
-    pass
+class ConfigNotFound(DomainError, LookupError):
+    status = 404
 
 
-class ConfigConflict(ValueError):
-    pass
+class ConfigConflict(DomainError, ValueError):
+    status = 409
 
 
-class ConfigInvalid(ValueError):
+class ConfigInvalid(DomainError, ValueError):
     pass
 
 
@@ -51,7 +53,7 @@ def register_config_type(config_type: str, schema_version: str, validator: Valid
 
 def _validate(connection: Connection, config_type: str, content: dict) -> tuple[str, dict]:
     if config_type not in _REGISTRY:
-        raise ConfigInvalid(f"type de configuration inconnu : {config_type}")
+        raise ConfigInvalid("CONFIG_TYPE_UNKNOWN", config_type=config_type)
     schema_version, validator = _REGISTRY[config_type]
     return schema_version, validator(connection, content)
 
@@ -76,7 +78,7 @@ def get_version(connection: Connection, version_id: uuid.UUID) -> dict[str, Any]
 def _require_version(connection: Connection, version_id: uuid.UUID) -> dict[str, Any]:
     version = get_version(connection, version_id)
     if version is None:
-        raise ConfigNotFound("version de configuration introuvable")
+        raise ConfigNotFound("CONFIG_VERSION_NOT_FOUND")
     return version
 
 
@@ -136,7 +138,7 @@ def activate_version(
     depuis le brouillon. Renvoie l'identifiant de la version remplacée."""
     version = _require_version(connection, version_id)
     if version["status"] != "draft":
-        raise ConfigConflict(f"seule une version brouillon peut être activée ({version['status']})")
+        raise ConfigConflict("CONFIG_ACTIVATION_REQUIRES_DRAFT", status=version["status"])
     _validate(connection, version["config_type"], version["content"])
 
     previous = connection.execute(
@@ -165,7 +167,7 @@ def retire_version(connection: Connection, *, version_id: uuid.UUID) -> None:
     """Retire une version (brouillon abandonné, ou règle arrêtée)."""
     version = _require_version(connection, version_id)
     if version["status"] not in ("draft", "active"):
-        raise ConfigConflict(f"cette version est déjà {version['status']}")
+        raise ConfigConflict("CONFIG_VERSION_ALREADY_IN_STATUS", status=version["status"])
     connection.execute(
         text("UPDATE config_versions SET status = 'retired' WHERE id = :id"), {"id": version_id}
     )

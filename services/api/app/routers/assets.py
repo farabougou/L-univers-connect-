@@ -2,7 +2,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
@@ -10,6 +10,7 @@ from app.assets import assign_physical_unit, get_current_occupant
 from app.audit import append_audit_entry
 from app.auth import require_any_role
 from app.deps import get_tenant_connection, get_tenant_id
+from app.errors import ApiError, api_error
 from app.lifecycle import (
     LifecycleError,
     LifecycleNotFound,
@@ -169,9 +170,7 @@ def create_physical_unit(
         text("SELECT 1 FROM product_models WHERE id = :id"), {"id": body.product_model_id}
     ).scalar()
     if not model_exists:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="modèle catalogue introuvable"
-        )
+        raise ApiError(404, "PRODUCT_MODEL_NOT_FOUND")
 
     unit_id = uuid.uuid4()
     connection.execute(
@@ -256,7 +255,7 @@ def create_functional_location(
         text("SELECT 1 FROM sites WHERE id = :id"), {"id": body.site_id}
     ).scalar()
     if not site_exists:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="site introuvable")
+        raise ApiError(404, "SITE_NOT_FOUND")
     if body.parent_id is not None:
         # Lecture sous RLS : un parent d'un autre tenant est introuvable. La clé
         # étrangère seule ne suffirait pas, elle ignore l'isolation des tenants.
@@ -265,21 +264,16 @@ def create_functional_location(
             {"id": body.parent_id},
         ).scalar()
         if parent_site is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="position parente introuvable"
-            )
+            raise ApiError(404, "PARENT_FUNCTIONAL_LOCATION_NOT_FOUND")
         if parent_site != body.site_id:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="la position parente appartient à un autre site",
-            )
+            raise ApiError(409, "PARENT_FUNCTIONAL_LOCATION_OTHER_SITE")
     if body.space_id is not None:
         try:
             check_space_for_location(connection, space_id=body.space_id, site_id=body.site_id)
         except SpatialNotFound as exc:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+            raise api_error(exc, 404) from exc
         except SpatialConflict as exc:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+            raise api_error(exc, 409) from exc
 
     location_id = uuid.uuid4()
     connection.execute(
@@ -369,14 +363,12 @@ def create_assignment(
         text("SELECT 1 FROM functional_locations WHERE id = :id"), {"id": functional_location_id}
     ).scalar()
     if not location_exists:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="position fonctionnelle introuvable"
-        )
+        raise ApiError(404, "FUNCTIONAL_LOCATION_NOT_FOUND")
     unit_exists = connection.execute(
         text("SELECT 1 FROM physical_units WHERE id = :id"), {"id": body.physical_unit_id}
     ).scalar()
     if not unit_exists:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="exemplaire introuvable")
+        raise ApiError(404, "PHYSICAL_UNIT_NOT_FOUND")
 
     try:
         assignment_id = assign_physical_unit(
@@ -388,7 +380,7 @@ def create_assignment(
             changed_by=_actor(claims),
         )
     except LifecycleError as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+        raise api_error(exc, 409) from exc
     append_audit_entry(
         connection,
         tenant_id=tenant_id,
@@ -425,9 +417,7 @@ def read_current_occupant(
         text("SELECT 1 FROM functional_locations WHERE id = :id"), {"id": functional_location_id}
     ).scalar()
     if not location_exists:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="position fonctionnelle introuvable"
-        )
+        raise ApiError(404, "FUNCTIONAL_LOCATION_NOT_FOUND")
 
     occupant = get_current_occupant(connection, functional_location_id=functional_location_id)
     return CurrentOccupantOut(
@@ -459,9 +449,9 @@ def change_lifecycle_state(
             note=body.note,
         )
     except LifecycleNotFound as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise api_error(exc, 404) from exc
     except LifecycleError as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+        raise api_error(exc, 409) from exc
     append_audit_entry(
         connection,
         tenant_id=tenant_id,
@@ -486,5 +476,5 @@ def read_lifecycle(
     try:
         current_state(connection, physical_unit_id)
     except LifecycleNotFound as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise api_error(exc, 404) from exc
     return [LifecycleEventOut(**row) for row in lifecycle_history(connection, physical_unit_id)]

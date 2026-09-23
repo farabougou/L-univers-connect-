@@ -12,6 +12,7 @@ from app.db import engine
 from app.lifecycle import LifecycleError, change_state, current_state, lifecycle_history
 from app.main import app
 from app.tenancy import set_tenant_context
+from tests.error_helpers import raises_code
 from tests.jwt_helpers import JWKS, make_token
 from tests.tenant_cleanup import purge_tenant
 
@@ -116,7 +117,7 @@ def test_a_unit_cannot_be_installed_in_two_positions_at_once(two_tenants) -> Non
     tenant_a, _ = two_tenants
     with _in(tenant_a) as connection:
         _assign(connection, tenant_a, "u1", "loc_a")
-    with pytest.raises(LifecycleError, match="en stock ou déposé"):
+    with raises_code(LifecycleError, "UNIT_NOT_INSTALLABLE"):
         with _in(tenant_a) as connection:
             _assign(connection, tenant_a, "u1", "loc_b")
 
@@ -125,7 +126,7 @@ def test_the_same_unit_cannot_be_assigned_twice_to_its_position(two_tenants) -> 
     tenant_a, _ = two_tenants
     with _in(tenant_a) as connection:
         _assign(connection, tenant_a, "u1", "loc_a")
-    with pytest.raises(LifecycleError, match="occupe déjà"):
+    with raises_code(LifecycleError, "UNIT_ALREADY_AT_LOCATION"):
         with _in(tenant_a) as connection:
             _assign(connection, tenant_a, "u1", "loc_a")
 
@@ -151,16 +152,16 @@ def test_commissioning_then_service(two_tenants) -> None:
 
 
 @pytest.mark.parametrize(
-    ("to_state", "message"),
+    ("to_state", "code"),
     [
-        ("installed", "découle d'une affectation"),
-        ("in_service", "impossible"),
-        ("flying", "inconnu"),
+        ("installed", "LIFECYCLE_STATE_FROM_ASSIGNMENT"),
+        ("in_service", "LIFECYCLE_TRANSITION_FORBIDDEN"),
+        ("flying", "LIFECYCLE_STATE_UNKNOWN"),
     ],
 )
-def test_invalid_manual_transitions(two_tenants, to_state, message) -> None:
+def test_invalid_manual_transitions(two_tenants, to_state, code) -> None:
     tenant_a, _ = two_tenants
-    with pytest.raises(LifecycleError, match=message):
+    with raises_code(LifecycleError, code):
         with _in(tenant_a) as connection:
             _change(connection, tenant_a, to_state)
 

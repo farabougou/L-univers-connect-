@@ -23,7 +23,6 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from fastapi import Request
-from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
 
@@ -60,6 +59,11 @@ class RequestContext:
 _current: contextvars.ContextVar[RequestContext | None] = contextvars.ContextVar(
     "paios_request_context", default=None
 )
+
+
+def current_request_id() -> str | None:
+    context = _current.get()
+    return context.request_id if context else None
 
 
 def set_tenant(tenant_id: uuid.UUID) -> None:
@@ -152,9 +156,15 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                         "route": _route_template(request),
                     },
                 )
-                response = JSONResponse(
-                    status_code=500,
-                    content={"detail": "erreur interne", "request_id": request_id},
+                # Import tardif : le module des erreurs dépend de celui-ci.
+                from app.errors import problem_response
+
+                response = problem_response(
+                    request,
+                    status=500,
+                    code="INTERNAL_ERROR",
+                    params={"request_id": request_id},
+                    request_id=request_id,
                 )
             response.headers[REQUEST_ID_HEADER] = request_id
             logger.info(

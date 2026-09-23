@@ -2,7 +2,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.engine import Connection
 
 import app.rules  # noqa: F401  (enregistre le type de configuration « alarm_rule »)
@@ -21,6 +21,7 @@ from app.config_versions import (
     retire_version,
 )
 from app.deps import get_tenant_connection, get_tenant_id
+from app.errors import ApiError, api_error
 from app.schemas import ConfigDiffOut, ConfigReason, ConfigVersionCreate, ConfigVersionOut
 
 router = APIRouter()
@@ -33,12 +34,12 @@ def _actor(claims: dict[str, Any]) -> str:
     return claims.get("sub") or "inconnu"
 
 
-def _http_error(exc: Exception) -> HTTPException:
+def _http_error(exc: Exception) -> ApiError:
     if isinstance(exc, ConfigNotFound):
-        return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+        return api_error(exc, 404)
     if isinstance(exc, ConfigConflict):
-        return HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
-    return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+        return api_error(exc, 409)
+    return api_error(exc, 400)
 
 
 _ERRORS = (ConfigNotFound, ConfigConflict, ConfigInvalid)
@@ -112,7 +113,7 @@ def read_config_version(
 ) -> ConfigVersionOut:
     version = get_version(connection, version_id)
     if version is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="version introuvable")
+        raise ApiError(404, "CONFIG_VERSION_NOT_FOUND")
     return ConfigVersionOut(**version)
 
 
@@ -126,12 +127,9 @@ def diff_config_versions(
     """Ce qui change de la version `against` à la version `version_id`."""
     new, old = get_version(connection, version_id), get_version(connection, against)
     if new is None or old is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="version introuvable")
+        raise ApiError(404, "CONFIG_VERSION_NOT_FOUND")
     if (new["config_type"], new["subject_key"]) != (old["config_type"], old["subject_key"]):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="les deux versions ne concernent pas le même élément",
-        )
+        raise ApiError(400, "CONFIG_DIFF_SUBJECT_MISMATCH")
     return ConfigDiffOut(
         from_version=old["version"],
         to_version=new["version"],

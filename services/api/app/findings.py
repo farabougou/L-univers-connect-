@@ -17,6 +17,8 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
+from app.errors import DomainError
+
 FINDING_STATUSES = ("open", "acknowledged", "resolved", "false_positive")
 
 FINDING_COLUMNS = (
@@ -26,7 +28,11 @@ FINDING_COLUMNS = (
 )
 
 
-class FindingNotFound(LookupError):
+class FindingNotFound(DomainError, LookupError):
+    status = 404
+
+
+class FindingInvalid(DomainError, ValueError):
     pass
 
 
@@ -135,9 +141,9 @@ def change_finding_status(
     note: str | None = None,
 ) -> None:
     if status not in FINDING_STATUSES:
-        raise ValueError(f"statut inconnu : {status}")
+        raise FindingInvalid("FINDING_STATUS_UNKNOWN", status=status)
     if get_finding(connection, finding_id) is None:
-        raise FindingNotFound("constat introuvable")
+        raise FindingNotFound("FINDING_NOT_FOUND")
     connection.execute(
         text("UPDATE findings SET status = :status WHERE id = :id"),
         {"status": status, "id": finding_id},

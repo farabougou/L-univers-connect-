@@ -148,7 +148,7 @@ def test_wrong_placement_is_explained(two_tenants) -> None:
         _headers(tenant_a, ["admin_tenant"]),
     )
     assert response.status_code == 400
-    assert "directement sous le site" in response.json()["detail"]
+    assert response.json()["code"] == "SPACE_PLACEMENT_UNDER_SITE_FORBIDDEN"
 
 
 def test_date_without_timezone_is_rejected(two_tenants) -> None:

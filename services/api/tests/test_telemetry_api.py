@@ -231,7 +231,7 @@ def test_unit_incompatible_with_class_is_explained(two_tenants) -> None:
         },
     )
     assert response.status_code == 400
-    assert "incompatible" in response.json()["detail"]
+    assert response.json()["code"] == "UNIT_QUANTITY_MISMATCH"
 
 
 def test_rejecting_a_point_requires_a_reason(two_tenants) -> None:

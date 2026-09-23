@@ -2,12 +2,13 @@ import uuid
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.engine import Connection
 
 from app.audit import append_audit_entry
 from app.auth import require_any_role
 from app.deps import get_tenant_connection, get_tenant_id
+from app.errors import ApiError, api_error
 from app.passport import build_passport
 from app.properties import PropertyError, PropertyNotFound, list_properties, set_property
 from app.schemas import PropertyOut, PropertySet, TagCreate, TagOut, TagRevoke
@@ -30,7 +31,7 @@ def _roles(claims: dict[str, Any]) -> set[str]:
 def _passport_or_404(connection: Connection, node_id: uuid.UUID, claims: dict) -> dict:
     passport = build_passport(connection, node_id, _roles(claims))
     if passport is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="nœud introuvable")
+        raise ApiError(404, "NODE_NOT_FOUND")
     return passport
 
 
@@ -57,9 +58,9 @@ def scan_tag(
     try:
         tag = resolve_tag(connection, code)
     except TagNotFound as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise api_error(exc, 404) from exc
     except TagRevoked as exc:
-        raise HTTPException(status_code=status.HTTP_410_GONE, detail=str(exc)) from exc
+        raise api_error(exc, 410) from exc
     return {"tag": TagOut(**tag), "passport": _passport_or_404(connection, tag["node_id"], claims)}
 
 
@@ -85,7 +86,7 @@ def create_tag_route(
             created_by=_actor(claims),
         )
     except TagNotFound as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise api_error(exc, 404) from exc
     append_audit_entry(
         connection,
         tenant_id=tenant_id,
@@ -124,9 +125,9 @@ def revoke_tag_route(
             revoked_at=datetime.now(UTC),
         )
     except TagNotFound as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise api_error(exc, 404) from exc
     except TagRevoked as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+        raise api_error(exc, 409) from exc
     append_audit_entry(
         connection,
         tenant_id=tenant_id,
@@ -170,9 +171,9 @@ def set_property_route(
             created_by=_actor(claims),
         )
     except PropertyNotFound as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise api_error(exc, 404) from exc
     except PropertyError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+        raise api_error(exc, 400) from exc
     append_audit_entry(
         connection,
         tenant_id=tenant_id,

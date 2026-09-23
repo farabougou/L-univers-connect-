@@ -20,6 +20,8 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
+from app.errors import DomainError
+
 STATES = (
     "planned",
     "ordered",
@@ -54,12 +56,12 @@ INSTALLABLE_STATES = ("in_stock", "removed")
 MOUNTED_STATES = ("installed", "commissioned", "in_service", "out_of_service")
 
 
-class LifecycleError(ValueError):
+class LifecycleError(DomainError, ValueError):
     pass
 
 
-class LifecycleNotFound(LookupError):
-    pass
+class LifecycleNotFound(DomainError, LookupError):
+    status = 404
 
 
 def current_state(connection: Connection, physical_unit_id: uuid.UUID) -> str:
@@ -68,7 +70,7 @@ def current_state(connection: Connection, physical_unit_id: uuid.UUID) -> str:
         {"id": physical_unit_id},
     ).scalar()
     if state is None:
-        raise LifecycleNotFound("exemplaire introuvable")
+        raise LifecycleNotFound("PHYSICAL_UNIT_NOT_FOUND")
     return state
 
 
@@ -84,15 +86,14 @@ def change_state(
     via_assignment: bool = False,
 ) -> None:
     if to_state not in STATES:
-        raise LifecycleError(f"état inconnu : {to_state}")
+        raise LifecycleError("LIFECYCLE_STATE_UNKNOWN", state=to_state)
     if to_state in ASSIGNMENT_STATES and not via_assignment:
-        raise LifecycleError(
-            f"« {to_state} » découle d'une affectation : installer ou remplacer l'exemplaire "
-            "à sa position plutôt que de changer l'état à la main"
-        )
+        raise LifecycleError("LIFECYCLE_STATE_FROM_ASSIGNMENT", state=to_state)
     from_state = current_state(connection, physical_unit_id)
     if to_state not in TRANSITIONS[from_state]:
-        raise LifecycleError(f"passage « {from_state} » → « {to_state} » impossible")
+        raise LifecycleError(
+            "LIFECYCLE_TRANSITION_FORBIDDEN", from_state=from_state, to_state=to_state
+        )
 
     connection.execute(
         text("UPDATE physical_units SET lifecycle_state = :state WHERE id = :id"),

@@ -1,11 +1,12 @@
 from typing import Annotated, Any
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI
 from sqlalchemy import text
 
 from app.auth import get_current_claims, require_role
 from app.config import settings
 from app.db import engine
+from app.errors import ApiError, install_error_handlers
 from app.observability import RequestLoggingMiddleware, configure_logging
 from app.routers.analytics import router as analytics_router
 from app.routers.assets import router as asset_registry_router
@@ -21,6 +22,7 @@ configure_logging(settings.log_level)
 
 app = FastAPI(title="Physical Asset Intelligence OS API")
 app.add_middleware(RequestLoggingMiddleware)
+install_error_handlers(app)
 app.include_router(asset_registry_router)
 app.include_router(graph_router)
 app.include_router(spatial_router)
@@ -43,7 +45,7 @@ def health_db() -> dict[str, str]:
         with engine.connect() as connection:
             connection.execute(text("SELECT 1"))
     except Exception as exc:
-        raise HTTPException(status_code=503, detail="database unavailable") from exc
+        raise ApiError(503, "DATABASE_UNAVAILABLE") from exc
 
     return {"status": "ok"}
 

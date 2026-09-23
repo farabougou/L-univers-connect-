@@ -115,7 +115,7 @@ def test_invalid_rule_is_explained(two_tenants) -> None:
         json=_rule_body(tenant_a, point_id=str(tenant_a["run_status"])),
     )
     assert response.status_code == 400
-    assert "point numérique" in response.json()["detail"]
+    assert response.json()["code"] == "RULE_THRESHOLD_REQUIRES_NUMBER"
 
 
 def test_diff_and_restore_through_the_api(two_tenants) -> None:

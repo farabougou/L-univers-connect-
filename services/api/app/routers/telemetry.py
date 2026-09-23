@@ -2,11 +2,13 @@ import uuid
 from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, Request, Response, status
 from sqlalchemy.engine import Connection
 
 from app.auth import require_any_role
 from app.deps import get_tenant_connection, get_tenant_id
+from app.errors import ApiError, api_error
+from app.i18n import negotiate_locale, render
 from app.points import get_point
 from app.schemas import (
     MeasurementBatch,
@@ -49,7 +51,7 @@ def create_measurement(
     (renvoi après coupure), 409 si une autre valeur existe à cet instant."""
     point = get_point(connection, body.point_id)
     if point is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="point introuvable")
+        raise ApiError(404, "POINT_NOT_FOUND")
 
     received_at = datetime.now(UTC)
     measured_at = body.measured_at or received_at
@@ -65,9 +67,9 @@ def create_measurement(
             received_at=received_at,
         )
     except MeasurementRejected as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+        raise api_error(exc, 400) from exc
     except MeasurementConflict as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+        raise api_error(exc, 409) from exc
 
     if outcome == "duplicate":
         response.status_code = status.HTTP_200_OK
@@ -77,6 +79,7 @@ def create_measurement(
 @router.post("/measurements/batch", response_model=MeasurementBatchResult)
 def create_measurements_batch(
     body: MeasurementBatch,
+    request: Request,
     connection: Annotated[Connection, Depends(get_tenant_connection)],
     tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
@@ -89,6 +92,10 @@ def create_measurements_batch(
         source=body.source,
         received_at=datetime.now(UTC),
     )
+    # Chaque ligne refusée porte son code (qui fait foi) et sa raison traduite.
+    locale = negotiate_locale(request.headers.get("accept-language"))
+    for error in summary["errors"]:
+        error["reason"] = render(error["code"], error["params"], locale)
     return MeasurementBatchResult(**summary)
 
 
@@ -101,15 +108,10 @@ def list_measurements_route(
     limit: int = 100,
 ) -> list[MeasurementOut]:
     if limit < 1 or limit > 1000:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="limit doit être entre 1 et 1000"
-        )
+        raise ApiError(400, "QUERY_LIMIT_OUT_OF_RANGE", minimum=1, maximum=1000)
     if since is not None and since.tzinfo is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="since doit préciser son fuseau horaire",
-        )
+        raise ApiError(400, "QUERY_SINCE_TIMEZONE_REQUIRED")
     if get_point(connection, point_id) is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="point introuvable")
+        raise ApiError(404, "POINT_NOT_FOUND")
     rows = list_measurements(connection, point_id=point_id, since=since, limit=limit)
     return [MeasurementOut(**row) for row in rows]

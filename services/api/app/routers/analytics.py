@@ -2,7 +2,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.engine import Connection
 
 from app.audit import append_audit_entry
@@ -16,6 +16,7 @@ from app.desired_states import (
     get_desired_state,
     list_desired_states,
 )
+from app.errors import ApiError, api_error
 from app.findings import (
     FindingNotFound,
     change_finding_status,
@@ -74,9 +75,9 @@ def declare_desired_state_route(
             created_by=_actor(claims),
         )
     except DesiredStateNotFound as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise api_error(exc, 404) from exc
     except DesiredStateInvalid as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+        raise api_error(exc, 400) from exc
     append_audit_entry(
         connection,
         tenant_id=tenant_id,
@@ -97,7 +98,7 @@ def list_desired_states_route(
     include_ended: bool = False,
 ) -> list[DesiredStateOut]:
     if get_point(connection, point_id) is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="point introuvable")
+        raise ApiError(404, "POINT_NOT_FOUND")
     rows = list_desired_states(connection, point_id, include_ended=include_ended)
     return [DesiredStateOut(**row) for row in rows]
 
@@ -114,9 +115,9 @@ def end_desired_state_route(
     try:
         end_desired_state(connection, desired_state_id=desired_state_id, valid_to=valid_to)
     except DesiredStateNotFound as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise api_error(exc, 404) from exc
     except DesiredStateInvalid as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+        raise api_error(exc, 409) from exc
     append_audit_entry(
         connection,
         tenant_id=tenant_id,
@@ -157,7 +158,7 @@ def read_finding(
 ) -> FindingOut:
     finding = get_finding(connection, finding_id)
     if finding is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="constat introuvable")
+        raise ApiError(404, "FINDING_NOT_FOUND")
     return FindingOut(**finding)
 
 
@@ -168,7 +169,7 @@ def read_finding_history(
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
 ) -> list[FindingStatusHistoryOut]:
     if get_finding(connection, finding_id) is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="constat introuvable")
+        raise ApiError(404, "FINDING_NOT_FOUND")
     return [FindingStatusHistoryOut(**row) for row in finding_history(connection, finding_id)]
 
 
@@ -190,7 +191,7 @@ def update_finding_status(
             note=body.note,
         )
     except FindingNotFound as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise api_error(exc, 404) from exc
     append_audit_entry(
         connection,
         tenant_id=tenant_id,
@@ -215,5 +216,5 @@ def read_point_trust(
     """Score de confiance du point maintenant, avec le détail de son calcul."""
     point = get_point(connection, point_id)
     if point is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="point introuvable")
+        raise ApiError(404, "POINT_NOT_FOUND")
     return TrustOut(**compute_trust(connection, point, datetime.now(UTC)))

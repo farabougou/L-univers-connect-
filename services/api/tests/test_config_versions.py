@@ -17,6 +17,7 @@ from app.config_versions import (
 )
 from app.rules import ALARM_RULE
 from tests.analytics_fixtures import cleanup_tenant, create_tenant_with_points, in_tenant
+from tests.error_helpers import raises_code
 
 NOW = datetime(2026, 9, 23, 12, 0, tzinfo=UTC)
 
@@ -131,38 +132,33 @@ def test_only_a_draft_can_be_activated(two_tenants) -> None:
 
 
 @pytest.mark.parametrize(
-    ("overrides", "message"),
-    [
-        ({"kind": "magie"}, "règle invalide"),
-        ({"surprise": 1}, "règle invalide"),
-        ({"threshold": "chaud"}, "règle invalide"),
-        ({"severity": "apocalypse"}, "règle invalide"),
-    ],
+    "overrides",
+    [{"kind": "magie"}, {"surprise": 1}, {"threshold": "chaud"}, {"severity": "apocalypse"}],
 )
-def test_invalid_rule_is_never_stored(two_tenants, overrides, message) -> None:
+def test_invalid_rule_is_never_stored(two_tenants, overrides) -> None:
     tenant_a, _ = two_tenants
-    with pytest.raises(ConfigInvalid, match=message):
+    with raises_code(ConfigInvalid, "RULE_CONTENT_INVALID"):
         with in_tenant(tenant_a) as connection:
             _new(connection, tenant_a, **overrides)
 
 
 def test_threshold_rule_requires_a_numeric_point(two_tenants) -> None:
     tenant_a, _ = two_tenants
-    with pytest.raises(ConfigInvalid, match="point numérique"):
+    with raises_code(ConfigInvalid, "RULE_THRESHOLD_REQUIRES_NUMBER"):
         with in_tenant(tenant_a) as connection:
             _new(connection, tenant_a, point_id=str(tenant_a["run_status"]))
 
 
 def test_rule_on_another_tenant_point_is_refused(two_tenants) -> None:
     tenant_a, tenant_b = two_tenants
-    with pytest.raises(ConfigInvalid, match="introuvable"):
+    with raises_code(ConfigInvalid, "RULE_POINT_NOT_FOUND"):
         with in_tenant(tenant_a) as connection:
             _new(connection, tenant_a, point_id=str(tenant_b["sensor"]))
 
 
 def test_unknown_config_type_is_refused(two_tenants) -> None:
     tenant_a, _ = two_tenants
-    with pytest.raises(ConfigInvalid, match="inconnu"):
+    with raises_code(ConfigInvalid, "CONFIG_TYPE_UNKNOWN"):
         with in_tenant(tenant_a) as connection:
             create_version(
                 connection,

@@ -11,6 +11,8 @@ type spéculatif « au cas où ».
 
 from dataclasses import dataclass
 
+from app.errors import DomainError
+
 SPATIAL_VOCABULARY_VERSION = "2026-09-23.1"
 
 
@@ -38,15 +40,20 @@ SPACE_TYPES: dict[str, SpaceType] = {
 }
 
 
-class SpatialVocabularyError(ValueError):
+class SpatialVocabularyError(DomainError, ValueError):
     pass
 
 
 def check_space_placement(space_type: str, parent_type: str | None) -> SpaceType:
     definition = SPACE_TYPES.get(space_type)
     if definition is None:
-        raise SpatialVocabularyError(f"type d'espace inconnu : {space_type}")
+        raise SpatialVocabularyError("SPACE_TYPE_UNKNOWN", space_type=space_type)
     if parent_type not in definition.parent_types:
-        where = "directement sous le site" if parent_type is None else f"dans un « {parent_type} »"
-        raise SpatialVocabularyError(f"un « {space_type} » ne peut pas être placé {where}")
+        if parent_type is None:
+            raise SpatialVocabularyError(
+                "SPACE_PLACEMENT_UNDER_SITE_FORBIDDEN", space_type=space_type
+            )
+        raise SpatialVocabularyError(
+            "SPACE_PLACEMENT_FORBIDDEN", space_type=space_type, parent_type=parent_type
+        )
     return definition

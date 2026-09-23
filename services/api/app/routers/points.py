@@ -1,12 +1,13 @@
 import uuid
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.engine import Connection
 
 from app.audit import append_audit_entry
 from app.auth import require_any_role
 from app.deps import get_tenant_connection, get_tenant_id
+from app.errors import ApiError, api_error
 from app.point_vocabulary import PointVocabularyError
 from app.points import (
     PointConflict,
@@ -29,12 +30,12 @@ def _actor(claims: dict[str, Any]) -> str:
     return claims.get("sub") or "inconnu"
 
 
-def _http_error(exc: Exception) -> HTTPException:
+def _http_error(exc: Exception) -> ApiError:
     if isinstance(exc, PointNotFound):
-        return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+        return api_error(exc, 404)
     if isinstance(exc, PointConflict):
-        return HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
-    return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+        return api_error(exc, 409)
+    return api_error(exc, 400)
 
 
 _ERRORS = (PointNotFound, PointConflict, PointVocabularyError)
@@ -90,7 +91,7 @@ def read_point(
 ) -> PointOut:
     point = get_point(connection, point_id)
     if point is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="point introuvable")
+        raise ApiError(404, "POINT_NOT_FOUND")
     return PointOut(**point)
 
 
@@ -164,8 +165,5 @@ def reject_point_route(
     claims: Annotated[dict, Depends(require_any_role(*_MANAGE_REGISTRY_ROLES))],
 ) -> PointOut:
     if not body.reason:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="une raison est obligatoire pour rejeter un point",
-        )
+        raise ApiError(422, "POINT_REJECTION_REASON_REQUIRED")
     return _decide("rejected", point_id, body, connection, tenant_id, claims)

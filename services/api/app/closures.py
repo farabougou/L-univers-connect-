@@ -14,18 +14,19 @@ from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
 from app.closure_vocabulary import ACTIONS, CAUSES, SYMPTOMS, VERIFICATION_RESULTS
+from app.errors import DomainError
 
 
-class ClosureError(ValueError):
+class ClosureError(DomainError, ValueError):
     pass
 
 
-class ClosureNotFound(LookupError):
-    pass
+class ClosureNotFound(DomainError, LookupError):
+    status = 404
 
 
-class ClosureConflict(ValueError):
-    pass
+class ClosureConflict(DomainError, ValueError):
+    status = 409
 
 
 _COLUMNS = (
@@ -48,28 +49,28 @@ def close_intervention(
     closed_by: str,
     note: str | None = None,
 ) -> uuid.UUID:
-    for code, vocabulary, label in (
-        (symptom_code, SYMPTOMS, "symptôme"),
-        (cause_code, CAUSES, "cause"),
-        (action_code, ACTIONS, "action"),
-        (verification_result, VERIFICATION_RESULTS, "résultat de vérification"),
+    for code, vocabulary, field in (
+        (symptom_code, SYMPTOMS, "symptom_code"),
+        (cause_code, CAUSES, "cause_code"),
+        (action_code, ACTIONS, "action_code"),
+        (verification_result, VERIFICATION_RESULTS, "verification_result"),
     ):
         if code not in vocabulary:
-            raise ClosureError(f"code de {label} inconnu : {code}")
+            raise ClosureError("CLOSURE_CODE_UNKNOWN", field=field, code=code)
     if action_code == "replacement" and not parts:
-        raise ClosureError("un remplacement doit indiquer la ou les pièces remplacées")
+        raise ClosureError("CLOSURE_REPLACEMENT_REQUIRES_PARTS")
 
     exists = connection.execute(
         text("SELECT 1 FROM interventions WHERE id = :id"), {"id": intervention_id}
     ).scalar()
     if not exists:
-        raise ClosureNotFound("intervention introuvable")
+        raise ClosureNotFound("INTERVENTION_NOT_FOUND")
     already = connection.execute(
         text("SELECT 1 FROM intervention_closures WHERE intervention_id = :id"),
         {"id": intervention_id},
     ).scalar()
     if already:
-        raise ClosureConflict("cette intervention est déjà clôturée")
+        raise ClosureConflict("INTERVENTION_ALREADY_CLOSED")
 
     closure_id = uuid.uuid4()
     connection.execute(

@@ -3,6 +3,7 @@ from datetime import datetime, time
 from typing import Literal
 
 from pydantic import AwareDatetime, BaseModel, Field, model_validator
+from pydantic_core import PydanticCustomError
 
 
 class SiteCreate(BaseModel):
@@ -186,7 +187,11 @@ class InterventionCreate(BaseModel):
         if self.client_ref is not None and (
             self.started_at is None or self.started_at.tzinfo is None
         ):
-            raise ValueError("client_ref exige started_at avec son fuseau horaire")
+            # Le type d'erreur sert de code stable dans la réponse (champ « reason »).
+            raise PydanticCustomError(
+                "client_ref_requires_aware_started_at",
+                "client_ref requires started_at with its time zone",
+            )
         return self
 
 
@@ -402,6 +407,8 @@ class MeasurementBatch(BaseModel):
 class MeasurementBatchError(BaseModel):
     index: int
     point_id: uuid.UUID
+    code: str
+    params: dict
     reason: str
 
 

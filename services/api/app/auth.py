@@ -2,12 +2,13 @@ import time
 from typing import Annotated, Any
 
 import httpx
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt
 from jose.exceptions import JOSEError
 
 from app.config import settings
+from app.errors import ApiError
 
 security = HTTPBearer(auto_error=False)
 
@@ -40,10 +41,7 @@ def decode_token(token: str) -> dict[str, Any]:
     try:
         jwks = fetch_jwks()
     except httpx.HTTPError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="fournisseur d'authentification indisponible",
-        ) from exc
+        raise ApiError(503, "AUTH_PROVIDER_UNAVAILABLE") from exc
 
     try:
         return jwt.decode(
@@ -54,16 +52,14 @@ def decode_token(token: str) -> dict[str, Any]:
             issuer=settings.oidc_issuer,
         )
     except JOSEError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="jeton invalide"
-        ) from exc
+        raise ApiError(401, "TOKEN_INVALID") from exc
 
 
 def get_current_claims(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security)],
 ) -> dict[str, Any]:
     if credentials is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="jeton manquant")
+        raise ApiError(401, "TOKEN_MISSING")
     return decode_token(credentials.credentials)
 
 
@@ -75,7 +71,7 @@ def require_role(role: str):
     ) -> dict[str, Any]:
         roles = claims.get("realm_access", {}).get("roles", [])
         if role not in roles:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="rôle insuffisant")
+            raise ApiError(403, "ROLE_FORBIDDEN")
         return claims
 
     return dependency
@@ -89,7 +85,7 @@ def require_any_role(*allowed_roles: str):
     ) -> dict[str, Any]:
         roles = set(claims.get("realm_access", {}).get("roles", []))
         if roles.isdisjoint(allowed_roles):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="rôle insuffisant")
+            raise ApiError(403, "ROLE_FORBIDDEN")
         return claims
 
     return dependency

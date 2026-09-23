@@ -2,13 +2,14 @@ import uuid
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
 from app.audit import append_audit_entry
 from app.auth import require_any_role
 from app.deps import get_tenant_connection, get_tenant_id
+from app.errors import ApiError, api_error
 from app.schemas import (
     LocationSpaceChange,
     LocationSpaceHistoryOut,
@@ -38,12 +39,12 @@ def _actor(claims: dict[str, Any]) -> str:
     return claims.get("sub") or "inconnu"
 
 
-def _http_error(exc: Exception) -> HTTPException:
+def _http_error(exc: Exception) -> ApiError:
     if isinstance(exc, SpatialNotFound):
-        return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+        return api_error(exc, 404)
     if isinstance(exc, SpatialConflict):
-        return HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
-    return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+        return api_error(exc, 409)
+    return api_error(exc, 400)
 
 
 @router.post("/spaces", response_model=SpaceOut, status_code=status.HTTP_201_CREATED)
@@ -175,9 +176,7 @@ def read_location_space_history(
         text("SELECT 1 FROM functional_locations WHERE id = :id"), {"id": functional_location_id}
     ).scalar()
     if not exists:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="position fonctionnelle introuvable"
-        )
+        raise ApiError(404, "FUNCTIONAL_LOCATION_NOT_FOUND")
     return [
         LocationSpaceHistoryOut(**row)
         for row in location_space_history(connection, functional_location_id)

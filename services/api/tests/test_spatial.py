@@ -19,6 +19,7 @@ from app.spatial import (
 from app.spatial_vocabulary import SpatialVocabularyError
 from app.tenancy import set_tenant_context
 from tests.db_helpers import purge_relations_for_tenant
+from tests.error_helpers import raises_code
 
 T0 = datetime(2026, 9, 23, 8, 0, tzinfo=UTC)
 
@@ -182,16 +183,16 @@ def test_parent_of_another_tenant_is_not_found(two_tenants) -> None:
 
 
 @pytest.mark.parametrize(
-    ("space_type", "parent_key", "message"),
+    ("space_type", "parent_key", "code"),
     [
-        ("room", None, "directement sous le site"),
-        ("building", "floor", "dans un « floor »"),
-        ("piscine", None, "inconnu"),
+        ("room", None, "SPACE_PLACEMENT_UNDER_SITE_FORBIDDEN"),
+        ("building", "floor", "SPACE_PLACEMENT_FORBIDDEN"),
+        ("piscine", None, "SPACE_TYPE_UNKNOWN"),
     ],
 )
-def test_space_placement_rules(two_tenants, space_type, parent_key, message) -> None:
+def test_space_placement_rules(two_tenants, space_type, parent_key, code) -> None:
     tenant_a, _ = two_tenants
-    with pytest.raises(SpatialVocabularyError, match=message):
+    with raises_code(SpatialVocabularyError, code):
         with _in_tenant(tenant_a) as connection:
             create_space(
                 connection,
@@ -207,7 +208,7 @@ def test_space_placement_rules(two_tenants, space_type, parent_key, message) -> 
 
 def test_parent_on_another_site_is_rejected_by_the_application(two_tenants) -> None:
     tenant_a, _ = two_tenants
-    with pytest.raises(SpatialConflict, match="autre site"):
+    with raises_code(SpatialConflict, "SPACE_PARENT_OTHER_SITE"):
         with _in_tenant(tenant_a) as connection:
             create_space(
                 connection,
@@ -257,7 +258,7 @@ def test_open_code_is_unique_per_site_but_reusable_after_closing(two_tenants) ->
 
     with _in_tenant(tenant_a) as connection:
         first = new_building(connection)
-    with pytest.raises(SpatialConflict, match="déjà utilisé"):
+    with raises_code(SpatialConflict, "SPACE_CODE_ALREADY_USED"):
         with _in_tenant(tenant_a) as connection:
             new_building(connection)
     with _in_tenant(tenant_a) as connection:
@@ -289,14 +290,14 @@ def test_closed_space_cannot_be_reopened(two_tenants) -> None:
 
 def test_space_with_open_children_cannot_be_closed(two_tenants) -> None:
     tenant_a, _ = two_tenants
-    with pytest.raises(SpatialConflict, match="espaces ouverts"):
+    with raises_code(SpatialConflict, "SPACE_HAS_OPEN_CHILDREN"):
         with _in_tenant(tenant_a) as connection:
             close_space(connection, space_id=tenant_a["building"], valid_to=T0 + timedelta(days=1))
 
 
 def test_space_holding_a_location_cannot_be_closed(two_tenants) -> None:
     tenant_a, _ = two_tenants
-    with pytest.raises(SpatialConflict, match="positions fonctionnelles"):
+    with raises_code(SpatialConflict, "SPACE_HAS_FUNCTIONAL_LOCATIONS"):
         with _in_tenant(tenant_a) as connection:
             _place(connection, tenant_a, tenant_a["ahu"], tenant_a["room"], T0)
             close_space(connection, space_id=tenant_a["room"], valid_to=T0 + timedelta(days=1))
@@ -324,7 +325,7 @@ def test_moving_a_location_keeps_the_full_history(two_tenants) -> None:
 
 def test_a_move_cannot_be_dated_before_the_previous_one(two_tenants) -> None:
     tenant_a, _ = two_tenants
-    with pytest.raises(ValueError, match="précédent changement"):
+    with raises_code(ValueError, "LOCATION_MOVE_BEFORE_PREVIOUS"):
         with _in_tenant(tenant_a) as connection:
             _place(connection, tenant_a, tenant_a["ahu"], tenant_a["room"], T0)
             _place(connection, tenant_a, tenant_a["ahu"], tenant_a["floor"], T0 - timedelta(days=1))
@@ -332,7 +333,7 @@ def test_a_move_cannot_be_dated_before_the_previous_one(two_tenants) -> None:
 
 def test_placing_in_the_same_space_again_is_refused(two_tenants) -> None:
     tenant_a, _ = two_tenants
-    with pytest.raises(SpatialConflict, match="déjà à cet emplacement"):
+    with raises_code(SpatialConflict, "LOCATION_ALREADY_IN_SPACE"):
         with _in_tenant(tenant_a) as connection:
             _place(connection, tenant_a, tenant_a["ahu"], tenant_a["room"], T0)
             _place(connection, tenant_a, tenant_a["ahu"], tenant_a["room"], T0 + timedelta(days=1))
@@ -340,7 +341,7 @@ def test_placing_in_the_same_space_again_is_refused(two_tenants) -> None:
 
 def test_location_cannot_be_placed_on_another_site(two_tenants) -> None:
     tenant_a, _ = two_tenants
-    with pytest.raises(SpatialConflict, match="autre site"):
+    with raises_code(SpatialConflict, "SPACE_OTHER_SITE_THAN_LOCATION"):
         with _in_tenant(tenant_a) as connection:
             _place(connection, tenant_a, tenant_a["ahu"], tenant_a["other_building"], T0)
 
@@ -357,7 +358,7 @@ def test_location_on_another_site_is_rejected_by_the_database(two_tenants) -> No
 
 def test_location_cannot_be_placed_in_a_closed_space(two_tenants) -> None:
     tenant_a, _ = two_tenants
-    with pytest.raises(SpatialConflict, match="clos"):
+    with raises_code(SpatialConflict, "SPACE_ENDED"):
         with _in_tenant(tenant_a) as connection:
             close_space(connection, space_id=tenant_a["room"], valid_to=T0 + timedelta(days=1))
             _place(connection, tenant_a, tenant_a["ahu"], tenant_a["room"], T0 + timedelta(days=2))

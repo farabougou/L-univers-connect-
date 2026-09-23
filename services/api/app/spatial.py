@@ -13,16 +13,21 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
+from app.errors import DomainError
 from app.spatial_vocabulary import check_space_placement
 
 _SPACE_COLUMNS = "id, site_id, parent_id, space_type, code, name, valid_from, valid_to, created_at"
 
 
-class SpatialNotFound(LookupError):
-    pass
+class SpatialNotFound(DomainError, LookupError):
+    status = 404
 
 
-class SpatialConflict(ValueError):
+class SpatialConflict(DomainError, ValueError):
+    status = 409
+
+
+class SpatialInvalid(DomainError, ValueError):
     pass
 
 
@@ -40,9 +45,9 @@ def get_space(connection: Connection, space_id: uuid.UUID) -> dict[str, Any] | N
 def _require_open_space(connection: Connection, space_id: uuid.UUID) -> dict[str, Any]:
     space = get_space(connection, space_id)
     if space is None:
-        raise SpatialNotFound("espace introuvable")
+        raise SpatialNotFound("SPACE_NOT_FOUND")
     if space["valid_to"] is not None:
-        raise SpatialConflict("cet espace est clos")
+        raise SpatialConflict("SPACE_ENDED")
     return space
 
 
@@ -61,13 +66,13 @@ def create_space(
         text("SELECT 1 FROM sites WHERE id = :id"), {"id": site_id}
     ).scalar()
     if not site_exists:
-        raise SpatialNotFound("site introuvable")
+        raise SpatialNotFound("SITE_NOT_FOUND")
 
     parent_type = None
     if parent_id is not None:
         parent = _require_open_space(connection, parent_id)
         if parent["site_id"] != site_id:
-            raise SpatialConflict("l'espace parent appartient à un autre site")
+            raise SpatialConflict("SPACE_PARENT_OTHER_SITE")
         parent_type = parent["space_type"]
     check_space_placement(space_type, parent_type)
 
@@ -76,7 +81,7 @@ def create_space(
         {"site_id": site_id, "code": code},
     ).scalar()
     if code_taken:
-        raise SpatialConflict(f"le code « {code} » est déjà utilisé sur ce site")
+        raise SpatialConflict("SPACE_CODE_ALREADY_USED", code=code)
 
     space_id = uuid.uuid4()
     connection.execute(
@@ -104,18 +109,18 @@ def close_space(connection: Connection, *, space_id: uuid.UUID, valid_to: dateti
     l'historique. Refusé tant qu'il contient encore quelque chose."""
     space = _require_open_space(connection, space_id)
     if valid_to <= space["valid_from"]:
-        raise ValueError("la date de fin doit être postérieure à la création de l'espace")
+        raise SpatialInvalid("SPACE_END_BEFORE_CREATION")
 
     open_children = connection.execute(
         text("SELECT 1 FROM spaces WHERE parent_id = :id AND valid_to IS NULL"), {"id": space_id}
     ).scalar()
     if open_children:
-        raise SpatialConflict("cet espace contient encore des espaces ouverts")
+        raise SpatialConflict("SPACE_HAS_OPEN_CHILDREN")
     located = connection.execute(
         text("SELECT 1 FROM functional_locations WHERE space_id = :id"), {"id": space_id}
     ).scalar()
     if located:
-        raise SpatialConflict("des positions fonctionnelles sont encore placées dans cet espace")
+        raise SpatialConflict("SPACE_HAS_FUNCTIONAL_LOCATIONS")
 
     connection.execute(
         text("UPDATE spaces SET valid_to = :valid_to WHERE id = :id"),
@@ -144,7 +149,7 @@ def check_space_for_location(
     site (la base le garantit aussi par une clé étrangère composée)."""
     space = _require_open_space(connection, space_id)
     if space["site_id"] != site_id:
-        raise SpatialConflict("l'espace appartient à un autre site que la position")
+        raise SpatialConflict("SPACE_OTHER_SITE_THAN_LOCATION")
 
 
 def record_location_space(
@@ -172,11 +177,11 @@ def record_location_space(
         .first()
     )
     if location is None:
-        raise SpatialNotFound("position fonctionnelle introuvable")
+        raise SpatialNotFound("FUNCTIONAL_LOCATION_NOT_FOUND")
     if space_id is not None:
         check_space_for_location(connection, space_id=space_id, site_id=location["site_id"])
     if space_id == location["space_id"]:
-        raise SpatialConflict("la position est déjà à cet emplacement")
+        raise SpatialConflict("LOCATION_ALREADY_IN_SPACE")
 
     last_change = connection.execute(
         text(
@@ -186,7 +191,7 @@ def record_location_space(
         {"id": functional_location_id},
     ).scalar()
     if last_change is not None and valid_from <= last_change:
-        raise ValueError("la date du déplacement doit suivre le précédent changement d'emplacement")
+        raise SpatialInvalid("LOCATION_MOVE_BEFORE_PREVIOUS")
 
     connection.execute(
         text("UPDATE functional_locations SET space_id = :space_id WHERE id = :id"),

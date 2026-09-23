@@ -2,11 +2,12 @@ import uuid
 from collections.abc import Iterator
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from sqlalchemy.engine import Connection
 
 from app.auth import get_current_claims
 from app.db import engine
+from app.errors import ApiError
 from app.observability import set_tenant
 from app.tenancy import set_tenant_context
 
@@ -20,13 +21,11 @@ def get_connection() -> Iterator[Connection]:
 def get_tenant_id(claims: Annotated[dict, Depends(get_current_claims)]) -> uuid.UUID:
     raw_tenant_id = claims.get("tenant_id")
     if not raw_tenant_id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="jeton sans tenant_id")
+        raise ApiError(400, "TOKEN_TENANT_MISSING")
     try:
         tenant_id = uuid.UUID(str(raw_tenant_id))
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="tenant_id invalide dans le jeton"
-        ) from exc
+        raise ApiError(400, "TOKEN_TENANT_INVALID") from exc
     set_tenant(tenant_id)
     return tenant_id
 

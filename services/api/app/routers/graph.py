@@ -2,12 +2,13 @@ import uuid
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.engine import Connection
 
 from app.audit import append_audit_entry
 from app.auth import require_any_role
 from app.deps import get_tenant_connection, get_tenant_id
+from app.errors import ApiError, api_error
 from app.graph import (
     NodeNotFound,
     RelationConflict,
@@ -47,7 +48,7 @@ def read_node(
 ) -> GraphNodeOut:
     node = get_node(connection, node_id)
     if node is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="nœud introuvable")
+        raise ApiError(404, "NODE_NOT_FOUND")
     return GraphNodeOut(**node)
 
 
@@ -61,9 +62,7 @@ def read_node_relations(
     try:
         edges = list_node_relations(connection, node_id, include_ended=include_ended)
     except NodeNotFound as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="nœud introuvable"
-        ) from exc
+        raise ApiError(404, "NODE_NOT_FOUND") from exc
     return [RelationOut(**edge) for edge in edges]
 
 
@@ -76,9 +75,7 @@ def read_external_identifiers(
     try:
         rows = list_external_identifiers(connection, node_id)
     except NodeNotFound as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="nœud introuvable"
-        ) from exc
+        raise ApiError(404, "NODE_NOT_FOUND") from exc
     return [ExternalIdentifierOut(**row) for row in rows]
 
 
@@ -104,13 +101,11 @@ def add_external_identifier_route(
             created_by=_actor(claims),
         )
     except NodeNotFound as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="nœud introuvable"
-        ) from exc
+        raise ApiError(404, "NODE_NOT_FOUND") from exc
     except VocabularyError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+        raise api_error(exc, 400) from exc
     except RelationConflict as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+        raise api_error(exc, 409) from exc
 
     append_audit_entry(
         connection,
@@ -146,13 +141,11 @@ def create_relation_route(
             confidence=body.confidence,
         )
     except NodeNotFound as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="nœud introuvable"
-        ) from exc
+        raise ApiError(404, "NODE_NOT_FOUND") from exc
     except VocabularyError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+        raise api_error(exc, 400) from exc
     except RelationConflict as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+        raise api_error(exc, 409) from exc
 
     append_audit_entry(
         connection,
@@ -182,13 +175,11 @@ def end_relation_route(
     try:
         subject_id = end_relation(connection, relation_id=relation_id, valid_to=valid_to)
     except RelationNotFound as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="relation introuvable"
-        ) from exc
+        raise ApiError(404, "RELATION_NOT_FOUND") from exc
     except RelationConflict as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+        raise api_error(exc, 409) from exc
     except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+        raise api_error(exc, 400) from exc
 
     append_audit_entry(
         connection,

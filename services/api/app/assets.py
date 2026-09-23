@@ -37,13 +37,10 @@ def assign_physical_unit(
 
     previous = get_current_occupant(connection, functional_location_id=functional_location_id)
     if previous == physical_unit_id:
-        raise LifecycleError("cet exemplaire occupe déjà cette position")
+        raise LifecycleError("UNIT_ALREADY_AT_LOCATION")
     state = current_state(connection, physical_unit_id)
     if state not in INSTALLABLE_STATES:
-        raise LifecycleError(
-            f"exemplaire à l'état « {state} » : seul un exemplaire en stock ou déposé "
-            "peut être installé"
-        )
+        raise LifecycleError("UNIT_NOT_INSTALLABLE", state=state)
 
     connection.execute(
         text(

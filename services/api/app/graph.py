@@ -14,6 +14,7 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
+from app.errors import DomainError
 from app.graph_vocabulary import (
     EXTERNAL_ID_SCHEMES,
     PREDICATES,
@@ -23,15 +24,19 @@ from app.graph_vocabulary import (
 )
 
 
-class NodeNotFound(LookupError):
-    pass
+class NodeNotFound(DomainError, LookupError):
+    status = 404
 
 
-class RelationNotFound(LookupError):
-    pass
+class RelationNotFound(DomainError, LookupError):
+    status = 404
 
 
-class RelationConflict(ValueError):
+class RelationConflict(DomainError, ValueError):
+    status = 409
+
+
+class GraphInvalid(DomainError, ValueError):
     pass
 
 
@@ -50,7 +55,7 @@ def get_node(connection: Connection, node_id: uuid.UUID) -> dict[str, Any] | Non
 def _require_node(connection: Connection, node_id: uuid.UUID) -> dict[str, Any]:
     node = get_node(connection, node_id)
     if node is None:
-        raise NodeNotFound(str(node_id))
+        raise NodeNotFound("NODE_NOT_FOUND")
     return node
 
 
@@ -91,10 +96,10 @@ def create_relation(
     definition = check_storable_relation(predicate, subject["node_type"], obj["node_type"])
 
     if _open_relation_exists(connection, subject_id, predicate, object_id):
-        raise RelationConflict("cette relation existe déjà")
+        raise RelationConflict("RELATION_ALREADY_EXISTS")
     symmetric = definition.inverse == definition.name
     if symmetric and _open_relation_exists(connection, object_id, predicate, subject_id):
-        raise RelationConflict("cette relation existe déjà dans l'autre sens")
+        raise RelationConflict("RELATION_ALREADY_EXISTS_REVERSE")
 
     relation_id = uuid.uuid4()
     connection.execute(
@@ -136,11 +141,11 @@ def end_relation(
         .first()
     )
     if row is None:
-        raise RelationNotFound(str(relation_id))
+        raise RelationNotFound("RELATION_NOT_FOUND")
     if row["valid_to"] is not None:
-        raise RelationConflict("cette relation est déjà close")
+        raise RelationConflict("RELATION_ALREADY_ENDED")
     if valid_to <= row["valid_from"]:
-        raise ValueError("la date de fin doit être postérieure au début de la relation")
+        raise GraphInvalid("END_BEFORE_START")
 
     connection.execute(
         text("UPDATE relations SET valid_to = :valid_to WHERE id = :id"),
@@ -361,7 +366,7 @@ def add_external_identifier(
     """Relie un identifiant d'un autre système (code client, GlobalId IFC…)
     à un nœud existant. Un même identifiant ne désigne qu'un seul nœud."""
     if scheme not in EXTERNAL_ID_SCHEMES:
-        raise VocabularyError(f"système d'identifiants inconnu : {scheme}")
+        raise VocabularyError("EXTERNAL_ID_SCHEME_UNKNOWN", scheme=scheme)
     _require_node(connection, node_id)
     taken = connection.execute(
         text(
@@ -371,7 +376,7 @@ def add_external_identifier(
         {"scheme": scheme, "external_id": external_id},
     ).scalar()
     if taken:
-        raise RelationConflict("cet identifiant externe est déjà utilisé")
+        raise RelationConflict("EXTERNAL_ID_ALREADY_USED")
 
     identifier_id = uuid.uuid4()
     connection.execute(

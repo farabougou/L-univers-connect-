@@ -147,10 +147,10 @@ def test_node_of_another_tenant_is_not_found(two_tenants) -> None:
 
 
 @pytest.mark.parametrize(
-    ("predicate", "expected_detail"),
-    [("aime", "inconnu"), ("hasPart", "hiérarchie")],
+    ("predicate", "code"),
+    [("aime", "PREDICATE_UNKNOWN"), ("hasPart", "PREDICATE_STRUCTURAL")],
 )
-def test_vocabulary_errors_are_explained(two_tenants, predicate, expected_detail) -> None:
+def test_vocabulary_errors_are_explained(two_tenants, predicate, code) -> None:
     tenant_a, _ = two_tenants
     headers = _headers(tenant_a, ["admin_tenant"])
 
@@ -160,7 +160,7 @@ def test_vocabulary_errors_are_explained(two_tenants, predicate, expected_detail
         )
 
     assert response.status_code == 400
-    assert expected_detail in response.json()["detail"]
+    assert response.json()["code"] == code
 
 
 def test_date_without_timezone_is_rejected(two_tenants) -> None:

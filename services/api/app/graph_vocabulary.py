@@ -19,6 +19,8 @@ Historique :
 
 from dataclasses import dataclass
 
+from app.errors import DomainError
+
 VOCABULARY_VERSION = "2026-09-23.3"
 
 # Types de nœuds existants à ce jour. Les types futurs (edge_device,
@@ -114,7 +116,7 @@ PREDICATES: dict[str, Predicate] = {
 }
 
 
-class VocabularyError(ValueError):
+class VocabularyError(DomainError, ValueError):
     pass
 
 
@@ -125,14 +127,15 @@ def check_storable_relation(predicate: str, subject_type: str, object_type: str)
     """
     definition = PREDICATES.get(predicate)
     if definition is None:
-        raise VocabularyError(f"prédicat inconnu : {predicate}")
+        raise VocabularyError("PREDICATE_UNKNOWN", predicate=predicate)
     if definition.structural:
-        raise VocabularyError(
-            f"« {predicate} » est déduit de la hiérarchie existante : "
-            "modifiez la hiérarchie plutôt que d'ajouter une relation"
-        )
+        raise VocabularyError("PREDICATE_STRUCTURAL", predicate=predicate)
     if subject_type not in definition.subject_types:
-        raise VocabularyError(f"« {predicate} » n'accepte pas un sujet de type {subject_type}")
+        raise VocabularyError(
+            "PREDICATE_SUBJECT_TYPE_INVALID", predicate=predicate, node_type=subject_type
+        )
     if object_type not in definition.object_types:
-        raise VocabularyError(f"« {predicate} » n'accepte pas un objet de type {object_type}")
+        raise VocabularyError(
+            "PREDICATE_OBJECT_TYPE_INVALID", predicate=predicate, node_type=object_type
+        )
     return definition

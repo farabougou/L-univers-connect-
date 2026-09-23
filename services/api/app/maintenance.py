@@ -6,6 +6,8 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
+from app.errors import DomainError
+
 WORK_ORDER_STATUSES = ("open", "in_progress", "completed", "cancelled")
 WORK_ORDER_TYPES = ("corrective", "preventive", "predictive", "inspection")
 ALARM_STATUSES = ("open", "acknowledged", "resolved")
@@ -72,7 +74,7 @@ def change_work_order_status(
     encore ensuite (voir la règle « rien n'est écrasé »).
     """
     if status not in WORK_ORDER_STATUSES:
-        raise ValueError(f"statut inconnu : {status}")
+        raise MaintenanceInvalid("WORK_ORDER_STATUS_UNKNOWN", status=status)
 
     connection.execute(
         text("UPDATE work_orders SET status = :status WHERE id = :id"),
@@ -114,8 +116,14 @@ def _insert_work_order_status_history(
     )
 
 
-class ClientRefConflict(ValueError):
+class ClientRefConflict(DomainError, ValueError):
     """Même référence client, contenu différent : rien n'est écrasé."""
+
+    status = 409
+
+
+class MaintenanceInvalid(DomainError, ValueError):
+    pass
 
 
 _INTERVENTION_FIELDS = (
@@ -236,10 +244,7 @@ def log_intervention_once(
     )
     differing = [field for field in _INTERVENTION_FIELDS if existing[field] != values[field]]
     if differing:
-        raise ClientRefConflict(
-            "cette référence client désigne déjà une autre intervention "
-            f"(champs différents : {', '.join(differing)})"
-        )
+        raise ClientRefConflict("CLIENT_REF_CONFLICT", fields=differing)
     return existing["id"], False
 
 
@@ -317,7 +322,7 @@ def record_photo_once(
         .one()
     )
     if existing["intervention_id"] != intervention_id:
-        raise ClientRefConflict("cette référence client désigne déjà une autre photo")
+        raise ClientRefConflict("CLIENT_REF_PHOTO_CONFLICT")
     return existing["id"], False
 
 
@@ -371,7 +376,7 @@ def change_alarm_status(
     note: str | None = None,
 ) -> None:
     if status not in ALARM_STATUSES:
-        raise ValueError(f"statut inconnu : {status}")
+        raise MaintenanceInvalid("ALARM_STATUS_UNKNOWN", status=status)
 
     connection.execute(
         text("UPDATE alarms SET status = :status WHERE id = :id"),

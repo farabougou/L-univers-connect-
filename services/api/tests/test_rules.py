@@ -17,6 +17,7 @@ from app.rules import ALARM_RULE
 from app.telemetry import record_measurement
 from app.trust import compute_trust
 from tests.analytics_fixtures import cleanup_tenant, create_tenant_with_points, in_tenant
+from tests.error_helpers import raises_code
 
 T0 = datetime(2026, 9, 23, 8, 0, tzinfo=UTC)
 
@@ -286,15 +287,15 @@ def test_desired_state_outside_its_validity_does_not_apply(two_tenants) -> None:
 
 
 @pytest.mark.parametrize(
-    ("overrides", "message"),
+    ("overrides", "code"),
     [
-        ({"timezone": "Mars/Olympus"}, "fuseau horaire inconnu"),
-        ({"timezone": None}, "exige son fuseau"),
-        ({"value": 2}, "0 ou 1"),
-        ({"daily_end": time(20, 0)}, "identiques"),
+        ({"timezone": "Mars/Olympus"}, "TIMEZONE_UNKNOWN"),
+        ({"timezone": None}, "DAILY_WINDOW_TIMEZONE_REQUIRED"),
+        ({"value": 2}, "VALUE_BOOLEAN_INVALID"),
+        ({"daily_end": time(20, 0)}, "DAILY_WINDOW_EMPTY"),
     ],
 )
-def test_invalid_desired_states_are_refused(two_tenants, overrides, message) -> None:
+def test_invalid_desired_states_are_refused(two_tenants, overrides, code) -> None:
     tenant_a, _ = two_tenants
     params = {
         "tenant_id": tenant_a["tenant_id"],
@@ -308,7 +309,7 @@ def test_invalid_desired_states_are_refused(two_tenants, overrides, message) -> 
         "created_by": "test",
     }
     params.update(overrides)
-    with pytest.raises(DesiredStateInvalid, match=message):
+    with raises_code(DesiredStateInvalid, code):
         with in_tenant(tenant_a) as connection:
             declare_desired_state(connection, **params)
 

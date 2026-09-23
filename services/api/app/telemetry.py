@@ -21,6 +21,7 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
+from app.errors import DomainError
 from app.point_vocabulary import PointVocabularyError, check_value
 from app.points import get_point
 from app.quality_flags import (
@@ -39,12 +40,12 @@ CLOCK_TOLERANCE = timedelta(minutes=5)
 LATE_ARRIVAL = timedelta(hours=24)
 
 
-class MeasurementRejected(ValueError):
+class MeasurementRejected(DomainError, ValueError):
     pass
 
 
-class MeasurementConflict(ValueError):
-    pass
+class MeasurementConflict(DomainError, ValueError):
+    status = 409
 
 
 def compute_quality_flags(
@@ -77,11 +78,11 @@ def record_measurement(
 ) -> str:
     """Enregistre un relevé. Renvoie « inserted » ou « duplicate »."""
     if point["mapping_status"] == "rejected":
-        raise MeasurementRejected("ce point a été rejeté lors de la mise en service")
+        raise MeasurementRejected("POINT_REJECTED")
     try:
         check_value(value, value_type=point["value_type"], states=point["states"])
     except PointVocabularyError as exc:
-        raise MeasurementRejected(str(exc)) from exc
+        raise MeasurementRejected.from_error(exc) from exc
 
     flags = compute_quality_flags(
         point, value=value, measured_at=measured_at, received_at=received_at
@@ -122,9 +123,7 @@ def record_measurement(
         {"p": point["id"], "m": measured_at},
     ).scalar()
     if existing != value:
-        raise MeasurementConflict(
-            f"une autre valeur ({existing}) existe déjà pour ce point à cet instant"
-        )
+        raise MeasurementConflict("MEASUREMENT_CONFLICT", existing_value=existing)
     return "duplicate"
 
 
@@ -153,7 +152,9 @@ def ingest_measurements(
         point = points[point_id]
         if point is None:
             summary["rejected"] += 1
-            errors.append({"index": index, "point_id": point_id, "reason": "point introuvable"})
+            errors.append(
+                {"index": index, "point_id": point_id, "code": "POINT_NOT_FOUND", "params": {}}
+            )
             continue
         try:
             status = record_measurement(
@@ -166,13 +167,11 @@ def ingest_measurements(
                 source=source,
                 received_at=received_at,
             )
-        except MeasurementRejected as exc:
-            summary["rejected"] += 1
-            errors.append({"index": index, "point_id": point_id, "reason": str(exc)})
-            continue
-        except MeasurementConflict as exc:
-            summary["conflicts"] += 1
-            errors.append({"index": index, "point_id": point_id, "reason": str(exc)})
+        except (MeasurementRejected, MeasurementConflict) as exc:
+            summary["conflicts" if isinstance(exc, MeasurementConflict) else "rejected"] += 1
+            errors.append(
+                {"index": index, "point_id": point_id, "code": exc.code, "params": exc.params}
+            )
             continue
         summary["inserted" if status == "inserted" else "duplicates"] += 1
 

@@ -6,9 +6,10 @@
 > langue. Toute nouvelle fonctionnalité visible utilise ces termes ; un terme absent est
 > ajouté ici **avant** d'apparaître à l'écran.
 >
-> Statut : **projet** (23 septembre 2026). Les lignes « À valider » attendent la
-> décision de Mohamed. Les définitions citant une norme sont à vérifier sur le texte de
-> la norme lors de son acquisition.
+> Statut : **version 1, validée** (23 septembre 2026, ADR 013 acceptée). Les termes
+> marqués « Validé par défaut » ont été retenus selon la proposition initiale et restent
+> révisables : seuls les libellés changeraient, jamais les codes. Les définitions citant
+> une norme sont à vérifier sur le texte de la norme lors de son acquisition.
 >
 > Colonnes : terme officiel (FR / EN) · code dans le modèle ou l'API · définition ·
 > à ne pas employer pour ce sens · référence.
@@ -22,10 +23,10 @@
 | Site | Site | `site` | Lieu géographique exploité, à une adresse, regroupant un ou plusieurs bâtiments. | Établissement, installation | ISO 41001 |
 | Bâtiment | Building | `space_type = building` | Construction située sur un site. | Immeuble (sauf dans un nom propre) | IFC `IfcBuilding` |
 | Niveau | Floor | `space_type = floor` | Étage d'un bâtiment. | Plancher | IFC `IfcBuildingStorey`, Brick `Floor` |
-| Espace | Space | `space` | Terme général pour tout élément de la hiérarchie spatiale (bâtiment, niveau, zone, pièce, espace extérieur). **À valider** | Local employé comme terme général | IFC `IfcSpace`, Brick `Space` |
+| Espace | Space | `space` | Terme général pour tout élément de la hiérarchie spatiale (bâtiment, niveau, zone, pièce, espace extérieur). **Validé par défaut** | Local employé comme terme général | IFC `IfcSpace`, Brick `Space` |
 | Pièce | Room | `space_type = room` | Volume délimité d'un niveau (bureau, salle, local). | — | IFC `IfcSpace`, Brick `Room` |
 | Espace extérieur | Outdoor area | `space_type = outdoor_area` | Surface extérieure d'un site (toiture-terrasse, parking). | — | Brick `Outdoor_Area` |
-| Local technique | Plant room | à ajouter (`room` + usage) | Pièce réservée aux équipements techniques. **À valider** | Chaufferie ou sous-station comme terme générique | — |
+| Local technique | Plant room | à ajouter (`room` + usage) | Pièce réservée aux équipements techniques. **Validé par défaut** | Chaufferie ou sous-station comme terme générique | — |
 | Zone | Zone | `space_type = zone` ; relation `servedBy` | Subdivision d'un bâtiment ou d'un niveau (plateau ouvert, zone CVC couvrant plusieurs pièces). Une pièce peut aussi être desservie par une zone sans en faire partie. | Secteur, partie | IFC `IfcZone`, Brick `Zone` |
 
 ## 2. Actifs et équipements
@@ -33,15 +34,15 @@
 | Français | English | Code | Définition | À éviter | Référence |
 |---|---|---|---|---|---|
 | Actif | Asset | — | Terme générique pour tout bien géré par la plateforme. Employé dans la documentation et l'API, rarement à l'écran du technicien. | Bien, matériel | ISO 55000 |
-| Équipement | Equipment | `functional_location` | Position technique stable remplissant une fonction (« CTA-02 — Bureaux R+1 »). Garde son historique quand l'appareil est remplacé. **À valider** (alternative : « Poste technique », convention SAP) | Machine, appareil, position | ISO 14224, ISO 81346 |
-| Exemplaire | Unit | `physical_unit` | Appareil physique identifié par son numéro de série, installé à un équipement puis éventuellement déposé. **À valider** | Matériel, machine | ISO 14224 |
+| Équipement | Equipment | `functional_location` | Position technique stable remplissant une fonction (« CTA-02 — Bureaux R+1 »). Garde son historique quand l'appareil est remplacé. **Validé par défaut** (alternative écartée : « Poste technique », convention SAP) | Machine, appareil, position | ISO 14224, ISO 81346 |
+| Exemplaire | Unit | `physical_unit` | Appareil physique identifié par son numéro de série, installé à un équipement puis éventuellement déposé. **Validé par défaut** | Matériel, machine | ISO 14224 |
 | Modèle | Product model | `product_model` | Produit d'un fabricant : fabricant + référence commerciale. | Type, gamme | — |
 | Type d'équipement | Equipment type | `equipment_type` (étape L5) | Catégorie universelle normalisée (pompe à chaleur, groupe froid, centrale de traitement d'air…), indépendante de l'appellation du fabricant. | Catégorie libre | Brick (classes `Equipment`) |
 | Désignation constructeur | Manufacturer designation | `manufacturer_designation` (L5) | Nom donné par le fabricant, conservé tel quel. | — | — |
 | Composant | Component | relation `hasPart` | Élément d'un équipement pouvant être maintenu séparément (compresseur, ventilateur, vanne). | Pièce (réservé aux pièces de rechange) | ISO 14224 (élément maintenable) |
 | Pièce de rechange | Spare part | `parts` (clôture) | Pièce consommée lors d'une intervention. | — | — |
 | Système | System | — (DEFER) | Ensemble d'équipements assurant ensemble une fonction (réseau d'eau glacée, ventilation d'un plateau). | Installation | Brick `System` |
-| Installation | — | — | **Non employé comme concept** : ambigu (un système ou l'action d'installer). Le verbe « installer » et l'état « Installé » restent employés pour un exemplaire. **À valider** | — | — |
+| Installation | — | — | **Non employé comme concept** : ambigu (un système ou l'action d'installer). Le verbe « installer » et l'état « Installé » restent employés pour un exemplaire. **Validé par défaut** | — | — |
 | Établissement | — | — | **Non employé comme concept** du modèle ; peut apparaître dans un nom de site. | — | — |
 | Jumeau numérique | Digital twin | — | Représentation numérique vivante d'un site et de ses équipements, construite à partir du registre, du graphe, de la télémétrie et de l'historique. Pas une base séparée. | Maquette (réservé au BIM) | ADR 004, ADR 011 |
 | Étiquette | Tag | `asset_tag` | QR, NFC ou code-barres collé sur un équipement, contenant un code opaque. | QR code comme terme générique | — |

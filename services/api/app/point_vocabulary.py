@@ -14,6 +14,8 @@ pas de migration, seulement une nouvelle version de ce fichier.
 import math
 from dataclasses import dataclass
 
+from app.errors import DomainError
+
 POINT_VOCABULARY_VERSION = "2026-09-23.1"
 
 VALUE_TYPES = ("number", "boolean", "multistate")
@@ -94,7 +96,7 @@ POINT_CLASSES: dict[str, PointClass] = {
 }
 
 
-class PointVocabularyError(ValueError):
+class PointVocabularyError(DomainError, ValueError):
     pass
 
 
@@ -112,39 +114,45 @@ def check_point_definition(
     sa classe connue (voir check_point_ready_for_validation).
     """
     if value_type not in VALUE_TYPES:
-        raise PointVocabularyError(f"type de valeur inconnu : {value_type}")
+        raise PointVocabularyError("POINT_VALUE_TYPE_UNKNOWN", value_type=value_type)
     if unit is not None and unit not in UNITS:
-        raise PointVocabularyError(f"unité inconnue : {unit} (codes UCUM attendus, ex. « Cel »)")
+        raise PointVocabularyError("UNIT_UNKNOWN", unit=unit)
 
     if value_type == "number":
         if states:
-            raise PointVocabularyError("un point numérique n'a pas de table d'états")
+            raise PointVocabularyError("POINT_NUMBER_HAS_NO_STATES")
     else:
         if unit is not None:
-            raise PointVocabularyError(f"un point de type {value_type} n'a pas d'unité")
+            raise PointVocabularyError("POINT_UNIT_NOT_ALLOWED", value_type=value_type)
     if value_type == "multistate":
         if not states:
-            raise PointVocabularyError("un point à états multiples exige sa table d'états")
+            raise PointVocabularyError("POINT_MULTISTATE_REQUIRES_STATES")
         if not all(key.lstrip("-").isdigit() for key in states):
-            raise PointVocabularyError("les codes d'état doivent être des nombres entiers")
+            raise PointVocabularyError("POINT_STATE_CODES_NOT_INTEGER")
     elif value_type == "boolean" and states:
-        raise PointVocabularyError("un point booléen n'a pas de table d'états")
+        raise PointVocabularyError("POINT_BOOLEAN_HAS_NO_STATES")
 
     if point_class is None:
         return None
     definition = POINT_CLASSES.get(point_class)
     if definition is None:
-        raise PointVocabularyError(f"classe de point inconnue : {point_class}")
+        raise PointVocabularyError("POINT_CLASS_UNKNOWN", point_class=point_class)
     if value_type != definition.value_type:
         raise PointVocabularyError(
-            f"un point « {point_class} » est de type {definition.value_type}, pas {value_type}"
+            "POINT_CLASS_VALUE_TYPE_MISMATCH",
+            point_class=point_class,
+            expected=definition.value_type,
+            value_type=value_type,
         )
     if definition.quantity is not None and unit is not None:
         unit_quantity = UNITS[unit][1]
         if unit_quantity != definition.quantity:
             raise PointVocabularyError(
-                f"l'unité {unit} mesure une grandeur « {unit_quantity} », "
-                f"incompatible avec « {point_class} » ({definition.quantity})"
+                "UNIT_QUANTITY_MISMATCH",
+                unit=unit,
+                unit_quantity=unit_quantity,
+                point_class=point_class,
+                quantity=definition.quantity,
             )
     return definition
 
@@ -160,20 +168,20 @@ def check_point_ready_for_validation(
     """Un point n'est validé (considéré fiable) que complètement décrit :
     classe connue, unité pour un nombre, rattaché à un équipement ou un espace."""
     if point_class is None:
-        raise PointVocabularyError("classe de point manquante : identifier le point d'abord")
+        raise PointVocabularyError("POINT_CLASS_MISSING")
     if value_type == "number" and unit is None:
-        raise PointVocabularyError("unité manquante pour un point numérique")
+        raise PointVocabularyError("POINT_UNIT_MISSING")
     if not has_anchor:
-        raise PointVocabularyError("point non rattaché à une position ni à un espace")
+        raise PointVocabularyError("POINT_NOT_ANCHORED")
     check_point_definition(point_class=point_class, value_type=value_type, unit=unit, states=states)
 
 
 def check_value(value: float, *, value_type: str, states: dict[str, str] | None) -> None:
     """Refuse une valeur impossible pour le type du point (jamais stockée)."""
     if not math.isfinite(value):
-        raise PointVocabularyError("valeur non finie refusée")
+        raise PointVocabularyError("VALUE_NOT_FINITE")
     if value_type == "boolean" and value not in (0, 1):
-        raise PointVocabularyError("un point booléen n'accepte que 0 ou 1")
+        raise PointVocabularyError("VALUE_BOOLEAN_INVALID")
     if value_type == "multistate":
         if value != int(value) or str(int(value)) not in (states or {}):
-            raise PointVocabularyError(f"état inconnu pour ce point : {value}")
+            raise PointVocabularyError("VALUE_STATE_UNKNOWN", value=value)

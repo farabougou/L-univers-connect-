@@ -73,18 +73,15 @@ def _validate_alarm_rule(connection: Connection, content: dict[str, Any]) -> dic
     try:
         rule = _RuleContent(rule=content).rule
     except ValidationError as exc:
-        details = "; ".join(
-            f"{'.'.join(str(p) for p in error['loc'][1:])} : {error['msg']}"
-            for error in exc.errors()
-        )
-        raise ConfigInvalid(f"règle invalide — {details}") from exc
+        fields = sorted({".".join(str(p) for p in error["loc"][1:]) for error in exc.errors()})
+        raise ConfigInvalid("RULE_CONTENT_INVALID", fields=fields) from exc
     point = get_point(connection, rule.point_id)
     if point is None:
-        raise ConfigInvalid("règle invalide — point introuvable")
+        raise ConfigInvalid("RULE_POINT_NOT_FOUND")
     if point["mapping_status"] != "validated":
-        raise ConfigInvalid("règle invalide — le point doit être validé (mise en service)")
+        raise ConfigInvalid("RULE_POINT_NOT_VALIDATED")
     if isinstance(rule, ThresholdRule) and point["value_type"] != "number":
-        raise ConfigInvalid("règle invalide — un seuil ne s'applique qu'à un point numérique")
+        raise ConfigInvalid("RULE_THRESHOLD_REQUIRES_NUMBER")
     return rule.model_dump(mode="json", exclude_none=True)
 
 

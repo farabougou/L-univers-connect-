@@ -2,7 +2,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
@@ -23,6 +23,7 @@ from app.closures import (
     get_closure,
 )
 from app.deps import get_tenant_connection, get_tenant_id
+from app.errors import ApiError, api_error
 from app.maintenance import (
     ClientRefConflict,
     change_alarm_status,
@@ -81,17 +82,13 @@ def _check_targets_exist(
             {"id": functional_location_id},
         ).scalar()
         if not exists:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="position fonctionnelle introuvable"
-            )
+            raise ApiError(404, "FUNCTIONAL_LOCATION_NOT_FOUND")
     if physical_unit_id is not None:
         exists = connection.execute(
             text("SELECT 1 FROM physical_units WHERE id = :id"), {"id": physical_unit_id}
         ).scalar()
         if not exists:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="exemplaire introuvable"
-            )
+            raise ApiError(404, "PHYSICAL_UNIT_NOT_FOUND")
 
 
 # --- Ordres de travail ------------------------------------------------
@@ -171,9 +168,7 @@ def update_work_order_status(
         text("SELECT 1 FROM work_orders WHERE id = :id"), {"id": work_order_id}
     ).scalar()
     if not exists:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="ordre de travail introuvable"
-        )
+        raise ApiError(404, "WORK_ORDER_NOT_FOUND")
 
     change_work_order_status(
         connection,
@@ -208,9 +203,7 @@ def read_work_order_history(
         text("SELECT 1 FROM work_orders WHERE id = :id"), {"id": work_order_id}
     ).scalar()
     if not exists:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="ordre de travail introuvable"
-        )
+        raise ApiError(404, "WORK_ORDER_NOT_FOUND")
 
     rows = (
         connection.execute(
@@ -266,9 +259,7 @@ def create_intervention(
             text("SELECT 1 FROM work_orders WHERE id = :id"), {"id": body.work_order_id}
         ).scalar()
         if not exists:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="ordre de travail introuvable"
-            )
+            raise ApiError(404, "WORK_ORDER_NOT_FOUND")
     _check_targets_exist(
         connection,
         functional_location_id=body.functional_location_id,
@@ -295,7 +286,7 @@ def create_intervention(
                 connection, client_ref=body.client_ref, **fields
             )
         except ClientRefConflict as exc:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+            raise api_error(exc, 409) from exc
 
     if created:
         append_audit_entry(
@@ -346,9 +337,7 @@ def _check_intervention_exists(connection: Connection, intervention_id: uuid.UUI
         text("SELECT 1 FROM interventions WHERE id = :id"), {"id": intervention_id}
     ).scalar()
     if not exists:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="intervention introuvable"
-        )
+        raise ApiError(404, "INTERVENTION_NOT_FOUND")
 
 
 @router.post(
@@ -390,10 +379,7 @@ def create_photo(
 ) -> PhotoOut:
     _check_intervention_exists(connection, intervention_id)
     if not key_belongs_to(body.object_key, tenant_id=tenant_id, intervention_id=intervention_id):
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="clé de stockage étrangère à cette intervention",
-        )
+        raise ApiError(422, "PHOTO_STORAGE_KEY_FOREIGN")
 
     fields = {
         "tenant_id": tenant_id,
@@ -408,7 +394,7 @@ def create_photo(
         try:
             photo_id, created = record_photo_once(connection, client_ref=body.client_ref, **fields)
         except ClientRefConflict as exc:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+            raise api_error(exc, 409) from exc
 
     if created:
         append_audit_entry(
@@ -543,7 +529,7 @@ def update_alarm_status(
         text("SELECT 1 FROM alarms WHERE id = :id"), {"id": alarm_id}
     ).scalar()
     if not exists:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="alarme introuvable")
+        raise ApiError(404, "ALARM_NOT_FOUND")
 
     change_alarm_status(
         connection,
@@ -575,7 +561,7 @@ def read_alarm_history(
         text("SELECT 1 FROM alarms WHERE id = :id"), {"id": alarm_id}
     ).scalar()
     if not exists:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="alarme introuvable")
+        raise ApiError(404, "ALARM_NOT_FOUND")
 
     rows = (
         connection.execute(
@@ -650,11 +636,11 @@ def create_closure(
             closed_by=_actor(claims),
         )
     except ClosureNotFound as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise api_error(exc, 404) from exc
     except ClosureConflict as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+        raise api_error(exc, 409) from exc
     except ClosureError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+        raise api_error(exc, 400) from exc
     append_audit_entry(
         connection,
         tenant_id=tenant_id,
@@ -680,5 +666,5 @@ def read_closure(
 ) -> ClosureOut:
     closure = get_closure(connection, intervention_id)
     if closure is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="aucune clôture")
+        raise ApiError(404, "CLOSURE_NOT_FOUND")
     return ClosureOut(**closure)

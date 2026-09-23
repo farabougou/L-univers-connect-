@@ -67,8 +67,9 @@
 
 | Défaillance | Effet visible | Comportement actuel | Reprise | Statut |
 |---|---|---|---|---|
-| Erreur de programmation sur une route | 500 `{"detail": "erreur interne", "request_id": …}` | Journalisée avec type et emplacements, **sans** le message (il peut contenir des valeurs métier) | Corriger ; retrouver le cas grâce au `request_id` | ✅ testé (F6) |
+| Erreur de programmation sur une route | 500 au format RFC 9457, code `INTERNAL_ERROR`, message traduit contenant la référence (`request_id`) | Journalisée avec type et emplacements, **sans** le message (il peut contenir des valeurs métier) | Corriger ; retrouver le cas grâce au `request_id` | ✅ testé (F6) |
 | Processus arrêté | Connexion refusée | L'hébergeur redémarre le conteneur | Automatique | ✅ (à vérifier au déploiement M1) |
+| Catalogue de messages absent au déploiement | Messages remplacés par leur code ; les codes restent exacts | Le dossier `shared/i18n` doit être livré avec l'API (ou désigné par `I18N_DIR`) | Livrer le dossier | ⚠️ à vérifier au premier déploiement (M1) |
 | En-tête `X-Request-ID` malveillant | Aucun | Remplacé s'il n'est pas court et sans caractère spécial : impossible d'injecter du texte dans les logs | — | ✅ testé |
 
 ## 5. Télémétrie (mesures)

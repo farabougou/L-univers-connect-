@@ -2,8 +2,10 @@
 
 ## Statut
 
-Proposée (23 septembre 2026). Rien n'est codé avant l'accord de Mohamed, qui doit
-aussi trancher les questions terminologiques de la section 5.
+Acceptée (23 septembre 2026), avec l'accord de Mohamed (« continuons »). Les quatre
+questions terminologiques de la section 5 sont tranchées selon les propositions par
+défaut ; elles restent révisables à faible coût, puisque seuls les libellés des
+catalogues changeraient, jamais les codes.
 
 ## Contexte
 
@@ -174,9 +176,8 @@ Existant conservé. Ajouts : code d'inventaire client sur l'exemplaire ; type un
 d'équipement (vocabulaire versionné aligné sur les classes d'équipement Brick), désignation
 constructeur, alias (au niveau du vocabulaire, puis par client si besoin).
 
-## 5. Questions terminologiques à trancher par Mohamed
+## 5. Questions terminologiques (tranchées le 23 septembre 2026, propositions par défaut)
 
-Proposition par défaut dans le glossaire, marquée « à valider » :
 1. **Les trois niveaux d'identité** : « Équipement » (la position, ce que le technicien
    voit : « CTA-02 — Bureaux R+1 ») / « Exemplaire » (l'appareil, numéro de série) /
    « Modèle » (fabricant + référence) ; ou la convention SAP « Poste technique » /
@@ -205,6 +206,13 @@ Mohamed avant la suivante.
 
 Ordre justifié par le coût : L2 et L3 d'abord (contrat de l'API et données stockées
 qui s'accumulent), L4 avant d'ajouter de nouveaux écrans.
+
+## 8. Avancement
+
+| Étape | État |
+|---|---|
+| L1 | ✅ ADR acceptée, glossaire en version 1 (23 septembre 2026) |
+| L2 | ✅ 121 codes d'erreur en français et en anglais (`shared/i18n/{fr,en}/errors.json`) ; réponses RFC 9457 (`application/problem+json`, `Content-Language`) ; langue choisie par `Accept-Language` ; erreurs de validation sans écho de la valeur saisie ; erreurs imprévues en `INTERNAL_ERROR` avec la référence ; tests : parité des catalogues, typographie française, correspondance exacte entre codes utilisés et codes décrits, aucune erreur en texte libre. Le dossier `shared/` doit accompagner l'API au déploiement (ou `I18N_DIR`). Les paramètres qui sont des codes (états, types) sont encore affichés tels quels dans les messages de l'API ; leurs libellés traduits viendront avec les catalogues d'interface (L4). |
 
 ## 7. Garde-fous inchangés
 

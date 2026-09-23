@@ -153,7 +153,8 @@ def test_revoked_tag_is_reported_as_such(two_tenants) -> None:
 
     assert revoked.json()["status"] == "revoked"
     assert scanned.status_code == 410
-    assert "arrachée" in scanned.json()["detail"]
+    assert scanned.json()["code"] == "TAG_REVOKED"
+    assert scanned.json()["params"] == {"reason": "Étiquette arrachée"}
     assert again.status_code == 409
 
 
@@ -244,20 +245,23 @@ def test_refrigerant_and_charge_with_history(two_tenants) -> None:
 
 
 @pytest.mark.parametrize(
-    ("body", "message"),
+    ("body", "code"),
     [
-        ({"key": "refrigerant_charge", "value": 2.5, "unit": "bar"}, "grandeur"),
-        ({"key": "refrigerant_charge", "value": 2.5}, "unité manquante"),
-        ({"key": "refrigerant_type", "value": "R9999"}, "non reconnue"),
-        ({"key": "couleur", "value": "rouge"}, "inconnue"),
-        ({"key": "manufacture_year", "value": 1850}, "au moins"),
+        (
+            {"key": "refrigerant_charge", "value": 2.5, "unit": "bar"},
+            "PROPERTY_UNIT_QUANTITY_MISMATCH",
+        ),
+        ({"key": "refrigerant_charge", "value": 2.5}, "PROPERTY_UNIT_MISSING"),
+        ({"key": "refrigerant_type", "value": "R9999"}, "PROPERTY_VALUE_NOT_ALLOWED"),
+        ({"key": "couleur", "value": "rouge"}, "PROPERTY_UNKNOWN"),
+        ({"key": "manufacture_year", "value": 1850}, "PROPERTY_BELOW_MINIMUM"),
     ],
 )
-def test_invalid_properties_are_explained(two_tenants, body, message) -> None:
+def test_invalid_properties_are_explained(two_tenants, body, code) -> None:
     tenant_a, _ = two_tenants
     response = _set(tenant_a, **body)
     assert response.status_code == 400
-    assert message in response.json()["detail"]
+    assert response.json()["code"] == code
 
 
 def test_nameplate_data_belongs_to_the_unit_not_the_position(two_tenants) -> None:
@@ -269,7 +273,7 @@ def test_nameplate_data_belongs_to_the_unit_not_the_position(two_tenants) -> Non
         json={"key": "refrigerant_type", "value": "R32", "source": "nameplate", "reason": "x"},
     )
     assert response.status_code == 400
-    assert "ne s'applique pas" in response.json()["detail"]
+    assert response.json()["code"] == "PROPERTY_NODE_TYPE_INVALID"
 
 
 def test_a_property_value_is_never_rewritten(two_tenants) -> None:

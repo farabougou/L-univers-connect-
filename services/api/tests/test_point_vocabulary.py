@@ -15,6 +15,7 @@ from app.telemetry import (
     LATE_ARRIVAL,
     compute_quality_flags,
 )
+from tests.error_helpers import raises_code
 
 # --- Unités ------------------------------------------------
 
@@ -37,7 +38,7 @@ def test_temperature_sensor_accepts_celsius_and_kelvin() -> None:
 
 
 def test_temperature_sensor_cannot_be_declared_in_bar() -> None:
-    with pytest.raises(PointVocabularyError, match="incompatible"):
+    with raises_code(PointVocabularyError, "UNIT_QUANTITY_MISMATCH"):
         check_point_definition(
             point_class="supply_water_temperature_sensor",
             value_type="number",
@@ -48,14 +49,14 @@ def test_temperature_sensor_cannot_be_declared_in_bar() -> None:
 
 def test_unit_must_be_a_known_ucum_code() -> None:
     # « °C » est un symbole d'affichage, pas le code stocké (« Cel »).
-    with pytest.raises(PointVocabularyError, match="UCUM"):
+    with raises_code(PointVocabularyError, "UNIT_UNKNOWN"):
         check_point_definition(
             point_class="temperature_sensor", value_type="number", unit="°C", states=None
         )
 
 
 def test_boolean_point_has_no_unit() -> None:
-    with pytest.raises(PointVocabularyError, match="pas d'unité"):
+    with raises_code(PointVocabularyError, "POINT_UNIT_NOT_ALLOWED"):
         check_point_definition(
             point_class="run_status", value_type="boolean", unit="%", states=None
         )
@@ -65,14 +66,14 @@ def test_boolean_point_has_no_unit() -> None:
 
 
 def test_class_imposes_its_value_type() -> None:
-    with pytest.raises(PointVocabularyError, match="est de type boolean"):
+    with raises_code(PointVocabularyError, "POINT_CLASS_VALUE_TYPE_MISMATCH"):
         check_point_definition(
             point_class="run_status", value_type="number", unit=None, states=None
         )
 
 
 def test_unknown_class_is_rejected() -> None:
-    with pytest.raises(PointVocabularyError, match="inconnue"):
+    with raises_code(PointVocabularyError, "POINT_CLASS_UNKNOWN"):
         check_point_definition(
             point_class="sonde_magique", value_type="number", unit=None, states=None
         )
@@ -80,18 +81,18 @@ def test_unknown_class_is_rejected() -> None:
 
 def test_discovered_point_without_class_is_accepted_but_not_validatable() -> None:
     check_point_definition(point_class=None, value_type="number", unit=None, states=None)
-    with pytest.raises(PointVocabularyError, match="classe de point manquante"):
+    with raises_code(PointVocabularyError, "POINT_CLASS_MISSING"):
         check_point_ready_for_validation(
             point_class=None, value_type="number", unit=None, states=None, has_anchor=True
         )
 
 
 @pytest.mark.parametrize(
-    ("unit", "has_anchor", "message"),
-    [(None, True, "unité manquante"), ("Cel", False, "non rattaché")],
+    ("unit", "has_anchor", "code"),
+    [(None, True, "POINT_UNIT_MISSING"), ("Cel", False, "POINT_NOT_ANCHORED")],
 )
-def test_validation_requires_a_complete_description(unit, has_anchor, message) -> None:
-    with pytest.raises(PointVocabularyError, match=message):
+def test_validation_requires_a_complete_description(unit, has_anchor, code) -> None:
+    with raises_code(PointVocabularyError, code):
         check_point_ready_for_validation(
             point_class="temperature_sensor",
             value_type="number",
@@ -102,9 +103,9 @@ def test_validation_requires_a_complete_description(unit, has_anchor, message) -
 
 
 def test_multistate_requires_integer_state_codes() -> None:
-    with pytest.raises(PointVocabularyError, match="table d'états"):
+    with raises_code(PointVocabularyError, "POINT_MULTISTATE_REQUIRES_STATES"):
         check_point_definition(point_class=None, value_type="multistate", unit=None, states=None)
-    with pytest.raises(PointVocabularyError, match="entiers"):
+    with raises_code(PointVocabularyError, "POINT_STATE_CODES_NOT_INTEGER"):
         check_point_definition(
             point_class=None, value_type="multistate", unit=None, states={"arret": "Arrêt"}
         )

@@ -1,5 +1,3 @@
-import pytest
-
 from app.graph_vocabulary import (
     NODE_TYPES,
     PREDICATES,
@@ -7,6 +5,7 @@ from app.graph_vocabulary import (
     VocabularyError,
     check_storable_relation,
 )
+from tests.error_helpers import raises_code
 
 
 def test_vocabulary_has_a_version() -> None:
@@ -30,22 +29,22 @@ def test_feeds_between_two_functional_locations_is_accepted() -> None:
 
 
 def test_unknown_predicate_is_rejected() -> None:
-    with pytest.raises(VocabularyError, match="inconnu"):
+    with raises_code(VocabularyError, "PREDICATE_UNKNOWN"):
         check_storable_relation("aime", "functional_location", "functional_location")
 
 
 def test_structural_predicate_cannot_be_stored() -> None:
     # « hasPart » est déduit de l'arbre des positions : le stocker créerait une
     # seconde source de vérité.
-    with pytest.raises(VocabularyError, match="hiérarchie"):
+    with raises_code(VocabularyError, "PREDICATE_STRUCTURAL"):
         check_storable_relation("hasPart", "functional_location", "functional_location")
 
 
 def test_wrong_subject_type_is_rejected() -> None:
-    with pytest.raises(VocabularyError, match="sujet"):
+    with raises_code(VocabularyError, "PREDICATE_SUBJECT_TYPE_INVALID"):
         check_storable_relation("feeds", "physical_unit", "functional_location")
 
 
 def test_maintained_by_is_not_usable_until_organizations_exist() -> None:
-    with pytest.raises(VocabularyError, match="objet"):
+    with raises_code(VocabularyError, "PREDICATE_OBJECT_TYPE_INVALID"):
         check_storable_relation("maintainedBy", "functional_location", "site")

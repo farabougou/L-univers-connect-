@@ -22,6 +22,7 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
+from app.errors import DomainError
 from app.point_vocabulary import UNITS
 
 PROPERTY_VOCABULARY_VERSION = "2026-09-23.1"
@@ -106,12 +107,12 @@ PROPERTIES: dict[str, PropertyDefinition] = {
 SOURCES = ("nameplate", "document", "measurement", "manual")
 
 
-class PropertyError(ValueError):
+class PropertyError(DomainError, ValueError):
     pass
 
 
-class PropertyNotFound(LookupError):
-    pass
+class PropertyNotFound(DomainError, LookupError):
+    status = 404
 
 
 def check_property(
@@ -119,35 +120,37 @@ def check_property(
 ) -> PropertyDefinition:
     definition = PROPERTIES.get(key)
     if definition is None:
-        raise PropertyError(f"propriété inconnue : {key}")
+        raise PropertyError("PROPERTY_UNKNOWN", key=key)
     if node_type not in definition.node_types:
-        raise PropertyError(f"« {key} » ne s'applique pas à un nœud de type {node_type}")
+        raise PropertyError("PROPERTY_NODE_TYPE_INVALID", key=key, node_type=node_type)
 
     if definition.value_type == "text":
         if not isinstance(value, str):
-            raise PropertyError(f"« {key} » attend un texte")
+            raise PropertyError("PROPERTY_TEXT_EXPECTED", key=key)
         if unit is not None:
-            raise PropertyError(f"« {key} » n'a pas d'unité")
+            raise PropertyError("PROPERTY_UNIT_NOT_ALLOWED", key=key)
         if definition.allowed_values and value not in definition.allowed_values:
-            raise PropertyError(f"valeur non reconnue pour « {key} » : {value}")
+            raise PropertyError("PROPERTY_VALUE_NOT_ALLOWED", key=key, value=value)
         return definition
 
     if isinstance(value, bool) or not isinstance(value, int | float):
-        raise PropertyError(f"« {key} » attend un nombre")
+        raise PropertyError("PROPERTY_NUMBER_EXPECTED", key=key)
     if definition.minimum is not None and value < definition.minimum:
-        raise PropertyError(f"« {key} » doit être au moins {definition.minimum}")
+        raise PropertyError("PROPERTY_BELOW_MINIMUM", key=key, minimum=definition.minimum)
     if definition.maximum is not None and value > definition.maximum:
-        raise PropertyError(f"« {key} » doit être au plus {definition.maximum}")
+        raise PropertyError("PROPERTY_ABOVE_MAXIMUM", key=key, maximum=definition.maximum)
     if definition.quantity is None:
         if unit is not None:
-            raise PropertyError(f"« {key} » n'a pas d'unité")
+            raise PropertyError("PROPERTY_UNIT_NOT_ALLOWED", key=key)
         return definition
     if unit is None:
-        raise PropertyError(f"unité manquante pour « {key} »")
+        raise PropertyError("PROPERTY_UNIT_MISSING", key=key)
     if unit not in UNITS:
-        raise PropertyError(f"unité inconnue : {unit} (codes UCUM attendus)")
+        raise PropertyError("UNIT_UNKNOWN", unit=unit)
     if UNITS[unit][1] != definition.quantity:
-        raise PropertyError(f"l'unité {unit} ne mesure pas une grandeur « {definition.quantity} »")
+        raise PropertyError(
+            "PROPERTY_UNIT_QUANTITY_MISMATCH", unit=unit, quantity=definition.quantity
+        )
     return definition
 
 
@@ -174,9 +177,9 @@ def set_property(
         text("SELECT node_type FROM graph_nodes WHERE id = :id"), {"id": node_id}
     ).scalar()
     if node_type is None:
-        raise PropertyNotFound("nœud introuvable")
+        raise PropertyNotFound("NODE_NOT_FOUND")
     if source not in SOURCES:
-        raise PropertyError(f"source inconnue : {source}")
+        raise PropertyError("PROPERTY_SOURCE_UNKNOWN", source=source)
     definition = check_property(key=key, node_type=node_type, value=value, unit=unit)
 
     current = (
@@ -192,7 +195,7 @@ def set_property(
     )
     if current is not None:
         if valid_from <= current["valid_from"]:
-            raise PropertyError("la nouvelle valeur doit prendre effet après la valeur actuelle")
+            raise PropertyError("PROPERTY_EFFECTIVE_DATE_NOT_LATER")
         connection.execute(
             text("UPDATE node_properties SET valid_to = :valid_to WHERE id = :id"),
             {"valid_to": valid_from, "id": current["id"]},

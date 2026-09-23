@@ -17,6 +17,7 @@ from app.telemetry import (
     record_measurement,
 )
 from app.tenancy import set_tenant_context
+from tests.error_helpers import raises_code
 
 T0 = datetime(2026, 9, 23, 8, 0, tzinfo=UTC)
 
@@ -207,7 +208,7 @@ def test_points_are_graph_nodes_linked_to_their_equipment(two_tenants) -> None:
 
 def test_a_validated_point_is_frozen(two_tenants) -> None:
     tenant_a, _ = two_tenants
-    with pytest.raises(PointConflict, match="plus modifiable"):
+    with raises_code(PointConflict, "POINT_NOT_EDITABLE"):
         with _in_tenant(tenant_a) as connection:
             identify_point(connection, point_id=tenant_a["sensor"], changes={"unit": "K"})
     with pytest.raises(DBAPIError, match="ne peut plus être modifiée"):
@@ -295,7 +296,7 @@ def test_a_rejected_point_refuses_measurements(two_tenants) -> None:
             created_by="decouverte",
         )
         decide_point(connection, point_id=ghost, decision="rejected")
-    with pytest.raises(MeasurementRejected, match="rejeté"):
+    with raises_code(MeasurementRejected, "POINT_REJECTED"):
         with _in_tenant(tenant_a) as connection:
             _record(connection, tenant_a, value=1.0, point=get_point(connection, ghost))
 
@@ -332,4 +333,4 @@ def test_batch_ingestion_reports_each_item(two_tenants) -> None:
         "conflicts": 1,
         "rejected": 1,
     }
-    assert [(e["index"], e["reason"]) for e in summary["errors"]][1] == (4, "point introuvable")
+    assert [(e["index"], e["code"]) for e in summary["errors"]][1] == (4, "POINT_NOT_FOUND")

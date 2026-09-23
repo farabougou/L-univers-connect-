@@ -17,6 +17,8 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
+from app.errors import DomainError
+
 QR_PREFIX = "paios:tag:"
 TAG_TYPES = ("qr", "nfc", "barcode")
 
@@ -26,11 +28,15 @@ _COLUMNS = (
 )
 
 
-class TagNotFound(LookupError):
-    pass
+class TagNotFound(DomainError, LookupError):
+    status = 404
 
 
-class TagRevoked(ValueError):
+class TagRevoked(DomainError, ValueError):
+    status = 410
+
+
+class TagInvalid(DomainError, ValueError):
     pass
 
 
@@ -52,12 +58,12 @@ def create_tag(
     created_by: str,
 ) -> dict[str, Any]:
     if tag_type not in TAG_TYPES:
-        raise ValueError(f"type d'étiquette inconnu : {tag_type}")
+        raise TagInvalid("TAG_TYPE_UNKNOWN", tag_type=tag_type)
     node_exists = connection.execute(
         text("SELECT 1 FROM graph_nodes WHERE id = :id"), {"id": node_id}
     ).scalar()
     if not node_exists:
-        raise TagNotFound("nœud introuvable")
+        raise TagNotFound("NODE_NOT_FOUND")
     tag_id = uuid.uuid4()
     connection.execute(
         text(
@@ -99,16 +105,14 @@ def find_tag(connection: Connection, code: str) -> dict[str, Any]:
         .first()
     )
     if row is None:
-        raise TagNotFound("étiquette inconnue")
+        raise TagNotFound("TAG_UNKNOWN")
     return with_payload(dict(row))
 
 
 def resolve_tag(connection: Connection, code: str) -> dict[str, Any]:
     tag = find_tag(connection, code)
     if tag["status"] == "revoked":
-        raise TagRevoked(
-            f"étiquette révoquée ({tag['revoke_reason']}) : scanner la nouvelle étiquette"
-        )
+        raise TagRevoked("TAG_REVOKED", reason=tag["revoke_reason"])
     return tag
 
 
@@ -117,7 +121,7 @@ def revoke_tag(
 ) -> dict[str, Any]:
     tag = find_tag(connection, code)
     if tag["status"] == "revoked":
-        raise TagRevoked("cette étiquette est déjà révoquée")
+        raise TagRevoked("TAG_ALREADY_REVOKED")
     connection.execute(
         text(
             "UPDATE asset_tags SET status = 'revoked', revoked_at = :at, revoked_by = :by, "

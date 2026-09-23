@@ -15,6 +15,7 @@ from app.graph import (
 from app.graph_vocabulary import VocabularyError
 from app.tenancy import set_tenant_context
 from tests.db_helpers import purge_relations_for_tenant
+from tests.error_helpers import raises_code
 
 T0 = datetime(2026, 9, 23, 8, 0, tzinfo=UTC)
 
@@ -267,7 +268,7 @@ def test_symmetric_relation_is_not_duplicated_in_reverse(two_tenants) -> None:
         set_tenant_context(connection, tenant_a["tenant_id"])
         _relate(connection, tenant_a, predicate="connectedTo")
 
-    with pytest.raises(RelationConflict, match="autre sens"):
+    with raises_code(RelationConflict, "RELATION_ALREADY_EXISTS_REVERSE"):
         with engine.begin() as connection:
             set_tenant_context(connection, tenant_a["tenant_id"])
             _relate(
@@ -299,7 +300,7 @@ def test_ending_a_relation_keeps_it_in_history_and_allows_a_new_one(two_tenants)
 def test_end_date_must_follow_start_date(two_tenants) -> None:
     tenant_a, _ = two_tenants
 
-    with pytest.raises(ValueError, match="postérieure"):
+    with raises_code(ValueError, "END_BEFORE_START"):
         with engine.begin() as connection:
             set_tenant_context(connection, tenant_a["tenant_id"])
             relation_id = _relate(connection, tenant_a)
