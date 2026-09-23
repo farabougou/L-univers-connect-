@@ -136,6 +136,22 @@ export async function changeLifecycleState(formData: FormData) {
   revalidatePath(`/registre/${nodeId}`);
 }
 
+export async function setAssetCode(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+  const unitId = formData.get("unit_id");
+
+  const response = await apiFetch(`/physical-units/${unitId}/asset-code`, accessToken, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ asset_code: formData.get("asset_code") }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  revalidatePath(`/registre/${nodeId}`);
+}
+
 export async function setProperty(formData: FormData) {
   const accessToken = await requireAccessToken();
   const nodeId = String(formData.get("node_id"));

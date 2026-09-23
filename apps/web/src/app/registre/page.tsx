@@ -5,7 +5,7 @@ import type { Translator } from "@/i18n/translator";
 import { apiFetch, requireAccessToken } from "@/lib/api";
 import { errorMessage, getTranslator } from "@/lib/i18n";
 
-import { createEquipment, createSite, createSpace, showTag } from "./actions";
+import { createEquipment, createSite, createSpace, showTag, updateSiteTimezone } from "./actions";
 
 type Me = { roles: string[] };
 type Site = { id: string; name: string; timezone: string | null };
@@ -126,7 +126,13 @@ export default async function RegistrePage({
             {sites.map((site) => (
               <tr key={site.id}>
                 <td style={cellStyle}>{site.name}</td>
-                <td style={cellStyle}>{site.timezone}</td>
+                <td style={cellStyle}>
+                  <form action={updateSiteTimezone} style={{ display: "flex", gap: 4 }}>
+                    <input type="hidden" name="site_id" value={site.id} />
+                    <input name="timezone" defaultValue={site.timezone ?? ""} required />
+                    <button type="submit">{t("web.registre.edit_timezone")}</button>
+                  </form>
+                </td>
               </tr>
             ))}
           </tbody>

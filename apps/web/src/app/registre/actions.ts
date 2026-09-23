@@ -51,6 +51,20 @@ export async function createSpace(formData: FormData) {
   revalidatePath("/registre");
 }
 
+export async function updateSiteTimezone(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const siteId = formData.get("site_id");
+  const response = await apiFetch(`/sites/${siteId}/timezone`, accessToken, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ timezone: formData.get("timezone") }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(response);
+  }
+  revalidatePath("/registre");
+}
+
 /**
  * Un équipement suppose quatre ressources liées (modèle, exemplaire,
  * emplacement fonctionnel, affectation) : cette action les crée dans

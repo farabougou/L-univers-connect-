@@ -15,6 +15,7 @@ import {
   declareDesiredState,
   endDesiredState,
   revokeTag,
+  setAssetCode,
   setHandling,
   setProperty,
 } from "./actions";
@@ -490,6 +491,17 @@ function UnitView({
       {unit.manufacturer_designation && <p style={mutedStyle}>{unit.manufacturer_designation}</p>}
       <p>{t("mobile.passport.serial", { serial: unit.serial_number })}</p>
       {unit.asset_code && <p>{t("mobile.passport.asset_code", { code: unit.asset_code })}</p>}
+      {canManage && (
+        <form action={setAssetCode} style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+          <input type="hidden" name="node_id" value={nodeId} />
+          <input type="hidden" name="unit_id" value={unit.id} />
+          <label>
+            {t("web.registre.asset_code_label")}
+            <input name="asset_code" defaultValue={unit.asset_code ?? ""} required style={fieldStyle} />
+          </label>
+          <button type="submit">{t("web.registre.submit")}</button>
+        </form>
+      )}
       <p>{t("mobile.passport.state", { state: t(`lifecycle.${unit.lifecycle_state}`) })}</p>
       {canManage && nextStates.length > 0 && (
         <form action={changeLifecycleState} style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>

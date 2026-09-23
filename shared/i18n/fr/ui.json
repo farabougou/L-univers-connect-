@@ -301,7 +301,9 @@
       "property_value": "Valeur",
       "property_unit": "Unité (facultatif)",
       "property_source": "Origine",
-      "property_reason": "Motif"
+      "property_reason": "Motif",
+      "edit_timezone": "Modifier",
+      "asset_code_label": "Code d’inventaire"
     }
   },
   "space_type": {

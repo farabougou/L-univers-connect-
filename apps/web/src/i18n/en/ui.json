@@ -301,7 +301,9 @@
       "property_value": "Value",
       "property_unit": "Unit (optional)",
       "property_source": "Source",
-      "property_reason": "Reason"
+      "property_reason": "Reason",
+      "edit_timezone": "Edit",
+      "asset_code_label": "Inventory code"
     }
   },
   "space_type": {
