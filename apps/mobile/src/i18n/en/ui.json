@@ -229,7 +229,8 @@
       "create": "Create a work order",
       "submit": "Create",
       "title_required": "The title is required.",
-      "creation_failed": "The work order could not be created. Please try again."
+      "creation_failed": "The work order could not be created. Please try again.",
+      "update_status": "Update"
     },
     "registre": {
       "title": "Asset registry",

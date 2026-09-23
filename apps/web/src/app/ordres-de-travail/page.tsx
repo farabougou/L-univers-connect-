@@ -4,7 +4,7 @@ import type { Translator } from "@/i18n/translator";
 import { apiFetch, requireAccessToken } from "@/lib/api";
 import { errorMessage, getTranslator } from "@/lib/i18n";
 
-import { createWorkOrder } from "./actions";
+import { createWorkOrder, updateWorkOrderStatus } from "./actions";
 
 type WorkOrder = {
   id: string;
@@ -22,6 +22,7 @@ const fieldStyle = { display: "block", width: "100%", padding: 8, marginTop: 4 }
 
 const TYPES = ["corrective", "preventive", "predictive", "inspection"];
 const PRIORITIES = ["low", "medium", "high", "urgent"];
+const STATUSES = ["open", "in_progress", "completed", "cancelled"];
 
 function creationError(translator: Translator, code: string | undefined): string | null {
   if (!code) return null;
@@ -74,7 +75,19 @@ export default async function WorkOrdersPage({
                   <td style={cellStyle}>{workOrder.title}</td>
                   <td style={cellStyle}>{t(`work_order.type.${workOrder.work_order_type}`)}</td>
                   <td style={cellStyle}>{t(`work_order.priority.${workOrder.priority}`)}</td>
-                  <td style={cellStyle}>{t(`work_order.status.${workOrder.status}`)}</td>
+                  <td style={cellStyle}>
+                    <form action={updateWorkOrderStatus} style={{ display: "flex", gap: 4 }}>
+                      <input type="hidden" name="work_order_id" value={workOrder.id} />
+                      <select name="status" defaultValue={workOrder.status}>
+                        {STATUSES.map((status) => (
+                          <option key={status} value={status}>
+                            {t(`work_order.status.${status}`)}
+                          </option>
+                        ))}
+                      </select>
+                      <button type="submit">{t("web.work_orders.update_status")}</button>
+                    </form>
+                  </td>
                   <td style={cellStyle}>
                     {target ? (
                       <Link href={`/registre/${target.id}`}>{target.code}</Link>

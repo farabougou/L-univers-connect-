@@ -229,7 +229,8 @@
       "create": "Créer un ordre de travail",
       "submit": "Créer",
       "title_required": "L’intitulé est obligatoire.",
-      "creation_failed": "La création de l’ordre de travail n’a pas pu être effectuée. Réessayez."
+      "creation_failed": "La création de l’ordre de travail n’a pas pu être effectuée. Réessayez.",
+      "update_status": "Mettre à jour"
     },
     "registre": {
       "title": "Registre d’actifs",

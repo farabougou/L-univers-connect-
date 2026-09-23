@@ -32,3 +32,23 @@ export async function createWorkOrder(formData: FormData) {
 
   revalidatePath("/ordres-de-travail");
 }
+
+export async function updateWorkOrderStatus(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const workOrderId = formData.get("work_order_id");
+
+  const response = await apiFetch(`/work-orders/${workOrderId}/status`, accessToken, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status: formData.get("status") }),
+  });
+
+  if (!response.ok) {
+    const problem = await response.json().catch(() => null);
+    const code = typeof problem?.code === "string" ? problem.code : "CREATION_FAILED";
+    redirect(`/ordres-de-travail?error=${encodeURIComponent(code)}`);
+  }
+
+  revalidatePath("/ordres-de-travail");
+  revalidatePath("/registre");
+}
