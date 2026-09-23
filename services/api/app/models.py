@@ -1,7 +1,20 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import BigInteger, DateTime, Float, ForeignKey, Identity, String, func, text
+from sqlalchemy import (
+    BigInteger,
+    CheckConstraint,
+    DateTime,
+    Float,
+    ForeignKey,
+    ForeignKeyConstraint,
+    Identity,
+    Index,
+    String,
+    UniqueConstraint,
+    func,
+    text,
+)
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -19,10 +32,109 @@ class Tenant(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+def _graph_node_fk(table: str) -> ForeignKeyConstraint:
+    """Chaque ligne d'une table « nœud » a son entrée dans graph_nodes, avec le
+    même tenant (créée par un déclencheur en base, voir la migration 706eca882498)."""
+    return ForeignKeyConstraint(
+        ["tenant_id", "id"],
+        ["graph_nodes.tenant_id", "graph_nodes.id"],
+        name=f"fk_{table}_graph_node",
+    )
+
+
+class GraphNode(Base):
+    """Registre d'identité commun (ADR 012, section 2.1) : tout ce qui peut
+    être relié, placé, scanné ou diagnostiqué y a une ligne, avec le même UUID
+    que dans sa propre table."""
+
+    __tablename__ = "graph_nodes"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "id", name="uq_graph_nodes_tenant_id_id"),
+        CheckConstraint(
+            "node_type IN ('site', 'functional_location', 'physical_unit')",
+            name="ck_graph_nodes_node_type",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    node_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Relation(Base):
+    """Relation typée entre deux nœuds du même tenant (ADR 012, section 2.2).
+
+    Bitemporelle (valid_from/valid_to + recorded_at), jamais effacée ni
+    réécrite : un déclencheur en base n'autorise que la clôture et la décision
+    sur une proposition. Le vocabulaire des prédicats vit dans
+    app.graph_vocabulary."""
+
+    __tablename__ = "relations"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["tenant_id", "subject_id"],
+            ["graph_nodes.tenant_id", "graph_nodes.id"],
+            name="fk_relations_subject",
+        ),
+        ForeignKeyConstraint(
+            ["tenant_id", "object_id"],
+            ["graph_nodes.tenant_id", "graph_nodes.id"],
+            name="fk_relations_object",
+        ),
+        CheckConstraint("subject_id <> object_id", name="ck_relations_not_self"),
+        CheckConstraint(
+            "valid_to IS NULL OR valid_to > valid_from", name="ck_relations_valid_period"
+        ),
+        CheckConstraint(
+            "origin IN ('manual', 'import', 'discovery', 'inferred')", name="ck_relations_origin"
+        ),
+        CheckConstraint(
+            "status IN ('proposed', 'validated', 'rejected')", name="ck_relations_status"
+        ),
+        CheckConstraint(
+            "confidence IS NULL OR (confidence >= 0 AND confidence <= 1)",
+            name="ck_relations_confidence",
+        ),
+        Index("ix_relations_subject_id", "subject_id"),
+        Index("ix_relations_object_id", "object_id"),
+        Index(
+            "uq_relations_open",
+            "tenant_id",
+            "subject_id",
+            "predicate",
+            "object_id",
+            unique=True,
+            postgresql_where=text("valid_to IS NULL AND status <> 'rejected'"),
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    subject_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    predicate: Mapped[str] = mapped_column(String(50), nullable=False)
+    object_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    valid_from: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    valid_to: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    recorded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    origin: Mapped[str] = mapped_column(String(20), nullable=False, server_default="manual")
+    confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="validated")
+    vocabulary_version: Mapped[str] = mapped_column(String(30), nullable=False)
+    created_by: Mapped[str] = mapped_column(String(200), nullable=False)
+
+
 class Site(Base):
     """Première table métier d'exemple, portant tenant_id (protégée par RLS)."""
 
     __tablename__ = "sites"
+    __table_args__ = (_graph_node_fk("sites"),)
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
@@ -82,6 +194,7 @@ class PhysicalUnit(Base):
     numéro de série (voir ADR 001)."""
 
     __tablename__ = "physical_units"
+    __table_args__ = (_graph_node_fk("physical_units"),)
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
@@ -101,6 +214,7 @@ class FunctionalLocation(Base):
     historique (voir ADR 001, et FunctionalLocationAssignment ci-dessous)."""
 
     __tablename__ = "functional_locations"
+    __table_args__ = (_graph_node_fk("functional_locations"),)
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(

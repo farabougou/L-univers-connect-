@@ -2,8 +2,7 @@
 
 ## Statut
 
-Proposée (23 septembre 2026). Aucune ligne de code n'est écrite avant l'accord de
-Mohamed sur ce document.
+Acceptée (23 septembre 2026), avec l'accord de Mohamed.
 
 **Complétée par l'ADR 012 (même jour)** : les espaces, positions, exemplaires et points
 sont enregistrés dans le registre d'identité commun (`graph_nodes`) ; les zones

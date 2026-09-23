@@ -2,8 +2,7 @@
 
 ## Statut
 
-Proposée (23 septembre 2026). Aucune ligne de code n'est écrite avant l'accord de
-Mohamed sur ce document. Complète l'ADR 001 (modèle sémantique), l'ADR 004 (vision
+Acceptée (23 septembre 2026), avec l'accord de Mohamed. Complète l'ADR 001 (modèle sémantique), l'ADR 004 (vision
 cible) et l'ADR 011 (modèle spatial) sans les remplacer.
 
 ## Contexte

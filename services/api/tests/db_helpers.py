@@ -15,6 +15,25 @@ ADMIN_DATABASE_URL = (
 )
 
 
+def purge_relations_for_tenant(tenant_id) -> None:
+    """Même principe pour les relations, protégées contre toute suppression
+    (voir la migration 706eca882498)."""
+    admin_engine = create_engine(ADMIN_DATABASE_URL)
+    try:
+        with admin_engine.begin() as connection:
+            connection.execute(
+                text("ALTER TABLE relations DISABLE TRIGGER relations_protect_history")
+            )
+            connection.execute(
+                text("DELETE FROM relations WHERE tenant_id = :id"), {"id": tenant_id}
+            )
+            connection.execute(
+                text("ALTER TABLE relations ENABLE TRIGGER relations_protect_history")
+            )
+    finally:
+        admin_engine.dispose()
+
+
 def purge_audit_log_for_tenant(tenant_id) -> None:
     admin_engine = create_engine(ADMIN_DATABASE_URL)
     try:

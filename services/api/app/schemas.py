@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import AwareDatetime, BaseModel, Field
 
 
 class SiteCreate(BaseModel):
@@ -194,6 +194,49 @@ class PhotoOut(BaseModel):
     caption: str | None
     taken_at: datetime
     uploaded_at: datetime
+
+
+class GraphNodeOut(BaseModel):
+    id: uuid.UUID
+    node_type: str
+    created_at: datetime
+
+
+class RelationCreate(BaseModel):
+    subject_id: uuid.UUID
+    predicate: str = Field(min_length=1, max_length=50)
+    object_id: uuid.UUID
+    # Date avec fuseau horaire obligatoire : une date « naïve » serait
+    # interprétée selon le fuseau du serveur, source d'erreurs silencieuses.
+    valid_from: AwareDatetime | None = None
+    confidence: float | None = Field(default=None, ge=0, le=1)
+
+
+class RelationEnd(BaseModel):
+    valid_to: AwareDatetime | None = None
+    reason: str = Field(min_length=1, max_length=500)
+
+
+class RelationOut(BaseModel):
+    """Une arête vue depuis un nœud : `label` est le prédicat dans le sens de
+    lecture (ex. « isFedBy » vu depuis l'objet d'un « feeds »). `derived`
+    signale une relation déduite de la hiérarchie, sans identifiant propre."""
+
+    id: uuid.UUID | None
+    subject_id: uuid.UUID
+    subject_type: str
+    predicate: str
+    object_id: uuid.UUID
+    object_type: str
+    direction: Literal["outgoing", "incoming"]
+    label: str
+    derived: bool
+    valid_from: datetime | None
+    valid_to: datetime | None
+    origin: str | None
+    status: str | None
+    confidence: float | None
+    vocabulary_version: str | None
 
 
 class MeasurementCreate(BaseModel):
