@@ -51,6 +51,20 @@ export async function createSpace(formData: FormData) {
   revalidatePath("/registre");
 }
 
+export async function closeSpace(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const spaceId = formData.get("space_id");
+  const response = await apiFetch(`/spaces/${spaceId}/close`, accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reason: formData.get("reason") }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(response);
+  }
+  revalidatePath("/registre");
+}
+
 export async function updateSiteTimezone(formData: FormData) {
   const accessToken = await requireAccessToken();
   const siteId = formData.get("site_id");

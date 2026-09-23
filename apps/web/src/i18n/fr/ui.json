@@ -305,7 +305,9 @@
       "edit_timezone": "Modifier",
       "asset_code_label": "Code d’inventaire",
       "confirm_finding": "Confirmer",
-      "confirm_note": "Ce qui a été vérifié"
+      "confirm_note": "Ce qui a été vérifié",
+      "close_space": "Fermer",
+      "close_space_reason": "Motif de fermeture"
     }
   },
   "space_type": {

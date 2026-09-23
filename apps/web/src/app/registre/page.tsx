@@ -5,7 +5,14 @@ import type { Translator } from "@/i18n/translator";
 import { apiFetch, requireAccessToken } from "@/lib/api";
 import { errorMessage, getTranslator } from "@/lib/i18n";
 
-import { createEquipment, createSite, createSpace, showTag, updateSiteTimezone } from "./actions";
+import {
+  closeSpace,
+  createEquipment,
+  createSite,
+  createSpace,
+  showTag,
+  updateSiteTimezone,
+} from "./actions";
 
 type Me = { roles: string[] };
 type Site = { id: string; name: string; timezone: string | null };
@@ -170,6 +177,7 @@ export default async function RegistrePage({
               <th style={headerCellStyle}>{t("web.registre.space_name")}</th>
               <th style={headerCellStyle}>{t("web.registre.equipment_site")}</th>
               <th style={headerCellStyle}>{t("web.registre.space_parent")}</th>
+              <th style={headerCellStyle} />
             </tr>
           </thead>
           <tbody>
@@ -182,6 +190,13 @@ export default async function RegistrePage({
                 <td style={cellStyle}>{siteName(space.site_id)}</td>
                 <td style={cellStyle}>
                   {space.parent_id ? spaceLabel(space.parent_id) : t("web.registre.space_parent_none")}
+                </td>
+                <td style={cellStyle}>
+                  <form action={closeSpace} style={{ display: "flex", gap: 4 }}>
+                    <input type="hidden" name="space_id" value={space.id} />
+                    <input name="reason" required placeholder={t("web.registre.close_space_reason")} />
+                    <button type="submit">{t("web.registre.close_space")}</button>
+                  </form>
                 </td>
               </tr>
             ))}

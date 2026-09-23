@@ -305,7 +305,9 @@
       "edit_timezone": "Edit",
       "asset_code_label": "Inventory code",
       "confirm_finding": "Confirm",
-      "confirm_note": "What was verified"
+      "confirm_note": "What was verified",
+      "close_space": "Close",
+      "close_space_reason": "Reason for closing"
     }
   },
   "space_type": {
