@@ -303,7 +303,9 @@
       "property_source": "Origine",
       "property_reason": "Motif",
       "edit_timezone": "Modifier",
-      "asset_code_label": "Code d’inventaire"
+      "asset_code_label": "Code d’inventaire",
+      "confirm_finding": "Confirmer",
+      "confirm_note": "Ce qui a été vérifié"
     }
   },
   "space_type": {

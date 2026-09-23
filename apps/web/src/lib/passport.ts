@@ -67,6 +67,7 @@ export type Passport = {
   points?: PassportPoint[];
   open_findings: {
     id: string;
+    kind: string;
     severity: string;
     title: string;
     certainty: string;

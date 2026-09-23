@@ -38,6 +38,26 @@ export async function acknowledgeSignal(formData: FormData) {
   revalidatePath(`/registre/${nodeId}`);
 }
 
+/**
+ * Confirmation d'un constat : seulement une personne (jamais un système), et
+ * jamais pour une prédiction (l'API le refuse aussi, voir app/findings.py).
+ */
+export async function confirmFinding(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const signalId = formData.get("signal_id");
+  const nodeId = String(formData.get("node_id"));
+
+  const response = await apiFetch(`/findings/${signalId}/confirm`, accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ note: formData.get("note") }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  revalidatePath(`/registre/${nodeId}`);
+}
+
 export async function setHandling(formData: FormData) {
   const accessToken = await requireAccessToken();
   const kind = formData.get("kind") as SignalKind;

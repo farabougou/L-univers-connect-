@@ -10,6 +10,7 @@ import {
   acknowledgeSignal,
   changeLifecycleState,
   clearAlarm,
+  confirmFinding,
   createTagForEquipment,
   createWorkOrderForEquipment,
   declareDesiredState,
@@ -247,7 +248,12 @@ export default async function EquipmentPage({
               <br />
               {finding.title}
             </p>
-            <SignalActions kind="finding" signal={finding} nodeId={id} t={t} />
+            <SignalActions
+              kind="finding"
+              signal={{ ...finding, findingKind: finding.kind }}
+              nodeId={id}
+              t={t}
+            />
           </div>
         ))}
         {alarms.length === 0 && passport.open_findings.length === 0 && (
@@ -348,7 +354,14 @@ function SignalActions({
   t,
 }: {
   kind: "alarm" | "finding";
-  signal: { id: string; ack_state: string; handling_status: string; condition_state: string };
+  signal: {
+    id: string;
+    ack_state: string;
+    handling_status: string;
+    condition_state: string;
+    findingKind?: string;
+    certainty?: string;
+  };
   nodeId: string;
   t: (key: string) => string;
 }) {
@@ -389,6 +402,15 @@ function SignalActions({
           {hidden}
           <input type="hidden" name="handling_status" value="false_positive" />
           <button type="submit">{t("web.registre.false_positive")}</button>
+        </form>
+      )}
+      {/* Une prédiction porte sur l'avenir : elle n'est jamais confirmée
+          (voir app/findings.py, confirm_finding). */}
+      {kind === "finding" && signal.certainty !== "confirmed" && signal.findingKind !== "prediction" && (
+        <form action={confirmFinding} style={{ display: "flex", gap: 4 }}>
+          {hidden}
+          <input name="note" required placeholder={t("web.registre.confirm_note")} />
+          <button type="submit">{t("web.registre.confirm_finding")}</button>
         </form>
       )}
     </div>
