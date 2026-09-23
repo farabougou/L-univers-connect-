@@ -12,7 +12,9 @@ type WorkOrder = {
   work_order_type: string;
   priority: string;
   status: string;
+  functional_location_id: string | null;
 };
+type FunctionalLocation = { id: string; code: string; name: string };
 
 const cellStyle = { borderBottom: "1px solid #eee", padding: "6px 8px", textAlign: "left" as const };
 const headerCellStyle = { borderBottom: "1px solid #ddd", padding: "6px 8px", textAlign: "left" as const };
@@ -38,8 +40,13 @@ export default async function WorkOrdersPage({
   const translator = await getTranslator();
   const { t } = translator;
   const error = creationError(translator, (await searchParams).error);
-  const response = await apiFetch("/work-orders", accessToken);
+  const [response, locationsResponse] = await Promise.all([
+    apiFetch("/work-orders", accessToken),
+    apiFetch("/functional-locations", accessToken),
+  ]);
   const workOrders: WorkOrder[] = response.ok ? await response.json() : [];
+  const locations: FunctionalLocation[] = locationsResponse.ok ? await locationsResponse.json() : [];
+  const location = (id: string | null) => locations.find((candidate) => candidate.id === id);
 
   return (
     <main style={{ maxWidth: 720, margin: "40px auto", padding: "0 16px" }}>
@@ -56,17 +63,28 @@ export default async function WorkOrdersPage({
               <th style={headerCellStyle}>{t("web.work_orders.col_type")}</th>
               <th style={headerCellStyle}>{t("web.work_orders.col_priority")}</th>
               <th style={headerCellStyle}>{t("web.work_orders.col_status")}</th>
+              <th style={headerCellStyle}>{t("mobile.passport.equipment")}</th>
             </tr>
           </thead>
           <tbody>
-            {workOrders.map((workOrder) => (
-              <tr key={workOrder.id}>
-                <td style={cellStyle}>{workOrder.title}</td>
-                <td style={cellStyle}>{t(`work_order.type.${workOrder.work_order_type}`)}</td>
-                <td style={cellStyle}>{t(`work_order.priority.${workOrder.priority}`)}</td>
-                <td style={cellStyle}>{t(`work_order.status.${workOrder.status}`)}</td>
-              </tr>
-            ))}
+            {workOrders.map((workOrder) => {
+              const target = location(workOrder.functional_location_id);
+              return (
+                <tr key={workOrder.id}>
+                  <td style={cellStyle}>{workOrder.title}</td>
+                  <td style={cellStyle}>{t(`work_order.type.${workOrder.work_order_type}`)}</td>
+                  <td style={cellStyle}>{t(`work_order.priority.${workOrder.priority}`)}</td>
+                  <td style={cellStyle}>{t(`work_order.status.${workOrder.status}`)}</td>
+                  <td style={cellStyle}>
+                    {target ? (
+                      <Link href={`/registre/${target.id}`}>{target.code}</Link>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}
