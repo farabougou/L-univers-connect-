@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Identity, String, func, text
+from sqlalchemy import BigInteger, DateTime, Float, ForeignKey, Identity, String, func, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -307,3 +307,36 @@ class InterventionPhoto(Base):
     uploaded_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+
+class Measurement(Base):
+    """Une mesure ponctuelle de télémétrie, en lecture seule (voir ADR 004,
+    brique Télémétrie, et le squelette de bout en bout du cahier des
+    charges, section 36.2).
+
+    Pour ce premier jalon (M2), `source` vaut toujours 'simulator' : aucun
+    connecteur réel vers un équipement n'existe encore (celui-ci est prévu
+    pour M3, derrière un adaptateur générique, voir règle non négociable 8).
+    `metric` reste un texte libre non normalisé tant que trois catégories
+    réelles n'ont pas été observées (formalisation Brick Schema différée,
+    ADR 004). Une mesure n'est jamais modifiée après coup : une nouvelle
+    lecture crée toujours une nouvelle ligne."""
+
+    __tablename__ = "measurements"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    functional_location_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("functional_locations.id"), nullable=True
+    )
+    physical_unit_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("physical_units.id"), nullable=True
+    )
+    metric: Mapped[str] = mapped_column(String(100), nullable=False)
+    value: Mapped[float] = mapped_column(Float, nullable=False)
+    unit: Mapped[str] = mapped_column(String(20), nullable=False)
+    source: Mapped[str] = mapped_column(String(50), nullable=False, server_default="simulator")
+    measured_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

@@ -194,3 +194,25 @@ class PhotoOut(BaseModel):
     caption: str | None
     taken_at: datetime
     uploaded_at: datetime
+
+
+class MeasurementCreate(BaseModel):
+    functional_location_id: uuid.UUID | None = None
+    physical_unit_id: uuid.UUID | None = None
+    metric: str = Field(min_length=1, max_length=100)
+    value: float
+    unit: str = Field(min_length=1, max_length=20)
+    source: str = Field(default="simulator", max_length=50)
+    measured_at: datetime | None = None
+
+
+class MeasurementOut(BaseModel):
+    id: uuid.UUID
+    functional_location_id: uuid.UUID | None
+    physical_unit_id: uuid.UUID | None
+    metric: str
+    value: float
+    unit: str
+    source: str
+    measured_at: datetime
+    created_at: datetime
