@@ -307,7 +307,24 @@
       "confirm_finding": "Confirmer",
       "confirm_note": "Ce qui a été vérifié",
       "close_space": "Fermer",
-      "close_space_reason": "Motif de fermeture"
+      "close_space_reason": "Motif de fermeture",
+      "rules_title": "Règles de détection",
+      "no_rules": "Aucune règle définie pour ce point.",
+      "rule_version": "Version {version}",
+      "create_threshold_rule": "Ajouter une règle de seuil",
+      "create_divergence_rule": "Ajouter une règle d’écart à la consigne",
+      "rule_severity": "Gravité",
+      "rule_title": "Intitulé du constat",
+      "rule_recommended_action": "Action recommandée (facultatif)",
+      "rule_create_work_order": "Créer un ordre de travail automatiquement",
+      "rule_operator_gt": "Supérieur à",
+      "rule_operator_lt": "Inférieur à",
+      "rule_threshold": "Seuil",
+      "rule_tolerance": "Tolérance",
+      "rule_reason": "Motif",
+      "activate_rule": "Activer",
+      "retire_rule": "Retirer",
+      "retire_reason": "Motif du retrait"
     }
   },
   "space_type": {
@@ -330,5 +347,10 @@
     "nominal_heating_capacity": "Puissance calorifique nominale",
     "nominal_electrical_power": "Puissance électrique nominale",
     "manufacture_year": "Année de fabrication"
+  },
+  "config_status": {
+    "draft": "Brouillon",
+    "active": "Active",
+    "retired": "Retirée"
   }
 }

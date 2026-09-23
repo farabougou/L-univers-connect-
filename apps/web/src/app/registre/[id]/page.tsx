@@ -8,18 +8,37 @@ import { type Locale, formatDate, formatDateTime, formatNumber } from "@/i18n/tr
 
 import {
   acknowledgeSignal,
+  activateRule,
   changeLifecycleState,
   clearAlarm,
   confirmFinding,
+  createDivergenceRule,
   createTagForEquipment,
+  createThresholdRule,
   createWorkOrderForEquipment,
   declareDesiredState,
   endDesiredState,
+  retireRule,
   revokeTag,
   setAssetCode,
   setHandling,
   setProperty,
 } from "./actions";
+
+type RuleContent = {
+  kind: "threshold" | "desired_state_divergence";
+  severity: string;
+  title: string;
+  operator?: string;
+  threshold?: number;
+  tolerance?: number;
+};
+type ConfigVersion = {
+  id: string;
+  version: number;
+  status: string;
+  content: RuleContent;
+};
 
 const PROPERTY_SOURCES = ["nameplate", "document", "measurement", "manual"];
 // Même vocabulaire fermé que app/properties.py (PROPERTIES) : une propriété
@@ -132,6 +151,19 @@ export default async function EquipmentPage({
     ),
   );
 
+  const rulesByPoint = Object.fromEntries(
+    await Promise.all(
+      points.map(async (point) => {
+        const rulesResponse = await apiFetch(
+          `/configs?config_type=alarm_rule&subject_key=${point.id}`,
+          accessToken,
+        );
+        const versions: ConfigVersion[] = rulesResponse.ok ? await rulesResponse.json() : [];
+        return [point.id, versions] as const;
+      }),
+    ),
+  );
+
   return (
     <main style={{ maxWidth: 720, margin: "40px auto", padding: "0 16px" }}>
       <Link href="/registre">← {t("common.back")}</Link>
@@ -219,6 +251,13 @@ export default async function EquipmentPage({
                 canManage={canManage}
                 t={t}
                 locale={locale}
+              />
+              <RulesBlock
+                point={point}
+                versions={rulesByPoint[point.id] ?? []}
+                nodeId={id}
+                canManage={canManage}
+                t={t}
               />
             </div>
           ))}
@@ -484,6 +523,142 @@ function DesiredStateBlock({
             </button>
           </form>
         </details>
+      )}
+    </div>
+  );
+}
+
+function RulesBlock({
+  point,
+  versions,
+  nodeId,
+  canManage,
+  t,
+}: {
+  point: { id: string };
+  versions: ConfigVersion[];
+  nodeId: string;
+  canManage: boolean;
+  t: (key: string, params?: Record<string, string>) => string;
+}) {
+  return (
+    <div style={{ marginLeft: 16, marginTop: 4 }}>
+      <p style={{ ...mutedStyle, margin: 0, fontWeight: 600 }}>{t("web.registre.rules_title")}</p>
+      {versions.length === 0 && <p style={mutedStyle}>{t("web.registre.no_rules")}</p>}
+      {versions.map((version) => (
+        <p key={version.id} style={{ margin: 0 }}>
+          {t("web.registre.rule_version", { version: String(version.version) })} —{" "}
+          {t(`config_status.${version.status}`)} — {t(`severity.${version.content.severity}`)} —{" "}
+          {version.content.title}
+          {version.content.kind === "threshold" &&
+            ` (${version.content.operator === ">" ? t("web.registre.rule_operator_gt") : t("web.registre.rule_operator_lt")} ${version.content.threshold})`}
+          {version.content.kind === "desired_state_divergence" &&
+            ` (${t("web.registre.rule_tolerance")}: ${version.content.tolerance})`}
+          {canManage && version.status === "draft" && (
+            <form action={activateRule} style={{ display: "inline", marginLeft: 8 }}>
+              <input type="hidden" name="version_id" value={version.id} />
+              <input type="hidden" name="node_id" value={nodeId} />
+              <button type="submit">{t("web.registre.activate_rule")}</button>
+            </form>
+          )}
+          {canManage && version.status !== "retired" && (
+            <form action={retireRule} style={{ display: "inline-flex", gap: 4, marginLeft: 8 }}>
+              <input type="hidden" name="version_id" value={version.id} />
+              <input type="hidden" name="node_id" value={nodeId} />
+              <input name="reason" required placeholder={t("web.registre.retire_reason")} />
+              <button type="submit">{t("web.registre.retire_rule")}</button>
+            </form>
+          )}
+        </p>
+      ))}
+      {canManage && (
+        <>
+          <details>
+            <summary>{t("web.registre.create_threshold_rule")}</summary>
+            <form action={createThresholdRule} style={{ maxWidth: 360 }}>
+              <input type="hidden" name="node_id" value={nodeId} />
+              <input type="hidden" name="point_id" value={point.id} />
+              <label>
+                {t("web.registre.rule_title")}
+                <input name="title" required style={fieldStyle} />
+              </label>
+              <label style={labelStyle}>
+                {t("web.registre.rule_severity")}
+                <select name="severity" defaultValue="warning" style={fieldStyle}>
+                  {["info", "warning", "major", "critical"].map((severity) => (
+                    <option key={severity} value={severity}>
+                      {t(`severity.${severity}`)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label style={labelStyle}>
+                {t("web.registre.rule_operator_gt")} / {t("web.registre.rule_operator_lt")}
+                <select name="operator" defaultValue=">" style={fieldStyle}>
+                  <option value=">">{t("web.registre.rule_operator_gt")}</option>
+                  <option value="<">{t("web.registre.rule_operator_lt")}</option>
+                </select>
+              </label>
+              <label style={labelStyle}>
+                {t("web.registre.rule_threshold")}
+                <input name="threshold" type="number" step="any" required style={fieldStyle} />
+              </label>
+              <label style={labelStyle}>
+                {t("web.registre.rule_recommended_action")}
+                <input name="recommended_action" style={fieldStyle} />
+              </label>
+              <label style={labelStyle}>
+                <input name="create_work_order" type="checkbox" /> {t("web.registre.rule_create_work_order")}
+              </label>
+              <label style={labelStyle}>
+                {t("web.registre.rule_reason")}
+                <input name="reason" required style={fieldStyle} />
+              </label>
+              <button type="submit" style={submitStyle}>
+                {t("web.registre.submit")}
+              </button>
+            </form>
+          </details>
+          <details>
+            <summary>{t("web.registre.create_divergence_rule")}</summary>
+            <form action={createDivergenceRule} style={{ maxWidth: 360 }}>
+              <input type="hidden" name="node_id" value={nodeId} />
+              <input type="hidden" name="point_id" value={point.id} />
+              <label>
+                {t("web.registre.rule_title")}
+                <input name="title" required style={fieldStyle} />
+              </label>
+              <label style={labelStyle}>
+                {t("web.registre.rule_severity")}
+                <select name="severity" defaultValue="warning" style={fieldStyle}>
+                  {["info", "warning", "major", "critical"].map((severity) => (
+                    <option key={severity} value={severity}>
+                      {t(`severity.${severity}`)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label style={labelStyle}>
+                {t("web.registre.rule_tolerance")}
+                <input name="tolerance" type="number" step="any" min="0" defaultValue="0" style={fieldStyle} />
+              </label>
+              <label style={labelStyle}>
+                {t("web.registre.rule_recommended_action")}
+                <input name="recommended_action" style={fieldStyle} />
+              </label>
+              <label style={labelStyle}>
+                <input name="create_work_order" type="checkbox" /> {t("web.registre.rule_create_work_order")}
+              </label>
+              <label style={labelStyle}>
+                {t("web.registre.rule_reason")}
+                <input name="reason" required style={fieldStyle} />
+              </label>
+              <button type="submit" style={submitStyle}>
+                {t("web.registre.submit")}
+              </button>
+            </form>
+          </details>
+        </>
       )}
     </div>
   );

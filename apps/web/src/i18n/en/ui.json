@@ -307,7 +307,24 @@
       "confirm_finding": "Confirm",
       "confirm_note": "What was verified",
       "close_space": "Close",
-      "close_space_reason": "Reason for closing"
+      "close_space_reason": "Reason for closing",
+      "rules_title": "Detection rules",
+      "no_rules": "No rule defined for this point.",
+      "rule_version": "Version {version}",
+      "create_threshold_rule": "Add a threshold rule",
+      "create_divergence_rule": "Add a desired-state divergence rule",
+      "rule_severity": "Severity",
+      "rule_title": "Finding title",
+      "rule_recommended_action": "Recommended action (optional)",
+      "rule_create_work_order": "Create a work order automatically",
+      "rule_operator_gt": "Greater than",
+      "rule_operator_lt": "Less than",
+      "rule_threshold": "Threshold",
+      "rule_tolerance": "Tolerance",
+      "rule_reason": "Reason",
+      "activate_rule": "Activate",
+      "retire_rule": "Retire",
+      "retire_reason": "Reason for retiring"
     }
   },
   "space_type": {
@@ -330,5 +347,10 @@
     "nominal_heating_capacity": "Nominal heating capacity",
     "nominal_electrical_power": "Nominal electrical power",
     "manufacture_year": "Manufacture year"
+  },
+  "config_status": {
+    "draft": "Draft",
+    "active": "Active",
+    "retired": "Retired"
   }
 }

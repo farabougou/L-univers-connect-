@@ -98,6 +98,102 @@ export async function clearAlarm(formData: FormData) {
   revalidatePath(`/registre/${nodeId}`);
 }
 
+/**
+ * Règle de détection déterministe (ADR 012 §2.15, F4) : une nouvelle version
+ * naît en brouillon, sans effet tant qu'elle n'est pas activée séparément
+ * (voir activateRule) — jamais de règle qui s'applique dès sa création.
+ */
+export async function createThresholdRule(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+  const pointId = String(formData.get("point_id"));
+  const recommendedAction = formData.get("recommended_action");
+
+  const response = await apiFetch("/configs", accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      config_type: "alarm_rule",
+      subject_key: pointId,
+      reason: formData.get("reason"),
+      content: {
+        kind: "threshold",
+        point_id: pointId,
+        severity: formData.get("severity"),
+        title: formData.get("title"),
+        recommended_action: recommendedAction || null,
+        create_work_order: formData.get("create_work_order") === "on",
+        operator: formData.get("operator"),
+        threshold: Number(formData.get("threshold")),
+      },
+    }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  revalidatePath(`/registre/${nodeId}`);
+}
+
+export async function createDivergenceRule(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+  const pointId = String(formData.get("point_id"));
+  const recommendedAction = formData.get("recommended_action");
+
+  const response = await apiFetch("/configs", accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      config_type: "alarm_rule",
+      subject_key: pointId,
+      reason: formData.get("reason"),
+      content: {
+        kind: "desired_state_divergence",
+        point_id: pointId,
+        severity: formData.get("severity"),
+        title: formData.get("title"),
+        recommended_action: recommendedAction || null,
+        create_work_order: formData.get("create_work_order") === "on",
+        tolerance: Number(formData.get("tolerance")),
+      },
+    }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  revalidatePath(`/registre/${nodeId}`);
+}
+
+export async function activateRule(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+  const versionId = formData.get("version_id");
+
+  const response = await apiFetch(`/configs/${versionId}/activate`, accessToken, {
+    method: "POST",
+  });
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  revalidatePath(`/registre/${nodeId}`);
+}
+
+export async function retireRule(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+  const versionId = formData.get("version_id");
+
+  const response = await apiFetch(`/configs/${versionId}/retire`, accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reason: formData.get("reason") }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  revalidatePath(`/registre/${nodeId}`);
+}
+
 export async function declareDesiredState(formData: FormData) {
   const accessToken = await requireAccessToken();
   const nodeId = String(formData.get("node_id"));
