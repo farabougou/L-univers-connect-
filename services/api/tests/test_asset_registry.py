@@ -117,6 +117,10 @@ def two_tenants_with_assets():
                 {"id": tenant["tenant_id"]},
             )
             connection.execute(
+                text("DELETE FROM physical_unit_lifecycle_events WHERE tenant_id = :id"),
+                {"id": tenant["tenant_id"]},
+            )
+            connection.execute(
                 text("DELETE FROM physical_units WHERE tenant_id = :id"),
                 {"id": tenant["tenant_id"]},
             )

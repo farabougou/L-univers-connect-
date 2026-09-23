@@ -30,6 +30,7 @@ def tenant_id():
         set_tenant_context(connection, tenant_id)
         for table in (
             "functional_location_assignments",
+            "physical_unit_lifecycle_events",
             "physical_units",
             "functional_locations",
             "product_models",

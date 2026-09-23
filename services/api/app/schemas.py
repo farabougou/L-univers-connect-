@@ -42,6 +42,7 @@ class PhysicalUnitOut(BaseModel):
     product_model_id: uuid.UUID
     serial_number: str
     commissioned_at: datetime | None
+    lifecycle_state: str
     created_at: datetime
 
 
@@ -511,3 +512,104 @@ class TrustOut(BaseModel):
     score: int
     components: dict
     reasons: list[str]
+
+
+class LifecycleChange(BaseModel):
+    to_state: Literal[
+        "planned",
+        "ordered",
+        "in_stock",
+        "commissioned",
+        "in_service",
+        "out_of_service",
+        "decommissioned",
+        "disposed",
+    ]
+    occurred_at: AwareDatetime | None = None
+    note: str | None = Field(default=None, max_length=2000)
+
+
+class LifecycleEventOut(BaseModel):
+    id: uuid.UUID
+    physical_unit_id: uuid.UUID
+    from_state: str | None
+    to_state: str
+    occurred_at: datetime
+    recorded_at: datetime
+    changed_by: str
+    note: str | None
+
+
+class ClosurePart(BaseModel):
+    reference: str = Field(min_length=1, max_length=100)
+    quantity: float = Field(gt=0, allow_inf_nan=False)
+    description: str | None = Field(default=None, max_length=200)
+
+
+class ClosureCreate(BaseModel):
+    symptom_code: str = Field(min_length=1, max_length=50)
+    cause_code: str = Field(min_length=1, max_length=50)
+    action_code: str = Field(min_length=1, max_length=50)
+    parts: list[ClosurePart] = Field(default_factory=list, max_length=50)
+    labor_minutes: int = Field(ge=0, le=10080)
+    verification_result: Literal["ok", "partial", "failed"]
+    note: str | None = Field(default=None, max_length=2000)
+
+
+class ClosureOut(BaseModel):
+    id: uuid.UUID
+    intervention_id: uuid.UUID
+    symptom_code: str
+    cause_code: str
+    action_code: str
+    parts: list[dict]
+    labor_minutes: int
+    verification_result: str
+    note: str | None
+    closed_by: str
+    closed_at: datetime
+
+
+class TagCreate(BaseModel):
+    tag_type: Literal["qr", "nfc", "barcode"] = "qr"
+
+
+class TagRevoke(BaseModel):
+    reason: str = Field(min_length=1, max_length=500)
+
+
+class TagOut(BaseModel):
+    id: uuid.UUID
+    node_id: uuid.UUID
+    code: str
+    payload: str
+    tag_type: str
+    status: str
+    created_by: str
+    created_at: datetime
+    revoked_at: datetime | None
+    revoked_by: str | None
+    revoke_reason: str | None
+
+
+class PropertySet(BaseModel):
+    key: str = Field(min_length=1, max_length=50)
+    value: float | str
+    unit: str | None = Field(default=None, max_length=30)
+    source: Literal["nameplate", "document", "measurement", "manual"]
+    valid_from: AwareDatetime | None = None
+    reason: str = Field(min_length=1, max_length=500)
+
+
+class PropertyOut(BaseModel):
+    id: uuid.UUID
+    node_id: uuid.UUID
+    property_key: str
+    value: float | str
+    unit: str | None
+    source: str
+    valid_from: datetime
+    valid_to: datetime | None
+    recorded_at: datetime
+    reason: str
+    created_by: str

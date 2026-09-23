@@ -10,12 +10,22 @@ from app.assets import assign_physical_unit, get_current_occupant
 from app.audit import append_audit_entry
 from app.auth import require_any_role
 from app.deps import get_tenant_connection, get_tenant_id
+from app.lifecycle import (
+    LifecycleError,
+    LifecycleNotFound,
+    change_state,
+    current_state,
+    lifecycle_history,
+    record_event,
+)
 from app.schemas import (
     AssignmentCreate,
     AssignmentOut,
     CurrentOccupantOut,
     FunctionalLocationCreate,
     FunctionalLocationOut,
+    LifecycleChange,
+    LifecycleEventOut,
     PhysicalUnitCreate,
     PhysicalUnitOut,
     ProductModelCreate,
@@ -178,6 +188,16 @@ def create_physical_unit(
             "commissioned_at": body.commissioned_at,
         },
     )
+    record_event(
+        connection,
+        tenant_id=tenant_id,
+        physical_unit_id=unit_id,
+        from_state=None,
+        to_state="in_stock",
+        occurred_at=datetime.now(UTC),
+        changed_by=_actor(claims),
+        note="création dans le registre",
+    )
     append_audit_entry(
         connection,
         tenant_id=tenant_id,
@@ -190,7 +210,8 @@ def create_physical_unit(
     row = (
         connection.execute(
             text(
-                "SELECT id, product_model_id, serial_number, commissioned_at, created_at "
+                "SELECT id, product_model_id, serial_number, commissioned_at, lifecycle_state, "
+                "created_at "
                 "FROM physical_units WHERE id = :id"
             ),
             {"id": unit_id},
@@ -209,7 +230,8 @@ def list_physical_units(
     rows = (
         connection.execute(
             text(
-                "SELECT id, product_model_id, serial_number, commissioned_at, created_at "
+                "SELECT id, product_model_id, serial_number, commissioned_at, lifecycle_state, "
+                "created_at "
                 "FROM physical_units ORDER BY created_at"
             )
         )
@@ -356,13 +378,17 @@ def create_assignment(
     if not unit_exists:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="exemplaire introuvable")
 
-    assignment_id = assign_physical_unit(
-        connection,
-        tenant_id=tenant_id,
-        functional_location_id=functional_location_id,
-        physical_unit_id=body.physical_unit_id,
-        valid_from=body.valid_from,
-    )
+    try:
+        assignment_id = assign_physical_unit(
+            connection,
+            tenant_id=tenant_id,
+            functional_location_id=functional_location_id,
+            physical_unit_id=body.physical_unit_id,
+            valid_from=body.valid_from,
+            changed_by=_actor(claims),
+        )
+    except LifecycleError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     append_audit_entry(
         connection,
         tenant_id=tenant_id,
@@ -407,3 +433,58 @@ def read_current_occupant(
     return CurrentOccupantOut(
         functional_location_id=functional_location_id, physical_unit_id=occupant
     )
+
+
+@router.post(
+    "/physical-units/{physical_unit_id}/lifecycle",
+    response_model=list[LifecycleEventOut],
+)
+def change_lifecycle_state(
+    physical_unit_id: uuid.UUID,
+    body: LifecycleChange,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
+    claims: Annotated[dict, Depends(require_any_role(*_MANAGE_REGISTRY_ROLES))],
+) -> list[LifecycleEventOut]:
+    """Change l'état de cycle de vie (hors installation et dépose, qui passent
+    par l'affectation) et renvoie tout l'historique."""
+    try:
+        change_state(
+            connection,
+            tenant_id=tenant_id,
+            physical_unit_id=physical_unit_id,
+            to_state=body.to_state,
+            occurred_at=body.occurred_at or datetime.now(UTC),
+            changed_by=_actor(claims),
+            note=body.note,
+        )
+    except LifecycleNotFound as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except LifecycleError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    append_audit_entry(
+        connection,
+        tenant_id=tenant_id,
+        actor=_actor(claims),
+        action="physical_unit.lifecycle_changed",
+        entity_type="physical_unit",
+        entity_id=str(physical_unit_id),
+        payload={"to_state": body.to_state, "note": body.note},
+    )
+    return [LifecycleEventOut(**row) for row in lifecycle_history(connection, physical_unit_id)]
+
+
+@router.get(
+    "/physical-units/{physical_unit_id}/lifecycle",
+    response_model=list[LifecycleEventOut],
+)
+def read_lifecycle(
+    physical_unit_id: uuid.UUID,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> list[LifecycleEventOut]:
+    try:
+        current_state(connection, physical_unit_id)
+    except LifecycleNotFound as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return [LifecycleEventOut(**row) for row in lifecycle_history(connection, physical_unit_id)]

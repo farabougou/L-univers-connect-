@@ -65,3 +65,28 @@ def purge_audit_log_for_tenant(tenant_id) -> None:
             connection.execute(text("ALTER TABLE audit_log ENABLE TRIGGER audit_log_no_delete"))
     finally:
         admin_engine.dispose()
+
+
+def purge_intervention_closures_for_tenant(tenant_id) -> None:
+    """Les clôtures d'intervention sont des preuves, protégées contre toute
+    suppression (voir la migration a4a1fa8a4cfa)."""
+    admin_engine = create_engine(ADMIN_DATABASE_URL)
+    try:
+        with admin_engine.begin() as connection:
+            connection.execute(
+                text(
+                    "ALTER TABLE intervention_closures "
+                    "DISABLE TRIGGER intervention_closures_no_delete"
+                )
+            )
+            connection.execute(
+                text("DELETE FROM intervention_closures WHERE tenant_id = :id"), {"id": tenant_id}
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE intervention_closures "
+                    "ENABLE TRIGGER intervention_closures_no_delete"
+                )
+            )
+    finally:
+        admin_engine.dispose()

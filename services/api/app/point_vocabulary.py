@@ -31,6 +31,7 @@ UNITS: dict[str, tuple[str, str]] = {
     "kW.h": ("kWh", "energy"),
     "[ppm]": ("ppm", "concentration"),
     "m3/h": ("m³/h", "volume_flow"),
+    "kg": ("kg", "mass"),
 }
 
 

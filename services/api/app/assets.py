@@ -4,6 +4,14 @@ from datetime import UTC, datetime
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
+from app.lifecycle import (
+    INSTALLABLE_STATES,
+    MOUNTED_STATES,
+    LifecycleError,
+    change_state,
+    current_state,
+)
+
 
 def assign_physical_unit(
     connection: Connection,
@@ -12,6 +20,7 @@ def assign_physical_unit(
     functional_location_id: uuid.UUID,
     physical_unit_id: uuid.UUID,
     valid_from: datetime | None = None,
+    changed_by: str = "systeme:affectation",
 ) -> uuid.UUID:
     """Installe un exemplaire physique à une position fonctionnelle.
 
@@ -19,8 +28,22 @@ def assign_physical_unit(
     close (valid_to renseigné) sans être supprimée ni modifiée dans son
     contenu : l'historique complet reste consultable, seule l'affectation
     courante change (voir ADR 001, modèle bitemporel).
+
+    Le cycle de vie suit (ADR 012, 2.9) : le nouvel exemplaire passe
+    « installé », l'ancien « déposé ». Un exemplaire déjà monté ailleurs, hors
+    service définitif ou éliminé ne peut pas être installé.
     """
     valid_from = valid_from or datetime.now(UTC)
+
+    previous = get_current_occupant(connection, functional_location_id=functional_location_id)
+    if previous == physical_unit_id:
+        raise LifecycleError("cet exemplaire occupe déjà cette position")
+    state = current_state(connection, physical_unit_id)
+    if state not in INSTALLABLE_STATES:
+        raise LifecycleError(
+            f"exemplaire à l'état « {state} » : seul un exemplaire en stock ou déposé "
+            "peut être installé"
+        )
 
     connection.execute(
         text(
@@ -47,6 +70,27 @@ def assign_physical_unit(
             "physical_unit_id": physical_unit_id,
             "valid_from": valid_from,
         },
+    )
+
+    if previous is not None and current_state(connection, previous) in MOUNTED_STATES:
+        change_state(
+            connection,
+            tenant_id=tenant_id,
+            physical_unit_id=previous,
+            to_state="removed",
+            occurred_at=valid_from,
+            changed_by=changed_by,
+            note="remplacé à sa position",
+            via_assignment=True,
+        )
+    change_state(
+        connection,
+        tenant_id=tenant_id,
+        physical_unit_id=physical_unit_id,
+        to_state="installed",
+        occurred_at=valid_from,
+        changed_by=changed_by,
+        via_assignment=True,
     )
     return assignment_id
 

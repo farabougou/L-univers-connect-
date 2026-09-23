@@ -204,6 +204,12 @@ class PhysicalUnit(Base):
     __table_args__ = (
         _graph_node_fk("physical_units"),
         Index("physical_units_tenant_serial_idx", "tenant_id", "serial_number", unique=True),
+        UniqueConstraint("tenant_id", "id", name="uq_physical_units_tenant_id_id"),
+        CheckConstraint(
+            "lifecycle_state IN ('planned', 'ordered', 'in_stock', 'installed', 'commissioned', "
+            "'in_service', 'out_of_service', 'removed', 'decommissioned', 'disposed')",
+            name="ck_physical_units_lifecycle_state",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -215,6 +221,11 @@ class PhysicalUnit(Base):
     )
     serial_number: Mapped[str] = mapped_column(String(200), nullable=False)
     commissioned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # État courant (app.lifecycle) ; la vérité historique vit dans
+    # PhysicalUnitLifecycleEvent, jamais modifiée.
+    lifecycle_state: Mapped[str] = mapped_column(
+        String(20), nullable=False, server_default="in_stock"
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -447,6 +458,7 @@ class Intervention(Base):
     """
 
     __tablename__ = "interventions"
+    __table_args__ = (UniqueConstraint("tenant_id", "id", name="uq_interventions_tenant_id_id"),)
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
@@ -885,3 +897,154 @@ class FindingStatusHistory(Base):
     changed_by: Mapped[str] = mapped_column(String(200), nullable=False)
     note: Mapped[str | None] = mapped_column(String(2000), nullable=True)
     changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class PhysicalUnitLifecycleEvent(Base):
+    """Historique du cycle de vie d'un exemplaire (ADR 012, 2.9), une ligne
+    par changement d'état, jamais modifiée."""
+
+    __tablename__ = "physical_unit_lifecycle_events"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["tenant_id", "physical_unit_id"],
+            ["physical_units.tenant_id", "physical_units.id"],
+            name="fk_lifecycle_events_unit",
+        ),
+        Index("ix_lifecycle_events_unit_occurred", "physical_unit_id", "occurred_at"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    physical_unit_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    from_state: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    to_state: Mapped[str] = mapped_column(String(20), nullable=False)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    recorded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    changed_by: Mapped[str] = mapped_column(String(200), nullable=False)
+    note: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+
+
+class AssetTag(Base):
+    """Étiquette QR / NFC collée sur un actif : un code aléatoire opaque qui
+    renvoie vers un nœud du graphe (app.tags). Révocable, jamais réattribuée."""
+
+    __tablename__ = "asset_tags"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["tenant_id", "node_id"],
+            ["graph_nodes.tenant_id", "graph_nodes.id"],
+            name="fk_asset_tags_node",
+        ),
+        UniqueConstraint("code", name="uq_asset_tags_code"),
+        CheckConstraint("tag_type IN ('qr', 'nfc', 'barcode')", name="ck_asset_tags_type"),
+        CheckConstraint("status IN ('active', 'revoked')", name="ck_asset_tags_status"),
+        CheckConstraint(
+            "(status = 'revoked') = (revoked_at IS NOT NULL)", name="ck_asset_tags_revocation"
+        ),
+        Index("ix_asset_tags_node_id", "node_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    node_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    code: Mapped[str] = mapped_column(String(64), nullable=False)
+    tag_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="active")
+    created_by: Mapped[str] = mapped_column(String(200), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    revoked_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    revoke_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+
+class InterventionClosure(Base):
+    """Clôture structurée d'une intervention (codes fermés, app.closure_vocabulary).
+    Une preuve : jamais modifiée ni supprimée (déclencheurs en base)."""
+
+    __tablename__ = "intervention_closures"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["tenant_id", "intervention_id"],
+            ["interventions.tenant_id", "interventions.id"],
+            name="fk_intervention_closures_intervention",
+        ),
+        UniqueConstraint("intervention_id", name="uq_intervention_closures_intervention"),
+        CheckConstraint(
+            "labor_minutes >= 0 AND labor_minutes <= 10080", name="ck_closures_labor_minutes"
+        ),
+        CheckConstraint(
+            "verification_result IN ('ok', 'partial', 'failed')", name="ck_closures_verification"
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    intervention_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    symptom_code: Mapped[str] = mapped_column(String(50), nullable=False)
+    cause_code: Mapped[str] = mapped_column(String(50), nullable=False)
+    action_code: Mapped[str] = mapped_column(String(50), nullable=False)
+    parts: Mapped[list] = mapped_column(JSONB, nullable=False, server_default=text("'[]'::jsonb"))
+    labor_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
+    verification_result: Mapped[str] = mapped_column(String(20), nullable=False)
+    note: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    closed_by: Mapped[str] = mapped_column(String(200), nullable=False)
+    closed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class NodeProperty(Base):
+    """Propriété technique datée d'un nœud (app.properties) : fluide, charge,
+    puissances… Bitemporelle, jamais réécrite : une nouvelle valeur clôt
+    l'ancienne."""
+
+    __tablename__ = "node_properties"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["tenant_id", "node_id"],
+            ["graph_nodes.tenant_id", "graph_nodes.id"],
+            name="fk_node_properties_node",
+        ),
+        CheckConstraint(
+            "(value_number IS NULL) <> (value_text IS NULL)", name="ck_node_properties_one_value"
+        ),
+        CheckConstraint(
+            "source IN ('nameplate', 'document', 'measurement', 'manual')",
+            name="ck_node_properties_source",
+        ),
+        CheckConstraint(
+            "valid_to IS NULL OR valid_to > valid_from", name="ck_node_properties_period"
+        ),
+        Index(
+            "uq_node_properties_open",
+            "tenant_id",
+            "node_id",
+            "property_key",
+            unique=True,
+            postgresql_where=text("valid_to IS NULL"),
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    node_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    property_key: Mapped[str] = mapped_column(String(50), nullable=False)
+    value_number: Mapped[float | None] = mapped_column(Float, nullable=True)
+    value_text: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    unit: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    source: Mapped[str] = mapped_column(String(20), nullable=False)
+    valid_from: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    valid_to: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    recorded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    reason: Mapped[str] = mapped_column(String(500), nullable=False)
+    created_by: Mapped[str] = mapped_column(String(200), nullable=False)

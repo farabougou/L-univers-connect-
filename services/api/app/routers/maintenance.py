@@ -8,6 +8,20 @@ from sqlalchemy.engine import Connection
 
 from app.audit import append_audit_entry
 from app.auth import require_any_role
+from app.closure_vocabulary import (
+    ACTIONS,
+    CAUSES,
+    CLOSURE_VOCABULARY_VERSION,
+    SYMPTOMS,
+    VERIFICATION_RESULTS,
+)
+from app.closures import (
+    ClosureConflict,
+    ClosureError,
+    ClosureNotFound,
+    close_intervention,
+    get_closure,
+)
 from app.deps import get_tenant_connection, get_tenant_id
 from app.maintenance import (
     change_alarm_status,
@@ -22,6 +36,8 @@ from app.schemas import (
     AlarmOut,
     AlarmStatusHistoryOut,
     AlarmStatusUpdate,
+    ClosureCreate,
+    ClosureOut,
     InterventionCreate,
     InterventionOut,
     PhotoCreate,
@@ -551,3 +567,81 @@ def _read_alarm(connection: Connection, alarm_id: uuid.UUID) -> AlarmOut:
         .one()
     )
     return AlarmOut(**row)
+
+
+# --- Clôture structurée ------------------------------------------------
+
+
+@router.get("/closure-vocabulary")
+def read_closure_vocabulary(
+    _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> dict[str, Any]:
+    """Codes de clôture et leurs libellés, pour construire les formulaires."""
+    return {
+        "version": CLOSURE_VOCABULARY_VERSION,
+        "symptoms": SYMPTOMS,
+        "causes": CAUSES,
+        "actions": ACTIONS,
+        "verification_results": VERIFICATION_RESULTS,
+    }
+
+
+@router.post(
+    "/interventions/{intervention_id}/closure",
+    response_model=ClosureOut,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_closure(
+    intervention_id: uuid.UUID,
+    body: ClosureCreate,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
+    claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> ClosureOut:
+    try:
+        close_intervention(
+            connection,
+            tenant_id=tenant_id,
+            intervention_id=intervention_id,
+            symptom_code=body.symptom_code,
+            cause_code=body.cause_code,
+            action_code=body.action_code,
+            parts=[part.model_dump(exclude_none=True) for part in body.parts],
+            labor_minutes=body.labor_minutes,
+            verification_result=body.verification_result,
+            note=body.note,
+            closed_by=_actor(claims),
+        )
+    except ClosureNotFound as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ClosureConflict as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    except ClosureError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    append_audit_entry(
+        connection,
+        tenant_id=tenant_id,
+        actor=_actor(claims),
+        action="intervention.closed",
+        entity_type="intervention",
+        entity_id=str(intervention_id),
+        payload={
+            "symptom_code": body.symptom_code,
+            "cause_code": body.cause_code,
+            "action_code": body.action_code,
+            "verification_result": body.verification_result,
+        },
+    )
+    return ClosureOut(**get_closure(connection, intervention_id))
+
+
+@router.get("/interventions/{intervention_id}/closure", response_model=ClosureOut)
+def read_closure(
+    intervention_id: uuid.UUID,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> ClosureOut:
+    closure = get_closure(connection, intervention_id)
+    if closure is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="aucune clôture")
+    return ClosureOut(**closure)

@@ -10,6 +10,7 @@ from app.routers.assets import router as asset_registry_router
 from app.routers.configs import router as configs_router
 from app.routers.graph import router as graph_router
 from app.routers.maintenance import router as maintenance_router
+from app.routers.passport import router as passport_router
 from app.routers.points import router as points_router
 from app.routers.spatial import router as spatial_router
 from app.routers.telemetry import router as telemetry_router
@@ -21,6 +22,7 @@ app.include_router(spatial_router)
 app.include_router(points_router)
 app.include_router(configs_router)
 app.include_router(analytics_router)
+app.include_router(passport_router)
 app.include_router(maintenance_router)
 app.include_router(telemetry_router)
 
