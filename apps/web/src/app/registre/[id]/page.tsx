@@ -5,13 +5,29 @@ import { errorMessage, getLocale, getTranslator } from "@/lib/i18n";
 import { type EquipmentStatus, type Passport, type PassportUnit, statusMessage } from "@/lib/passport";
 import { type Locale, formatDate, formatDateTime, formatNumber } from "@/i18n/translator";
 
-import { acknowledgeSignal, clearAlarm, setHandling } from "./actions";
+import { acknowledgeSignal, clearAlarm, createWorkOrderForEquipment, setHandling } from "./actions";
+
+type Me = { roles: string[] };
+
+const MANAGE_ROLES = ["responsable_exploitation", "admin_tenant"];
+const WORK_ORDER_TYPES = ["corrective", "preventive", "predictive", "inspection"];
+const WORK_ORDER_PRIORITIES = ["low", "medium", "high", "urgent"];
 
 const sectionStyle = { borderTop: "1px solid #eee", paddingTop: 12, marginTop: 16 };
 const sectionTitleStyle = { fontSize: 16, fontWeight: 600 as const, marginBottom: 8 };
 const mutedStyle = { color: "#666" };
 const strongStyle = { fontWeight: 600 as const };
 const signalActionsStyle = { display: "flex", gap: 8, marginTop: 4 };
+const fieldStyle = { display: "block", width: "100%", padding: 8, marginTop: 4 };
+const labelStyle = { display: "block", marginTop: 12 };
+const submitStyle = {
+  marginTop: 16,
+  padding: "10px 20px",
+  background: "#2563eb",
+  color: "white",
+  border: "none",
+  borderRadius: 8,
+};
 const HANDLING_OPEN = ["open", "in_progress"];
 
 export default async function EquipmentPage({
@@ -31,7 +47,12 @@ export default async function EquipmentPage({
     ? (errorMessage(translator.locale, errorCode) ?? t("web.registre.creation_failed"))
     : null;
 
-  const response = await apiFetch(`/graph/nodes/${id}/passport`, accessToken);
+  const [response, meResponse] = await Promise.all([
+    apiFetch(`/graph/nodes/${id}/passport`, accessToken),
+    apiFetch("/me", accessToken),
+  ]);
+  const me: Me = meResponse.ok ? await meResponse.json() : { roles: [] };
+  const canManage = me.roles.some((role) => MANAGE_ROLES.includes(role));
   if (!response.ok) {
     return (
       <main style={{ maxWidth: 720, margin: "40px auto", padding: "0 16px" }}>
@@ -122,14 +143,46 @@ export default async function EquipmentPage({
         )}
       </section>
 
-      {passport.open_work_orders && passport.open_work_orders.length > 0 && (
+      {((passport.open_work_orders && passport.open_work_orders.length > 0) || canManage) && (
         <section style={sectionStyle}>
           <h2 style={sectionTitleStyle}>{t("mobile.passport.work_orders")}</h2>
-          {passport.open_work_orders.map((order) => (
+          {passport.open_work_orders?.map((order) => (
             <p key={order.id}>
               {order.title} ({t(`work_order.status.${order.status}`)})
             </p>
           ))}
+          {canManage && (
+            <form action={createWorkOrderForEquipment} style={{ maxWidth: 400, marginTop: 12 }}>
+              <input type="hidden" name="node_id" value={id} />
+              <label>
+                {t("web.work_orders.col_title")}
+                <input name="title" required style={fieldStyle} />
+              </label>
+              <label style={labelStyle}>
+                {t("web.work_orders.col_type")}
+                <select name="work_order_type" defaultValue="corrective" style={fieldStyle}>
+                  {WORK_ORDER_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {t(`work_order.type.${type}`)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label style={labelStyle}>
+                {t("web.work_orders.col_priority")}
+                <select name="priority" defaultValue="medium" style={fieldStyle}>
+                  {WORK_ORDER_PRIORITIES.map((priority) => (
+                    <option key={priority} value={priority}>
+                      {t(`work_order.priority.${priority}`)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button type="submit" style={submitStyle}>
+                {t("web.work_orders.submit")}
+              </button>
+            </form>
+          )}
         </section>
       )}
 

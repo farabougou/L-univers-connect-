@@ -77,3 +77,23 @@ export async function clearAlarm(formData: FormData) {
   }
   revalidatePath(`/registre/${nodeId}`);
 }
+
+export async function createWorkOrderForEquipment(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+
+  const response = await apiFetch("/work-orders", accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title: formData.get("title"),
+      work_order_type: formData.get("work_order_type"),
+      priority: formData.get("priority"),
+      functional_location_id: nodeId,
+    }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  revalidatePath(`/registre/${nodeId}`);
+}
