@@ -136,6 +136,32 @@ export async function changeLifecycleState(formData: FormData) {
   revalidatePath(`/registre/${nodeId}`);
 }
 
+export async function setProperty(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+  const unitId = formData.get("unit_id");
+  const unitField = formData.get("unit");
+  const rawValue = String(formData.get("value"));
+  const numericValue = Number(rawValue);
+  const value = rawValue.trim() !== "" && !Number.isNaN(numericValue) ? numericValue : rawValue;
+
+  const response = await apiFetch(`/graph/nodes/${unitId}/properties`, accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      key: formData.get("key"),
+      value,
+      unit: unitField || null,
+      source: formData.get("source"),
+      reason: formData.get("reason"),
+    }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  revalidatePath(`/registre/${nodeId}`);
+}
+
 export async function revokeTag(formData: FormData) {
   const accessToken = await requireAccessToken();
   const nodeId = String(formData.get("node_id"));

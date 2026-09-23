@@ -293,7 +293,15 @@
       "create_tag": "Créer une étiquette",
       "lifecycle_next_state": "Nouvel état",
       "lifecycle_note": "Motif (facultatif)",
-      "change_lifecycle": "Changer l’état"
+      "change_lifecycle": "Changer l’état",
+      "properties_title": "Caractéristiques techniques",
+      "no_properties": "Aucune caractéristique enregistrée.",
+      "add_property": "Ajouter une caractéristique",
+      "property_key": "Nom",
+      "property_value": "Valeur",
+      "property_unit": "Unité (facultatif)",
+      "property_source": "Origine",
+      "property_reason": "Motif"
     }
   },
   "space_type": {
@@ -302,5 +310,19 @@
     "zone": "Zone",
     "room": "Local technique",
     "outdoor_area": "Espace extérieur"
+  },
+  "property_source": {
+    "nameplate": "Plaque signalétique",
+    "document": "Document",
+    "measurement": "Mesure",
+    "manual": "Saisie manuelle"
+  },
+  "property_key": {
+    "refrigerant_type": "Fluide frigorigène",
+    "refrigerant_charge": "Charge en fluide",
+    "nominal_cooling_capacity": "Puissance frigorifique nominale",
+    "nominal_heating_capacity": "Puissance calorifique nominale",
+    "nominal_electrical_power": "Puissance électrique nominale",
+    "manufacture_year": "Année de fabrication"
   }
 }

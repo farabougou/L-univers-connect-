@@ -16,7 +16,20 @@ import {
   endDesiredState,
   revokeTag,
   setHandling,
+  setProperty,
 } from "./actions";
+
+const PROPERTY_SOURCES = ["nameplate", "document", "measurement", "manual"];
+// Même vocabulaire fermé que app/properties.py (PROPERTIES) : une propriété
+// technique ne se saisit jamais en texte libre (F-Gas, plaques normalisées).
+const PROPERTY_KEYS = [
+  "refrigerant_type",
+  "refrigerant_charge",
+  "nominal_cooling_capacity",
+  "nominal_heating_capacity",
+  "nominal_electrical_power",
+  "manufacture_year",
+];
 
 // Même transitions que app/lifecycle.py, sans les états imposés par
 // l'affectation (installed/removed) : ceux-là ne se déclarent pas à la main.
@@ -138,7 +151,7 @@ export default async function EquipmentPage({
       <section style={sectionStyle}>
         <h2 style={sectionTitleStyle}>{t("mobile.passport.unit")}</h2>
         {unit ? (
-          <UnitView unit={unit} t={t} nodeId={id} canManage={canManage} />
+          <UnitView unit={unit} t={t} nodeId={id} canManage={canManage} locale={locale} />
         ) : (
           <p>{t("mobile.passport.no_unit")}</p>
         )}
@@ -458,13 +471,16 @@ function UnitView({
   t,
   nodeId,
   canManage,
+  locale,
 }: {
   unit: PassportUnit;
   t: (key: string, params?: Record<string, string>) => string;
   nodeId: string;
   canManage: boolean;
+  locale: Locale;
 }) {
   const nextStates = LIFECYCLE_TRANSITIONS[unit.lifecycle_state] ?? [];
+  const properties = unit.properties ?? [];
   return (
     <>
       <p style={strongStyle}>
@@ -495,6 +511,67 @@ function UnitView({
           </label>
           <button type="submit">{t("web.registre.change_lifecycle")}</button>
         </form>
+      )}
+
+      <p style={{ ...strongStyle, marginTop: 16 }}>{t("web.registre.properties_title")}</p>
+      {properties.length === 0 ? (
+        <p style={mutedStyle}>{t("web.registre.no_properties")}</p>
+      ) : (
+        properties.map((property) => (
+          <p key={property.id} style={{ margin: 0 }}>
+            {t(`property_key.${property.property_key}`)} :{" "}
+            {typeof property.value === "number"
+              ? formatNumber(locale, property.value)
+              : property.value}
+            {property.unit ? ` ${property.unit}` : ""}
+            {" — "}
+            {t(`property_source.${property.source}`)}
+          </p>
+        ))
+      )}
+      {canManage && (
+        <details>
+          <summary>{t("web.registre.add_property")}</summary>
+          <form action={setProperty} style={{ maxWidth: 360 }}>
+            <input type="hidden" name="node_id" value={nodeId} />
+            <input type="hidden" name="unit_id" value={unit.id} />
+            <label>
+              {t("web.registre.property_key")}
+              <select name="key" required style={fieldStyle}>
+                {PROPERTY_KEYS.map((key) => (
+                  <option key={key} value={key}>
+                    {t(`property_key.${key}`)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label style={labelStyle}>
+              {t("web.registre.property_value")}
+              <input name="value" required style={fieldStyle} />
+            </label>
+            <label style={labelStyle}>
+              {t("web.registre.property_unit")}
+              <input name="unit" style={fieldStyle} />
+            </label>
+            <label style={labelStyle}>
+              {t("web.registre.property_source")}
+              <select name="source" defaultValue="nameplate" style={fieldStyle}>
+                {PROPERTY_SOURCES.map((source) => (
+                  <option key={source} value={source}>
+                    {t(`property_source.${source}`)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label style={labelStyle}>
+              {t("web.registre.property_reason")}
+              <input name="reason" required style={fieldStyle} />
+            </label>
+            <button type="submit" style={submitStyle}>
+              {t("web.registre.submit")}
+            </button>
+          </form>
+        </details>
       )}
     </>
   );

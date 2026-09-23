@@ -27,6 +27,15 @@ export type PassportPoint = {
   latest: PassportMeasurement | null;
 };
 
+export type Property = {
+  id: string;
+  property_key: string;
+  value: number | string;
+  unit: string | null;
+  source: string;
+  valid_from: string;
+};
+
 export type PassportUnit = {
   id: string;
   serial_number: string;
@@ -36,6 +45,7 @@ export type PassportUnit = {
   reference: string;
   equipment_type: string;
   manufacturer_designation: string | null;
+  properties?: Property[];
 };
 
 export type Tag = {

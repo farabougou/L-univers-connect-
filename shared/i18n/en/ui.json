@@ -293,7 +293,15 @@
       "create_tag": "Create a tag",
       "lifecycle_next_state": "New state",
       "lifecycle_note": "Reason (optional)",
-      "change_lifecycle": "Change state"
+      "change_lifecycle": "Change state",
+      "properties_title": "Technical properties",
+      "no_properties": "No property recorded.",
+      "add_property": "Add a property",
+      "property_key": "Name",
+      "property_value": "Value",
+      "property_unit": "Unit (optional)",
+      "property_source": "Source",
+      "property_reason": "Reason"
     }
   },
   "space_type": {
@@ -302,5 +310,19 @@
     "zone": "Zone",
     "room": "Plant room",
     "outdoor_area": "Outdoor area"
+  },
+  "property_source": {
+    "nameplate": "Nameplate",
+    "document": "Document",
+    "measurement": "Measurement",
+    "manual": "Manual entry"
+  },
+  "property_key": {
+    "refrigerant_type": "Refrigerant",
+    "refrigerant_charge": "Refrigerant charge",
+    "nominal_cooling_capacity": "Nominal cooling capacity",
+    "nominal_heating_capacity": "Nominal heating capacity",
+    "nominal_electrical_power": "Nominal electrical power",
+    "manufacture_year": "Manufacture year"
   }
 }
