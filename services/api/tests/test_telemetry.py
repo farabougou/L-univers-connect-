@@ -64,6 +64,13 @@ def _cleanup(tenant: dict) -> None:
     with engine.begin() as connection:
         set_tenant_context(connection, tenant["tenant_id"])
         for table in (
+            "finding_status_history",
+            "findings",
+            "alarm_status_history",
+            "alarms",
+            "work_order_status_history",
+            "work_orders",
+            "desired_states",
             "measurements",
             "external_identifiers",
             "points",

@@ -23,6 +23,13 @@ from sqlalchemy.engine import Connection
 
 from app.point_vocabulary import PointVocabularyError, check_value
 from app.points import get_point
+from app.quality_flags import (
+    FLAG_CLOCK_SUSPECT,
+    FLAG_LATE_ARRIVAL,
+    FLAG_OUT_OF_RANGE,
+    FLAG_UNVALIDATED_POINT,
+)
+from app.rules import evaluate_after_measurement
 
 # Tolérance d'horloge : un relevé daté de plus de 5 minutes dans le futur
 # révèle une horloge d'Edge ou de capteur déréglée.
@@ -30,11 +37,6 @@ CLOCK_TOLERANCE = timedelta(minutes=5)
 # Au-delà de 24 h entre relevé et réception : arrivée tardive (stock envoyé
 # après une longue coupure). La valeur reste bonne, mais on le sait.
 LATE_ARRIVAL = timedelta(hours=24)
-
-FLAG_OUT_OF_RANGE = "out_of_range"
-FLAG_CLOCK_SUSPECT = "clock_suspect"
-FLAG_LATE_ARRIVAL = "late_arrival"
-FLAG_UNVALIDATED_POINT = "unvalidated_point"
 
 
 class MeasurementRejected(ValueError):
@@ -103,6 +105,16 @@ def record_measurement(
         },
     ).scalar()
     if inserted is not None:
+        # Qualité puis règles, dans la même transaction : si l'évaluation
+        # échoue, la mesure n'est pas enregistrée à moitié.
+        evaluate_after_measurement(
+            connection,
+            tenant_id=tenant_id,
+            point=point,
+            value=value,
+            measured_at=measured_at,
+            quality_flags=flags,
+        )
         return "inserted"
 
     existing = connection.execute(

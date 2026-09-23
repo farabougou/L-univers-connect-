@@ -34,6 +34,26 @@ def purge_relations_for_tenant(tenant_id) -> None:
         admin_engine.dispose()
 
 
+def purge_config_versions_for_tenant(tenant_id) -> None:
+    """Les versions de configuration sont protégées contre toute suppression
+    (voir la migration 1403c6bbaa32). Les constats qui les référencent
+    doivent être supprimés avant."""
+    admin_engine = create_engine(ADMIN_DATABASE_URL)
+    try:
+        with admin_engine.begin() as connection:
+            connection.execute(
+                text("ALTER TABLE config_versions DISABLE TRIGGER config_versions_no_delete")
+            )
+            connection.execute(
+                text("DELETE FROM config_versions WHERE tenant_id = :id"), {"id": tenant_id}
+            )
+            connection.execute(
+                text("ALTER TABLE config_versions ENABLE TRIGGER config_versions_no_delete")
+            )
+    finally:
+        admin_engine.dispose()
+
+
 def purge_audit_log_for_tenant(tenant_id) -> None:
     admin_engine = create_engine(ADMIN_DATABASE_URL)
     try:

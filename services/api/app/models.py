@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, time
 
 from sqlalchemy import (
     BigInteger,
@@ -13,6 +13,7 @@ from sqlalchemy import (
     Index,
     Integer,
     String,
+    Time,
     UniqueConstraint,
     func,
     text,
@@ -679,3 +680,208 @@ class Measurement(Base):
     received_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+
+
+class ConfigVersion(Base):
+    """Une version d'une configuration qui influence le fonctionnement (règle
+    d'alarme, attente, mapping…), ADR 012 section 2.11.
+
+    Jamais réécrite ni supprimée : corriger ou revenir en arrière crée une
+    nouvelle version (raison obligatoire). Une seule version active par
+    élément configuré (index partiel unique)."""
+
+    __tablename__ = "config_versions"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "id", name="uq_config_versions_tenant_id_id"),
+        UniqueConstraint(
+            "tenant_id", "config_type", "subject_key", "version", name="uq_config_versions_version"
+        ),
+        ForeignKeyConstraint(
+            ["tenant_id", "parent_version_id"],
+            ["config_versions.tenant_id", "config_versions.id"],
+            name="fk_config_versions_parent",
+        ),
+        CheckConstraint(
+            "status IN ('draft', 'active', 'superseded', 'retired')",
+            name="ck_config_versions_status",
+        ),
+        CheckConstraint("version >= 1", name="ck_config_versions_version"),
+        Index(
+            "uq_config_versions_one_active",
+            "tenant_id",
+            "config_type",
+            "subject_key",
+            unique=True,
+            postgresql_where=text("status = 'active'"),
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    config_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    subject_key: Mapped[str] = mapped_column(String(200), nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    content: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    schema_version: Mapped[str] = mapped_column(String(30), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="draft")
+    author: Mapped[str] = mapped_column(String(200), nullable=False)
+    reason: Mapped[str] = mapped_column(String(500), nullable=False)
+    parent_version_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    activated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    activated_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+
+
+class DesiredState(Base):
+    """État souhaité d'un point (ADR 012, section 2.4). En lecture seule, la
+    seule origine permise est une attente déclarée par un humain (« éclairage
+    éteint de 20 h à 7 h »). Fenêtre quotidienne facultative, toujours avec
+    son fuseau horaire. Jamais réécrit : on le clôt et on en crée un autre."""
+
+    __tablename__ = "desired_states"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["tenant_id", "point_id"],
+            ["points.tenant_id", "points.id"],
+            name="fk_desired_states_point",
+        ),
+        CheckConstraint("source IN ('declared_expectation')", name="ck_desired_states_source"),
+        CheckConstraint(
+            "(daily_start IS NULL) = (daily_end IS NULL)", name="ck_desired_states_window"
+        ),
+        CheckConstraint(
+            "daily_start IS NULL OR timezone IS NOT NULL", name="ck_desired_states_timezone"
+        ),
+        CheckConstraint(
+            "valid_to IS NULL OR valid_to > valid_from", name="ck_desired_states_period"
+        ),
+        Index("ix_desired_states_point_id", "point_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    point_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    value: Mapped[float] = mapped_column(Float, nullable=False)
+    daily_start: Mapped[time | None] = mapped_column(Time, nullable=True)
+    daily_end: Mapped[time | None] = mapped_column(Time, nullable=True)
+    timezone: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    source: Mapped[str] = mapped_column(
+        String(30), nullable=False, server_default="declared_expectation"
+    )
+    valid_from: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    valid_to: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    reason: Mapped[str] = mapped_column(String(500), nullable=False)
+    created_by: Mapped[str] = mapped_column(String(200), nullable=False)
+    recorded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+class Finding(Base):
+    """Un constat analytique (ADR 012, section 2.15) : qualité de donnée, mise
+    en service, anomalie, défaut ou prédiction, avec la règle (et sa version)
+    qui l'a produit et ses preuves. Jamais une action : il peut lever une
+    alarme ou créer un ordre de travail, pas commander un équipement."""
+
+    __tablename__ = "findings"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["tenant_id", "subject_node_id"],
+            ["graph_nodes.tenant_id", "graph_nodes.id"],
+            name="fk_findings_subject",
+        ),
+        ForeignKeyConstraint(
+            ["tenant_id", "point_id"], ["points.tenant_id", "points.id"], name="fk_findings_point"
+        ),
+        ForeignKeyConstraint(
+            ["tenant_id", "rule_config_version_id"],
+            ["config_versions.tenant_id", "config_versions.id"],
+            name="fk_findings_rule",
+        ),
+        ForeignKeyConstraint(["alarm_id"], ["alarms.id"], name="fk_findings_alarm"),
+        ForeignKeyConstraint(["work_order_id"], ["work_orders.id"], name="fk_findings_work_order"),
+        UniqueConstraint("tenant_id", "id", name="uq_findings_tenant_id_id"),
+        CheckConstraint(
+            "kind IN ('data_quality', 'commissioning', 'anomaly', 'fault', 'prediction')",
+            name="ck_findings_kind",
+        ),
+        CheckConstraint(
+            "method IN ('deterministic_rule', 'engineering_rule', 'statistical', "
+            "'physical_model', 'peer_comparison', 'ml')",
+            name="ck_findings_method",
+        ),
+        CheckConstraint("severity IN ('info', 'warning', 'critical')", name="ck_findings_severity"),
+        CheckConstraint(
+            "status IN ('open', 'acknowledged', 'resolved', 'false_positive')",
+            name="ck_findings_status",
+        ),
+        CheckConstraint(
+            "confidence IS NULL OR (confidence >= 0 AND confidence <= 1)",
+            name="ck_findings_confidence",
+        ),
+        CheckConstraint("occurrence_count >= 1", name="ck_findings_occurrences"),
+        Index(
+            "uq_findings_one_open",
+            "tenant_id",
+            "dedup_key",
+            unique=True,
+            postgresql_where=text("status IN ('open', 'acknowledged')"),
+        ),
+        Index("ix_findings_subject_node_id", "subject_node_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    subject_node_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    point_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    kind: Mapped[str] = mapped_column(String(20), nullable=False)
+    method: Mapped[str] = mapped_column(String(30), nullable=False)
+    rule_config_version_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    dedup_key: Mapped[str] = mapped_column(String(300), nullable=False)
+    severity: Mapped[str] = mapped_column(String(20), nullable=False)
+    title: Mapped[str] = mapped_column(String(300), nullable=False)
+    recommended_action: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    evidence: Mapped[dict] = mapped_column(
+        JSONB, nullable=False, server_default=text("'{}'::jsonb")
+    )
+    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="open")
+    first_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    occurrence_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
+    alarm_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    work_order_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class FindingStatusHistory(Base):
+    """Historique des statuts d'un constat, jamais modifié (même principe que
+    les alarmes et ordres de travail)."""
+
+    __tablename__ = "finding_status_history"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["tenant_id", "finding_id"],
+            ["findings.tenant_id", "findings.id"],
+            name="fk_finding_status_history_finding",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    finding_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False)
+    changed_by: Mapped[str] = mapped_column(String(200), nullable=False)
+    note: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

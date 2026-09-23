@@ -239,6 +239,13 @@ n'est écrasé). Une seule version active par sujet, garantie par la base.
 Pourquoi générique : 12 types de configuration, un seul mécanisme, testé une fois. La
 première règle de seuil (M2) sera la première configuration versionnée.
 
+**Mise en œuvre F4 (23/09/2026)** — statuts retenus pour commencer : `draft`,
+`active`, `superseded`, `retired` (transitions contrôlées par la base). La validation
+du contenu se fait à chaque création et à nouveau à l'activation. Les étapes
+`validated` / `approved` (approbation par une seconde personne) et la simulation
+préalable restent DEFER : elles deviendront indispensables avec la première
+configuration à impact physique, pas avant.
+
 ### 2.12 Connector abstraction — DEFER (M3), contrat fixé maintenant
 
 Contrat du SDK : découvrir, lire, s'abonner, état de santé, capacités déclarées ;
@@ -281,6 +288,13 @@ temps) et un historique de statut. Le **diagnostic** est séparé
 (`diagnoses` : hypothèses de cause avec probabilité) et la **recommandation** aussi
 (`recommendations` : action proposée, gain estimé marqué `estimated`, acceptée ou
 rejetée par un humain, qui peut alors créer un ordre de travail).
+
+**Mise en œuvre F4 (23/09/2026)** — `findings` et son historique de statut sont
+construits. Les tables `diagnoses` et `recommendations` sont **DEFER** : aucun moteur
+ne produit encore d'hypothèses de cause, et créer des tables sans producteur irait
+contre la règle des trois. En attendant, un constat porte un champ
+`recommended_action` (texte) et une confiance ; les tables viendront avec le premier
+moteur d'ingénierie (règles AFDD de la Guideline 36) sans modifier `findings`.
 
 Chaîne : constat → (alarme existante si besoin d'alerter) → ordre de travail existant.
 Premières règles d'ingénierie visées pour le wedge : les règles de détection de défauts

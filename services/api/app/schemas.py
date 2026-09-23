@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, time
 from typing import Literal
 
 from pydantic import AwareDatetime, BaseModel, Field
@@ -402,3 +402,112 @@ class MeasurementOut(BaseModel):
     source: str
     quality_flags: list[str]
     received_at: datetime
+
+
+class ConfigVersionCreate(BaseModel):
+    config_type: str = Field(min_length=1, max_length=50)
+    subject_key: str = Field(min_length=1, max_length=200)
+    content: dict
+    reason: str = Field(min_length=1, max_length=500)
+
+
+class ConfigReason(BaseModel):
+    reason: str = Field(min_length=1, max_length=500)
+
+
+class ConfigVersionOut(BaseModel):
+    id: uuid.UUID
+    config_type: str
+    subject_key: str
+    version: int
+    content: dict
+    content_hash: str
+    schema_version: str
+    status: str
+    author: str
+    reason: str
+    parent_version_id: uuid.UUID | None
+    created_at: datetime
+    activated_at: datetime | None
+    activated_by: str | None
+
+
+class ConfigDiffOut(BaseModel):
+    from_version: int
+    to_version: int
+    added: dict
+    removed: dict
+    changed: dict
+
+
+class DesiredStateCreate(BaseModel):
+    value: float = Field(allow_inf_nan=False)
+    valid_from: AwareDatetime | None = None
+    daily_start: time | None = None
+    daily_end: time | None = None
+    timezone: str | None = Field(default=None, max_length=64)
+    reason: str = Field(min_length=1, max_length=500)
+
+
+class DesiredStateEnd(BaseModel):
+    valid_to: AwareDatetime | None = None
+
+
+class DesiredStateOut(BaseModel):
+    id: uuid.UUID
+    point_id: uuid.UUID
+    value: float
+    daily_start: time | None
+    daily_end: time | None
+    timezone: str | None
+    source: str
+    valid_from: datetime
+    valid_to: datetime | None
+    reason: str
+    created_by: str
+    recorded_at: datetime
+
+
+class FindingOut(BaseModel):
+    id: uuid.UUID
+    subject_node_id: uuid.UUID
+    point_id: uuid.UUID | None
+    kind: str
+    method: str
+    rule_config_version_id: uuid.UUID | None
+    dedup_key: str
+    severity: str
+    title: str
+    recommended_action: str | None
+    confidence: float | None
+    evidence: dict
+    status: str
+    first_seen_at: datetime
+    last_seen_at: datetime
+    occurrence_count: int
+    alarm_id: uuid.UUID | None
+    work_order_id: uuid.UUID | None
+    created_at: datetime
+
+
+class FindingStatusUpdate(BaseModel):
+    status: Literal["open", "acknowledged", "resolved", "false_positive"]
+    note: str | None = Field(default=None, max_length=2000)
+
+
+class FindingStatusHistoryOut(BaseModel):
+    id: uuid.UUID
+    finding_id: uuid.UUID
+    status: str
+    changed_by: str
+    note: str | None
+    changed_at: datetime
+
+
+class TrustOut(BaseModel):
+    point_id: uuid.UUID
+    evaluated_at: datetime
+    algorithm: str
+    score: int
+    components: dict
+    reasons: list[str]
