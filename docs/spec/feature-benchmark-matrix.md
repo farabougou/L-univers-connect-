@@ -152,6 +152,20 @@ l'ADR 012.
 | Scénarios « what-if » / simulation | ❌ Absent | Grands éditeurs (jumeaux avancés) | EnergyPlus, Modelica | Basse | Espace de scénarios séparé ; origine `simulated`/`estimated` dès F3 | DEFER | Un résultat simulé n'est jamais présenté ni stocké comme une mesure. |
 | Intelligence de flotte (analyse multi-sites) | ❌ Absent | Honeywell Forge, Johnson Controls OpenBlue | — | Basse | S'appuie sur RLS et le graphe | DEFER | Dépend d'un volume réel de sites. |
 
+### Langage, codes et internationalisation (ADR 013)
+
+| Feature | Notre statut | Concurrent(s) | Standard | Priorité | Architecture concernée | Décision | Justification |
+|---|---|---|---|---|---|---|---|
+| Référentiel terminologique unique (produit, documentation, API, support) | ⚠️ Projet — `docs/product/glossaire.md`, termes « à valider » | Souvent implicite chez les grands éditeurs ; incohérences fréquentes chez les acteurs de niche | NF EN 13306, ISA-18.2, ISO 55000, IFC, Brick | Haute | ADR 013, étape L1 | ADD | Un concept = un terme ; condition d'une IA, d'une documentation et d'un support cohérents. |
+| Messages et erreurs par codes stables, traduits à l'affichage | ❌ 46 erreurs en phrases françaises, une en anglais ; titres de constats stockés en français | Codes d'erreur courants chez Siemens, Schneider Electric ; variable ailleurs | RFC 9457 (Problem Details), ICU MessageFormat | Haute | ADR 013, étapes L2-L3 | REFACTOR | Les règles dépendent du code, pas de la phrase ; traduction sans réécriture des données. |
+| Internationalisation français / anglais (dates, nombres, pluriels, fuseau du site) | ❌ Textes en dur, sites sans fuseau | Standard chez les grands éditeurs | Unicode CLDR, BCP 47, IANA tz | Haute | ADR 013, étape L4 | ADD | Coût faible aujourd'hui, élevé après la multiplication des écrans. |
+| Taxonomie des signalements (nature, gravité, condition, acquittement, traitement) | ⚠️ Nature et gravité (3 niveaux sans définition) ; statut unique mêlant acquittement et condition | Gestion d'alarmes des GTB (Siemens Desigo CC, Honeywell, Johnson Controls) | ISA-18.2 / IEC 62682 | Haute | ADR 013, étape L3 | REFACTOR | Indispensable pour les alarmes de GTB en M3 (retour à la normale non acquitté). |
+| Niveau de certitude des résultats d'analyse | ⚠️ Nature, méthode et confiance ; pas de niveau explicite | Rarement explicite sur le marché | — | Haute | ADR 013, section 4.4 (L3) | ADD | Ne jamais présenter une hypothèse ou une prédiction comme un fait. |
+| État de fonctionnement et état de communication distincts | ❌ Absent | Courant en GTB, souvent confondus (« hors ligne » = « arrêté ») | Brick (points d'état) | Moyenne | ADR 013, section 4.5 (L6) | ADD | « Hors ligne » affiche le dernier état connu et sa date, jamais un état supposé. |
+| Nomenclature des équipements (type universel, désignation constructeur, alias) | ❌ Catégorie en texte libre | Bibliothèques d'équipements chez les grands éditeurs | Brick (classes d'équipement) | Moyenne | ADR 013, étape L5 | REFACTOR | Condition de la recherche, des statistiques de flotte et de l'IA. |
+| Présentation selon le profil (métier / technique) | ⚠️ Actions calculées par rôle dans le passeport | Vues par profil chez les grands éditeurs | — | Basse | ADR 013 (libellé métier + technique par terme) | KEEP + DEFER | L'information technique n'est jamais retirée, seulement présentée autrement. |
+| Vocabulaire des commandes (demandée → vérifiée) | ✅ Défini, aucune commande codée | Chez les éditeurs de GTB, « envoyée » est souvent affiché comme « exécutée » | ISA-18.2 (acquittement distinct) | — | Glossaire, section 8 ; ADR 013, section 4.6 | DEFER | Prêt pour le jour où la règle 1 serait levée (ADR 007), sans ambiguïté avec l'acquittement d'alarme. |
+
 ## Décisions techniques actuelles signalées comme risques de blocage
 
 La liste complète, classée par urgence, est tenue dans l'**ADR 012, section 5**. Rappel
@@ -161,6 +175,11 @@ des deux risques élevés :
    d'anti-doublon, clé incompatible TimescaleDB) → corrigé à l'étape F3, tant qu'il n'y
    a que des données de test.
 2. **Pas de registre d'identité commun** → corrigé à l'étape F1.
+
+Risques ajoutés par l'ADR 013 (section 2) : **phrases générées stockées en base** pour
+les constats (élevé, étape L3) ; **statut unique des alarmes** mêlant acquittement et
+condition (élevé avant M3, étape L3) ; **catégories d'équipement en texte libre**
+(moyen, étape L5).
 
 Convention proposée par l'ADR 011, à appliquer dès maintenant : les bâtiments, étages,
 pièces et zones ne sont plus créés comme positions fonctionnelles.
