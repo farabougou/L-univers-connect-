@@ -46,7 +46,7 @@ tertiaire. Le cahier des charges complet est dans `docs/spec/`.
 4. Démarrer l'API :
 
    ```bash
-   uvicorn app.main:app --reload
+   uvicorn app.main:app --reload --no-access-log
    ```
 
 L'API est alors disponible sur http://localhost:8000 :

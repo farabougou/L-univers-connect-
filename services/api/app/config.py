@@ -5,6 +5,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     environment: str = "development"
+    # Niveau des logs JSON (DEBUG, INFO, WARNING, ERROR), voir app/observability.
+    log_level: str = "INFO"
     database_url: str = "postgresql+psycopg://paios:paios_dev_password@localhost:5432/paios"
 
     # Fournisseur OpenID Connect (Keycloak, voir docs/adr/002). L'API ne fait

@@ -26,7 +26,7 @@ Un téléphone physique ne peut pas joindre `localhost` : partout ci-dessous,
    `localhost` (depuis `services/api`, environnement virtuel activé) :
 
    ```bash
-   uvicorn app.main:app --host 0.0.0.0 --reload
+   uvicorn app.main:app --host 0.0.0.0 --reload --no-access-log
    ```
 
 2. Dans `services/api/.env`, faire pointer `OIDC_ISSUER` vers l'adresse IP de

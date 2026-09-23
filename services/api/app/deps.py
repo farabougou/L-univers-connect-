@@ -7,6 +7,7 @@ from sqlalchemy.engine import Connection
 
 from app.auth import get_current_claims
 from app.db import engine
+from app.observability import set_tenant
 from app.tenancy import set_tenant_context
 
 
@@ -21,11 +22,13 @@ def get_tenant_id(claims: Annotated[dict, Depends(get_current_claims)]) -> uuid.
     if not raw_tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="jeton sans tenant_id")
     try:
-        return uuid.UUID(str(raw_tenant_id))
+        tenant_id = uuid.UUID(str(raw_tenant_id))
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="tenant_id invalide dans le jeton"
         ) from exc
+    set_tenant(tenant_id)
+    return tenant_id
 
 
 def get_tenant_connection(

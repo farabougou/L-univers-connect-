@@ -39,7 +39,7 @@ démonstration (`demo.technicien` / `demo.admin`, mot de passe `demo-dev-only`).
   | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])"
   ```
 
-  Puis, avec l'API démarrée (`uvicorn app.main:app --reload`) :
+  Puis, avec l'API démarrée (`uvicorn app.main:app --reload --no-access-log`) :
 
   ```bash
   curl -s http://localhost:8000/me -H "Authorization: Bearer <le jeton copié ci-dessus>"

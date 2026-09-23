@@ -4,7 +4,9 @@ from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy import text
 
 from app.auth import get_current_claims, require_role
+from app.config import settings
 from app.db import engine
+from app.observability import RequestLoggingMiddleware, configure_logging
 from app.routers.analytics import router as analytics_router
 from app.routers.assets import router as asset_registry_router
 from app.routers.configs import router as configs_router
@@ -15,7 +17,10 @@ from app.routers.points import router as points_router
 from app.routers.spatial import router as spatial_router
 from app.routers.telemetry import router as telemetry_router
 
+configure_logging(settings.log_level)
+
 app = FastAPI(title="Physical Asset Intelligence OS API")
+app.add_middleware(RequestLoggingMiddleware)
 app.include_router(asset_registry_router)
 app.include_router(graph_router)
 app.include_router(spatial_router)

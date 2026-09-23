@@ -423,6 +423,17 @@ pour naître directement sous forme de configuration versionnée produisant un c
 - Chaque nouvelle table : `tenant_id`, RLS forcée, test d'isolation.
 - Rien n'est écrasé : historiques, bitemporalité, versions.
 
+## 8. Avancement (23 septembre 2026)
+
+| Étape | État | Reste à faire (repris dans la matrice) |
+|---|---|---|
+| F1 | ✅ Livrée, CI verte | — |
+| F2 | ✅ Livrée, CI verte | Plans 2D et IFC : ADR 011, plus tard |
+| F3 | ✅ Livrée, CI verte | File des messages rejetés : M3 |
+| F4 | ✅ Livrée, CI verte | Tables `diagnoses` / `recommendations` et statuts validé/approuvé : DEFER |
+| F5 | ✅ Serveur livré ; écran passeport mobile par saisie du code | Lecture du QR par la caméra (nouvelle dépendance native `expo-camera`, à valider) ; saisie mobile de la clôture structurée (touche la file hors ligne) ; calcul CO₂ équivalent : DEFER |
+| F6 | ✅ Logs JSON (identifiant de requête, tenant, sans donnée personnelle) ; [modes de défaillance](../architecture/failure-modes.md) | Risque ouvert trouvé en rédigeant : doublon possible d'intervention mobile si la réponse du serveur se perd (clé d'idempotence à ajouter, migration à valider) |
+
 ## Conséquences
 
 - L'ADR 001 reçoit un complément (vocabulaire interne + correspondances versionnées).
