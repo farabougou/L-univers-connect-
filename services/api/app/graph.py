@@ -14,7 +14,13 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
-from app.graph_vocabulary import PREDICATES, VOCABULARY_VERSION, check_storable_relation
+from app.graph_vocabulary import (
+    EXTERNAL_ID_SCHEMES,
+    PREDICATES,
+    VOCABULARY_VERSION,
+    VocabularyError,
+    check_storable_relation,
+)
 
 
 class NodeNotFound(LookupError):
@@ -263,6 +269,31 @@ def _derived_edges(connection: Connection, node: dict[str, Any]) -> list[dict[st
                 for root_id in roots
             )
 
+    elif node_type == "point":
+        anchors = (
+            connection.execute(
+                text("SELECT functional_location_id, space_id FROM points WHERE id = :id"),
+                {"id": node_id},
+            )
+            .mappings()
+            .one()
+        )
+        for anchor_type, anchor_id in (
+            ("functional_location", anchors["functional_location_id"]),
+            ("space", anchors["space_id"]),
+        ):
+            if anchor_id is not None:
+                edges.append(
+                    _edge(
+                        node_id=node_id,
+                        subject_id=anchor_id,
+                        subject_type=anchor_type,
+                        predicate="hasPoint",
+                        object_id=node_id,
+                        object_type="point",
+                    )
+                )
+
     elif node_type == "space":
         edges.extend(_tree_edges(connection, node_id, "space"))
         located = connection.execute(
@@ -298,7 +329,81 @@ def _derived_edges(connection: Connection, node: dict[str, Any]) -> list[dict[st
                 )
             )
 
+    if node_type in ("space", "functional_location"):
+        column = "space_id" if node_type == "space" else "functional_location_id"
+        points = connection.execute(
+            text(f"SELECT id FROM points WHERE {column} = :id ORDER BY code"), {"id": node_id}
+        ).scalars()
+        edges.extend(
+            _edge(
+                node_id=node_id,
+                subject_id=node_id,
+                subject_type=node_type,
+                predicate="hasPoint",
+                object_id=point_id,
+                object_type="point",
+            )
+            for point_id in points
+        )
+
     return edges
+
+
+def add_external_identifier(
+    connection: Connection,
+    *,
+    tenant_id: uuid.UUID,
+    node_id: uuid.UUID,
+    scheme: str,
+    external_id: str,
+    created_by: str,
+) -> uuid.UUID:
+    """Relie un identifiant d'un autre système (code client, GlobalId IFC…)
+    à un nœud existant. Un même identifiant ne désigne qu'un seul nœud."""
+    if scheme not in EXTERNAL_ID_SCHEMES:
+        raise VocabularyError(f"système d'identifiants inconnu : {scheme}")
+    _require_node(connection, node_id)
+    taken = connection.execute(
+        text(
+            "SELECT 1 FROM external_identifiers WHERE scheme = :scheme "
+            "AND external_id = :external_id"
+        ),
+        {"scheme": scheme, "external_id": external_id},
+    ).scalar()
+    if taken:
+        raise RelationConflict("cet identifiant externe est déjà utilisé")
+
+    identifier_id = uuid.uuid4()
+    connection.execute(
+        text(
+            "INSERT INTO external_identifiers "
+            "(id, tenant_id, node_id, scheme, external_id, created_by) "
+            "VALUES (:id, :tenant_id, :node_id, :scheme, :external_id, :created_by)"
+        ),
+        {
+            "id": identifier_id,
+            "tenant_id": tenant_id,
+            "node_id": node_id,
+            "scheme": scheme,
+            "external_id": external_id,
+            "created_by": created_by,
+        },
+    )
+    return identifier_id
+
+
+def list_external_identifiers(connection: Connection, node_id: uuid.UUID) -> list[dict]:
+    _require_node(connection, node_id)
+    return [
+        dict(row)
+        for row in connection.execute(
+            text(
+                "SELECT id, node_id, scheme, external_id, created_by, created_at "
+                "FROM external_identifiers WHERE node_id = :id ORDER BY scheme, external_id"
+            ),
+            {"id": node_id},
+        ).mappings()
+    ]
 
 
 def list_node_relations(

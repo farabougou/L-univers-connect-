@@ -8,6 +8,7 @@ from app.db import engine
 from app.routers.assets import router as asset_registry_router
 from app.routers.graph import router as graph_router
 from app.routers.maintenance import router as maintenance_router
+from app.routers.points import router as points_router
 from app.routers.spatial import router as spatial_router
 from app.routers.telemetry import router as telemetry_router
 
@@ -15,6 +16,7 @@ app = FastAPI(title="Physical Asset Intelligence OS API")
 app.include_router(asset_registry_router)
 app.include_router(graph_router)
 app.include_router(spatial_router)
+app.include_router(points_router)
 app.include_router(maintenance_router)
 app.include_router(telemetry_router)
 

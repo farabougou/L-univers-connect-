@@ -3,6 +3,7 @@ from datetime import datetime
 
 from sqlalchemy import (
     BigInteger,
+    Boolean,
     CheckConstraint,
     DateTime,
     Float,
@@ -10,12 +11,13 @@ from sqlalchemy import (
     ForeignKeyConstraint,
     Identity,
     Index,
+    Integer,
     String,
     UniqueConstraint,
     func,
     text,
 )
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -51,7 +53,7 @@ class GraphNode(Base):
     __table_args__ = (
         UniqueConstraint("tenant_id", "id", name="uq_graph_nodes_tenant_id_id"),
         CheckConstraint(
-            "node_type IN ('site', 'space', 'functional_location', 'physical_unit')",
+            "node_type IN ('site', 'space', 'functional_location', 'physical_unit', 'point')",
             name="ck_graph_nodes_node_type",
         ),
     )
@@ -157,6 +159,7 @@ class AuditLog(Base):
     """
 
     __tablename__ = "audit_log"
+    __table_args__ = (Index("audit_log_tenant_seq_idx", "tenant_id", "seq"),)
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     seq: Mapped[int] = mapped_column(BigInteger, Identity(always=True), unique=True, nullable=False)
@@ -197,7 +200,10 @@ class PhysicalUnit(Base):
     numéro de série (voir ADR 001)."""
 
     __tablename__ = "physical_units"
-    __table_args__ = (_graph_node_fk("physical_units"),)
+    __table_args__ = (
+        _graph_node_fk("physical_units"),
+        Index("physical_units_tenant_serial_idx", "tenant_id", "serial_number", unique=True),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
@@ -343,6 +349,16 @@ class FunctionalLocationAssignment(Base):
     """
 
     __tablename__ = "functional_location_assignments"
+    __table_args__ = (
+        # Un seul exemplaire à la fois dans une position (voir la migration
+        # 01847c2561a1).
+        Index(
+            "functional_location_one_open_assignment",
+            "functional_location_id",
+            unique=True,
+            postgresql_where=text("valid_to IS NULL"),
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
@@ -523,34 +539,143 @@ class InterventionPhoto(Base):
     )
 
 
-class Measurement(Base):
-    """Une mesure ponctuelle de télémétrie, en lecture seule (voir ADR 004,
-    brique Télémétrie, et le squelette de bout en bout du cahier des
-    charges, section 36.2).
+class Point(Base):
+    """Un point de télémétrie : capteur, consigne, état, alarme, compteur…
+    (ADR 012, section 2.7), nœud du graphe.
 
-    Pour ce premier jalon (M2), `source` vaut toujours 'simulator' : aucun
-    connecteur réel vers un équipement n'existe encore (celui-ci est prévu
-    pour M3, derrière un adaptateur générique, voir règle non négociable 8).
-    `metric` reste un texte libre non normalisé tant que trois catégories
-    réelles n'ont pas été observées (formalisation Brick Schema différée,
-    ADR 004). Une mesure n'est jamais modifiée après coup : une nouvelle
-    lecture crée toujours une nouvelle ligne."""
+    Rattaché à une position fonctionnelle et/ou à un espace. Un point découvert
+    commence « proposed » : il n'est considéré fiable qu'une fois validé
+    (mise en service), et sa description est alors figée (déclencheur en
+    base). `is_writable` est forcé à faux par une contrainte : règle non
+    négociable 1 inscrite dans la base."""
 
-    __tablename__ = "measurements"
+    __tablename__ = "points"
+    __table_args__ = (
+        _graph_node_fk("points"),
+        ForeignKeyConstraint(
+            ["tenant_id", "functional_location_id"],
+            ["functional_locations.tenant_id", "functional_locations.id"],
+            name="fk_points_functional_location",
+        ),
+        ForeignKeyConstraint(
+            ["tenant_id", "space_id"], ["spaces.tenant_id", "spaces.id"], name="fk_points_space"
+        ),
+        UniqueConstraint("tenant_id", "id", name="uq_points_tenant_id_id"),
+        UniqueConstraint("tenant_id", "code", name="uq_points_tenant_code"),
+        CheckConstraint("is_writable = false", name="ck_points_read_only_c0"),
+        CheckConstraint(
+            "value_type IN ('number', 'boolean', 'multistate')", name="ck_points_value_type"
+        ),
+        CheckConstraint(
+            "mapping_status IN ('proposed', 'validated', 'rejected')",
+            name="ck_points_mapping_status",
+        ),
+        CheckConstraint(
+            "mapping_confidence IS NULL OR (mapping_confidence >= 0 AND mapping_confidence <= 1)",
+            name="ck_points_mapping_confidence",
+        ),
+        CheckConstraint(
+            "expected_interval_seconds IS NULL OR expected_interval_seconds > 0",
+            name="ck_points_expected_interval",
+        ),
+        CheckConstraint(
+            "min_value IS NULL OR max_value IS NULL OR min_value < max_value",
+            name="ck_points_range",
+        ),
+        Index("ix_points_functional_location_id", "functional_location_id"),
+        Index("ix_points_space_id", "space_id"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
     )
     functional_location_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("functional_locations.id"), nullable=True
+        UUID(as_uuid=True), nullable=True
     )
-    physical_unit_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("physical_units.id"), nullable=True
+    space_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    code: Mapped[str] = mapped_column(String(200), nullable=False)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    point_class: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    kind: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    value_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    unit: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    states: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    expected_interval_seconds: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    min_value: Mapped[float | None] = mapped_column(Float, nullable=True)
+    max_value: Mapped[float | None] = mapped_column(Float, nullable=True)
+    is_writable: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
+    mapping_status: Mapped[str] = mapped_column(
+        String(20), nullable=False, server_default="proposed"
     )
-    metric: Mapped[str] = mapped_column(String(100), nullable=False)
-    value: Mapped[float] = mapped_column(Float, nullable=False)
-    unit: Mapped[str] = mapped_column(String(20), nullable=False)
-    source: Mapped[str] = mapped_column(String(50), nullable=False, server_default="simulator")
-    measured_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    mapping_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    created_by: Mapped[str] = mapped_column(String(200), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ExternalIdentifier(Base):
+    """Identifiant d'un nœud dans un autre système (code client, GlobalId
+    IFC, objet BACnet…) : une seule table de correspondance pour tous les
+    imports et connecteurs, jamais de modèle d'actifs parallèle (ADR 011)."""
+
+    __tablename__ = "external_identifiers"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["tenant_id", "node_id"],
+            ["graph_nodes.tenant_id", "graph_nodes.id"],
+            name="fk_external_identifiers_node",
+        ),
+        UniqueConstraint(
+            "tenant_id", "scheme", "external_id", name="uq_external_identifiers_scheme_value"
+        ),
+        Index("ix_external_identifiers_node_id", "node_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    node_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    scheme: Mapped[str] = mapped_column(String(50), nullable=False)
+    external_id: Mapped[str] = mapped_column(String(500), nullable=False)
+    created_by: Mapped[str] = mapped_column(String(200), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Measurement(Base):
+    """Une valeur relevée sur un point, en lecture seule (ADR 012, 2.7-2.8).
+
+    Clé primaire (point, date du relevé) : un relevé renvoyé deux fois (reprise
+    après coupure Edge) n'est jamais dupliqué, et la clé est compatible avec
+    TimescaleDB (M3). `received_at` = date de réception par la plateforme ;
+    `origin` distingue une mesure réelle d'une valeur simulée ou estimée ;
+    `quality_flags` garde les anomalies détectées à la réception. Une mesure
+    n'est jamais modifiée après coup."""
+
+    __tablename__ = "measurements"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["tenant_id", "point_id"],
+            ["points.tenant_id", "points.id"],
+            name="fk_measurements_point",
+        ),
+        CheckConstraint(
+            "origin IN ('measured', 'manual', 'derived', 'estimated', 'simulated')",
+            name="ck_measurements_origin",
+        ),
+    )
+
+    point_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    measured_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), primary_key=True)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    value: Mapped[float] = mapped_column(Float, nullable=False)
+    origin: Mapped[str] = mapped_column(String(20), nullable=False)
+    source: Mapped[str] = mapped_column(String(50), nullable=False)
+    quality_flags: Mapped[list[str]] = mapped_column(
+        ARRAY(String(30)), nullable=False, server_default=text("'{}'")
+    )
+    received_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )

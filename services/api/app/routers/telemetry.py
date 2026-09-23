@@ -1,119 +1,115 @@
 import uuid
 from datetime import UTC, datetime
-from typing import Annotated, Any
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import text
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.engine import Connection
 
 from app.auth import require_any_role
 from app.deps import get_tenant_connection, get_tenant_id
-from app.schemas import MeasurementCreate, MeasurementOut
-from app.telemetry import record_measurement
+from app.points import get_point
+from app.schemas import (
+    MeasurementBatch,
+    MeasurementBatchResult,
+    MeasurementCreate,
+    MeasurementOut,
+)
+from app.telemetry import (
+    MeasurementConflict,
+    MeasurementRejected,
+    ingest_measurements,
+    list_measurements,
+    read_measurement,
+    record_measurement,
+)
 
 router = APIRouter()
 
+# Tant qu'aucune identité machine n'existe (M3, ADR 012 §2.10), l'ingestion
+# passe par ces rôles humains : acceptable pour le simulateur, jamais pour
+# un vrai appareil.
 _FIELD_ROLES = ("technicien", "responsable_exploitation", "admin_tenant")
 
 
-def _actor(claims: dict[str, Any]) -> str:
-    return claims.get("sub") or "inconnu"
-
-
-def _check_targets_exist(
-    connection: Connection,
-    *,
-    functional_location_id: uuid.UUID | None,
-    physical_unit_id: uuid.UUID | None,
-) -> None:
-    if functional_location_id is not None:
-        exists = connection.execute(
-            text("SELECT 1 FROM functional_locations WHERE id = :id"),
-            {"id": functional_location_id},
-        ).scalar()
-        if not exists:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="position fonctionnelle introuvable"
-            )
-    if physical_unit_id is not None:
-        exists = connection.execute(
-            text("SELECT 1 FROM physical_units WHERE id = :id"), {"id": physical_unit_id}
-        ).scalar()
-        if not exists:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="exemplaire introuvable"
-            )
+# L'ingestion de mesures n'écrit pas dans le journal d'audit : ce n'est pas
+# une action sensible, et son volume saturerait une chaîne conçue pour les
+# actions humaines (ADR 012, risque 9). La traçabilité est portée par
+# `source`, `origin` et `received_at` sur chaque mesure.
 
 
 @router.post("/measurements", response_model=MeasurementOut, status_code=status.HTTP_201_CREATED)
 def create_measurement(
     body: MeasurementCreate,
+    response: Response,
     connection: Annotated[Connection, Depends(get_tenant_connection)],
     tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
 ) -> MeasurementOut:
-    """Point d'entrée de télémétrie pour le squelette de bout en bout (M2).
+    """Un relevé. 201 s'il est nouveau, 200 s'il était déjà reçu à l'identique
+    (renvoi après coupure), 409 si une autre valeur existe à cet instant."""
+    point = get_point(connection, body.point_id)
+    if point is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="point introuvable")
 
-    Aucun connecteur réel n'existe encore : ce point sert pour l'instant à
-    un point simulé (voir ADR 004). Il ne fait qu'enregistrer une valeur
-    déjà mesurée, jamais commander un équipement (règle non négociable 1).
-    """
-    _check_targets_exist(
-        connection,
-        functional_location_id=body.functional_location_id,
-        physical_unit_id=body.physical_unit_id,
-    )
+    received_at = datetime.now(UTC)
+    measured_at = body.measured_at or received_at
+    try:
+        outcome = record_measurement(
+            connection,
+            tenant_id=tenant_id,
+            point=point,
+            value=body.value,
+            measured_at=measured_at,
+            origin=body.origin,
+            source=body.source,
+            received_at=received_at,
+        )
+    except MeasurementRejected as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except MeasurementConflict as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
 
-    measurement_id = record_measurement(
+    if outcome == "duplicate":
+        response.status_code = status.HTTP_200_OK
+    return MeasurementOut(**read_measurement(connection, body.point_id, measured_at))
+
+
+@router.post("/measurements/batch", response_model=MeasurementBatchResult)
+def create_measurements_batch(
+    body: MeasurementBatch,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
+    _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> MeasurementBatchResult:
+    """Envoi groupé (jusqu'à 1000 relevés), rejouable sans risque de doublon."""
+    summary = ingest_measurements(
         connection,
         tenant_id=tenant_id,
-        metric=body.metric,
-        value=body.value,
-        unit=body.unit,
+        items=[item.model_dump() for item in body.items],
         source=body.source,
-        measured_at=body.measured_at or datetime.now(UTC),
-        functional_location_id=body.functional_location_id,
-        physical_unit_id=body.physical_unit_id,
+        received_at=datetime.now(UTC),
     )
-    return _read_measurement(connection, measurement_id)
+    return MeasurementBatchResult(**summary)
 
 
 @router.get("/measurements", response_model=list[MeasurementOut])
-def list_measurements(
+def list_measurements_route(
+    point_id: uuid.UUID,
     connection: Annotated[Connection, Depends(get_tenant_connection)],
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
-    functional_location_id: uuid.UUID | None = None,
+    since: datetime | None = None,
     limit: int = 100,
 ) -> list[MeasurementOut]:
     if limit < 1 or limit > 1000:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="limit doit être entre 1 et 1000"
         )
-
-    query = (
-        "SELECT id, functional_location_id, physical_unit_id, metric, value, unit, "
-        "source, measured_at, created_at FROM measurements"
-    )
-    params: dict[str, Any] = {"limit": limit}
-    if functional_location_id is not None:
-        query += " WHERE functional_location_id = :functional_location_id"
-        params["functional_location_id"] = functional_location_id
-    query += " ORDER BY measured_at DESC LIMIT :limit"
-
-    rows = connection.execute(text(query), params).mappings().all()
-    return [MeasurementOut(**row) for row in rows]
-
-
-def _read_measurement(connection: Connection, measurement_id: uuid.UUID) -> MeasurementOut:
-    row = (
-        connection.execute(
-            text(
-                "SELECT id, functional_location_id, physical_unit_id, metric, value, unit, "
-                "source, measured_at, created_at FROM measurements WHERE id = :id"
-            ),
-            {"id": measurement_id},
+    if since is not None and since.tzinfo is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="since doit préciser son fuseau horaire",
         )
-        .mappings()
-        .one()
-    )
-    return MeasurementOut(**row)
+    if get_point(connection, point_id) is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="point introuvable")
+    rows = list_measurements(connection, point_id=point_id, since=since, limit=limit)
+    return [MeasurementOut(**row) for row in rows]

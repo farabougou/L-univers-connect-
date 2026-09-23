@@ -287,23 +287,118 @@ class RelationOut(BaseModel):
     vocabulary_version: str | None
 
 
-class MeasurementCreate(BaseModel):
+class ExternalIdentifierCreate(BaseModel):
+    scheme: str = Field(min_length=1, max_length=50)
+    external_id: str = Field(min_length=1, max_length=500)
+
+
+class ExternalIdentifierOut(BaseModel):
+    id: uuid.UUID
+    node_id: uuid.UUID
+    scheme: str
+    external_id: str
+    created_by: str
+    created_at: datetime
+
+
+class PointCreate(BaseModel):
+    code: str = Field(min_length=1, max_length=200)
+    name: str = Field(min_length=1, max_length=200)
+    value_type: Literal["number", "boolean", "multistate"]
+    point_class: str | None = Field(default=None, max_length=100)
+    unit: str | None = Field(default=None, max_length=30)
+    states: dict[str, str] | None = None
     functional_location_id: uuid.UUID | None = None
-    physical_unit_id: uuid.UUID | None = None
-    metric: str = Field(min_length=1, max_length=100)
-    value: float
-    unit: str = Field(min_length=1, max_length=20)
-    source: str = Field(default="simulator", max_length=50)
-    measured_at: datetime | None = None
+    space_id: uuid.UUID | None = None
+    expected_interval_seconds: int | None = Field(default=None, gt=0)
+    min_value: float | None = None
+    max_value: float | None = None
+    mapping_confidence: float | None = Field(default=None, ge=0, le=1)
+
+
+class PointUpdate(BaseModel):
+    """Identification d'un point encore « proposed » : seuls les champs
+    envoyés sont modifiés."""
+
+    name: str | None = Field(default=None, min_length=1, max_length=200)
+    value_type: Literal["number", "boolean", "multistate"] | None = None
+    point_class: str | None = Field(default=None, max_length=100)
+    unit: str | None = Field(default=None, max_length=30)
+    states: dict[str, str] | None = None
+    functional_location_id: uuid.UUID | None = None
+    space_id: uuid.UUID | None = None
+    expected_interval_seconds: int | None = Field(default=None, gt=0)
+    min_value: float | None = None
+    max_value: float | None = None
+    mapping_confidence: float | None = Field(default=None, ge=0, le=1)
+
+
+class PointDecision(BaseModel):
+    reason: str | None = Field(default=None, max_length=500)
+
+
+class PointOut(BaseModel):
+    id: uuid.UUID
+    functional_location_id: uuid.UUID | None
+    space_id: uuid.UUID | None
+    code: str
+    name: str
+    point_class: str | None
+    kind: str | None
+    value_type: str
+    unit: str | None
+    states: dict[str, str] | None
+    expected_interval_seconds: int | None
+    min_value: float | None
+    max_value: float | None
+    is_writable: bool
+    mapping_status: str
+    mapping_confidence: float | None
+    created_by: str
+    created_at: datetime
+
+
+class MeasurementCreate(BaseModel):
+    point_id: uuid.UUID
+    # Ni infini ni « NaN » : une valeur non finie n'est jamais une mesure.
+    value: float = Field(allow_inf_nan=False)
+    measured_at: AwareDatetime | None = None
+    # « derived » et « estimated » sont réservés aux moteurs de la plateforme.
+    origin: Literal["measured", "manual", "simulated"] = "measured"
+    source: str = Field(default="api", min_length=1, max_length=50)
+
+
+class MeasurementItem(BaseModel):
+    point_id: uuid.UUID
+    value: float = Field(allow_inf_nan=False)
+    measured_at: AwareDatetime
+    origin: Literal["measured", "manual", "simulated"] = "measured"
+
+
+class MeasurementBatch(BaseModel):
+    source: str = Field(min_length=1, max_length=50)
+    items: list[MeasurementItem] = Field(min_length=1, max_length=1000)
+
+
+class MeasurementBatchError(BaseModel):
+    index: int
+    point_id: uuid.UUID
+    reason: str
+
+
+class MeasurementBatchResult(BaseModel):
+    inserted: int
+    duplicates: int
+    conflicts: int
+    rejected: int
+    errors: list[MeasurementBatchError]
 
 
 class MeasurementOut(BaseModel):
-    id: uuid.UUID
-    functional_location_id: uuid.UUID | None
-    physical_unit_id: uuid.UUID | None
-    metric: str
-    value: float
-    unit: str
-    source: str
+    point_id: uuid.UUID
     measured_at: datetime
-    created_at: datetime
+    value: float
+    origin: str
+    source: str
+    quality_flags: list[str]
+    received_at: datetime

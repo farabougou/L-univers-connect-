@@ -13,15 +13,20 @@ Historique :
 - 2026-09-23.1 : F1, sites, positions fonctionnelles, exemplaires.
 - 2026-09-23.2 : F2, ajout des espaces (bâtiment, étage, pièce, zone) et du
   prédicat déduit « locatedIn ».
+- 2026-09-23.3 : F3, ajout des points de télémétrie, du prédicat déduit
+  « hasPoint », et d'un point comme objet possible de « measuredBy ».
 """
 
 from dataclasses import dataclass
 
-VOCABULARY_VERSION = "2026-09-23.2"
+VOCABULARY_VERSION = "2026-09-23.3"
 
-# Types de nœuds existants à ce jour. Les types futurs (point, edge_device,
+# Types de nœuds existants à ce jour. Les types futurs (edge_device,
 # organization) seront ajoutés avec leurs tables respectives.
-NODE_TYPES = ("site", "space", "functional_location", "physical_unit")
+NODE_TYPES = ("site", "space", "functional_location", "physical_unit", "point")
+
+# Systèmes dont on accepte les identifiants (table external_identifiers).
+EXTERNAL_ID_SCHEMES = ("customer_code", "ifc_global_id", "bacnet_object", "haystack_id")
 
 
 @dataclass(frozen=True)
@@ -67,10 +72,20 @@ PREDICATES: dict[str, Predicate] = {
             structural=True,
             brick="brick:hasLocation",
         ),
+        Predicate(
+            "hasPoint",
+            "isPointOf",
+            _EQUIPMENT_OR_SPACE,
+            ("point",),
+            structural=True,
+            brick="brick:hasPoint",
+        ),
         # Une CTA alimente un autre équipement ou directement une zone.
         Predicate("feeds", "isFedBy", _EQUIPMENT, _EQUIPMENT_OR_SPACE, brick="brick:feeds"),
         Predicate("poweredBy", "powers", _EQUIPMENT, _EQUIPMENT),
-        Predicate("measuredBy", "measures", _EQUIPMENT_OR_SPACE, _EQUIPMENT),
+        # Mesuré par un compteur (équipement) ou par un point situé ailleurs
+        # (sonde d'ambiance d'une zone voisine, par exemple).
+        Predicate("measuredBy", "measures", _EQUIPMENT_OR_SPACE, ("functional_location", "point")),
         Predicate("controlledBy", "controls", _EQUIPMENT, _EQUIPMENT),
         Predicate(
             "connectedTo",

@@ -12,13 +12,22 @@ from app.graph import (
     NodeNotFound,
     RelationConflict,
     RelationNotFound,
+    add_external_identifier,
     create_relation,
     end_relation,
     get_node,
+    list_external_identifiers,
     list_node_relations,
 )
 from app.graph_vocabulary import VocabularyError
-from app.schemas import GraphNodeOut, RelationCreate, RelationEnd, RelationOut
+from app.schemas import (
+    ExternalIdentifierCreate,
+    ExternalIdentifierOut,
+    GraphNodeOut,
+    RelationCreate,
+    RelationEnd,
+    RelationOut,
+)
 
 router = APIRouter()
 
@@ -56,6 +65,66 @@ def read_node_relations(
             status_code=status.HTTP_404_NOT_FOUND, detail="nœud introuvable"
         ) from exc
     return [RelationOut(**edge) for edge in edges]
+
+
+@router.get("/graph/nodes/{node_id}/external-ids", response_model=list[ExternalIdentifierOut])
+def read_external_identifiers(
+    node_id: uuid.UUID,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> list[ExternalIdentifierOut]:
+    try:
+        rows = list_external_identifiers(connection, node_id)
+    except NodeNotFound as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="nœud introuvable"
+        ) from exc
+    return [ExternalIdentifierOut(**row) for row in rows]
+
+
+@router.post(
+    "/graph/nodes/{node_id}/external-ids",
+    response_model=ExternalIdentifierOut,
+    status_code=status.HTTP_201_CREATED,
+)
+def add_external_identifier_route(
+    node_id: uuid.UUID,
+    body: ExternalIdentifierCreate,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
+    claims: Annotated[dict, Depends(require_any_role(*_MANAGE_GRAPH_ROLES))],
+) -> ExternalIdentifierOut:
+    try:
+        identifier_id = add_external_identifier(
+            connection,
+            tenant_id=tenant_id,
+            node_id=node_id,
+            scheme=body.scheme,
+            external_id=body.external_id,
+            created_by=_actor(claims),
+        )
+    except NodeNotFound as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="nœud introuvable"
+        ) from exc
+    except VocabularyError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except RelationConflict as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+
+    append_audit_entry(
+        connection,
+        tenant_id=tenant_id,
+        actor=_actor(claims),
+        action="external_identifier.added",
+        entity_type="graph_node",
+        entity_id=str(node_id),
+        payload={"scheme": body.scheme, "external_id": body.external_id},
+    )
+    row = next(
+        row for row in list_external_identifiers(connection, node_id) if row["id"] == identifier_id
+    )
+    return ExternalIdentifierOut(**row)
 
 
 @router.post("/relations", response_model=RelationOut, status_code=status.HTTP_201_CREATED)
