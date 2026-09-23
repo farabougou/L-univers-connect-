@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 
 import { config } from "./config";
+import { isAccessTokenExpired } from "./token-expiry";
 
 const TOKENS_COOKIE = "paios_tokens";
 const OAUTH_FLOW_COOKIE = "paios_oauth_flow";
@@ -57,9 +58,7 @@ export async function getValidAccessToken(): Promise<string | null> {
   const tokens = await getTokensCookie();
   if (!tokens) return null;
 
-  // Marge de 10 secondes pour ne jamais envoyer à l'API un jeton qui
-  // expirerait pendant le trajet réseau.
-  if (Date.now() < tokens.expiresAt - 10_000) {
+  if (!isAccessTokenExpired(tokens.expiresAt)) {
     return tokens.accessToken;
   }
 

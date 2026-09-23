@@ -99,5 +99,8 @@ jobs:
       - name: Vérification des types (TypeScript)
         run: npm run typecheck
 
+      - name: Tests (vitest)
+        run: npm test
+
       - name: Build
         run: npm run build
