@@ -8,11 +8,18 @@ from pydantic_core import PydanticCustomError
 
 class SiteCreate(BaseModel):
     name: str = Field(min_length=1, max_length=200)
+    # Fuseau IANA, obligatoire : les heures du site s'affichent dans ce fuseau.
+    timezone: str = Field(min_length=1, max_length=64)
+
+
+class SiteTimezoneUpdate(BaseModel):
+    timezone: str = Field(min_length=1, max_length=64)
 
 
 class SiteOut(BaseModel):
     id: uuid.UUID
     name: str
+    timezone: str | None
     created_at: datetime
 
 

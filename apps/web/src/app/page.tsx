@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { apiFetch, requireAccessToken } from "@/lib/api";
+import { getTranslator } from "@/lib/i18n";
 
 type Me = {
   sub: string;
@@ -17,6 +18,7 @@ type FunctionalLocation = {
 
 export default async function DashboardPage() {
   const accessToken = await requireAccessToken();
+  const { t } = await getTranslator();
 
   const [meResponse, locationsResponse] = await Promise.all([
     apiFetch("/me", accessToken),
@@ -35,26 +37,28 @@ export default async function DashboardPage() {
   return (
     <main style={{ maxWidth: 720, margin: "40px auto", padding: "0 16px" }}>
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1>Physical Asset Intelligence OS</h1>
-        <a href="/api/auth/logout">Se déconnecter</a>
+        <h1>{t("common.app_name")}</h1>
+        <a href="/api/auth/logout">{t("common.sign_out")}</a>
       </header>
-      <p>
-        Connecté en tant que <strong>{me.sub}</strong> — rôles : {me.roles.join(", ")}
-      </p>
+      <p>{t("web.dashboard.signed_in_as", { user: me.sub, roles: me.roles.join(", ") })}</p>
 
       <nav style={{ margin: "16px 0" }}>
-        <Link href="/ordres-de-travail">Ordres de travail →</Link>
+        <Link href="/ordres-de-travail">{t("web.dashboard.work_orders_link")} →</Link>
       </nav>
 
-      <h2>Positions fonctionnelles</h2>
+      <h2>{t("web.dashboard.equipment")}</h2>
       {locations.length === 0 ? (
-        <p>Aucune position fonctionnelle enregistrée pour l&apos;instant.</p>
+        <p>{t("web.dashboard.no_equipment")}</p>
       ) : (
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr>
-              <th style={{ textAlign: "left", borderBottom: "1px solid #ddd" }}>Code</th>
-              <th style={{ textAlign: "left", borderBottom: "1px solid #ddd" }}>Nom</th>
+              <th style={{ textAlign: "left", borderBottom: "1px solid #ddd" }}>
+                {t("web.dashboard.code")}
+              </th>
+              <th style={{ textAlign: "left", borderBottom: "1px solid #ddd" }}>
+                {t("web.dashboard.name")}
+              </th>
             </tr>
           </thead>
           <tbody>

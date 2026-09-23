@@ -1,0 +1,175 @@
+{
+  "common": {
+    "app_name": "Physical Asset Intelligence OS",
+    "sign_in": "Se connecter",
+    "sign_out": "Se déconnecter",
+    "back": "Retour"
+  },
+  "severity": {
+    "info": "Information",
+    "warning": "Avertissement",
+    "major": "Majeur",
+    "critical": "Critique"
+  },
+  "certainty": {
+    "detected": "Anomalie détectée",
+    "confirmed": "Défaut confirmé",
+    "probable_cause": "Cause probable",
+    "hypothesis": "Hypothèse de diagnostic",
+    "prediction": "Prédiction",
+    "recommendation": "Recommandation",
+    "simulation_result": "Résultat de simulation",
+    "unavailable": "Information non disponible"
+  },
+  "condition_state": {
+    "active": "Condition active",
+    "cleared": "Retour à la normale"
+  },
+  "ack_state": {
+    "unacknowledged": "À acquitter",
+    "acknowledged": "Acquitté"
+  },
+  "handling_status": {
+    "open": "Ouvert",
+    "in_progress": "En cours de traitement",
+    "closed": "Clos",
+    "false_positive": "Faux positif"
+  },
+  "lifecycle": {
+    "planned": "Prévu",
+    "ordered": "En approvisionnement",
+    "in_stock": "En stock",
+    "installed": "Installé",
+    "commissioned": "Réceptionné",
+    "in_service": "En service",
+    "out_of_service": "Hors service",
+    "removed": "Déposé",
+    "decommissioned": "Réformé",
+    "disposed": "Éliminé"
+  },
+  "intervention_type": {
+    "intervention": "Intervention",
+    "ronde": "Ronde"
+  },
+  "work_order": {
+    "type": {
+      "corrective": "Correctif",
+      "preventive": "Préventif",
+      "predictive": "Prédictif",
+      "inspection": "Inspection"
+    },
+    "priority": {
+      "low": "Basse",
+      "medium": "Moyenne",
+      "high": "Haute",
+      "urgent": "Urgente"
+    },
+    "status": {
+      "open": "Ouvert",
+      "in_progress": "En cours",
+      "completed": "Terminé",
+      "cancelled": "Annulé"
+    }
+  },
+  "mobile": {
+    "home": {
+      "subtitle": "Application technicien",
+      "signed_in": "Session ouverte",
+      "user": "Utilisateur : {user}",
+      "tenant": "Client : {tenant}",
+      "roles": "Rôles : {roles}",
+      "new_intervention": "Nouvelle intervention",
+      "history": "Historique",
+      "passport": "Passeport d’équipement",
+      "pending": {
+        "one": "{count} intervention en attente d’envoi",
+        "other": "{count} interventions en attente d’envoi"
+      },
+      "nothing_pending": "Aucune intervention en attente d’envoi.",
+      "sync": "Synchroniser",
+      "server_unreachable": "Le serveur est momentanément injoignable. Les interventions restent enregistrées sur le téléphone.",
+      "sign_in_failed": "La connexion n’a pas pu aboutir. Réessayez ; si le problème persiste, contactez votre administrateur."
+    },
+    "intervention": {
+      "title": "Nouvelle intervention",
+      "equipment_optional": "Équipement (facultatif)",
+      "no_cached_equipment": "Aucun équipement n’est disponible hors ligne. Connectez-vous une fois au réseau pour charger la liste.",
+      "summary": "Compte rendu",
+      "summary_placeholder": "Constats et opérations réalisées",
+      "checks": "Vérifications",
+      "check": {
+        "pression_ok": "Pression correcte",
+        "bruit_anormal": "Bruit anormal",
+        "filtre_propre": "Filtre propre"
+      },
+      "photo_required_label": "Photo (obligatoire)",
+      "take_photo": "Prendre une photo",
+      "retake_photo": "Reprendre la photo",
+      "save": "Enregistrer",
+      "photo_required_title": "Photo requise",
+      "photo_required_message": "Une photo est requise avant l’enregistrement de l’intervention."
+    },
+    "history": {
+      "title": "Interventions envoyées au serveur",
+      "empty": "Aucune intervention envoyée pour le moment.",
+      "load_failed": "L’historique n’a pas pu être chargé. Vérifiez la connexion au réseau."
+    },
+    "passport": {
+      "screen_title": "Passeport d’équipement",
+      "tag_code": "Code de l’étiquette",
+      "tag_placeholder": "Code imprimé sous le QR",
+      "show": "Afficher le passeport",
+      "invalid_code": "Ce code d’étiquette n’est pas valide. Vérifiez la saisie.",
+      "sign_in_first": "Connectez-vous pour consulter le passeport.",
+      "offline": "Aucune connexion au réseau : le passeport se consulte en ligne.",
+      "tag_unknown": "Cette étiquette n’est pas reconnue.",
+      "tag_revoked": "Cette étiquette a été révoquée : scannez la nouvelle étiquette de l’équipement.",
+      "forbidden": "Accès refusé : reconnectez-vous.",
+      "server_error": "Le passeport n’a pas pu être chargé (erreur {status}). Réessayez plus tard.",
+      "equipment": "Équipement",
+      "unit": "Exemplaire installé",
+      "no_unit": "Aucun exemplaire installé.",
+      "serial": "N° de série : {serial}",
+      "state": "État : {state}",
+      "latest": "Dernières mesures",
+      "no_measurement": "Aucune mesure",
+      "flagged": "valeur à vérifier",
+      "signals": "Alarmes et constats en cours",
+      "nothing_open": "Aucun signalement en cours.",
+      "alarm": "Alarme",
+      "finding": "Constat",
+      "work_orders": "Ordres de travail en cours",
+      "interventions": "Dernières interventions",
+      "no_summary": "Sans compte rendu",
+      "site_time": "Heures affichées dans le fuseau du site ({timezone}).",
+      "device_time": "Heures affichées dans le fuseau de l’appareil : le fuseau du site n’est pas renseigné."
+    }
+  },
+  "web": {
+    "console": "Console d’exploitation",
+    "login": {
+      "subtitle": "Console du responsable d’exploitation",
+      "failed": "La connexion n’a pas pu aboutir. Réessayez ; si le problème persiste, contactez votre administrateur."
+    },
+    "dashboard": {
+      "signed_in_as": "Session de {user} — rôles : {roles}",
+      "work_orders_link": "Ordres de travail",
+      "equipment": "Équipements",
+      "no_equipment": "Aucun équipement enregistré pour le moment.",
+      "code": "Code",
+      "name": "Nom"
+    },
+    "work_orders": {
+      "title": "Ordres de travail",
+      "empty": "Aucun ordre de travail pour le moment.",
+      "col_title": "Intitulé",
+      "col_type": "Type",
+      "col_priority": "Priorité",
+      "col_status": "Statut",
+      "create": "Créer un ordre de travail",
+      "submit": "Créer",
+      "title_required": "L’intitulé est obligatoire.",
+      "creation_failed": "La création de l’ordre de travail n’a pas pu être effectuée. Réessayez."
+    }
+  }
+}

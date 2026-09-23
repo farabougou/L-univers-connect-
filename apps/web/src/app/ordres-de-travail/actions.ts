@@ -10,7 +10,7 @@ export async function createWorkOrder(formData: FormData) {
   const title = formData.get("title");
 
   if (typeof title !== "string" || title.trim().length === 0) {
-    redirect("/ordres-de-travail?error=titre_requis");
+    redirect("/ordres-de-travail?error=TITLE_REQUIRED");
   }
 
   const response = await apiFetch("/work-orders", accessToken, {
@@ -24,7 +24,10 @@ export async function createWorkOrder(formData: FormData) {
   });
 
   if (!response.ok) {
-    redirect(`/ordres-de-travail?error=creation_echouee_${response.status}`);
+    // Seul le code stable de l'erreur passe dans l'adresse, jamais un texte.
+    const problem = await response.json().catch(() => null);
+    const code = typeof problem?.code === "string" ? problem.code : "CREATION_FAILED";
+    redirect(`/ordres-de-travail?error=${encodeURIComponent(code)}`);
   }
 
   revalidatePath("/ordres-de-travail");

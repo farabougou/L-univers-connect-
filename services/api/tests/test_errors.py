@@ -169,18 +169,26 @@ def test_messages_are_complete_sentences_with_simple_placeholders(locale) -> Non
         assert "  " not in message, code
 
 
-def test_french_typography() -> None:
+def _strings(node, prefix=""):
+    if isinstance(node, str):
+        yield prefix, node
+    else:
+        for key, value in node.items():
+            yield from _strings(value, f"{prefix}.{key}" if prefix else key)
+
+
+@pytest.mark.parametrize("namespace", ["errors", "findings", "closure"])
+def test_french_typography(namespace) -> None:
     """Apostrophe typographique, espace insécable avant « : ; ? ! » et à
-    l'intérieur des guillemets français."""
-    catalog = load_catalog("fr")
-    for code, message in [*catalog["codes"].items(), *catalog["titles"].items()]:
-        assert "'" not in message, f"{code} : apostrophe droite"
+    l'intérieur des guillemets français, dans tous les catalogues de l'API."""
+    for key, message in _strings(load_catalog("fr", namespace)):
+        assert "'" not in message, f"{key} : apostrophe droite"
         for mark in (":", ";", "?", "!"):
-            assert f" {mark}" not in message, f"{code} : espace ordinaire avant {mark}"
-        assert "« " not in message and " »" not in message, f"{code} : guillemets"
+            assert f" {mark}" not in message, f"{key} : espace ordinaire avant {mark}"
+        assert "« " not in message and " »" not in message, f"{key} : guillemets"
         for mark in (";", "?", "!"):
             index = message.find(mark)
-            assert index <= 0 or message[index - 1] == "\u00a0", f"{code} : {mark}"
+            assert index <= 0 or message[index - 1] == "\u00a0", f"{key} : {mark}"
 
 
 def _string_constants(path: Path) -> set[str]:

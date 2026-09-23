@@ -11,11 +11,12 @@ import {
 
 import { config } from "../src/lib/config";
 import { useAuth } from "../src/lib/auth";
+import { locale, t } from "../src/lib/i18n";
+import { formatDate, formatDateTime, formatNumber } from "../src/i18n/translator";
 import {
   type Passport,
   type PassportUnit,
   fetchPassportByTag,
-  lifecycleLabel,
   parseTagCode,
 } from "../src/lib/passport";
 
@@ -32,37 +33,37 @@ export default function PasseportScreen() {
     setPassport(null);
     const code = parseTagCode(input);
     if (!code) {
-      setMessage("Code d'étiquette invalide.");
+      setMessage(t("mobile.passport.invalid_code"));
       return;
     }
     const token = await auth.getAccessToken();
     if (!token) {
-      setMessage("Connectez-vous d'abord.");
+      setMessage(t("mobile.passport.sign_in_first"));
       return;
     }
     setLoading(true);
     setMessage(null);
-    const result = await fetchPassportByTag(config.apiUrl, token, code);
+    const result = await fetchPassportByTag(config.apiUrl, token, code, locale);
     setLoading(false);
     if (result.ok) {
       setPassport(result.passport);
     } else {
-      setMessage(result.message);
+      setMessage(t(result.messageKey, result.params));
     }
   }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.label}>Code de l'étiquette</Text>
+      <Text style={styles.label}>{t("mobile.passport.tag_code")}</Text>
       <TextInput
         style={styles.input}
         value={input}
         onChangeText={setInput}
         autoCapitalize="none"
         autoCorrect={false}
-        placeholder="Code imprimé sous le QR"
+        placeholder={t("mobile.passport.tag_placeholder")}
       />
-      <Button title="Afficher le passeport" onPress={lookUp} disabled={loading} />
+      <Button title={t("mobile.passport.show")} onPress={lookUp} disabled={loading} />
       {loading && <ActivityIndicator />}
       {message && <Text style={styles.error}>{message}</Text>}
       {passport && <PassportView passport={passport} />}
@@ -72,10 +73,14 @@ export default function PasseportScreen() {
 
 function PassportView({ passport }: { passport: Passport }) {
   const unit = passport.physical_unit ?? passport.current_unit ?? null;
+  // Heures du site dans son fuseau quand il est renseigné, sinon celles de
+  // l'appareil, et on le dit (ADR 013 : ne jamais laisser croire).
+  const timeZone = passport.site?.timezone ?? null;
+  const alarms = passport.open_alarms ?? [];
   return (
     <View style={styles.passport}>
       {passport.functional_location && (
-        <Section title="Position">
+        <Section title={t("mobile.passport.equipment")}>
           <Text style={styles.strong}>
             {passport.functional_location.code} — {passport.functional_location.name}
           </Text>
@@ -85,61 +90,79 @@ function PassportView({ passport }: { passport: Passport }) {
         <Text style={styles.muted}>{passport.space_path.map((s) => s.name).join(" › ")}</Text>
       )}
 
-      <Section title="Équipement">
-        {unit ? <UnitView unit={unit} /> : <Text>Aucun exemplaire en place.</Text>}
+      <Section title={t("mobile.passport.unit")}>
+        {unit ? <UnitView unit={unit} /> : <Text>{t("mobile.passport.no_unit")}</Text>}
       </Section>
 
       {passport.points && passport.points.length > 0 && (
-        <Section title="Dernières mesures">
+        <Section title={t("mobile.passport.latest")}>
           {passport.points.map((point) => (
             <Text key={point.id}>
-              {point.name} :{" "}
+              {point.name} —{" "}
               {point.latest
-                ? `${point.latest.value} ${point.unit} (${new Date(
+                ? `${formatNumber(locale, point.latest.value)} ${point.unit} (${formatDateTime(
+                    locale,
                     point.latest.measured_at,
-                  ).toLocaleString()})`
-                : "aucune mesure"}
-              {point.latest && point.latest.quality_flags.length > 0 ? " ⚠️" : ""}
+                    timeZone,
+                  )})`
+                : t("mobile.passport.no_measurement")}
+              {point.latest && point.latest.quality_flags.length > 0
+                ? ` — ${t("mobile.passport.flagged")}`
+                : ""}
             </Text>
           ))}
         </Section>
       )}
 
-      <Section title="Alarmes et constats ouverts">
-        {(passport.open_alarms ?? []).map((alarm) => (
+      <Section title={t("mobile.passport.signals")}>
+        {alarms.map((alarm) => (
           <Text key={alarm.id}>
-            🔔 [{alarm.severity}] {alarm.message}
+            {t("mobile.passport.alarm")} · {t(`severity.${alarm.severity}`)} ·{" "}
+            {t(`condition_state.${alarm.condition_state}`)} · {t(`ack_state.${alarm.ack_state}`)}
+            {"\n"}
+            {alarm.message}
           </Text>
         ))}
         {passport.open_findings.map((finding) => (
           <Text key={finding.id}>
-            🔎 [{finding.severity}] {finding.title}
+            {t("mobile.passport.finding")} · {t(`severity.${finding.severity}`)} ·{" "}
+            {t(`certainty.${finding.certainty}`)} · {t(`condition_state.${finding.condition_state}`)}
+            {"\n"}
+            {finding.title}
           </Text>
         ))}
-        {(passport.open_alarms ?? []).length === 0 && passport.open_findings.length === 0 && (
-          <Text>Rien d'ouvert.</Text>
+        {alarms.length === 0 && passport.open_findings.length === 0 && (
+          <Text>{t("mobile.passport.nothing_open")}</Text>
         )}
       </Section>
 
       {passport.open_work_orders && passport.open_work_orders.length > 0 && (
-        <Section title="Ordres de travail en cours">
+        <Section title={t("mobile.passport.work_orders")}>
           {passport.open_work_orders.map((order) => (
-            <Text key={order.id}>• {order.title}</Text>
+            <Text key={order.id}>
+              {order.title} ({t(`work_order.status.${order.status}`)})
+            </Text>
           ))}
         </Section>
       )}
 
       {passport.recent_interventions && passport.recent_interventions.length > 0 && (
-        <Section title="Dernières interventions">
+        <Section title={t("mobile.passport.interventions")}>
           {passport.recent_interventions.map((item) => (
             <Text key={item.id}>
-              {new Date(item.started_at).toLocaleDateString()} —{" "}
-              {item.action_label ?? item.summary ?? "sans résumé"}
+              {formatDate(locale, item.started_at, timeZone)} —{" "}
+              {item.action_label ?? item.summary ?? t("mobile.passport.no_summary")}
               {item.symptom_label ? ` (${item.symptom_label})` : ""}
             </Text>
           ))}
         </Section>
       )}
+
+      <Text style={styles.muted}>
+        {timeZone
+          ? t("mobile.passport.site_time", { timezone: timeZone })
+          : t("mobile.passport.device_time")}
+      </Text>
     </View>
   );
 }
@@ -150,8 +173,8 @@ function UnitView({ unit }: { unit: PassportUnit }) {
       <Text style={styles.strong}>
         {unit.manufacturer} {unit.reference}
       </Text>
-      <Text>N° de série : {unit.serial_number}</Text>
-      <Text>État : {lifecycleLabel(unit.lifecycle_state)}</Text>
+      <Text>{t("mobile.passport.serial", { serial: unit.serial_number })}</Text>
+      <Text>{t("mobile.passport.state", { state: t(`lifecycle.${unit.lifecycle_state}`) })}</Text>
     </>
   );
 }

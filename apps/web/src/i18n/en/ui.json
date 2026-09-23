@@ -1,0 +1,175 @@
+{
+  "common": {
+    "app_name": "Physical Asset Intelligence OS",
+    "sign_in": "Sign in",
+    "sign_out": "Sign out",
+    "back": "Back"
+  },
+  "severity": {
+    "info": "Information",
+    "warning": "Warning",
+    "major": "Major",
+    "critical": "Critical"
+  },
+  "certainty": {
+    "detected": "Anomaly detected",
+    "confirmed": "Confirmed fault",
+    "probable_cause": "Probable cause",
+    "hypothesis": "Diagnostic hypothesis",
+    "prediction": "Prediction",
+    "recommendation": "Recommendation",
+    "simulation_result": "Simulation result",
+    "unavailable": "Information not available"
+  },
+  "condition_state": {
+    "active": "Condition active",
+    "cleared": "Returned to normal"
+  },
+  "ack_state": {
+    "unacknowledged": "Awaiting acknowledgement",
+    "acknowledged": "Acknowledged"
+  },
+  "handling_status": {
+    "open": "Open",
+    "in_progress": "In progress",
+    "closed": "Closed",
+    "false_positive": "False positive"
+  },
+  "lifecycle": {
+    "planned": "Planned",
+    "ordered": "On order",
+    "in_stock": "In stock",
+    "installed": "Installed",
+    "commissioned": "Commissioned",
+    "in_service": "In service",
+    "out_of_service": "Out of service",
+    "removed": "Removed",
+    "decommissioned": "Decommissioned",
+    "disposed": "Disposed"
+  },
+  "intervention_type": {
+    "intervention": "Intervention",
+    "ronde": "Inspection round"
+  },
+  "work_order": {
+    "type": {
+      "corrective": "Corrective",
+      "preventive": "Preventive",
+      "predictive": "Predictive",
+      "inspection": "Inspection"
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "urgent": "Urgent"
+    },
+    "status": {
+      "open": "Open",
+      "in_progress": "In progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    }
+  },
+  "mobile": {
+    "home": {
+      "subtitle": "Technician app",
+      "signed_in": "Signed in",
+      "user": "User: {user}",
+      "tenant": "Customer: {tenant}",
+      "roles": "Roles: {roles}",
+      "new_intervention": "New intervention",
+      "history": "History",
+      "passport": "Equipment passport",
+      "pending": {
+        "one": "{count} intervention waiting to be sent",
+        "other": "{count} interventions waiting to be sent"
+      },
+      "nothing_pending": "No intervention waiting to be sent.",
+      "sync": "Synchronise",
+      "server_unreachable": "The server is temporarily unreachable. Interventions remain stored on the phone.",
+      "sign_in_failed": "Sign-in could not be completed. Please try again; if the problem persists, contact your administrator."
+    },
+    "intervention": {
+      "title": "New intervention",
+      "equipment_optional": "Equipment (optional)",
+      "no_cached_equipment": "No equipment is available offline. Connect to the network once to load the list.",
+      "summary": "Report",
+      "summary_placeholder": "Observations and work carried out",
+      "checks": "Checks",
+      "check": {
+        "pression_ok": "Pressure correct",
+        "bruit_anormal": "Abnormal noise",
+        "filtre_propre": "Filter clean"
+      },
+      "photo_required_label": "Photo (required)",
+      "take_photo": "Take a photo",
+      "retake_photo": "Retake the photo",
+      "save": "Save",
+      "photo_required_title": "Photo required",
+      "photo_required_message": "A photo is required before the intervention can be saved."
+    },
+    "history": {
+      "title": "Interventions sent to the server",
+      "empty": "No intervention sent yet.",
+      "load_failed": "The history could not be loaded. Check the network connection."
+    },
+    "passport": {
+      "screen_title": "Equipment passport",
+      "tag_code": "Tag code",
+      "tag_placeholder": "Code printed under the QR code",
+      "show": "Show the passport",
+      "invalid_code": "This tag code is not valid. Check what was entered.",
+      "sign_in_first": "Sign in to view the passport.",
+      "offline": "No network connection: the passport is only available online.",
+      "tag_unknown": "This tag is not recognised.",
+      "tag_revoked": "This tag has been revoked: scan the new tag on the equipment.",
+      "forbidden": "Access denied: please sign in again.",
+      "server_error": "The passport could not be loaded (error {status}). Please try again later.",
+      "equipment": "Equipment",
+      "unit": "Installed unit",
+      "no_unit": "No unit installed.",
+      "serial": "Serial number: {serial}",
+      "state": "State: {state}",
+      "latest": "Latest measurements",
+      "no_measurement": "No measurement",
+      "flagged": "value to be checked",
+      "signals": "Current alarms and findings",
+      "nothing_open": "No current signal.",
+      "alarm": "Alarm",
+      "finding": "Finding",
+      "work_orders": "Current work orders",
+      "interventions": "Latest interventions",
+      "no_summary": "No report",
+      "site_time": "Times shown in the site time zone ({timezone}).",
+      "device_time": "Times shown in the device time zone: the site time zone has not been set."
+    }
+  },
+  "web": {
+    "console": "Operations console",
+    "login": {
+      "subtitle": "Operations manager console",
+      "failed": "Sign-in could not be completed. Please try again; if the problem persists, contact your administrator."
+    },
+    "dashboard": {
+      "signed_in_as": "Signed in as {user} — roles: {roles}",
+      "work_orders_link": "Work orders",
+      "equipment": "Equipment",
+      "no_equipment": "No equipment registered yet.",
+      "code": "Code",
+      "name": "Name"
+    },
+    "work_orders": {
+      "title": "Work orders",
+      "empty": "No work order yet.",
+      "col_title": "Title",
+      "col_type": "Type",
+      "col_priority": "Priority",
+      "col_status": "Status",
+      "create": "Create a work order",
+      "submit": "Create",
+      "title_required": "The title is required.",
+      "creation_failed": "The work order could not be created. Please try again."
+    }
+  }
+}

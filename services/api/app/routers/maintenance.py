@@ -2,19 +2,15 @@ import uuid
 from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Request, Response, status
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
 from app.audit import append_audit_entry
 from app.auth import require_any_role
-from app.closure_vocabulary import (
-    ACTIONS,
-    CAUSES,
-    CLOSURE_VOCABULARY_VERSION,
-    SYMPTOMS,
-    VERIFICATION_RESULTS,
-)
+from app.closure_vocabulary import CLOSURE_VOCABULARY_VERSION
+from app.closure_vocabulary import SECTIONS as CLOSURE_SECTIONS
+from app.closure_vocabulary import labels as closure_labels
 from app.closures import (
     ClosureConflict,
     ClosureError,
@@ -24,6 +20,7 @@ from app.closures import (
 )
 from app.deps import get_tenant_connection, get_tenant_id
 from app.errors import ApiError, api_error
+from app.i18n import negotiate_locale
 from app.maintenance import (
     ClientRefConflict,
     change_work_order_status,
@@ -639,15 +636,15 @@ def _read_alarm(connection: Connection, alarm_id: uuid.UUID) -> AlarmOut:
 
 @router.get("/closure-vocabulary")
 def read_closure_vocabulary(
+    request: Request,
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
 ) -> dict[str, Any]:
-    """Codes de clôture et leurs libellés, pour construire les formulaires."""
+    """Codes de clôture et leurs libellés dans la langue demandée, pour
+    construire les formulaires. Le code est enregistré, jamais le libellé."""
+    locale = negotiate_locale(request.headers.get("accept-language"))
     return {
         "version": CLOSURE_VOCABULARY_VERSION,
-        "symptoms": SYMPTOMS,
-        "causes": CAUSES,
-        "actions": ACTIONS,
-        "verification_results": VERIFICATION_RESULTS,
+        **{section: closure_labels(section, locale) for section in CLOSURE_SECTIONS},
     }
 
 

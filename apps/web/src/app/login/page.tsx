@@ -1,14 +1,17 @@
 import { Suspense } from "react";
 
+import { getTranslator } from "@/lib/i18n";
+
 import { LoginError } from "./LoginError";
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const { t } = await getTranslator();
   return (
     <main style={{ maxWidth: 420, margin: "80px auto", textAlign: "center" }}>
-      <h1>Physical Asset Intelligence OS</h1>
-      <p>Console responsable d&apos;exploitation</p>
+      <h1>{t("common.app_name")}</h1>
+      <p>{t("web.login.subtitle")}</p>
       <Suspense>
-        <LoginError />
+        <LoginError message={t("web.login.failed")} />
       </Suspense>
       <a
         href="/api/auth/login"
@@ -22,7 +25,7 @@ export default function LoginPage() {
           textDecoration: "none",
         }}
       >
-        Se connecter
+        {t("common.sign_in")}
       </a>
     </main>
   );

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { fetchPassportByTag, lifecycleLabel, parseTagCode } from "./passport";
+import { fetchPassportByTag, parseTagCode } from "./passport";
 
 describe("parseTagCode", () => {
   it("accepte le contenu brut d'un QR", () => {
@@ -38,35 +38,28 @@ describe("fetchPassportByTag", () => {
     const passport = { node_id: "n1", node_type: "physical_unit", allowed_actions: [] };
     const fetchMock = stubFetch(200, { tag: {}, passport });
 
-    const result = await fetchPassportByTag("https://api.test", "jeton", "Ab3_x-9Zk2LmN0pQ");
+    const result = await fetchPassportByTag("https://api.test", "jeton", "Ab3_x-9Zk2LmN0pQ", "en");
 
     expect(result).toEqual({ ok: true, passport });
     expect(fetchMock).toHaveBeenCalledWith("https://api.test/tags/Ab3_x-9Zk2LmN0pQ", {
-      headers: { Authorization: "Bearer jeton" },
+      headers: { Authorization: "Bearer jeton", "Accept-Language": "en" },
     });
   });
 
   it.each([
-    [404, "Étiquette inconnue."],
-    [410, "Étiquette révoquée : scannez la nouvelle étiquette de l'équipement."],
-    [403, "Accès refusé : reconnectez-vous."],
-    [500, "Erreur serveur (500)."],
-  ])("traduit le code %i en message clair", async (status, message) => {
+    [404, { ok: false, messageKey: "mobile.passport.tag_unknown" }],
+    [410, { ok: false, messageKey: "mobile.passport.tag_revoked" }],
+    [403, { ok: false, messageKey: "mobile.passport.forbidden" }],
+    [500, { ok: false, messageKey: "mobile.passport.server_error", params: { status: 500 } }],
+  ])("traduit le code %i en clé de message", async (status, expected) => {
     stubFetch(status);
-    const result = await fetchPassportByTag("https://api.test", "jeton", "Ab3_x-9Zk2LmN0pQ");
-    expect(result).toEqual({ ok: false, message });
+    const result = await fetchPassportByTag("https://api.test", "jeton", "Ab3_x-9Zk2LmN0pQ", "fr");
+    expect(result).toEqual(expected);
   });
 
   it("signale l'absence de réseau", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Network request failed")));
-    const result = await fetchPassportByTag("https://api.test", "jeton", "Ab3_x-9Zk2LmN0pQ");
-    expect(result.ok).toBe(false);
-  });
-});
-
-describe("lifecycleLabel", () => {
-  it("traduit les états connus et laisse passer les autres", () => {
-    expect(lifecycleLabel("in_service")).toBe("En service");
-    expect(lifecycleLabel("etat_futur")).toBe("etat_futur");
+    const result = await fetchPassportByTag("https://api.test", "jeton", "Ab3_x-9Zk2LmN0pQ", "fr");
+    expect(result).toEqual({ ok: false, messageKey: "mobile.passport.offline" });
   });
 });

@@ -9,50 +9,70 @@ diagnostic automatique, l'apprentissage et l'économie des actifs : on n'en
 ajoute qu'avec un besoin réel, et jamais on n'en retire (versionner).
 """
 
-CLOSURE_VOCABULARY_VERSION = "2026-09-23.1"
+from app.i18n import DEFAULT_LOCALE, load_catalog
 
-SYMPTOMS = {
-    "no_heating": "Pas de chauffage",
-    "no_cooling": "Pas de froid",
-    "insufficient_performance": "Performance insuffisante",
-    "abnormal_noise": "Bruit anormal",
-    "vibration": "Vibrations",
-    "water_leak": "Fuite d'eau",
-    "refrigerant_leak": "Fuite de fluide frigorigène",
-    "fault_code": "Code défaut affiché",
-    "abnormal_consumption": "Consommation anormale",
-    "preventive_check": "Aucun (contrôle préventif)",
-    "other": "Autre",
+CLOSURE_VOCABULARY_VERSION = "2026-09-24.1"
+
+# Codes seulement : leurs libellés, en français et en anglais, sont dans le
+# catalogue `shared/i18n/<langue>/closure.json` (ADR 013). Un test vérifie que
+# les codes et le catalogue restent identiques.
+SYMPTOMS = (
+    "no_heating",
+    "no_cooling",
+    "insufficient_performance",
+    "abnormal_noise",
+    "vibration",
+    "water_leak",
+    "refrigerant_leak",
+    "fault_code",
+    "abnormal_consumption",
+    "preventive_check",
+    "other",
+)
+
+CAUSES = (
+    "wear",
+    "fouling",
+    "refrigerant_loss",
+    "electrical_fault",
+    "control_setting",
+    "sensor_fault",
+    "component_failure",
+    "external_cause",
+    "lack_of_maintenance",
+    "no_fault_found",
+    "unknown",
+)
+
+ACTIONS = (
+    "adjustment",
+    "cleaning",
+    "repair",
+    "replacement",
+    "refrigerant_recharge",
+    "reset",
+    "inspection_only",
+    "temporary_fix",
+    "other",
+)
+
+VERIFICATION_RESULTS = ("ok", "partial", "failed")
+
+SECTIONS = {
+    "symptoms": SYMPTOMS,
+    "causes": CAUSES,
+    "actions": ACTIONS,
+    "verification_results": VERIFICATION_RESULTS,
 }
 
-CAUSES = {
-    "wear": "Usure",
-    "fouling": "Encrassement / colmatage",
-    "refrigerant_loss": "Perte de fluide",
-    "electrical_fault": "Défaut électrique",
-    "control_setting": "Réglage ou programmation",
-    "sensor_fault": "Capteur défaillant",
-    "component_failure": "Composant défaillant",
-    "external_cause": "Cause extérieure (coupure, gel, choc…)",
-    "lack_of_maintenance": "Défaut d'entretien",
-    "no_fault_found": "Aucun défaut trouvé",
-    "unknown": "Cause non identifiée",
-}
 
-ACTIONS = {
-    "adjustment": "Réglage",
-    "cleaning": "Nettoyage",
-    "repair": "Réparation",
-    "replacement": "Remplacement de pièce",
-    "refrigerant_recharge": "Recharge de fluide",
-    "reset": "Réarmement",
-    "inspection_only": "Contrôle seul",
-    "temporary_fix": "Dépannage provisoire",
-    "other": "Autre",
-}
+def labels(section: str, locale: str = DEFAULT_LOCALE) -> dict[str, str]:
+    """Code → libellé dans la langue demandée, dans l'ordre du vocabulaire."""
+    catalog = load_catalog(locale, "closure")[section]
+    return {code: catalog[code] for code in SECTIONS[section]}
 
-VERIFICATION_RESULTS = {
-    "ok": "Fonctionnement rétabli",
-    "partial": "Rétabli partiellement",
-    "failed": "Non rétabli",
-}
+
+def label(section: str, code: str | None, locale: str = DEFAULT_LOCALE) -> str | None:
+    if code is None:
+        return None
+    return load_catalog(locale, "closure")[section].get(code)

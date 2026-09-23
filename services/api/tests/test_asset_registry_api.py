@@ -52,7 +52,9 @@ def test_create_site_rejects_technicien_role(tenant_id) -> None:
     headers = _auth_headers(tenant_id, ["technicien"])
 
     with patch("app.auth.fetch_jwks", return_value=JWKS):
-        response = client.post("/sites", json={"name": "Site A"}, headers=headers)
+        response = client.post(
+            "/sites", json={"name": "Site A", "timezone": "Europe/Paris"}, headers=headers
+        )
 
     assert response.status_code == 403
 
@@ -61,7 +63,11 @@ def test_full_asset_registry_flow_as_admin(tenant_id) -> None:
     headers = _auth_headers(tenant_id, ["admin_tenant"])
 
     with patch("app.auth.fetch_jwks", return_value=JWKS):
-        site_response = client.post("/sites", json={"name": "Site principal"}, headers=headers)
+        site_response = client.post(
+            "/sites",
+            json={"name": "Site principal", "timezone": "Europe/Paris"},
+            headers=headers,
+        )
         assert site_response.status_code == 201
         site_id = site_response.json()["id"]
 
@@ -160,7 +166,9 @@ def test_list_sites_only_shows_own_tenant(tenant_id) -> None:
     headers = _auth_headers(tenant_id, ["admin_tenant"])
     try:
         with patch("app.auth.fetch_jwks", return_value=JWKS):
-            client.post("/sites", json={"name": "Mon site"}, headers=headers)
+            client.post(
+                "/sites", json={"name": "Mon site", "timezone": "Europe/Paris"}, headers=headers
+            )
             response = client.get("/sites", headers=headers)
 
         assert response.status_code == 200
@@ -173,3 +181,41 @@ def test_list_sites_only_shows_own_tenant(tenant_id) -> None:
             )
         with engine.begin() as connection:
             connection.execute(text("DELETE FROM tenants WHERE id = :id"), {"id": other_tenant_id})
+
+
+@pytest.mark.parametrize(
+    ("body", "code"),
+    [
+        ({"name": "Site sans fuseau"}, "VALIDATION_ERROR"),
+        ({"name": "Site", "timezone": "Mars/Olympus"}, "TIMEZONE_UNKNOWN"),
+        ({"name": "Site", "timezone": "UTC+2"}, "TIMEZONE_UNKNOWN"),
+    ],
+)
+def test_a_site_requires_a_valid_iana_time_zone(tenant_id, body, code) -> None:
+    headers = _auth_headers(tenant_id, ["admin_tenant"])
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        response = client.post("/sites", json=body, headers=headers)
+    assert (response.status_code, response.json()["code"]) == (422, code)
+
+
+def test_time_zone_of_an_existing_site_can_be_set_and_is_audited(tenant_id) -> None:
+    headers = _auth_headers(tenant_id, ["admin_tenant"])
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        site_id = client.post(
+            "/sites", json={"name": "Site Lyon", "timezone": "Europe/Paris"}, headers=headers
+        ).json()["id"]
+        updated = client.put(
+            f"/sites/{site_id}/timezone", json={"timezone": "Europe/Madrid"}, headers=headers
+        )
+        unknown = client.put(
+            f"/sites/{uuid.uuid4()}/timezone", json={"timezone": "Europe/Paris"}, headers=headers
+        )
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_id)
+        payload = connection.execute(
+            text("SELECT payload FROM audit_log WHERE action = 'site.timezone_set'")
+        ).scalar()
+
+    assert updated.json()["timezone"] == "Europe/Madrid"
+    assert unknown.status_code == 404
+    assert payload == {"previous": "Europe/Paris", "timezone": "Europe/Madrid"}

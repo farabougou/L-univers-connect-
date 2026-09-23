@@ -48,6 +48,7 @@ export type PassportUnit = {
 
 export type Passport = {
   node_id: string;
+  site?: { id: string; name: string; timezone: string | null } | null;
   node_type: "functional_location" | "physical_unit" | "space" | "point";
   allowed_actions: string[];
   functional_location?: { code: string; name: string };
@@ -84,21 +85,23 @@ export type Passport = {
 
 export type ScanResult =
   | { ok: true; passport: Passport }
-  | { ok: false; message: string };
+  | { ok: false; messageKey: string; params?: Record<string, number> };
 
-/** Traduit la réponse du serveur en message clair pour le technicien. */
+/** Réponse du serveur → clé du message à afficher (catalogue d'interface). */
 export async function fetchPassportByTag(
   apiUrl: string,
   accessToken: string,
   code: string,
+  language: string,
 ): Promise<ScanResult> {
   let response: Response;
   try {
     response = await fetch(`${apiUrl}/tags/${encodeURIComponent(code)}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      // La langue demandée sert aux titres des constats, traduits par l'API.
+      headers: { Authorization: `Bearer ${accessToken}`, "Accept-Language": language },
     });
   } catch {
-    return { ok: false, message: "Pas de réseau : le passeport se consulte en ligne." };
+    return { ok: false, messageKey: "mobile.passport.offline" };
   }
   if (response.ok) {
     const body = (await response.json()) as { passport: Passport };
@@ -106,33 +109,17 @@ export async function fetchPassportByTag(
   }
   switch (response.status) {
     case 404:
-      return { ok: false, message: "Étiquette inconnue." };
+      return { ok: false, messageKey: "mobile.passport.tag_unknown" };
     case 410:
-      return {
-        ok: false,
-        message: "Étiquette révoquée : scannez la nouvelle étiquette de l'équipement.",
-      };
+      return { ok: false, messageKey: "mobile.passport.tag_revoked" };
     case 401:
     case 403:
-      return { ok: false, message: "Accès refusé : reconnectez-vous." };
+      return { ok: false, messageKey: "mobile.passport.forbidden" };
     default:
-      return { ok: false, message: `Erreur serveur (${response.status}).` };
+      return {
+        ok: false,
+        messageKey: "mobile.passport.server_error",
+        params: { status: response.status },
+      };
   }
-}
-
-const LIFECYCLE_LABELS: Record<string, string> = {
-  planned: "Prévu",
-  ordered: "Commandé",
-  in_stock: "En stock",
-  installed: "Installé",
-  commissioned: "Mis en service (réception)",
-  in_service: "En service",
-  out_of_service: "Hors service",
-  removed: "Déposé",
-  decommissioned: "Réformé",
-  disposed: "Éliminé",
-};
-
-export function lifecycleLabel(state: string): string {
-  return LIFECYCLE_LABELS[state] ?? state;
 }

@@ -5,6 +5,9 @@ import * as WebBrowser from "expo-web-browser";
 
 import { config } from "./config";
 
+/** Clé du catalogue d'interface affichée en cas d'échec de connexion. */
+export const SIGN_IN_FAILED = "mobile.home.sign_in_failed";
+
 // Nécessaire pour que la fenêtre de connexion se referme correctement après
 // le retour de Keycloak vers l'application (voir la doc expo-web-browser).
 WebBrowser.maybeCompleteAuthSession();
@@ -93,9 +96,11 @@ export function useAuth() {
           await persistTokens(tokenResponse);
           setAccessToken(tokenResponse.accessToken);
         })
-        .catch((exchangeError: Error) => setError(exchangeError.message));
+        // Le détail technique ne s'affiche jamais : l'écran montre un message
+        // du catalogue (ADR 013, point 13).
+        .catch(() => setError(SIGN_IN_FAILED));
     } else if (response?.type === "error") {
-      setError(response.error?.message ?? "connexion refusée");
+      setError(SIGN_IN_FAILED);
     }
   }, [response, request, redirectUri]);
 

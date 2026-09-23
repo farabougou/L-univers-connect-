@@ -16,7 +16,7 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
-from app.closure_vocabulary import ACTIONS, SYMPTOMS
+from app.closure_vocabulary import label as closure_label
 from app.findings import displayed
 from app.graph import get_node
 from app.i18n import DEFAULT_LOCALE
@@ -104,7 +104,7 @@ def _points(connection: Connection, column: str, node_id: uuid.UUID) -> list[dic
     return points
 
 
-def _maintenance(connection: Connection, location_id: uuid.UUID) -> dict[str, Any]:
+def _maintenance(connection: Connection, location_id: uuid.UUID, locale: str) -> dict[str, Any]:
     interventions = _all(
         connection,
         "SELECT i.id, i.intervention_type, i.started_at, i.summary, i.technician, "
@@ -114,8 +114,10 @@ def _maintenance(connection: Connection, location_id: uuid.UUID) -> dict[str, An
         {"id": location_id},
     )
     for intervention in interventions:
-        intervention["symptom_label"] = SYMPTOMS.get(intervention["symptom_code"] or "")
-        intervention["action_label"] = ACTIONS.get(intervention["action_code"] or "")
+        intervention["symptom_label"] = closure_label(
+            "symptoms", intervention["symptom_code"], locale
+        )
+        intervention["action_label"] = closure_label("actions", intervention["action_code"], locale)
     return {
         "open_alarms": _all(
             connection,
@@ -133,6 +135,14 @@ def _maintenance(connection: Connection, location_id: uuid.UUID) -> dict[str, An
         ),
         "recent_interventions": interventions,
     }
+
+
+def _site(connection: Connection, site_id: uuid.UUID | None) -> dict[str, Any] | None:
+    """Le site et son fuseau : les heures du passeport s'affichent dans ce
+    fuseau quand il est connu."""
+    if site_id is None:
+        return None
+    return _one(connection, "SELECT id, name, timezone FROM sites WHERE id = :id", {"id": site_id})
 
 
 def build_passport(
@@ -203,6 +213,30 @@ def build_passport(
         {"id": node_id, "location": location_id or node_id},
     )
     passport["open_findings"] = [displayed(finding, locale) for finding in open_findings]
+    passport["site"] = _site(connection, _site_id(connection, node_type, node_id, location_id))
     if location_id is not None:
-        passport.update(_maintenance(connection, location_id))
+        passport.update(_maintenance(connection, location_id, locale))
     return passport
+
+
+def _site_id(
+    connection: Connection, node_type: str, node_id: uuid.UUID, location_id: uuid.UUID | None
+) -> uuid.UUID | None:
+    if location_id is not None:
+        return connection.execute(
+            text("SELECT site_id FROM functional_locations WHERE id = :id"), {"id": location_id}
+        ).scalar()
+    if node_type == "space":
+        return connection.execute(
+            text("SELECT site_id FROM spaces WHERE id = :id"), {"id": node_id}
+        ).scalar()
+    if node_type == "point":
+        return connection.execute(
+            text(
+                "SELECT COALESCE(fl.site_id, s.site_id) FROM points p "
+                "LEFT JOIN functional_locations fl ON fl.id = p.functional_location_id "
+                "LEFT JOIN spaces s ON s.id = p.space_id WHERE p.id = :id"
+            ),
+            {"id": node_id},
+        ).scalar()
+    return None

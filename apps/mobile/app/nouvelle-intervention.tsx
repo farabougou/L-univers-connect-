@@ -15,16 +15,14 @@ import { useRouter } from "expo-router";
 
 import { config } from "../src/lib/config";
 import { useAuth } from "../src/lib/auth";
+import { t } from "../src/lib/i18n";
 import { insertPendingIntervention, listCachedFunctionalLocations } from "../src/lib/db";
 import type { CachedFunctionalLocation } from "../src/lib/db";
 import { takePhoto } from "../src/lib/photos";
 import { syncPendingInterventions } from "../src/lib/sync";
 
-const CHECKLIST_ITEMS: { key: string; label: string }[] = [
-  { key: "pression_ok", label: "Pression correcte" },
-  { key: "bruit_anormal", label: "Bruit anormal" },
-  { key: "filtre_propre", label: "Filtre propre" },
-];
+// Codes des vérifications (enregistrés tels quels) ; libellés dans le catalogue.
+const CHECKLIST_ITEMS = ["pression_ok", "bruit_anormal", "filtre_propre"];
 
 // Sert aussi de référence client côté serveur (anti-doublon) : unique chez
 // un même client, tous téléphones confondus. Date + 16 caractères aléatoires.
@@ -60,7 +58,10 @@ export default function NouvelleInterventionScreen() {
 
   async function handleSave() {
     if (!photoPath) {
-      Alert.alert("Photo obligatoire", "Prends une photo avant d'enregistrer.");
+      Alert.alert(
+        t("mobile.intervention.photo_required_title"),
+        t("mobile.intervention.photo_required_message"),
+      );
       return;
     }
     setIsSaving(true);
@@ -92,26 +93,24 @@ export default function NouvelleInterventionScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Nouvelle intervention</Text>
+      <Text style={styles.title}>{t("mobile.intervention.title")}</Text>
 
       <View style={styles.typeRow}>
         <Button
-          title="Intervention"
+          title={t("intervention_type.intervention")}
           onPress={() => setInterventionType("intervention")}
           color={interventionType === "intervention" ? undefined : "#999"}
         />
         <Button
-          title="Ronde"
+          title={t("intervention_type.ronde")}
           onPress={() => setInterventionType("ronde")}
           color={interventionType === "ronde" ? undefined : "#999"}
         />
       </View>
 
-      <Text style={styles.label}>Équipement (optionnel)</Text>
+      <Text style={styles.label}>{t("mobile.intervention.equipment_optional")}</Text>
       {locations.length === 0 ? (
-        <Text style={styles.hint}>
-          Aucun équipement en cache — connecte-toi une fois au réseau pour les charger.
-        </Text>
+        <Text style={styles.hint}>{t("mobile.intervention.no_cached_equipment")}</Text>
       ) : (
         <View style={styles.locationList}>
           {locations.map((location) => (
@@ -135,33 +134,36 @@ export default function NouvelleInterventionScreen() {
         </View>
       )}
 
-      <Text style={styles.label}>Résumé</Text>
+      <Text style={styles.label}>{t("mobile.intervention.summary")}</Text>
       <TextInput
         style={styles.textInput}
         multiline
-        placeholder="Ce qui a été constaté ou fait..."
+        placeholder={t("mobile.intervention.summary_placeholder")}
         value={summary}
         onChangeText={setSummary}
       />
 
-      <Text style={styles.label}>Vérifications</Text>
-      {CHECKLIST_ITEMS.map((item) => (
-        <View key={item.key} style={styles.checklistRow}>
-          <Text>{item.label}</Text>
+      <Text style={styles.label}>{t("mobile.intervention.checks")}</Text>
+      {CHECKLIST_ITEMS.map((key) => (
+        <View key={key} style={styles.checklistRow}>
+          <Text>{t(`mobile.intervention.check.${key}`)}</Text>
           <Switch
-            value={checklist[item.key] ?? false}
-            onValueChange={(value) => setChecklist((prev) => ({ ...prev, [item.key]: value }))}
+            value={checklist[key] ?? false}
+            onValueChange={(value) => setChecklist((prev) => ({ ...prev, [key]: value }))}
           />
         </View>
       ))}
 
-      <Text style={styles.label}>Photo (obligatoire)</Text>
+      <Text style={styles.label}>{t("mobile.intervention.photo_required_label")}</Text>
       {photoPath && <Image source={{ uri: photoPath }} style={styles.photo} />}
-      <Button title={photoPath ? "Reprendre la photo" : "Prendre une photo"} onPress={handleTakePhoto} />
+      <Button
+        title={t(photoPath ? "mobile.intervention.retake_photo" : "mobile.intervention.take_photo")}
+        onPress={handleTakePhoto}
+      />
 
       <View style={styles.saveButton}>
         <Button
-          title="Enregistrer"
+          title={t("mobile.intervention.save")}
           onPress={handleSave}
           disabled={!photoPath || isSaving}
         />

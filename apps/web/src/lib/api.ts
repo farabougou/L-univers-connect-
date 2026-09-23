@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { config } from "./config";
+import { getLocale } from "./i18n";
 import { getValidAccessToken } from "./session";
 
 /**
@@ -23,6 +24,9 @@ export async function apiFetch(path: string, accessToken: string, init?: Request
     headers: {
       ...(init?.headers ?? {}),
       Authorization: `Bearer ${accessToken}`,
+      // Les textes produits par l'API (erreurs, constats) suivent la langue
+      // de la console.
+      "Accept-Language": await getLocale(),
     },
   });
 }

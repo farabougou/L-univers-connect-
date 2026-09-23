@@ -3,6 +3,8 @@ import { FlatList, StyleSheet, Text, View } from "react-native";
 
 import { config } from "../src/lib/config";
 import { useAuth } from "../src/lib/auth";
+import { locale, t } from "../src/lib/i18n";
+import { formatDateTime } from "../src/i18n/translator";
 
 type Intervention = {
   id: string;
@@ -28,23 +30,23 @@ export default function HistoriqueScreen() {
           return res.json();
         })
         .then((data: Intervention[]) => setInterventions(data.reverse()))
-        .catch((err: Error) => setError(err.message));
+        .catch(() => setError(t("mobile.history.load_failed")));
     });
   }, [auth.accessToken]);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Historique (envoyées au serveur)</Text>
-      {error && <Text style={styles.error}>Erreur : {error}</Text>}
+      <Text style={styles.title}>{t("mobile.history.title")}</Text>
+      {error && <Text style={styles.error}>{error}</Text>}
       <FlatList
         data={interventions}
         keyExtractor={(item) => item.id}
-        ListEmptyComponent={<Text>Aucune intervention envoyée pour l'instant.</Text>}
+        ListEmptyComponent={<Text>{t("mobile.history.empty")}</Text>}
         renderItem={({ item }) => (
           <View style={styles.row}>
             <Text style={styles.rowType}>
-              {item.intervention_type === "ronde" ? "Ronde" : "Intervention"} —{" "}
-              {new Date(item.started_at).toLocaleString()}
+              {t(`intervention_type.${item.intervention_type}`)} —{" "}
+              {formatDateTime(locale, item.started_at)}
             </Text>
             {item.summary && <Text>{item.summary}</Text>}
           </View>

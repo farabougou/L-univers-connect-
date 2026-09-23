@@ -1,10 +1,10 @@
-import { Suspense } from "react";
 import Link from "next/link";
 
+import type { Translator } from "@/i18n/translator";
 import { apiFetch, requireAccessToken } from "@/lib/api";
+import { errorMessage, getTranslator } from "@/lib/i18n";
 
 import { createWorkOrder } from "./actions";
-import { CreationError } from "./CreationError";
 
 type WorkOrder = {
   id: string;
@@ -18,66 +18,84 @@ const cellStyle = { borderBottom: "1px solid #eee", padding: "6px 8px", textAlig
 const headerCellStyle = { borderBottom: "1px solid #ddd", padding: "6px 8px", textAlign: "left" as const };
 const fieldStyle = { display: "block", width: "100%", padding: 8, marginTop: 4 };
 
-export default async function WorkOrdersPage() {
+const TYPES = ["corrective", "preventive", "predictive", "inspection"];
+const PRIORITIES = ["low", "medium", "high", "urgent"];
+
+function creationError(translator: Translator, code: string | undefined): string | null {
+  if (!code) return null;
+  if (code === "TITLE_REQUIRED") return translator.t("web.work_orders.title_required");
+  return (
+    errorMessage(translator.locale, code) ?? translator.t("web.work_orders.creation_failed")
+  );
+}
+
+export default async function WorkOrdersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const accessToken = await requireAccessToken();
+  const translator = await getTranslator();
+  const { t } = translator;
+  const error = creationError(translator, (await searchParams).error);
   const response = await apiFetch("/work-orders", accessToken);
   const workOrders: WorkOrder[] = response.ok ? await response.json() : [];
 
   return (
     <main style={{ maxWidth: 720, margin: "40px auto", padding: "0 16px" }}>
-      <Link href="/">← Retour</Link>
-      <h1>Ordres de travail</h1>
+      <Link href="/">← {t("common.back")}</Link>
+      <h1>{t("web.work_orders.title")}</h1>
 
       {workOrders.length === 0 ? (
-        <p>Aucun ordre de travail pour l&apos;instant.</p>
+        <p>{t("web.work_orders.empty")}</p>
       ) : (
         <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 32 }}>
           <thead>
             <tr>
-              <th style={headerCellStyle}>Titre</th>
-              <th style={headerCellStyle}>Type</th>
-              <th style={headerCellStyle}>Priorité</th>
-              <th style={headerCellStyle}>Statut</th>
+              <th style={headerCellStyle}>{t("web.work_orders.col_title")}</th>
+              <th style={headerCellStyle}>{t("web.work_orders.col_type")}</th>
+              <th style={headerCellStyle}>{t("web.work_orders.col_priority")}</th>
+              <th style={headerCellStyle}>{t("web.work_orders.col_status")}</th>
             </tr>
           </thead>
           <tbody>
             {workOrders.map((workOrder) => (
               <tr key={workOrder.id}>
                 <td style={cellStyle}>{workOrder.title}</td>
-                <td style={cellStyle}>{workOrder.work_order_type}</td>
-                <td style={cellStyle}>{workOrder.priority}</td>
-                <td style={cellStyle}>{workOrder.status}</td>
+                <td style={cellStyle}>{t(`work_order.type.${workOrder.work_order_type}`)}</td>
+                <td style={cellStyle}>{t(`work_order.priority.${workOrder.priority}`)}</td>
+                <td style={cellStyle}>{t(`work_order.status.${workOrder.status}`)}</td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
 
-      <h2>Créer un ordre de travail</h2>
-      <Suspense>
-        <CreationError />
-      </Suspense>
+      <h2>{t("web.work_orders.create")}</h2>
+      {error && <p style={{ color: "#c0392b" }}>{error}</p>}
       <form action={createWorkOrder} style={{ maxWidth: 400 }}>
         <label>
-          Titre
+          {t("web.work_orders.col_title")}
           <input name="title" required style={fieldStyle} />
         </label>
         <label style={{ display: "block", marginTop: 12 }}>
-          Type
+          {t("web.work_orders.col_type")}
           <select name="work_order_type" defaultValue="corrective" style={fieldStyle}>
-            <option value="corrective">Correctif</option>
-            <option value="preventive">Préventif</option>
-            <option value="predictive">Prédictif</option>
-            <option value="inspection">Inspection</option>
+            {TYPES.map((type) => (
+              <option key={type} value={type}>
+                {t(`work_order.type.${type}`)}
+              </option>
+            ))}
           </select>
         </label>
         <label style={{ display: "block", marginTop: 12 }}>
-          Priorité
+          {t("web.work_orders.col_priority")}
           <select name="priority" defaultValue="medium" style={fieldStyle}>
-            <option value="low">Basse</option>
-            <option value="medium">Moyenne</option>
-            <option value="high">Haute</option>
-            <option value="urgent">Urgente</option>
+            {PRIORITIES.map((priority) => (
+              <option key={priority} value={priority}>
+                {t(`work_order.priority.${priority}`)}
+              </option>
+            ))}
           </select>
         </label>
         <button
@@ -91,7 +109,7 @@ export default async function WorkOrdersPage() {
             borderRadius: 8,
           }}
         >
-          Créer
+          {t("web.work_orders.submit")}
         </button>
       </form>
     </main>

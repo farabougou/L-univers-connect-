@@ -147,6 +147,9 @@ class Site(Base):
         UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
     )
     name: Mapped[str] = mapped_column(String(200), nullable=False)
+    # Fuseau IANA du site (« Europe/Paris ») ; vide pour les sites créés avant
+    # ADR 013 tant qu'il n'a pas été renseigné : aucun fuseau n'est deviné.
+    timezone: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

@@ -2,9 +2,9 @@
 
 import { useSearchParams } from "next/navigation";
 
-export function LoginError() {
+/** Le code technique reçu dans l'adresse n'est jamais affiché (ADR 013). */
+export function LoginError({ message }: { message: string }) {
   const searchParams = useSearchParams();
-  const error = searchParams.get("error");
-  if (!error) return null;
-  return <p style={{ color: "#c0392b" }}>Connexion impossible ({error}). Réessaie.</p>;
+  if (!searchParams.get("error")) return null;
+  return <p style={{ color: "#c0392b" }}>{message}</p>;
 }

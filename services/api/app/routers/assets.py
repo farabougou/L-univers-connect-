@@ -33,6 +33,7 @@ from app.schemas import (
     ProductModelOut,
     SiteCreate,
     SiteOut,
+    SiteTimezoneUpdate,
 )
 from app.spatial import (
     SpatialConflict,
@@ -40,6 +41,7 @@ from app.spatial import (
     check_space_for_location,
     record_location_space,
 )
+from app.timezones import check_timezone
 
 router = APIRouter()
 
@@ -51,6 +53,20 @@ def _actor(claims: dict[str, Any]) -> str:
     return claims.get("sub") or "inconnu"
 
 
+def _read_site(connection: Connection, site_id: uuid.UUID) -> SiteOut:
+    row = (
+        connection.execute(
+            text("SELECT id, name, timezone, created_at FROM sites WHERE id = :id"),
+            {"id": site_id},
+        )
+        .mappings()
+        .first()
+    )
+    if row is None:
+        raise ApiError(404, "SITE_NOT_FOUND")
+    return SiteOut(**row)
+
+
 @router.post("/sites", response_model=SiteOut, status_code=status.HTTP_201_CREATED)
 def create_site(
     body: SiteCreate,
@@ -58,10 +74,14 @@ def create_site(
     tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
     claims: Annotated[dict, Depends(require_any_role(*_MANAGE_REGISTRY_ROLES))],
 ) -> SiteOut:
+    check_timezone(body.timezone)
     site_id = uuid.uuid4()
     connection.execute(
-        text("INSERT INTO sites (id, tenant_id, name) VALUES (:id, :tenant_id, :name)"),
-        {"id": site_id, "tenant_id": tenant_id, "name": body.name},
+        text(
+            "INSERT INTO sites (id, tenant_id, name, timezone) "
+            "VALUES (:id, :tenant_id, :name, :timezone)"
+        ),
+        {"id": site_id, "tenant_id": tenant_id, "name": body.name, "timezone": body.timezone},
     )
     append_audit_entry(
         connection,
@@ -70,16 +90,37 @@ def create_site(
         action="site.created",
         entity_type="site",
         entity_id=str(site_id),
-        payload={"name": body.name},
+        payload={"name": body.name, "timezone": body.timezone},
     )
-    row = (
-        connection.execute(
-            text("SELECT id, name, created_at FROM sites WHERE id = :id"), {"id": site_id}
-        )
-        .mappings()
-        .one()
+    return _read_site(connection, site_id)
+
+
+@router.put("/sites/{site_id}/timezone", response_model=SiteOut)
+def set_site_timezone(
+    site_id: uuid.UUID,
+    body: SiteTimezoneUpdate,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
+    claims: Annotated[dict, Depends(require_any_role(*_MANAGE_REGISTRY_ROLES))],
+) -> SiteOut:
+    """Renseigne ou corrige le fuseau d'un site ; l'ancienne valeur reste
+    dans le journal d'audit."""
+    check_timezone(body.timezone)
+    previous = _read_site(connection, site_id).timezone
+    connection.execute(
+        text("UPDATE sites SET timezone = :timezone WHERE id = :id"),
+        {"timezone": body.timezone, "id": site_id},
     )
-    return SiteOut(**row)
+    append_audit_entry(
+        connection,
+        tenant_id=tenant_id,
+        actor=_actor(claims),
+        action="site.timezone_set",
+        entity_type="site",
+        entity_id=str(site_id),
+        payload={"previous": previous, "timezone": body.timezone},
+    )
+    return _read_site(connection, site_id)
 
 
 @router.get("/sites", response_model=list[SiteOut])
@@ -88,7 +129,9 @@ def list_sites(
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
 ) -> list[SiteOut]:
     rows = (
-        connection.execute(text("SELECT id, name, created_at FROM sites ORDER BY created_at"))
+        connection.execute(
+            text("SELECT id, name, timezone, created_at FROM sites ORDER BY created_at")
+        )
         .mappings()
         .all()
     )

@@ -7,7 +7,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 
+from app.closure_vocabulary import SECTIONS as CLOSURE_SECTIONS
 from app.db import engine
+from app.i18n import load_catalog
 from app.main import app
 from app.tenancy import set_tenant_context
 from tests.jwt_helpers import JWKS, make_token
@@ -332,7 +334,7 @@ def test_structured_closure_appears_in_the_passport(two_tenants) -> None:
     assert closed.json()["parts"] == [{"reference": "VANNE-3V-DN25", "quantity": 1.0}]
     recent = passport["recent_interventions"][0]
     assert (recent["symptom_label"], recent["action_label"]) == (
-        "Pas de chauffage",
+        "Absence de chauffage",
         "Remplacement de pièce",
     )
 
@@ -380,7 +382,7 @@ def test_an_intervention_is_closed_once_and_the_closure_is_immutable(two_tenants
 def test_closure_vocabulary_is_published(two_tenants) -> None:
     tenant_a, _ = two_tenants
     vocabulary = _call("GET", "/closure-vocabulary", _tech(tenant_a)).json()
-    assert vocabulary["symptoms"]["no_heating"] == "Pas de chauffage"
+    assert vocabulary["symptoms"]["no_heating"] == "Absence de chauffage"
     assert set(vocabulary["verification_results"]) == {"ok", "partial", "failed"}
 
 
@@ -403,3 +405,19 @@ def test_tenant_isolation_on_passport_tables(two_tenants, table) -> None:
         set_tenant_context(connection, tenant_b["tenant_id"])
         seen_by_b = connection.execute(query, {"id": tenant_a["tenant_id"]}).fetchall()
     assert seen_by_a and seen_by_b == []
+
+
+def test_closure_vocabulary_follows_the_requested_language(two_tenants) -> None:
+    tenant_a, _ = two_tenants
+    english = _call(
+        "GET", "/closure-vocabulary", {**_tech(tenant_a), "Accept-Language": "en"}
+    ).json()
+    assert english["symptoms"]["no_heating"] == "No heating"
+    assert english["verification_results"]["ok"] == "Operation restored"
+
+
+@pytest.mark.parametrize("locale", ["fr", "en"])
+def test_closure_catalog_matches_the_codes_exactly(locale) -> None:
+    catalog = load_catalog(locale, "closure")
+    for section, codes in CLOSURE_SECTIONS.items():
+        assert list(catalog[section]) == list(codes), section

@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "PAIOS",
-  description: "Physical Asset Intelligence OS — console web",
-};
+import { getLocale, getTranslator } from "@/lib/i18n";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getTranslator();
+  return { title: "PAIOS", description: `${t("common.app_name")} — ${t("web.console")}` };
+}
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr">
+    <html lang={await getLocale()}>
       <body>{children}</body>
     </html>
   );

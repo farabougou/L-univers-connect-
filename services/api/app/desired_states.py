@@ -13,11 +13,12 @@ passe minuit (20:00 → 07:00).
 import uuid
 from datetime import datetime, time
 from typing import Any
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
+from app import timezones
 from app.errors import DomainError
 from app.point_vocabulary import PointVocabularyError, check_value
 from app.points import get_point
@@ -38,9 +39,9 @@ class DesiredStateInvalid(DomainError, ValueError):
 
 def check_timezone(name: str) -> ZoneInfo:
     try:
-        return ZoneInfo(name)
-    except (ZoneInfoNotFoundError, ValueError) as exc:
-        raise DesiredStateInvalid("TIMEZONE_UNKNOWN", timezone=name) from exc
+        return timezones.check_timezone(name)
+    except timezones.TimezoneInvalid as exc:
+        raise DesiredStateInvalid.from_error(exc) from exc
 
 
 def in_daily_window(at: datetime, *, start: time, end: time, timezone: str) -> bool:
