@@ -50,6 +50,8 @@ class FunctionalLocationCreate(BaseModel):
     parent_id: uuid.UUID | None = None
     code: str = Field(min_length=1, max_length=200)
     name: str = Field(min_length=1, max_length=200)
+    kind: Literal["system", "equipment", "component"] | None = None
+    space_id: uuid.UUID | None = None
 
 
 class FunctionalLocationOut(BaseModel):
@@ -58,7 +60,53 @@ class FunctionalLocationOut(BaseModel):
     parent_id: uuid.UUID | None
     code: str
     name: str
+    kind: str | None
+    space_id: uuid.UUID | None
     created_at: datetime
+
+
+class SpaceCreate(BaseModel):
+    site_id: uuid.UUID
+    parent_id: uuid.UUID | None = None
+    space_type: str = Field(min_length=1, max_length=50)
+    code: str = Field(min_length=1, max_length=200)
+    name: str = Field(min_length=1, max_length=200)
+    valid_from: AwareDatetime | None = None
+
+
+class SpaceOut(BaseModel):
+    id: uuid.UUID
+    site_id: uuid.UUID
+    parent_id: uuid.UUID | None
+    space_type: str
+    code: str
+    name: str
+    valid_from: datetime
+    valid_to: datetime | None
+    created_at: datetime
+
+
+class SpaceClose(BaseModel):
+    valid_to: AwareDatetime | None = None
+    reason: str = Field(min_length=1, max_length=500)
+
+
+class LocationSpaceChange(BaseModel):
+    """space_id à null : la position est retirée de tout espace."""
+
+    space_id: uuid.UUID | None
+    valid_from: AwareDatetime | None = None
+    reason: str | None = Field(default=None, max_length=500)
+
+
+class LocationSpaceHistoryOut(BaseModel):
+    id: uuid.UUID
+    functional_location_id: uuid.UUID
+    space_id: uuid.UUID | None
+    valid_from: datetime
+    recorded_at: datetime
+    changed_by: str
+    reason: str | None
 
 
 class AssignmentCreate(BaseModel):

@@ -2,7 +2,8 @@
 
 Les nœuds sont créés par la base elle-même (déclencheurs) ; ce module ne fait
 que les lire. Les relations transverses sont stockées ; les relations de
-hiérarchie (site → position, position → sous-position) sont déduites des
+hiérarchie (site → espace ou position, espace → sous-espace, position →
+sous-position, position → espace où elle se trouve) sont déduites des
 colonnes existantes, jamais recopiées.
 """
 
@@ -178,74 +179,122 @@ def _edge(
     return edge
 
 
+# Arbres stricts exposés comme relations déduites : table → type de nœud.
+# Pour les espaces, seuls les espaces ouverts apparaissent dans la structure
+# courante (un espace clos reste consultable, mais n'a plus d'enfant actif).
+_TREES = {
+    "functional_location": ("functional_locations", ""),
+    "space": ("spaces", " AND valid_to IS NULL"),
+}
+
+
+def _tree_edges(connection: Connection, node_id: uuid.UUID, node_type: str) -> list[dict]:
+    """Parent (le site pour une racine, sinon le nœud parent) et enfants."""
+    table, open_filter = _TREES[node_type]
+    row = (
+        connection.execute(
+            text(f"SELECT site_id, parent_id FROM {table} WHERE id = :id"), {"id": node_id}
+        )
+        .mappings()
+        .one()
+    )
+    if row["parent_id"] is None:
+        parent_edge = _edge(
+            node_id=node_id,
+            subject_id=row["site_id"],
+            subject_type="site",
+            predicate="contains",
+            object_id=node_id,
+            object_type=node_type,
+        )
+    else:
+        parent_edge = _edge(
+            node_id=node_id,
+            subject_id=row["parent_id"],
+            subject_type=node_type,
+            predicate="hasPart",
+            object_id=node_id,
+            object_type=node_type,
+        )
+
+    children = connection.execute(
+        text(f"SELECT id FROM {table} WHERE parent_id = :id{open_filter} ORDER BY code"),
+        {"id": node_id},
+    ).scalars()
+    return [parent_edge] + [
+        _edge(
+            node_id=node_id,
+            subject_id=node_id,
+            subject_type=node_type,
+            predicate="hasPart",
+            object_id=child_id,
+            object_type=node_type,
+        )
+        for child_id in children
+    ]
+
+
 def _derived_edges(connection: Connection, node: dict[str, Any]) -> list[dict[str, Any]]:
     node_id = node["id"]
+    node_type = node["node_type"]
     edges: list[dict[str, Any]] = []
 
-    if node["node_type"] == "site":
-        top_level = connection.execute(
-            text(
-                "SELECT id FROM functional_locations "
-                "WHERE site_id = :id AND parent_id IS NULL ORDER BY code"
-            ),
-            {"id": node_id},
-        ).scalars()
-        for location_id in top_level:
-            edges.append(
+    if node_type == "site":
+        for child_type, (table, open_filter) in (
+            ("space", _TREES["space"]),
+            ("functional_location", _TREES["functional_location"]),
+        ):
+            roots = connection.execute(
+                text(
+                    f"SELECT id FROM {table} "
+                    f"WHERE site_id = :id AND parent_id IS NULL{open_filter} ORDER BY code"
+                ),
+                {"id": node_id},
+            ).scalars()
+            edges.extend(
                 _edge(
                     node_id=node_id,
                     subject_id=node_id,
                     subject_type="site",
                     predicate="contains",
-                    object_id=location_id,
-                    object_type="functional_location",
+                    object_id=root_id,
+                    object_type=child_type,
                 )
+                for root_id in roots
             )
 
-    elif node["node_type"] == "functional_location":
-        location = (
-            connection.execute(
-                text("SELECT site_id, parent_id FROM functional_locations WHERE id = :id"),
-                {"id": node_id},
-            )
-            .mappings()
-            .one()
-        )
-        if location["parent_id"] is None:
-            edges.append(
-                _edge(
-                    node_id=node_id,
-                    subject_id=location["site_id"],
-                    subject_type="site",
-                    predicate="contains",
-                    object_id=node_id,
-                    object_type="functional_location",
-                )
-            )
-        else:
-            edges.append(
-                _edge(
-                    node_id=node_id,
-                    subject_id=location["parent_id"],
-                    subject_type="functional_location",
-                    predicate="hasPart",
-                    object_id=node_id,
-                    object_type="functional_location",
-                )
-            )
-        children = connection.execute(
-            text("SELECT id FROM functional_locations WHERE parent_id = :id ORDER BY code"),
+    elif node_type == "space":
+        edges.extend(_tree_edges(connection, node_id, "space"))
+        located = connection.execute(
+            text("SELECT id FROM functional_locations WHERE space_id = :id ORDER BY code"),
             {"id": node_id},
         ).scalars()
-        for child_id in children:
+        edges.extend(
+            _edge(
+                node_id=node_id,
+                subject_id=location_id,
+                subject_type="functional_location",
+                predicate="locatedIn",
+                object_id=node_id,
+                object_type="space",
+            )
+            for location_id in located
+        )
+
+    elif node_type == "functional_location":
+        edges.extend(_tree_edges(connection, node_id, "functional_location"))
+        space_id = connection.execute(
+            text("SELECT space_id FROM functional_locations WHERE id = :id"), {"id": node_id}
+        ).scalar()
+        if space_id is not None:
             edges.append(
                 _edge(
                     node_id=node_id,
                     subject_id=node_id,
                     subject_type="functional_location",
-                    predicate="hasPart",
-                    object_id=child_id,
-                    object_type="functional_location",
+                    predicate="locatedIn",
+                    object_id=space_id,
+                    object_type="space",
                 )
             )
 

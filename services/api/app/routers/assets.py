@@ -1,4 +1,5 @@
 import uuid
+from datetime import UTC, datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -21,6 +22,12 @@ from app.schemas import (
     ProductModelOut,
     SiteCreate,
     SiteOut,
+)
+from app.spatial import (
+    SpatialConflict,
+    SpatialNotFound,
+    check_space_for_location,
+    record_location_space,
 )
 
 router = APIRouter()
@@ -228,12 +235,35 @@ def create_functional_location(
     ).scalar()
     if not site_exists:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="site introuvable")
+    if body.parent_id is not None:
+        # Lecture sous RLS : un parent d'un autre tenant est introuvable. La clé
+        # étrangère seule ne suffirait pas, elle ignore l'isolation des tenants.
+        parent_site = connection.execute(
+            text("SELECT site_id FROM functional_locations WHERE id = :id"),
+            {"id": body.parent_id},
+        ).scalar()
+        if parent_site is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="position parente introuvable"
+            )
+        if parent_site != body.site_id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="la position parente appartient à un autre site",
+            )
+    if body.space_id is not None:
+        try:
+            check_space_for_location(connection, space_id=body.space_id, site_id=body.site_id)
+        except SpatialNotFound as exc:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        except SpatialConflict as exc:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
 
     location_id = uuid.uuid4()
     connection.execute(
         text(
-            "INSERT INTO functional_locations (id, tenant_id, site_id, parent_id, code, name) "
-            "VALUES (:id, :tenant_id, :site_id, :parent_id, :code, :name)"
+            "INSERT INTO functional_locations (id, tenant_id, site_id, parent_id, code, name, "
+            "kind) VALUES (:id, :tenant_id, :site_id, :parent_id, :code, :name, :kind)"
         ),
         {
             "id": location_id,
@@ -242,8 +272,19 @@ def create_functional_location(
             "parent_id": body.parent_id,
             "code": body.code,
             "name": body.name,
+            "kind": body.kind,
         },
     )
+    if body.space_id is not None:
+        record_location_space(
+            connection,
+            tenant_id=tenant_id,
+            functional_location_id=location_id,
+            space_id=body.space_id,
+            valid_from=datetime.now(UTC),
+            changed_by=_actor(claims),
+            reason="emplacement initial",
+        )
     append_audit_entry(
         connection,
         tenant_id=tenant_id,
@@ -251,12 +292,17 @@ def create_functional_location(
         action="functional_location.created",
         entity_type="functional_location",
         entity_id=str(location_id),
-        payload={"code": body.code, "name": body.name},
+        payload={
+            "code": body.code,
+            "name": body.name,
+            "kind": body.kind,
+            "space_id": str(body.space_id) if body.space_id else None,
+        },
     )
     row = (
         connection.execute(
             text(
-                "SELECT id, site_id, parent_id, code, name, created_at "
+                "SELECT id, site_id, parent_id, code, name, kind, space_id, created_at "
                 "FROM functional_locations WHERE id = :id"
             ),
             {"id": location_id},
@@ -275,7 +321,7 @@ def list_functional_locations(
     rows = (
         connection.execute(
             text(
-                "SELECT id, site_id, parent_id, code, name, created_at "
+                "SELECT id, site_id, parent_id, code, name, kind, space_id, created_at "
                 "FROM functional_locations ORDER BY created_at"
             )
         )

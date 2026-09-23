@@ -8,16 +8,20 @@ inventée). Un seul sens est stocké ; l'inverse est seulement affiché.
 Modifier ce vocabulaire (ajout, retrait, changement de domaine) impose de
 changer VOCABULARY_VERSION : chaque relation garde la version sous laquelle
 elle a été créée.
+
+Historique :
+- 2026-09-23.1 : F1, sites, positions fonctionnelles, exemplaires.
+- 2026-09-23.2 : F2, ajout des espaces (bâtiment, étage, pièce, zone) et du
+  prédicat déduit « locatedIn ».
 """
 
 from dataclasses import dataclass
 
-VOCABULARY_VERSION = "2026-09-23.1"
+VOCABULARY_VERSION = "2026-09-23.2"
 
-# Types de nœuds existants à ce jour. Les types futurs (space, point,
-# edge_device, organization) seront ajoutés avec leurs tables respectives,
-# ainsi que « locatedIn », déduit de l'arbre spatial (étape F2).
-NODE_TYPES = ("site", "functional_location", "physical_unit")
+# Types de nœuds existants à ce jour. Les types futurs (point, edge_device,
+# organization) seront ajoutés avec leurs tables respectives.
+NODE_TYPES = ("site", "space", "functional_location", "physical_unit")
 
 
 @dataclass(frozen=True)
@@ -26,14 +30,16 @@ class Predicate:
     inverse: str
     subject_types: tuple[str, ...]
     object_types: tuple[str, ...]
-    # Déduit des arbres (colonnes parent_id, site_id...) : jamais stocké dans
-    # la table relations, pour garder une seule source de vérité.
+    # Déduit des arbres (colonnes parent_id, site_id, space_id) : jamais stocké
+    # dans la table relations, pour garder une seule source de vérité.
     structural: bool = False
     brick: str | None = None
     s223: str | None = None
 
 
 _EQUIPMENT = ("functional_location",)
+_SPACE = ("space",)
+_EQUIPMENT_OR_SPACE = ("space", "functional_location")
 
 PREDICATES: dict[str, Predicate] = {
     p.name: p
@@ -42,20 +48,29 @@ PREDICATES: dict[str, Predicate] = {
             "contains",
             "isContainedIn",
             ("site",),
-            ("functional_location",),
+            _EQUIPMENT_OR_SPACE,
             structural=True,
         ),
         Predicate(
             "hasPart",
             "isPartOf",
-            _EQUIPMENT,
-            _EQUIPMENT,
+            _EQUIPMENT_OR_SPACE,
+            _EQUIPMENT_OR_SPACE,
             structural=True,
             brick="brick:hasPart",
         ),
-        Predicate("feeds", "isFedBy", _EQUIPMENT, _EQUIPMENT, brick="brick:feeds"),
+        Predicate(
+            "locatedIn",
+            "isLocationOf",
+            _EQUIPMENT,
+            _SPACE,
+            structural=True,
+            brick="brick:hasLocation",
+        ),
+        # Une CTA alimente un autre équipement ou directement une zone.
+        Predicate("feeds", "isFedBy", _EQUIPMENT, _EQUIPMENT_OR_SPACE, brick="brick:feeds"),
         Predicate("poweredBy", "powers", _EQUIPMENT, _EQUIPMENT),
-        Predicate("measuredBy", "measures", _EQUIPMENT, _EQUIPMENT),
+        Predicate("measuredBy", "measures", _EQUIPMENT_OR_SPACE, _EQUIPMENT),
         Predicate("controlledBy", "controls", _EQUIPMENT, _EQUIPMENT),
         Predicate(
             "connectedTo",
@@ -64,20 +79,22 @@ PREDICATES: dict[str, Predicate] = {
             _EQUIPMENT,
             s223="s223:connectedTo",
         ),
-        Predicate("servedBy", "serves", _EQUIPMENT, _EQUIPMENT),
+        # Une pièce desservie par une zone CVC qui la dépasse (zone transverse,
+        # ADR 011) : la zone, elle, est alimentée par la CTA via « feeds ».
+        Predicate("servedBy", "serves", _SPACE, _SPACE),
         Predicate(
             "maintainedBy",
             "maintains",
-            ("site", "functional_location", "physical_unit"),
+            ("site", "space", "functional_location", "physical_unit"),
             (),
         ),
         Predicate(
             "dependsOn",
             "isDependencyOf",
-            ("site", "functional_location"),
-            ("site", "functional_location"),
+            ("site", "space", "functional_location"),
+            ("site", "space", "functional_location"),
         ),
-        Predicate("protectedBy", "protects", _EQUIPMENT, _EQUIPMENT),
+        Predicate("protectedBy", "protects", _EQUIPMENT_OR_SPACE, _EQUIPMENT),
     )
 }
 

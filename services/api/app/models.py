@@ -51,7 +51,7 @@ class GraphNode(Base):
     __table_args__ = (
         UniqueConstraint("tenant_id", "id", name="uq_graph_nodes_tenant_id_id"),
         CheckConstraint(
-            "node_type IN ('site', 'functional_location', 'physical_unit')",
+            "node_type IN ('site', 'space', 'functional_location', 'physical_unit')",
             name="ck_graph_nodes_node_type",
         ),
     )
@@ -134,7 +134,10 @@ class Site(Base):
     """Première table métier d'exemple, portant tenant_id (protégée par RLS)."""
 
     __tablename__ = "sites"
-    __table_args__ = (_graph_node_fk("sites"),)
+    __table_args__ = (
+        _graph_node_fk("sites"),
+        UniqueConstraint("tenant_id", "id", name="uq_sites_tenant_id_id"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
@@ -214,7 +217,17 @@ class FunctionalLocation(Base):
     historique (voir ADR 001, et FunctionalLocationAssignment ci-dessous)."""
 
     __tablename__ = "functional_locations"
-    __table_args__ = (_graph_node_fk("functional_locations"),)
+    __table_args__ = (
+        _graph_node_fk("functional_locations"),
+        UniqueConstraint("tenant_id", "id", name="uq_functional_locations_tenant_id_id"),
+        # Une position ne peut être placée que dans un espace du même site.
+        ForeignKeyConstraint(
+            ["tenant_id", "site_id", "space_id"],
+            ["spaces.tenant_id", "spaces.site_id", "spaces.id"],
+            name="fk_functional_locations_space",
+        ),
+        Index("ix_functional_locations_space_id", "space_id"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
@@ -228,7 +241,94 @@ class FunctionalLocation(Base):
     )
     code: Mapped[str] = mapped_column(String(200), nullable=False)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
+    # Emplacement courant (ADR 011) ; la vérité historique vit dans
+    # FunctionalLocationSpaceHistory, jamais modifiée.
+    space_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    # system / equipment / component (app.spatial_vocabulary).
+    kind: Mapped[str | None] = mapped_column(String(20), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Space(Base):
+    """Un espace physique : bâtiment, étage, pièce, zone… (ADR 011).
+
+    Arbre séparé de l'arbre technique des positions fonctionnelles. Le parent
+    est toujours dans le même tenant et le même site (clé étrangère composée).
+    La structure n'est jamais réécrite : un espace rénové est clos (valid_to)
+    et remplacé par un nouveau (déclencheur en base)."""
+
+    __tablename__ = "spaces"
+    __table_args__ = (
+        _graph_node_fk("spaces"),
+        ForeignKeyConstraint(
+            ["tenant_id", "site_id"], ["sites.tenant_id", "sites.id"], name="fk_spaces_site"
+        ),
+        ForeignKeyConstraint(
+            ["tenant_id", "site_id", "parent_id"],
+            ["spaces.tenant_id", "spaces.site_id", "spaces.id"],
+            name="fk_spaces_parent",
+        ),
+        UniqueConstraint("tenant_id", "id", name="uq_spaces_tenant_id_id"),
+        UniqueConstraint("tenant_id", "site_id", "id", name="uq_spaces_tenant_site_id"),
+        CheckConstraint("parent_id IS NULL OR parent_id <> id", name="ck_spaces_not_own_parent"),
+        CheckConstraint("valid_to IS NULL OR valid_to > valid_from", name="ck_spaces_valid_period"),
+        Index("ix_spaces_parent_id", "parent_id"),
+        Index(
+            "uq_spaces_open_code",
+            "tenant_id",
+            "site_id",
+            "code",
+            unique=True,
+            postgresql_where=text("valid_to IS NULL"),
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    site_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    parent_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    space_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    code: Mapped[str] = mapped_column(String(200), nullable=False)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    valid_from: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    valid_to: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class FunctionalLocationSpaceHistory(Base):
+    """Historique des emplacements d'une position fonctionnelle : une ligne
+    par changement (space_id NULL = retirée de tout espace), jamais modifiée.
+    valid_from = date réelle du déplacement, recorded_at = date de saisie."""
+
+    __tablename__ = "functional_location_space_history"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["tenant_id", "functional_location_id"],
+            ["functional_locations.tenant_id", "functional_locations.id"],
+            name="fk_fl_space_history_location",
+        ),
+        ForeignKeyConstraint(
+            ["tenant_id", "space_id"],
+            ["spaces.tenant_id", "spaces.id"],
+            name="fk_fl_space_history_space",
+        ),
+        Index("ix_fl_space_history_location_valid_from", "functional_location_id", "valid_from"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    functional_location_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    space_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    valid_from: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    recorded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    changed_by: Mapped[str] = mapped_column(String(200), nullable=False)
+    reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
 
 class FunctionalLocationAssignment(Base):
