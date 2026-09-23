@@ -78,24 +78,82 @@ def test_squelette_de_bout_en_bout_mesure_regle_constat_alarme_ordre_de_travail(
             "source": "simulator",
         },
     )
-    findings = _call("GET", "/findings", technicien, params={"status": "open"})
+    findings = _call("GET", "/findings", technicien, params={"handling_status": "open"})
     work_orders = _call("GET", "/work-orders", technicien)
 
     assert measurement.status_code == 201, measurement.text
     assert len(findings.json()) == 1
     finding = findings.json()[0]
     assert (finding["kind"], finding["severity"]) == ("fault", "critical")
+    assert (finding["reason_code"], finding["certainty"]) == ("RULE_THRESHOLD_EXCEEDED", "detected")
     assert finding["work_order_id"] in {wo["id"] for wo in work_orders.json()}
+    url = f"/findings/{finding['id']}"
 
-    resolved = _call(
-        "PATCH",
-        f"/findings/{finding['id']}/status",
+    acknowledged = _call("POST", f"{url}/acknowledge", technicien, json={})
+    too_early = _call("PATCH", f"{url}/handling", technicien, json={"handling_status": "closed"})
+    _call(
+        "POST",
+        "/measurements",
         technicien,
-        json={"status": "resolved", "note": "Vanne trois voies débloquée"},
+        json={
+            "point_id": str(tenant_a["sensor"]),
+            "value": 45.0,
+            "measured_at": "2026-09-23T08:05:00+00:00",
+            "origin": "simulated",
+            "source": "simulator",
+        },
     )
-    history = _call("GET", f"/findings/{finding['id']}/history", technicien)
-    assert resolved.json()["status"] == "resolved"
-    assert [row["status"] for row in history.json()] == ["open", "resolved"]
+    confirmed = _call(
+        "POST", f"{url}/confirm", technicien, json={"note": "Vanne trois voies grippée"}
+    )
+    closed = _call(
+        "PATCH",
+        f"{url}/handling",
+        technicien,
+        json={"handling_status": "closed", "note": "Vanne trois voies débloquée"},
+    )
+    history = _call("GET", f"{url}/history", technicien)
+
+    assert acknowledged.json()["ack_state"] == "acknowledged"
+    assert too_early.status_code == 409
+    assert too_early.json()["code"] == "SIGNAL_CONDITION_STILL_ACTIVE"
+    assert confirmed.json()["certainty"] == "confirmed"
+    assert (closed.json()["condition_state"], closed.json()["handling_status"]) == (
+        "cleared",
+        "closed",
+    )
+    assert [(row["field"], row["value"]) for row in history.json()] == [
+        ("handling_status", "open"),
+        ("ack_state", "acknowledged"),
+        ("condition_state", "cleared"),
+        ("certainty", "confirmed"),
+        ("handling_status", "closed"),
+    ]
+
+
+def test_finding_titles_follow_the_requested_language(two_tenants) -> None:
+    tenant_a, _ = two_tenants
+    _active_rule(tenant_a)
+    technicien = _headers(tenant_a, ["technicien"])
+    _call(
+        "POST",
+        "/measurements",
+        technicien,
+        json={
+            "point_id": str(tenant_a["sensor"]),
+            "value": 150.0,
+            "measured_at": "2026-09-23T08:00:00+00:00",
+            "origin": "simulated",
+            "source": "simulator",
+        },
+    )
+    english = _call(
+        "GET", "/findings", {**technicien, "Accept-Language": "en"}, params={"kind": "data_quality"}
+    )
+    french = _call("GET", "/findings", technicien, params={"kind": "data_quality"})
+
+    assert english.json()[0]["title"].startswith("Value outside the sensor's physical range")
+    assert french.json()[0]["title"].startswith("Valeur hors de la plage physique")
 
 
 def test_technicien_cannot_change_rules(two_tenants) -> None:

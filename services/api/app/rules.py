@@ -27,20 +27,26 @@ from sqlalchemy.engine import Connection
 from app.audit import append_audit_entry
 from app.config_versions import ConfigInvalid, active_versions, register_config_type
 from app.desired_states import desired_state_at
-from app.findings import link_finding, raise_or_repeat_finding
+from app.findings import clear_finding_by_key, link_finding, raise_or_repeat_finding
 from app.maintenance import create_work_order, raise_alarm
 from app.points import get_point
 from app.quality_flags import FLAG_CLOCK_SUSPECT, FLAG_OUT_OF_RANGE
+from app.signal_vocabulary import WORK_ORDER_PRIORITY
 from app.trust import MIN_TRUST_FOR_RULES, compute_trust
 
 ALARM_RULE = "alarm_rule"
 ALARM_RULE_SCHEMA = "alarm_rule/1"
 SYSTEM_ACTOR = "systeme:regles"
 
-# Drapeaux qui rendent une valeur inutilisable pour un diagnostic.
+# Drapeaux qui rendent une valeur inutilisable pour un diagnostic, avec le
+# code de raison du constat de qualité correspondant.
 _BLOCKING_FLAGS = {
-    FLAG_OUT_OF_RANGE: "valeur hors de la plage physique du capteur",
-    FLAG_CLOCK_SUSPECT: "horloge suspecte (relevé daté dans le futur)",
+    FLAG_OUT_OF_RANGE: "DATA_QUALITY_OUT_OF_RANGE",
+    FLAG_CLOCK_SUSPECT: "DATA_QUALITY_CLOCK_SUSPECT",
+}
+_RULE_REASONS = {
+    "threshold": "RULE_THRESHOLD_EXCEEDED",
+    "desired_state_divergence": "RULE_DESIRED_STATE_DIVERGENCE",
 }
 
 
@@ -48,7 +54,7 @@ class _RuleBase(BaseModel):
     model_config = {"extra": "forbid"}
 
     point_id: uuid.UUID
-    severity: Literal["info", "warning", "critical"]
+    severity: Literal["info", "warning", "major", "critical"]
     title: str = Field(min_length=1, max_length=300)
     recommended_action: str | None = Field(default=None, max_length=1000)
     create_work_order: bool = False
@@ -138,22 +144,29 @@ def evaluate_after_measurement(
         "value": value,
     }
 
+    point_code = {"point_code": point["code"]}
+    common = {"tenant_id": tenant_id, "changed_by": SYSTEM_ACTOR}
+
     blocking = [flag for flag in quality_flags if flag in _BLOCKING_FLAGS]
-    for flag in blocking:
+    for flag, reason_code in _BLOCKING_FLAGS.items():
+        dedup_key = f"quality:{point['id']}:{flag}"
+        if flag not in blocking:
+            # Relevé propre : le problème de qualité est revenu à la normale.
+            clear_finding_by_key(connection, dedup_key=dedup_key, **common)
+            continue
         finding_id, _ = raise_or_repeat_finding(
             connection,
-            tenant_id=tenant_id,
-            dedup_key=f"quality:{point['id']}:{flag}",
+            dedup_key=dedup_key,
             subject_node_id=subject,
             point_id=point["id"],
             kind="data_quality",
             method="deterministic_rule",
             severity="warning",
-            title=f"Donnée douteuse sur {point['code']} : {_BLOCKING_FLAGS[flag]}",
-            recommended_action="Vérifier le capteur, son câblage et son horloge.",
+            reason_code=reason_code,
+            reason_params=point_code,
             evidence={**base_evidence, "flag": flag},
             seen_at=measured_at,
-            changed_by=SYSTEM_ACTOR,
+            **common,
         )
         touched.append(finding_id)
     if blocking:
@@ -166,45 +179,53 @@ def evaluate_after_measurement(
         return touched
 
     trust = compute_trust(connection, point, measured_at)
+    trust_key = f"quality:{point['id']}:low_trust"
     if trust["score"] < MIN_TRUST_FOR_RULES:
         finding_id, _ = raise_or_repeat_finding(
             connection,
-            tenant_id=tenant_id,
-            dedup_key=f"quality:{point['id']}:low_trust",
+            dedup_key=trust_key,
             subject_node_id=subject,
             point_id=point["id"],
             kind="data_quality",
             method="deterministic_rule",
             severity="warning",
-            title=f"Règles non évaluées sur {point['code']} : confiance insuffisante",
-            recommended_action="Contrôler le capteur avant de se fier aux alarmes de ce point.",
+            reason_code="DATA_QUALITY_LOW_TRUST",
+            reason_params={**point_code, "score": trust["score"]},
             evidence={**base_evidence, "trust": trust},
             seen_at=measured_at,
-            changed_by=SYSTEM_ACTOR,
+            **common,
         )
         return touched + [finding_id]
+    clear_finding_by_key(connection, dedup_key=trust_key, **common)
 
     for version in rules:
         rule = version["content"]
+        dedup_key = f"rule:{ALARM_RULE}:{version['subject_key']}"
         evidence = _evaluate(connection, rule, point, value, measured_at)
         if evidence is None:
+            # Règle respectée : retour à la normale du constat et de son alarme.
+            clear_finding_by_key(connection, dedup_key=dedup_key, **common)
             continue
         finding_id, created = raise_or_repeat_finding(
             connection,
-            tenant_id=tenant_id,
-            dedup_key=f"rule:{ALARM_RULE}:{version['subject_key']}",
+            dedup_key=dedup_key,
             subject_node_id=subject,
             point_id=point["id"],
             kind="fault" if rule["kind"] == "threshold" else "commissioning",
             method="deterministic_rule",
             rule_config_version_id=version["id"],
             severity=rule["severity"],
+            reason_code=_RULE_REASONS[rule["kind"]],
+            reason_params={
+                **point_code,
+                **{k: v for k, v in evidence.items() if k != "desired_state_id"},
+            },
             title=rule["title"],
             recommended_action=rule.get("recommended_action"),
             confidence=1.0,
             evidence={**base_evidence, **evidence, "trust_score": trust["score"]},
             seen_at=measured_at,
-            changed_by=SYSTEM_ACTOR,
+            **common,
         )
         touched.append(finding_id)
         if created:
@@ -242,7 +263,7 @@ def _escalate(
             title=rule["title"][:200],
             description=rule.get("recommended_action"),
             work_order_type="corrective",
-            priority="high" if rule["severity"] == "critical" else "medium",
+            priority=WORK_ORDER_PRIORITY[rule["severity"]],
             functional_location_id=point["functional_location_id"],
         )
     link_finding(connection, finding_id=finding_id, alarm_id=alarm_id, work_order_id=work_order_id)

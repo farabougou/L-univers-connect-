@@ -2,13 +2,14 @@ import uuid
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.engine import Connection
 
 from app.audit import append_audit_entry
 from app.auth import require_any_role
 from app.deps import get_tenant_connection, get_tenant_id
 from app.errors import ApiError, api_error
+from app.i18n import negotiate_locale
 from app.passport import build_passport
 from app.properties import PropertyError, PropertyNotFound, list_properties, set_property
 from app.schemas import PropertyOut, PropertySet, TagCreate, TagOut, TagRevoke
@@ -28,8 +29,11 @@ def _roles(claims: dict[str, Any]) -> set[str]:
     return set(claims.get("realm_access", {}).get("roles", []))
 
 
-def _passport_or_404(connection: Connection, node_id: uuid.UUID, claims: dict) -> dict:
-    passport = build_passport(connection, node_id, _roles(claims))
+def _passport_or_404(
+    connection: Connection, node_id: uuid.UUID, claims: dict, request: Request
+) -> dict:
+    locale = negotiate_locale(request.headers.get("accept-language"))
+    passport = build_passport(connection, node_id, _roles(claims), locale)
     if passport is None:
         raise ApiError(404, "NODE_NOT_FOUND")
     return passport
@@ -41,15 +45,17 @@ def _passport_or_404(connection: Connection, node_id: uuid.UUID, claims: dict) -
 @router.get("/graph/nodes/{node_id}/passport")
 def read_passport(
     node_id: uuid.UUID,
+    request: Request,
     connection: Annotated[Connection, Depends(get_tenant_connection)],
     claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
 ) -> dict[str, Any]:
-    return _passport_or_404(connection, node_id, claims)
+    return _passport_or_404(connection, node_id, claims, request)
 
 
 @router.get("/tags/{code}")
 def scan_tag(
     code: str,
+    request: Request,
     connection: Annotated[Connection, Depends(get_tenant_connection)],
     claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
 ) -> dict[str, Any]:
@@ -61,7 +67,10 @@ def scan_tag(
         raise api_error(exc, 404) from exc
     except TagRevoked as exc:
         raise api_error(exc, 410) from exc
-    return {"tag": TagOut(**tag), "passport": _passport_or_404(connection, tag["node_id"], claims)}
+    return {
+        "tag": TagOut(**tag),
+        "passport": _passport_or_404(connection, tag["node_id"], claims, request),
+    }
 
 
 # --- Étiquettes ------------------------------------------------

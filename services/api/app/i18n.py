@@ -66,11 +66,15 @@ class _KeepMissing(dict):
         return "{" + key + "}"
 
 
+def render_text(template: str, params: dict[str, Any]) -> str:
+    return template.format_map(_KeepMissing({k: _format_param(v) for k, v in params.items()}))
+
+
 def render(code: str, params: dict[str, Any], locale: str = DEFAULT_LOCALE) -> str:
     template = load_catalog(locale)["codes"].get(code)
     if template is None:
         return code
-    return template.format_map(_KeepMissing({k: _format_param(v) for k, v in params.items()}))
+    return render_text(template, params)
 
 
 def title(status: int, locale: str = DEFAULT_LOCALE) -> str:

@@ -200,12 +200,28 @@ def _codes_used_in_code() -> set[str]:
 
 
 def test_every_code_used_in_the_code_has_a_message_and_none_is_orphaned() -> None:
-    catalog_codes = set(load_catalog("fr")["codes"])
-    # Chaînes au même format qui ne sont pas des codes d'erreur.
+    error_codes = set(load_catalog("fr")["codes"])
+    finding_codes = set(load_catalog("fr", "findings")["titles"])
+    # Chaînes au même format qui ne sont pas des codes de message.
     used = _codes_used_in_code() - {"I18N_DIR"}
 
-    assert used - catalog_codes == set(), "codes sans message"
-    assert catalog_codes - used == set(), "messages jamais utilisés"
+    assert used - error_codes - finding_codes == set(), "codes sans message"
+    assert error_codes - used == set(), "messages d'erreur jamais utilisés"
+    assert finding_codes - used == set(), "messages de constat jamais utilisés"
+
+
+def test_finding_catalogs_are_consistent_and_typographically_correct() -> None:
+    fr, en = (load_catalog(locale, "findings") for locale in LOCALES)
+    for section in ("titles", "actions"):
+        assert fr[section].keys() == en[section].keys() == fr["titles"].keys()
+        for code, message in fr[section].items():
+            assert set(_PLACEHOLDER.findall(message)) == set(
+                _PLACEHOLDER.findall(en[section][code])
+            ), code
+            assert "'" not in message, f"{code} : apostrophe droite"
+            assert " :" not in message, f"{code} : espace ordinaire avant les deux-points"
+    for message in fr["actions"].values():
+        assert message.endswith(".")
 
 
 def test_no_http_exception_with_free_text_remains() -> None:

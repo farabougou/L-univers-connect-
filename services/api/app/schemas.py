@@ -210,8 +210,12 @@ class InterventionOut(BaseModel):
     client_ref: str | None = None
 
 
+Severity = Literal["info", "warning", "major", "critical"]
+HandlingStatus = Literal["open", "in_progress", "closed", "false_positive"]
+
+
 class AlarmCreate(BaseModel):
-    severity: Literal["info", "warning", "critical"]
+    severity: Severity
     message: str = Field(min_length=1, max_length=500)
     functional_location_id: uuid.UUID | None = None
     physical_unit_id: uuid.UUID | None = None
@@ -223,20 +227,34 @@ class AlarmOut(BaseModel):
     physical_unit_id: uuid.UUID | None
     severity: str
     message: str
-    status: str
+    condition_state: str
+    ack_state: str
+    handling_status: str
     raised_by: str
     raised_at: datetime
 
 
-class AlarmStatusUpdate(BaseModel):
-    status: Literal["open", "acknowledged", "resolved"]
+class SignalNote(BaseModel):
     note: str | None = Field(default=None, max_length=2000)
 
 
-class AlarmStatusHistoryOut(BaseModel):
+class SignalHandlingUpdate(BaseModel):
+    handling_status: HandlingStatus
+    note: str | None = Field(default=None, max_length=2000)
+
+
+class FindingConfirmation(BaseModel):
+    # Une confirmation dit ce qui a été vérifié : la note est obligatoire.
+    note: str = Field(min_length=1, max_length=2000)
+
+
+class SignalHistoryOut(BaseModel):
     id: uuid.UUID
-    alarm_id: uuid.UUID
-    status: str
+    signal_id: uuid.UUID
+    # Champ modifié ; vide pour les lignes antérieures à l'ADR 013 (ancien
+    # statut unique, conservé tel quel).
+    field: str | None
+    value: str
     changed_by: str
     note: str | None
     changed_at: datetime
@@ -503,31 +521,26 @@ class FindingOut(BaseModel):
     rule_config_version_id: uuid.UUID | None
     dedup_key: str
     severity: str
+    reason_code: str
+    reason_params: dict
+    # Traduits à l'affichage (sauf titre et action écrits par l'auteur d'une règle).
     title: str
     recommended_action: str | None
     confidence: float | None
+    certainty: str
+    action_required: bool
+    confirmed_by: str | None
+    confirmed_at: datetime | None
     evidence: dict
-    status: str
+    condition_state: str
+    ack_state: str
+    handling_status: str
     first_seen_at: datetime
     last_seen_at: datetime
     occurrence_count: int
     alarm_id: uuid.UUID | None
     work_order_id: uuid.UUID | None
     created_at: datetime
-
-
-class FindingStatusUpdate(BaseModel):
-    status: Literal["open", "acknowledged", "resolved", "false_positive"]
-    note: str | None = Field(default=None, max_length=2000)
-
-
-class FindingStatusHistoryOut(BaseModel):
-    id: uuid.UUID
-    finding_id: uuid.UUID
-    status: str
-    changed_by: str
-    note: str | None
-    changed_at: datetime
 
 
 class TrustOut(BaseModel):

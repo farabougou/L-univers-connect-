@@ -1,6 +1,6 @@
 import uuid
 from datetime import UTC, datetime
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy import text
@@ -26,7 +26,6 @@ from app.deps import get_tenant_connection, get_tenant_id
 from app.errors import ApiError, api_error
 from app.maintenance import (
     ClientRefConflict,
-    change_alarm_status,
     change_work_order_status,
     create_work_order,
     log_intervention,
@@ -38,21 +37,25 @@ from app.maintenance import (
 from app.schemas import (
     AlarmCreate,
     AlarmOut,
-    AlarmStatusHistoryOut,
-    AlarmStatusUpdate,
     ClosureCreate,
     ClosureOut,
+    HandlingStatus,
     InterventionCreate,
     InterventionOut,
     PhotoCreate,
     PhotoOut,
     PhotoUploadUrlOut,
     PhotoUploadUrlRequest,
+    SignalHandlingUpdate,
+    SignalHistoryOut,
+    SignalNote,
     WorkOrderCreate,
     WorkOrderOut,
     WorkOrderStatusHistoryOut,
     WorkOrderStatusUpdate,
 )
+from app.signals import acknowledge, clear_condition, get_axes, set_handling
+from app.signals import history as signal_history
 from app.storage import (
     build_object_key,
     create_presigned_download_url,
@@ -499,92 +502,131 @@ def create_alarm(
     return _read_alarm(connection, alarm_id)
 
 
+_ALARM_COLUMNS = (
+    "id, functional_location_id, physical_unit_id, severity, message, condition_state, "
+    "ack_state, handling_status, raised_by, raised_at"
+)
+
+
 @router.get("/alarms", response_model=list[AlarmOut])
 def list_alarms(
     connection: Annotated[Connection, Depends(get_tenant_connection)],
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+    handling_status: HandlingStatus | None = None,
+    condition_state: Literal["active", "cleared"] | None = None,
+    ack_state: Literal["unacknowledged", "acknowledged"] | None = None,
 ) -> list[AlarmOut]:
-    rows = (
-        connection.execute(
-            text(
-                "SELECT id, functional_location_id, physical_unit_id, severity, message, "
-                "status, raised_by, raised_at FROM alarms ORDER BY raised_at"
-            )
-        )
-        .mappings()
-        .all()
-    )
+    query = f"SELECT {_ALARM_COLUMNS} FROM alarms WHERE true"
+    params: dict[str, Any] = {}
+    for column, value in (
+        ("handling_status", handling_status),
+        ("condition_state", condition_state),
+        ("ack_state", ack_state),
+    ):
+        if value is not None:
+            query += f" AND {column} = :{column}"
+            params[column] = value
+    rows = connection.execute(text(query + " ORDER BY raised_at"), params).mappings().all()
     return [AlarmOut(**row) for row in rows]
 
 
-@router.patch("/alarms/{alarm_id}/status", response_model=AlarmOut)
-def update_alarm_status(
-    alarm_id: uuid.UUID,
-    body: AlarmStatusUpdate,
-    connection: Annotated[Connection, Depends(get_tenant_connection)],
-    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
-    claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
-) -> AlarmOut:
-    exists = connection.execute(
-        text("SELECT 1 FROM alarms WHERE id = :id"), {"id": alarm_id}
-    ).scalar()
-    if not exists:
-        raise ApiError(404, "ALARM_NOT_FOUND")
-
-    change_alarm_status(
-        connection,
-        tenant_id=tenant_id,
-        alarm_id=alarm_id,
-        status=body.status,
-        changed_by=_actor(claims),
-        note=body.note,
-    )
+def _audit_alarm(connection, tenant_id, claims, action, alarm_id, payload) -> None:
     append_audit_entry(
         connection,
         tenant_id=tenant_id,
         actor=_actor(claims),
-        action="alarm.status_changed",
+        action=action,
         entity_type="alarm",
         entity_id=str(alarm_id),
-        payload={"status": body.status},
+        payload=payload,
+    )
+
+
+@router.post("/alarms/{alarm_id}/acknowledge", response_model=AlarmOut)
+def acknowledge_alarm(
+    alarm_id: uuid.UUID,
+    body: SignalNote,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
+    claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> AlarmOut:
+    """« J'ai pris connaissance de l'alarme » ; ne dit pas qu'elle est réglée."""
+    acknowledge(
+        connection,
+        kind="alarm",
+        tenant_id=tenant_id,
+        signal_id=alarm_id,
+        changed_by=_actor(claims),
+        note=body.note,
+    )
+    _audit_alarm(connection, tenant_id, claims, "alarm.acknowledged", alarm_id, {})
+    return _read_alarm(connection, alarm_id)
+
+
+@router.patch("/alarms/{alarm_id}/handling", response_model=AlarmOut)
+def update_alarm_handling(
+    alarm_id: uuid.UUID,
+    body: SignalHandlingUpdate,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
+    claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> AlarmOut:
+    set_handling(
+        connection,
+        kind="alarm",
+        tenant_id=tenant_id,
+        signal_id=alarm_id,
+        handling_status=body.handling_status,
+        changed_by=_actor(claims),
+        note=body.note,
+    )
+    _audit_alarm(
+        connection,
+        tenant_id,
+        claims,
+        "alarm.handling_changed",
+        alarm_id,
+        {"handling_status": body.handling_status},
     )
     return _read_alarm(connection, alarm_id)
 
 
-@router.get("/alarms/{alarm_id}/history", response_model=list[AlarmStatusHistoryOut])
+@router.post("/alarms/{alarm_id}/clear", response_model=AlarmOut)
+def clear_alarm(
+    alarm_id: uuid.UUID,
+    body: SignalNote,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
+    claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> AlarmOut:
+    """Retour à la normale constaté par une personne (alarme saisie à la main :
+    aucune mesure ne peut le détecter)."""
+    clear_condition(
+        connection,
+        kind="alarm",
+        tenant_id=tenant_id,
+        signal_id=alarm_id,
+        changed_by=_actor(claims),
+        note=body.note,
+    )
+    _audit_alarm(connection, tenant_id, claims, "alarm.cleared", alarm_id, {})
+    return _read_alarm(connection, alarm_id)
+
+
+@router.get("/alarms/{alarm_id}/history", response_model=list[SignalHistoryOut])
 def read_alarm_history(
     alarm_id: uuid.UUID,
     connection: Annotated[Connection, Depends(get_tenant_connection)],
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
-) -> list[AlarmStatusHistoryOut]:
-    exists = connection.execute(
-        text("SELECT 1 FROM alarms WHERE id = :id"), {"id": alarm_id}
-    ).scalar()
-    if not exists:
-        raise ApiError(404, "ALARM_NOT_FOUND")
-
-    rows = (
-        connection.execute(
-            text(
-                "SELECT id, alarm_id, status, changed_by, note, changed_at "
-                "FROM alarm_status_history WHERE alarm_id = :id ORDER BY changed_at"
-            ),
-            {"id": alarm_id},
-        )
-        .mappings()
-        .all()
-    )
-    return [AlarmStatusHistoryOut(**row) for row in rows]
+) -> list[SignalHistoryOut]:
+    get_axes(connection, "alarm", alarm_id)
+    return [SignalHistoryOut(**row) for row in signal_history(connection, "alarm", alarm_id)]
 
 
 def _read_alarm(connection: Connection, alarm_id: uuid.UUID) -> AlarmOut:
     row = (
         connection.execute(
-            text(
-                "SELECT id, functional_location_id, physical_unit_id, severity, message, "
-                "status, raised_by, raised_at FROM alarms WHERE id = :id"
-            ),
-            {"id": alarm_id},
+            text(f"SELECT {_ALARM_COLUMNS} FROM alarms WHERE id = :id"), {"id": alarm_id}
         )
         .mappings()
         .one()

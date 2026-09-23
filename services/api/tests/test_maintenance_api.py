@@ -96,26 +96,37 @@ def test_full_maintenance_flow(tenant_id) -> None:
         )
         assert alarm_response.status_code == 201
         alarm_id = alarm_response.json()["id"]
-        assert alarm_response.json()["status"] == "open"
-
-        ack_response = client.patch(
-            f"/alarms/{alarm_id}/status", json={"status": "acknowledged"}, headers=headers
+        created = alarm_response.json()
+        assert (created["condition_state"], created["ack_state"], created["handling_status"]) == (
+            "active",
+            "unacknowledged",
+            "open",
         )
-        assert ack_response.status_code == 200
 
-        resolve_response = client.patch(
-            f"/alarms/{alarm_id}/status",
-            json={"status": "resolved", "note": "Vanne resserrée"},
-            headers=headers,
+        ack_response = client.post(f"/alarms/{alarm_id}/acknowledge", json={}, headers=headers)
+        assert ack_response.json()["ack_state"] == "acknowledged"
+        assert ack_response.json()["condition_state"] == "active"
+
+        too_early = client.patch(
+            f"/alarms/{alarm_id}/handling", json={"handling_status": "closed"}, headers=headers
         )
-        assert resolve_response.status_code == 200
-        assert resolve_response.json()["status"] == "resolved"
+        assert too_early.status_code == 409
+
+        cleared = client.post(
+            f"/alarms/{alarm_id}/clear", json={"note": "Vanne resserrée"}, headers=headers
+        )
+        closed = client.patch(
+            f"/alarms/{alarm_id}/handling", json={"handling_status": "closed"}, headers=headers
+        )
+        assert cleared.json()["condition_state"] == "cleared"
+        assert closed.json()["handling_status"] == "closed"
 
         history_response = client.get(f"/alarms/{alarm_id}/history", headers=headers)
-        assert [entry["status"] for entry in history_response.json()] == [
-            "open",
-            "acknowledged",
-            "resolved",
+        assert [(entry["field"], entry["value"]) for entry in history_response.json()] == [
+            ("handling_status", "open"),
+            ("ack_state", "acknowledged"),
+            ("condition_state", "cleared"),
+            ("handling_status", "closed"),
         ]
 
         intervention_response = client.post(

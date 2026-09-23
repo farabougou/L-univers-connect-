@@ -88,7 +88,10 @@
 
 | Défaillance | Effet visible | Comportement actuel | Reprise | Statut |
 |---|---|---|---|---|
-| Même anomalie répétée | Un seul constat, compteur d'occurrences | Clé de déduplication + index unique partiel | — | ✅ testé |
+| Même anomalie répétée | Un seul constat, compteur d'occurrences | Clé de déduplication + index unique partiel (constats en traitement) | — | ✅ testé |
+| Problème résolu de lui-même | Constat et alarme « revenus à la normale », toujours à traiter | Détection automatique à la mesure conforme suivante ; jamais sur une donnée douteuse ou un point peu fiable | Une personne clôt | ✅ testé |
+| Problème qui revient avant la clôture | Même constat réactivé, à acquitter de nouveau | Pas de nouveau constat ni de nouvelle alarme | — | ✅ testé |
+| Constat « confirmé » à tort par un automate | Impossible | Contraintes en base : confirmation par une personne seulement, jamais pour une prédiction | — | ✅ testé |
 | Configuration de règle erronée activée | Alarmes absentes ou fausses | Versionnée : on restaure la version précédente (nouvelle version, rien d'écrasé), raison obligatoire | Restaurer | ✅ |
 | Fuseau horaire d'un état attendu mal saisi | Refus à la saisie | Fuseaux IANA validés ; base `tzdata` figée dans les dépendances | — | ✅ testé (heure d'été / d'hiver) |
 

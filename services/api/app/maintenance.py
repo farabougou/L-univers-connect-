@@ -7,10 +7,11 @@ from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
 from app.errors import DomainError
+from app.signal_vocabulary import SEVERITIES
+from app.signals import record_change
 
 WORK_ORDER_STATUSES = ("open", "in_progress", "completed", "cancelled")
 WORK_ORDER_TYPES = ("corrective", "preventive", "predictive", "inspection")
-ALARM_STATUSES = ("open", "acknowledged", "resolved")
 
 
 def create_work_order(
@@ -336,14 +337,17 @@ def raise_alarm(
     functional_location_id: uuid.UUID | None = None,
     physical_unit_id: uuid.UUID | None = None,
 ) -> uuid.UUID:
+    """Alarme active, non acquittée, ouverte (ADR 013, 4.2). Ses changements
+    d'état passent ensuite par app.signals, axe par axe."""
+    if severity not in SEVERITIES:
+        raise MaintenanceInvalid("SEVERITY_UNKNOWN", severity=severity)
     alarm_id = uuid.uuid4()
     connection.execute(
         text(
             "INSERT INTO alarms "
-            "(id, tenant_id, functional_location_id, physical_unit_id, "
-            "severity, message, status, raised_by) "
-            "VALUES (:id, :tenant_id, :functional_location_id, :physical_unit_id, "
-            ":severity, :message, 'open', :raised_by)"
+            "(id, tenant_id, functional_location_id, physical_unit_id, severity, message, "
+            "raised_by) VALUES (:id, :tenant_id, :functional_location_id, :physical_unit_id, "
+            ":severity, :message, :raised_by)"
         ),
         {
             "id": alarm_id,
@@ -355,64 +359,13 @@ def raise_alarm(
             "raised_by": raised_by,
         },
     )
-    _insert_alarm_status_history(
+    record_change(
         connection,
+        kind="alarm",
         tenant_id=tenant_id,
-        alarm_id=alarm_id,
-        status="open",
+        signal_id=alarm_id,
+        field="handling_status",
+        value="open",
         changed_by=raised_by,
-        note=None,
     )
     return alarm_id
-
-
-def change_alarm_status(
-    connection: Connection,
-    *,
-    tenant_id: uuid.UUID,
-    alarm_id: uuid.UUID,
-    status: str,
-    changed_by: str,
-    note: str | None = None,
-) -> None:
-    if status not in ALARM_STATUSES:
-        raise MaintenanceInvalid("ALARM_STATUS_UNKNOWN", status=status)
-
-    connection.execute(
-        text("UPDATE alarms SET status = :status WHERE id = :id"),
-        {"status": status, "id": alarm_id},
-    )
-    _insert_alarm_status_history(
-        connection,
-        tenant_id=tenant_id,
-        alarm_id=alarm_id,
-        status=status,
-        changed_by=changed_by,
-        note=note,
-    )
-
-
-def _insert_alarm_status_history(
-    connection: Connection,
-    *,
-    tenant_id: uuid.UUID,
-    alarm_id: uuid.UUID,
-    status: str,
-    changed_by: str,
-    note: str | None,
-) -> None:
-    connection.execute(
-        text(
-            "INSERT INTO alarm_status_history "
-            "(id, tenant_id, alarm_id, status, changed_by, note) "
-            "VALUES (:id, :tenant_id, :alarm_id, :status, :changed_by, :note)"
-        ),
-        {
-            "id": uuid.uuid4(),
-            "tenant_id": tenant_id,
-            "alarm_id": alarm_id,
-            "status": status,
-            "changed_by": changed_by,
-            "note": note,
-        },
-    )

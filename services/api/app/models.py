@@ -498,6 +498,21 @@ class Alarm(Base):
     manuellement (aucune détection automatique n'existe encore)."""
 
     __tablename__ = "alarms"
+    __table_args__ = (
+        CheckConstraint(
+            "severity IN ('info', 'warning', 'major', 'critical')", name="ck_alarms_severity"
+        ),
+        CheckConstraint(
+            "condition_state IN ('active', 'cleared')", name="ck_alarms_condition_state"
+        ),
+        CheckConstraint(
+            "ack_state IN ('unacknowledged', 'acknowledged')", name="ck_alarms_ack_state"
+        ),
+        CheckConstraint(
+            "handling_status IN ('open', 'in_progress', 'closed', 'false_positive')",
+            name="ck_alarms_handling_status",
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
@@ -511,7 +526,14 @@ class Alarm(Base):
     )
     severity: Mapped[str] = mapped_column(String(20), nullable=False)
     message: Mapped[str] = mapped_column(String(500), nullable=False)
-    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="open")
+    # Trois axes séparés (ADR 013, 4.2) : condition, acquittement, traitement.
+    condition_state: Mapped[str] = mapped_column(
+        String(20), nullable=False, server_default="active"
+    )
+    ack_state: Mapped[str] = mapped_column(
+        String(20), nullable=False, server_default="unacknowledged"
+    )
+    handling_status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="open")
     raised_by: Mapped[str] = mapped_column(String(200), nullable=False)
     raised_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
@@ -522,6 +544,13 @@ class AlarmStatusHistory(Base):
     app.maintenance.change_alarm_status)."""
 
     __tablename__ = "alarm_status_history"
+    __table_args__ = (
+        CheckConstraint(
+            "field IS NULL OR field IN "
+            "('condition_state', 'ack_state', 'handling_status', 'certainty')",
+            name="ck_alarm_status_history_field",
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
@@ -530,6 +559,8 @@ class AlarmStatusHistory(Base):
     alarm_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("alarms.id"), nullable=False
     )
+    # Champ modifié (vide pour les lignes antérieures à ADR 013 : ancien statut).
+    field: Mapped[str | None] = mapped_column(String(30), nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False)
     changed_by: Mapped[str] = mapped_column(String(200), nullable=False)
     note: Mapped[str | None] = mapped_column(String(2000), nullable=True)
@@ -839,10 +870,35 @@ class Finding(Base):
             "'physical_model', 'peer_comparison', 'ml')",
             name="ck_findings_method",
         ),
-        CheckConstraint("severity IN ('info', 'warning', 'critical')", name="ck_findings_severity"),
         CheckConstraint(
-            "status IN ('open', 'acknowledged', 'resolved', 'false_positive')",
-            name="ck_findings_status",
+            "severity IN ('info', 'warning', 'major', 'critical')", name="ck_findings_severity"
+        ),
+        CheckConstraint(
+            "condition_state IN ('active', 'cleared')", name="ck_findings_condition_state"
+        ),
+        CheckConstraint(
+            "ack_state IN ('unacknowledged', 'acknowledged')", name="ck_findings_ack_state"
+        ),
+        CheckConstraint(
+            "handling_status IN ('open', 'in_progress', 'closed', 'false_positive')",
+            name="ck_findings_handling_status",
+        ),
+        CheckConstraint(
+            "certainty IN ('detected', 'confirmed', 'probable_cause', 'hypothesis', "
+            "'prediction', 'recommendation', 'simulation_result', 'unavailable')",
+            name="ck_findings_certainty",
+        ),
+        CheckConstraint(
+            "certainty <> 'confirmed' OR (confirmed_by IS NOT NULL AND confirmed_at IS NOT NULL "
+            "AND confirmed_by NOT LIKE 'systeme:%')",
+            name="ck_findings_confirmation",
+        ),
+        CheckConstraint(
+            "NOT (kind = 'prediction' AND certainty = 'confirmed')",
+            name="ck_findings_prediction_never_confirmed",
+        ),
+        CheckConstraint(
+            "reason_code NOT LIKE 'RULE\\_%' OR title IS NOT NULL", name="ck_findings_rule_title"
         ),
         CheckConstraint(
             "confidence IS NULL OR (confidence >= 0 AND confidence <= 1)",
@@ -854,7 +910,7 @@ class Finding(Base):
             "tenant_id",
             "dedup_key",
             unique=True,
-            postgresql_where=text("status IN ('open', 'acknowledged')"),
+            postgresql_where=text("handling_status IN ('open', 'in_progress')"),
         ),
         Index("ix_findings_subject_node_id", "subject_node_id"),
     )
@@ -872,13 +928,30 @@ class Finding(Base):
     )
     dedup_key: Mapped[str] = mapped_column(String(300), nullable=False)
     severity: Mapped[str] = mapped_column(String(20), nullable=False)
-    title: Mapped[str] = mapped_column(String(300), nullable=False)
+    # Code stable + paramètres : la phrase est produite à l'affichage (ADR 013).
+    reason_code: Mapped[str] = mapped_column(String(80), nullable=False)
+    reason_params: Mapped[dict] = mapped_column(
+        JSONB, nullable=False, server_default=text("'{}'::jsonb")
+    )
+    # Titre écrit par l'auteur d'une règle (contenu du client) ; vide pour les
+    # constats produits par le système.
+    title: Mapped[str | None] = mapped_column(String(300), nullable=True)
     recommended_action: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
     evidence: Mapped[dict] = mapped_column(
         JSONB, nullable=False, server_default=text("'{}'::jsonb")
     )
-    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="open")
+    certainty: Mapped[str] = mapped_column(String(30), nullable=False)
+    action_required: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    confirmed_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    condition_state: Mapped[str] = mapped_column(
+        String(20), nullable=False, server_default="active"
+    )
+    ack_state: Mapped[str] = mapped_column(
+        String(20), nullable=False, server_default="unacknowledged"
+    )
+    handling_status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="open")
     first_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     occurrence_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
@@ -898,6 +971,11 @@ class FindingStatusHistory(Base):
             ["findings.tenant_id", "findings.id"],
             name="fk_finding_status_history_finding",
         ),
+        CheckConstraint(
+            "field IS NULL OR field IN "
+            "('condition_state', 'ack_state', 'handling_status', 'certainty')",
+            name="ck_finding_status_history_field",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -905,6 +983,8 @@ class FindingStatusHistory(Base):
         UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
     )
     finding_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    # Champ modifié (vide pour les lignes antérieures à ADR 013 : ancien statut).
+    field: Mapped[str | None] = mapped_column(String(30), nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False)
     changed_by: Mapped[str] = mapped_column(String(200), nullable=False)
     note: Mapped[str | None] = mapped_column(String(2000), nullable=True)

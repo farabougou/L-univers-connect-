@@ -17,7 +17,9 @@ from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
 from app.closure_vocabulary import ACTIONS, SYMPTOMS
+from app.findings import displayed
 from app.graph import get_node
+from app.i18n import DEFAULT_LOCALE
 from app.lifecycle import lifecycle_history
 from app.properties import list_properties
 from app.tags import list_tags
@@ -29,7 +31,13 @@ _FIELD_ROLES = {"technicien"} | _MANAGER_ROLES
 def allowed_actions(roles: set[str], node_type: str) -> list[str]:
     actions: list[str] = []
     if roles & _FIELD_ROLES and node_type in ("functional_location", "physical_unit"):
-        actions += ["log_intervention", "raise_alarm", "update_finding_status"]
+        actions += [
+            "log_intervention",
+            "raise_alarm",
+            "acknowledge_signal",
+            "update_signal_handling",
+            "confirm_finding",
+        ]
     if roles & _MANAGER_ROLES:
         if node_type in ("functional_location", "physical_unit"):
             actions.append("create_work_order")
@@ -111,8 +119,9 @@ def _maintenance(connection: Connection, location_id: uuid.UUID) -> dict[str, An
     return {
         "open_alarms": _all(
             connection,
-            "SELECT id, severity, message, status, raised_at FROM alarms "
-            "WHERE functional_location_id = :id AND status <> 'resolved' ORDER BY raised_at DESC",
+            "SELECT id, severity, message, condition_state, ack_state, handling_status, "
+            "raised_at FROM alarms WHERE functional_location_id = :id "
+            "AND handling_status IN ('open', 'in_progress') ORDER BY raised_at DESC",
             {"id": location_id},
         ),
         "open_work_orders": _all(
@@ -127,7 +136,7 @@ def _maintenance(connection: Connection, location_id: uuid.UUID) -> dict[str, An
 
 
 def build_passport(
-    connection: Connection, node_id: uuid.UUID, roles: set[str]
+    connection: Connection, node_id: uuid.UUID, roles: set[str], locale: str = DEFAULT_LOCALE
 ) -> dict[str, Any] | None:
     node = get_node(connection, node_id)
     if node is None:
@@ -185,13 +194,15 @@ def build_passport(
             {"id": node_id},
         )
 
-    passport["open_findings"] = _all(
+    open_findings = _all(
         connection,
-        "SELECT id, kind, severity, title, status, occurrence_count, last_seen_at FROM findings "
-        "WHERE status IN ('open', 'acknowledged') AND (subject_node_id = :id "
-        "OR subject_node_id = :location) ORDER BY last_seen_at DESC",
+        "SELECT id, kind, severity, reason_code, reason_params, title, recommended_action, "
+        "certainty, condition_state, ack_state, handling_status, occurrence_count, "
+        "last_seen_at FROM findings WHERE handling_status IN ('open', 'in_progress') "
+        "AND (subject_node_id = :id OR subject_node_id = :location) ORDER BY last_seen_at DESC",
         {"id": node_id, "location": location_id or node_id},
     )
+    passport["open_findings"] = [displayed(finding, locale) for finding in open_findings]
     if location_id is not None:
         passport.update(_maintenance(connection, location_id))
     return passport

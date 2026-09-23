@@ -55,8 +55,23 @@ export type Passport = {
   current_unit?: PassportUnit | null;
   physical_unit?: PassportUnit | null;
   points?: PassportPoint[];
-  open_findings: { id: string; severity: string; title: string; status: string }[];
-  open_alarms?: { id: string; severity: string; message: string }[];
+  open_findings: {
+    id: string;
+    severity: string;
+    title: string;
+    certainty: string;
+    condition_state: string;
+    ack_state: string;
+    handling_status: string;
+  }[];
+  open_alarms?: {
+    id: string;
+    severity: string;
+    message: string;
+    condition_state: string;
+    ack_state: string;
+    handling_status: string;
+  }[];
   open_work_orders?: { id: string; title: string; status: string }[];
   recent_interventions?: {
     id: string;

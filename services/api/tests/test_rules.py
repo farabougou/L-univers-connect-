@@ -11,9 +11,15 @@ from app.desired_states import (
     desired_state_at,
     in_daily_window,
 )
-from app.findings import change_finding_status, list_findings
+from app.findings import (
+    confirm_finding,
+    displayed,
+    list_findings,
+    raise_or_repeat_finding,
+)
 from app.points import get_point
 from app.rules import ALARM_RULE
+from app.signals import SignalConflict, set_handling
 from app.telemetry import record_measurement
 from app.trust import compute_trust
 from tests.analytics_fixtures import cleanup_tenant, create_tenant_with_points, in_tenant
@@ -91,18 +97,30 @@ def test_threshold_breach_raises_finding_alarm_and_work_order(two_tenants) -> No
 
     assert len(findings) == 1
     finding = findings[0]
-    assert (finding["kind"], finding["method"], finding["status"]) == (
+    assert (finding["kind"], finding["method"], finding["reason_code"]) == (
         "fault",
         "deterministic_rule",
+        "RULE_THRESHOLD_EXCEEDED",
+    )
+    assert (finding["condition_state"], finding["ack_state"], finding["handling_status"]) == (
+        "active",
+        "unacknowledged",
         "open",
     )
+    assert finding["certainty"] == "detected"
+    assert finding["reason_params"] == {
+        "point_code": "CTA01-TDEP",
+        "value": 85.0,
+        "operator": ">",
+        "threshold": 80,
+    }
     assert finding["rule_config_version_id"] == rule_version
     assert finding["subject_node_id"] == tenant_a["ahu"]
     assert finding["evidence"]["value"] == 85.0
     assert finding["evidence"]["threshold"] == 80
     assert finding["alarm_id"] is not None and finding["work_order_id"] is not None
     assert [tuple(row) for row in alarms] == [("systeme:regles", "critical")]
-    assert [tuple(row) for row in work_orders] == [("Départ d'eau trop chaud", "high")]
+    assert [tuple(row) for row in work_orders] == [("Départ d'eau trop chaud", "urgent")]
     assert audited == 1
 
 
@@ -128,24 +146,233 @@ def test_normal_value_raises_nothing(two_tenants) -> None:
         assert _findings(connection) == []
 
 
-def test_a_new_breach_after_resolution_opens_a_new_finding(two_tenants) -> None:
+def _close(connection, tenant, finding_id, handling="closed"):
+    set_handling(
+        connection,
+        kind="finding",
+        tenant_id=tenant["tenant_id"],
+        signal_id=finding_id,
+        handling_status=handling,
+        changed_by="technicien",
+        note="Vanne débloquée",
+    )
+
+
+def test_a_new_breach_after_closing_opens_a_new_finding(two_tenants) -> None:
     tenant_a, _ = two_tenants
     with in_tenant(tenant_a) as connection:
         _activate_rule(connection, tenant_a)
         _measure(connection, tenant_a, 85.0, T0)
         first = _findings(connection)[0]
-        change_finding_status(
+        _measure(connection, tenant_a, 45.0, T0 + timedelta(minutes=1))
+        _close(connection, tenant_a, first["id"])
+        _measure(connection, tenant_a, 86.0, T0 + timedelta(minutes=2))
+        statuses = sorted(f["handling_status"] for f in _findings(connection))
+
+    assert statuses == ["closed", "open"]
+
+
+# --- Retour à la normale, acquittement, traitement (ADR 013) ------------------------------
+
+
+def _alarm_axes(connection, alarm_id):
+    return tuple(
+        connection.execute(
+            text("SELECT condition_state, ack_state, handling_status FROM alarms WHERE id = :id"),
+            {"id": alarm_id},
+        ).one()
+    )
+
+
+def test_return_to_normal_clears_finding_and_alarm_but_keeps_them_to_handle(
+    two_tenants,
+) -> None:
+    tenant_a, _ = two_tenants
+    with in_tenant(tenant_a) as connection:
+        _activate_rule(connection, tenant_a)
+        _measure(connection, tenant_a, 85.0, T0)
+        _measure(connection, tenant_a, 45.0, T0 + timedelta(minutes=1))
+        finding = _findings(connection)[0]
+        alarm = _alarm_axes(connection, finding["alarm_id"])
+
+    assert (finding["condition_state"], finding["ack_state"], finding["handling_status"]) == (
+        "cleared",
+        "unacknowledged",
+        "open",
+    )
+    assert alarm == ("cleared", "unacknowledged", "open")
+
+
+def test_recurrence_before_closing_reactivates_the_same_finding(two_tenants) -> None:
+    tenant_a, _ = two_tenants
+    with in_tenant(tenant_a) as connection:
+        _activate_rule(connection, tenant_a)
+        _measure(connection, tenant_a, 85.0, T0)
+        finding_id = _findings(connection)[0]["id"]
+        set_handling(
+            connection,
+            kind="finding",
+            tenant_id=tenant_a["tenant_id"],
+            signal_id=finding_id,
+            handling_status="in_progress",
+            changed_by="technicien",
+        )
+        _measure(connection, tenant_a, 45.0, T0 + timedelta(minutes=1))
+        _measure(connection, tenant_a, 87.0, T0 + timedelta(minutes=2))
+        findings = _findings(connection)
+        alarm = _alarm_axes(connection, findings[0]["alarm_id"])
+
+    assert [f["id"] for f in findings] == [finding_id]
+    assert (findings[0]["condition_state"], findings[0]["ack_state"]) == (
+        "active",
+        "unacknowledged",
+    )
+    assert findings[0]["handling_status"] == "in_progress"
+    assert findings[0]["occurrence_count"] == 2
+    assert alarm[0] == "active"
+
+
+def test_a_finding_cannot_be_closed_while_its_condition_is_active(two_tenants) -> None:
+    tenant_a, _ = two_tenants
+    with in_tenant(tenant_a) as connection:
+        _activate_rule(connection, tenant_a)
+        _measure(connection, tenant_a, 85.0, T0)
+        finding_id = _findings(connection)[0]["id"]
+    with raises_code(SignalConflict, "SIGNAL_CONDITION_STILL_ACTIVE"):
+        with in_tenant(tenant_a) as connection:
+            _close(connection, tenant_a, finding_id)
+    with in_tenant(tenant_a) as connection:
+        _close(connection, tenant_a, finding_id, handling="false_positive")
+        finding = _findings(connection)[0]
+    # Déclarer un faux positif vaut acquittement.
+    assert (finding["handling_status"], finding["ack_state"]) == (
+        "false_positive",
+        "acknowledged",
+    )
+
+
+def test_a_clean_reading_clears_the_quality_finding(two_tenants) -> None:
+    tenant_a, _ = two_tenants
+    with in_tenant(tenant_a) as connection:
+        _activate_rule(connection, tenant_a)
+        _measure(connection, tenant_a, 150.0, T0)
+        _measure(connection, tenant_a, 45.0, T0 + timedelta(minutes=1))
+        quality = _findings(connection, kind="data_quality")
+
+    assert [(f["reason_code"], f["condition_state"]) for f in quality] == [
+        ("DATA_QUALITY_OUT_OF_RANGE", "cleared")
+    ]
+
+
+def test_major_severity_maps_to_a_high_priority_work_order(two_tenants) -> None:
+    tenant_a, _ = two_tenants
+    with in_tenant(tenant_a) as connection:
+        _activate_rule(connection, tenant_a, severity="major")
+        _measure(connection, tenant_a, 85.0, T0)
+        priority = connection.execute(text("SELECT priority FROM work_orders")).scalar()
+        severity = connection.execute(text("SELECT severity FROM alarms")).scalar()
+
+    assert (priority, severity) == ("high", "major")
+
+
+# --- Textes produits à l'affichage, jamais stockés (ADR 013) ------------------------------
+
+
+def test_system_findings_store_a_code_not_a_sentence(two_tenants) -> None:
+    tenant_a, _ = two_tenants
+    with in_tenant(tenant_a) as connection:
+        _activate_rule(connection, tenant_a)
+        _measure(connection, tenant_a, 150.0, T0)
+        stored = _findings(connection, kind="data_quality")[0]
+
+    assert stored["title"] is None and stored["recommended_action"] is None
+    assert stored["reason_params"] == {"point_code": "CTA01-TDEP"}
+    assert displayed(stored, "fr")["title"] == (
+        "Valeur hors de la plage physique du capteur sur le point CTA01-TDEP"
+    )
+    assert displayed(stored, "en")["title"] == (
+        "Value outside the sensor's physical range on point CTA01-TDEP"
+    )
+
+
+def test_rule_findings_keep_the_title_written_by_their_author(two_tenants) -> None:
+    tenant_a, _ = two_tenants
+    with in_tenant(tenant_a) as connection:
+        _activate_rule(connection, tenant_a)
+        _measure(connection, tenant_a, 85.0, T0)
+        finding = _findings(connection)[0]
+
+    assert displayed(finding, "en")["title"] == "Départ d'eau trop chaud"
+    assert displayed(finding, "en")["recommended_action"] == "Contrôler la vanne trois voies."
+
+
+# --- Certitude : jamais plus que ce que le système sait (ADR 013, 4.4) ---------------------
+
+
+def _confirm(connection, tenant, finding_id, by="technicien-1"):
+    confirm_finding(
+        connection,
+        tenant_id=tenant["tenant_id"],
+        finding_id=finding_id,
+        confirmed_by=by,
+        confirmed_at=T0 + timedelta(hours=1),
+        note="Vanne trois voies grippée constatée sur site",
+    )
+
+
+def test_a_person_confirms_a_detected_fault(two_tenants) -> None:
+    tenant_a, _ = two_tenants
+    with in_tenant(tenant_a) as connection:
+        _activate_rule(connection, tenant_a)
+        _measure(connection, tenant_a, 85.0, T0)
+        finding_id = _findings(connection)[0]["id"]
+        _confirm(connection, tenant_a, finding_id)
+        finding = _findings(connection)[0]
+
+    assert (finding["certainty"], finding["confirmed_by"]) == ("confirmed", "technicien-1")
+
+
+def test_the_system_never_confirms_a_fault(two_tenants) -> None:
+    tenant_a, _ = two_tenants
+    with in_tenant(tenant_a) as connection:
+        _activate_rule(connection, tenant_a)
+        _measure(connection, tenant_a, 85.0, T0)
+        finding_id = _findings(connection)[0]["id"]
+    with raises_code(ValueError, "FINDING_CONFIRMATION_REQUIRES_PERSON"):
+        with in_tenant(tenant_a) as connection:
+            _confirm(connection, tenant_a, finding_id, by="systeme:regles")
+    with pytest.raises(DBAPIError, match="ck_findings_confirmation"):
+        with in_tenant(tenant_a) as connection:
+            connection.execute(
+                text(
+                    "UPDATE findings SET certainty = 'confirmed', confirmed_at = now(), "
+                    "confirmed_by = 'systeme:regles'"
+                )
+            )
+
+
+def test_a_prediction_is_never_confirmed(two_tenants) -> None:
+    tenant_a, _ = two_tenants
+    with in_tenant(tenant_a) as connection:
+        finding_id, _ = raise_or_repeat_finding(
             connection,
             tenant_id=tenant_a["tenant_id"],
-            finding_id=first["id"],
-            status="resolved",
-            changed_by="technicien",
-            note="Vanne débloquée",
+            dedup_key="prediction:test",
+            subject_node_id=tenant_a["ahu"],
+            kind="prediction",
+            method="statistical",
+            severity="warning",
+            reason_code="FINDING_UNCLASSIFIED",
+            reason_params={},
+            evidence={},
+            seen_at=T0,
+            changed_by="systeme:regles",
         )
-        _measure(connection, tenant_a, 86.0, T0 + timedelta(minutes=1))
-        statuses = sorted(f["status"] for f in _findings(connection))
-
-    assert statuses == ["open", "resolved"]
+        certainty = _findings(connection, kind="prediction")[0]["certainty"]
+    assert certainty == "prediction"
+    with raises_code(SignalConflict, "FINDING_PREDICTION_NOT_CONFIRMABLE"):
+        with in_tenant(tenant_a) as connection:
+            _confirm(connection, tenant_a, finding_id)
 
 
 def test_superseded_rule_version_no_longer_applies(two_tenants) -> None:
@@ -336,6 +563,7 @@ def test_tenant_isolation_on_analytics_tables(two_tenants, table) -> None:
     ("statement", "message"),
     [
         ("UPDATE findings SET title = 'autre'", "non modifiable"),
+        ("UPDATE findings SET reason_code = 'AUTRE'", "code de raison non modifiable"),
         ("UPDATE findings SET occurrence_count = 0", "ck_findings_occurrences|en arrière"),
         ("UPDATE desired_states SET value = 1", "non modifiable"),
     ],

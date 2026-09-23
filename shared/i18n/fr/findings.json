@@ -1,0 +1,18 @@
+{
+  "titles": {
+    "DATA_QUALITY_CLOCK_SUSPECT": "Horodatage suspect sur le point {point_code} : relevé daté dans le futur",
+    "DATA_QUALITY_LOW_TRUST": "Règles non évaluées sur le point {point_code} : score de confiance insuffisant ({score}/100)",
+    "DATA_QUALITY_OUT_OF_RANGE": "Valeur hors de la plage physique du capteur sur le point {point_code}",
+    "FINDING_UNCLASSIFIED": "Constat non classé",
+    "RULE_DESIRED_STATE_DIVERGENCE": "Écart entre l’état réel et l’état souhaité sur le point {point_code} : valeur {actual}, valeur attendue {desired}",
+    "RULE_THRESHOLD_EXCEEDED": "Seuil franchi sur le point {point_code} : valeur {value} (condition {operator} {threshold})"
+  },
+  "actions": {
+    "DATA_QUALITY_CLOCK_SUSPECT": "Vérifiez l’horloge de la passerelle ou du capteur. Les règles ne sont pas appliquées à cette valeur.",
+    "DATA_QUALITY_LOW_TRUST": "Contrôlez le capteur avant de vous fier aux alarmes de ce point.",
+    "DATA_QUALITY_OUT_OF_RANGE": "Vérifiez le capteur et son câblage. Les règles ne sont pas appliquées à cette valeur.",
+    "FINDING_UNCLASSIFIED": "Examinez les éléments de preuve du constat.",
+    "RULE_DESIRED_STATE_DIVERGENCE": "Vérifiez la programmation horaire et le fonctionnement de l’équipement.",
+    "RULE_THRESHOLD_EXCEEDED": "Vérifiez le fonctionnement de l’équipement concerné."
+  }
+}

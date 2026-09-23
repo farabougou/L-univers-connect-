@@ -6,13 +6,14 @@ from sqlalchemy import text
 
 from app.db import engine
 from app.maintenance import (
-    change_alarm_status,
     change_work_order_status,
     create_work_order,
     log_intervention,
     raise_alarm,
     record_photo,
 )
+from app.signals import acknowledge, clear_condition, set_handling
+from app.signals import history as signal_history
 from app.tenancy import set_tenant_context
 from tests.db_helpers import purge_audit_log_for_tenant
 
@@ -165,6 +166,8 @@ def test_work_order_type_can_be_set_explicitly(two_tenants) -> None:
 
 
 def test_alarm_lifecycle_keeps_full_history(two_tenants) -> None:
+    """Acquitter, revenir à la normale et clore sont trois faits distincts,
+    chacun tracé (ADR 013, 4.2)."""
     tenant_a, _tenant_b = two_tenants
 
     with engine.begin() as connection:
@@ -176,46 +179,32 @@ def test_alarm_lifecycle_keeps_full_history(two_tenants) -> None:
             severity="critical",
             message="Pression basse détectée",
         )
+    common = {"kind": "alarm", "tenant_id": tenant_a, "signal_id": alarm_id}
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_a)
+        acknowledge(connection, **common, changed_by="responsable-1")
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_a)
+        clear_condition(connection, **common, changed_by="technicien-1", note="Vanne resserrée")
+        set_handling(connection, **common, handling_status="closed", changed_by="technicien-1")
 
     with engine.begin() as connection:
         set_tenant_context(connection, tenant_a)
-        change_alarm_status(
-            connection,
-            tenant_id=tenant_a,
-            alarm_id=alarm_id,
-            status="acknowledged",
-            changed_by="responsable-1",
-        )
-    with engine.begin() as connection:
-        set_tenant_context(connection, tenant_a)
-        change_alarm_status(
-            connection,
-            tenant_id=tenant_a,
-            alarm_id=alarm_id,
-            status="resolved",
-            changed_by="technicien-1",
-            note="Vanne resserrée",
-        )
+        axes = connection.execute(
+            text("SELECT condition_state, ack_state, handling_status FROM alarms WHERE id = :id"),
+            {"id": alarm_id},
+        ).one()
+        entries = [
+            (row["field"], row["value"]) for row in signal_history(connection, "alarm", alarm_id)
+        ]
 
-    with engine.begin() as connection:
-        set_tenant_context(connection, tenant_a)
-        current_status = connection.execute(
-            text("SELECT status FROM alarms WHERE id = :id"), {"id": alarm_id}
-        ).scalar()
-        history = (
-            connection.execute(
-                text(
-                    "SELECT status FROM alarm_status_history "
-                    "WHERE alarm_id = :id ORDER BY changed_at"
-                ),
-                {"id": alarm_id},
-            )
-            .scalars()
-            .all()
-        )
-
-    assert current_status == "resolved"
-    assert history == ["open", "acknowledged", "resolved"]
+    assert tuple(axes) == ("cleared", "acknowledged", "closed")
+    assert entries == [
+        ("handling_status", "open"),
+        ("ack_state", "acknowledged"),
+        ("condition_state", "cleared"),
+        ("handling_status", "closed"),
+    ]
 
 
 def test_log_intervention_without_work_order(two_tenants) -> None:
