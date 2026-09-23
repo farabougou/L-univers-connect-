@@ -259,7 +259,25 @@
       "tag_close": "Fermer",
       "creation_failed": "La création n’a pas pu être effectuée. Réessayez ; si le problème persiste, contactez votre administrateur.",
       "site_timezone_placeholder": "Europe/Paris",
-      "equipment_not_found": "L’équipement demandé est introuvable."
+      "equipment_not_found": "L’équipement demandé est introuvable.",
+      "spaces_title": "Bâtiments et locaux",
+      "no_spaces": "Aucun bâtiment ni local enregistré pour le moment.",
+      "create_space_title": "Ajouter un bâtiment ou un local",
+      "space_site": "Site",
+      "space_type": "Type",
+      "space_parent": "Situé dans (facultatif)",
+      "space_parent_none": "Directement sous le site",
+      "space_code": "Code",
+      "space_name": "Nom",
+      "equipment_space": "Emplacement (facultatif)",
+      "equipment_space_none": "Aucun emplacement précis"
     }
+  },
+  "space_type": {
+    "building": "Bâtiment",
+    "floor": "Étage",
+    "zone": "Zone",
+    "room": "Local technique",
+    "outdoor_area": "Espace extérieur"
   }
 }

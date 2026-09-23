@@ -259,7 +259,25 @@
       "tag_close": "Close",
       "creation_failed": "The creation could not be completed. Try again; if the problem persists, contact your administrator.",
       "site_timezone_placeholder": "Europe/Paris",
-      "equipment_not_found": "The requested equipment could not be found."
+      "equipment_not_found": "The requested equipment could not be found.",
+      "spaces_title": "Buildings and rooms",
+      "no_spaces": "No building or room registered yet.",
+      "create_space_title": "Add a building or a room",
+      "space_site": "Site",
+      "space_type": "Type",
+      "space_parent": "Located in (optional)",
+      "space_parent_none": "Directly under the site",
+      "space_code": "Code",
+      "space_name": "Name",
+      "equipment_space": "Location (optional)",
+      "equipment_space_none": "No precise location"
     }
+  },
+  "space_type": {
+    "building": "Building",
+    "floor": "Floor",
+    "zone": "Zone",
+    "room": "Plant room",
+    "outdoor_area": "Outdoor area"
   }
 }

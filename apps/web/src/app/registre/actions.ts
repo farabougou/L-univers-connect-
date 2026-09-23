@@ -31,6 +31,26 @@ export async function createSite(formData: FormData) {
   revalidatePath("/registre");
 }
 
+export async function createSpace(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const parentId = formData.get("parent_id");
+  const response = await apiFetch("/spaces", accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      site_id: formData.get("site_id"),
+      parent_id: parentId ? parentId : null,
+      space_type: formData.get("space_type"),
+      code: formData.get("code"),
+      name: formData.get("name"),
+    }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(response);
+  }
+  revalidatePath("/registre");
+}
+
 /**
  * Un équipement suppose quatre ressources liées (modèle, exemplaire,
  * emplacement fonctionnel, affectation) : cette action les crée dans
@@ -68,6 +88,7 @@ export async function createEquipment(formData: FormData) {
   }
   const unit = await unitResponse.json();
 
+  const spaceId = formData.get("space_id");
   const locationResponse = await apiFetch("/functional-locations", accessToken, {
     method: "POST",
     headers: json,
@@ -76,6 +97,7 @@ export async function createEquipment(formData: FormData) {
       code: formData.get("code"),
       name: formData.get("name"),
       kind: "equipment",
+      space_id: spaceId ? spaceId : null,
     }),
   });
   if (!locationResponse.ok) {
