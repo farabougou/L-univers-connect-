@@ -290,7 +290,10 @@
       "revoke_tag": "Revoke",
       "revoke_reason": "Reason",
       "no_active_tag": "No active tag.",
-      "create_tag": "Create a tag"
+      "create_tag": "Create a tag",
+      "lifecycle_next_state": "New state",
+      "lifecycle_note": "Reason (optional)",
+      "change_lifecycle": "Change state"
     }
   },
   "space_type": {

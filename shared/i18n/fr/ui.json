@@ -290,7 +290,10 @@
       "revoke_tag": "Révoquer",
       "revoke_reason": "Motif",
       "no_active_tag": "Aucune étiquette active.",
-      "create_tag": "Créer une étiquette"
+      "create_tag": "Créer une étiquette",
+      "lifecycle_next_state": "Nouvel état",
+      "lifecycle_note": "Motif (facultatif)",
+      "change_lifecycle": "Changer l’état"
     }
   },
   "space_type": {

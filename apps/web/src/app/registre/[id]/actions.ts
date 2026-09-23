@@ -119,6 +119,23 @@ export async function endDesiredState(formData: FormData) {
   revalidatePath(`/registre/${nodeId}`);
 }
 
+export async function changeLifecycleState(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+  const unitId = formData.get("physical_unit_id");
+  const note = formData.get("note");
+
+  const response = await apiFetch(`/physical-units/${unitId}/lifecycle`, accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ to_state: formData.get("to_state"), note: note || null }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  revalidatePath(`/registre/${nodeId}`);
+}
+
 export async function revokeTag(formData: FormData) {
   const accessToken = await requireAccessToken();
   const nodeId = String(formData.get("node_id"));

@@ -8,6 +8,7 @@ import { type Locale, formatDate, formatDateTime, formatNumber } from "@/i18n/tr
 
 import {
   acknowledgeSignal,
+  changeLifecycleState,
   clearAlarm,
   createTagForEquipment,
   createWorkOrderForEquipment,
@@ -16,6 +17,21 @@ import {
   revokeTag,
   setHandling,
 } from "./actions";
+
+// Même transitions que app/lifecycle.py, sans les états imposés par
+// l'affectation (installed/removed) : ceux-là ne se déclarent pas à la main.
+const LIFECYCLE_TRANSITIONS: Record<string, string[]> = {
+  planned: ["ordered", "in_stock"],
+  ordered: ["in_stock"],
+  in_stock: ["decommissioned", "disposed"],
+  installed: ["commissioned"],
+  commissioned: ["in_service"],
+  in_service: ["out_of_service"],
+  out_of_service: ["in_service"],
+  removed: ["in_stock", "decommissioned"],
+  decommissioned: ["disposed"],
+  disposed: [],
+};
 
 type DesiredState = {
   id: string;
@@ -121,7 +137,11 @@ export default async function EquipmentPage({
 
       <section style={sectionStyle}>
         <h2 style={sectionTitleStyle}>{t("mobile.passport.unit")}</h2>
-        {unit ? <UnitView unit={unit} t={t} /> : <p>{t("mobile.passport.no_unit")}</p>}
+        {unit ? (
+          <UnitView unit={unit} t={t} nodeId={id} canManage={canManage} />
+        ) : (
+          <p>{t("mobile.passport.no_unit")}</p>
+        )}
       </section>
 
       <section style={sectionStyle}>
@@ -436,10 +456,15 @@ function DesiredStateBlock({
 function UnitView({
   unit,
   t,
+  nodeId,
+  canManage,
 }: {
   unit: PassportUnit;
   t: (key: string, params?: Record<string, string>) => string;
+  nodeId: string;
+  canManage: boolean;
 }) {
+  const nextStates = LIFECYCLE_TRANSITIONS[unit.lifecycle_state] ?? [];
   return (
     <>
       <p style={strongStyle}>
@@ -450,6 +475,27 @@ function UnitView({
       <p>{t("mobile.passport.serial", { serial: unit.serial_number })}</p>
       {unit.asset_code && <p>{t("mobile.passport.asset_code", { code: unit.asset_code })}</p>}
       <p>{t("mobile.passport.state", { state: t(`lifecycle.${unit.lifecycle_state}`) })}</p>
+      {canManage && nextStates.length > 0 && (
+        <form action={changeLifecycleState} style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+          <input type="hidden" name="node_id" value={nodeId} />
+          <input type="hidden" name="physical_unit_id" value={unit.id} />
+          <label>
+            {t("web.registre.lifecycle_next_state")}
+            <select name="to_state" required style={fieldStyle}>
+              {nextStates.map((state) => (
+                <option key={state} value={state}>
+                  {t(`lifecycle.${state}`)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            {t("web.registre.lifecycle_note")}
+            <input name="note" style={fieldStyle} />
+          </label>
+          <button type="submit">{t("web.registre.change_lifecycle")}</button>
+        </form>
+      )}
     </>
   );
 }
