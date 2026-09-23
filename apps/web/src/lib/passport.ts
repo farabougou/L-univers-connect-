@@ -38,8 +38,16 @@ export type PassportUnit = {
   manufacturer_designation: string | null;
 };
 
+export type Tag = {
+  id: string;
+  code: string;
+  payload: string;
+  status: string;
+};
+
 export type Passport = {
   node_id: string;
+  tags?: Tag[];
   status?: EquipmentStatus | null;
   site?: { id: string; name: string; timezone: string | null } | null;
   node_type: "functional_location" | "physical_unit" | "space" | "point";

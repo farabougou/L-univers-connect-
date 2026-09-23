@@ -1,4 +1,5 @@
 import Link from "next/link";
+import QRCode from "qrcode";
 
 import { apiFetch, requireAccessToken } from "@/lib/api";
 import { errorMessage, getLocale, getTranslator } from "@/lib/i18n";
@@ -8,9 +9,11 @@ import { type Locale, formatDate, formatDateTime, formatNumber } from "@/i18n/tr
 import {
   acknowledgeSignal,
   clearAlarm,
+  createTagForEquipment,
   createWorkOrderForEquipment,
   declareDesiredState,
   endDesiredState,
+  revokeTag,
   setHandling,
 } from "./actions";
 
@@ -83,6 +86,10 @@ export default async function EquipmentPage({
   const timeZone = passport.site?.timezone ?? null;
   const alarms = passport.open_alarms ?? [];
   const points = passport.points ?? [];
+  const activeTag = passport.tags?.find((tag) => tag.status === "active") ?? null;
+  const tagSvg = activeTag
+    ? await QRCode.toString(activeTag.payload, { type: "svg", margin: 1, width: 220 })
+    : null;
 
   const desiredStatesByPoint = Object.fromEntries(
     await Promise.all(
@@ -115,6 +122,41 @@ export default async function EquipmentPage({
       <section style={sectionStyle}>
         <h2 style={sectionTitleStyle}>{t("mobile.passport.unit")}</h2>
         {unit ? <UnitView unit={unit} t={t} /> : <p>{t("mobile.passport.no_unit")}</p>}
+      </section>
+
+      <section style={sectionStyle}>
+        <h2 style={sectionTitleStyle}>{t("web.registre.tag_section_title")}</h2>
+        {activeTag && tagSvg ? (
+          <>
+            <div dangerouslySetInnerHTML={{ __html: tagSvg }} />
+            <p>
+              {t("web.registre.tag_code_label")} : <strong>{activeTag.code}</strong>
+            </p>
+            {canManage && (
+              <form action={revokeTag} style={{ maxWidth: 360 }}>
+                <input type="hidden" name="node_id" value={id} />
+                <input type="hidden" name="code" value={activeTag.code} />
+                <label>
+                  {t("web.registre.revoke_reason")}
+                  <input name="reason" required style={fieldStyle} />
+                </label>
+                <button type="submit" style={{ marginTop: 8 }}>
+                  {t("web.registre.revoke_tag")}
+                </button>
+              </form>
+            )}
+          </>
+        ) : (
+          <>
+            <p>{t("web.registre.no_active_tag")}</p>
+            {canManage && (
+              <form action={createTagForEquipment}>
+                <input type="hidden" name="node_id" value={id} />
+                <button type="submit">{t("web.registre.create_tag")}</button>
+              </form>
+            )}
+          </>
+        )}
       </section>
 
       {points.length > 0 && (

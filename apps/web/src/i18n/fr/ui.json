@@ -285,7 +285,12 @@
       "declare_desired_state": "Déclarer un état souhaité",
       "end_desired_state": "Arrêter",
       "no_desired_state": "Aucun état souhaité déclaré.",
-      "desired_state_active": "Attendu : {value} depuis le {since}"
+      "desired_state_active": "Attendu : {value} depuis le {since}",
+      "tag_section_title": "Étiquette",
+      "revoke_tag": "Révoquer",
+      "revoke_reason": "Motif",
+      "no_active_tag": "Aucune étiquette active.",
+      "create_tag": "Créer une étiquette"
     }
   },
   "space_type": {

@@ -285,7 +285,12 @@
       "declare_desired_state": "Declare a desired state",
       "end_desired_state": "Stop",
       "no_desired_state": "No desired state declared.",
-      "desired_state_active": "Expected: {value} since {since}"
+      "desired_state_active": "Expected: {value} since {since}",
+      "tag_section_title": "Tag",
+      "revoke_tag": "Revoke",
+      "revoke_reason": "Reason",
+      "no_active_tag": "No active tag.",
+      "create_tag": "Create a tag"
     }
   },
   "space_type": {
