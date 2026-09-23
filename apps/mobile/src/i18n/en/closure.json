@@ -1,0 +1,44 @@
+{
+  "symptoms": {
+    "no_heating": "No heating",
+    "no_cooling": "No cooling",
+    "insufficient_performance": "Insufficient performance",
+    "abnormal_noise": "Abnormal noise",
+    "vibration": "Vibration",
+    "water_leak": "Water leak",
+    "refrigerant_leak": "Refrigerant leak",
+    "fault_code": "Fault code displayed",
+    "abnormal_consumption": "Abnormal consumption",
+    "preventive_check": "None (preventive check)",
+    "other": "Other"
+  },
+  "causes": {
+    "wear": "Wear",
+    "fouling": "Fouling or clogging",
+    "refrigerant_loss": "Refrigerant loss",
+    "electrical_fault": "Electrical fault",
+    "control_setting": "Setting or programming",
+    "sensor_fault": "Faulty sensor",
+    "component_failure": "Faulty component",
+    "external_cause": "External cause (power cut, frost, impact…)",
+    "lack_of_maintenance": "Insufficient maintenance",
+    "no_fault_found": "No fault found",
+    "unknown": "Cause not identified"
+  },
+  "actions": {
+    "adjustment": "Adjustment",
+    "cleaning": "Cleaning",
+    "repair": "Repair",
+    "replacement": "Part replacement",
+    "refrigerant_recharge": "Refrigerant recharge",
+    "reset": "Reset",
+    "inspection_only": "Inspection only",
+    "temporary_fix": "Temporary fix",
+    "other": "Other"
+  },
+  "verification_results": {
+    "ok": "Operation restored",
+    "partial": "Operation partially restored",
+    "failed": "Operation not restored"
+  }
+}

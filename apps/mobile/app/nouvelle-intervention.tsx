@@ -18,6 +18,14 @@ import { useAuth } from "../src/lib/auth";
 import { t } from "../src/lib/i18n";
 import { insertPendingIntervention, listCachedFunctionalLocations } from "../src/lib/db";
 import type { CachedFunctionalLocation } from "../src/lib/db";
+import {
+  CLOSURE_CODES,
+  type ClosureDraft,
+  type ClosureSection,
+  EMPTY_CLOSURE,
+  toClosureBody,
+  validateClosure,
+} from "../src/lib/closure";
 import { takePhoto } from "../src/lib/photos";
 import { syncPendingInterventions } from "../src/lib/sync";
 
@@ -43,6 +51,8 @@ export default function NouvelleInterventionScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [locations, setLocations] = useState<CachedFunctionalLocation[]>([]);
   const [functionalLocationId, setFunctionalLocationId] = useState<string | null>(null);
+  const [closeNow, setCloseNow] = useState(false);
+  const [closure, setClosure] = useState<ClosureDraft>(EMPTY_CLOSURE);
 
   useEffect(() => {
     listCachedFunctionalLocations().then(setLocations);
@@ -64,6 +74,13 @@ export default function NouvelleInterventionScreen() {
       );
       return;
     }
+    if (closeNow) {
+      const error = validateClosure(closure);
+      if (error) {
+        Alert.alert(t("mobile.intervention.closure.invalid_title"), t(error));
+        return;
+      }
+    }
     setIsSaving(true);
     try {
       const id = localId();
@@ -75,6 +92,7 @@ export default function NouvelleInterventionScreen() {
         startedAt: new Date().toISOString(),
         photoPath,
         functionalLocationId,
+        closure: closeNow ? toClosureBody(closure) : null,
       });
 
       // Tentative d'envoi immédiat si le réseau est disponible maintenant ;
@@ -154,6 +172,12 @@ export default function NouvelleInterventionScreen() {
         </View>
       ))}
 
+      <View style={styles.checklistRow}>
+        <Text style={styles.label}>{t("mobile.intervention.closure.toggle")}</Text>
+        <Switch value={closeNow} onValueChange={setCloseNow} />
+      </View>
+      {closeNow && <ClosureForm draft={closure} onChange={setClosure} />}
+
       <Text style={styles.label}>{t("mobile.intervention.photo_required_label")}</Text>
       {photoPath && <Image source={{ uri: photoPath }} style={styles.photo} />}
       <Button
@@ -172,7 +196,143 @@ export default function NouvelleInterventionScreen() {
   );
 }
 
+const SECTIONS: { section: ClosureSection; field: keyof ClosureDraft; label: string }[] = [
+  { section: "symptoms", field: "symptom_code", label: "mobile.intervention.closure.symptom" },
+  { section: "causes", field: "cause_code", label: "mobile.intervention.closure.cause" },
+  { section: "actions", field: "action_code", label: "mobile.intervention.closure.action" },
+  {
+    section: "verification_results",
+    field: "verification_result",
+    label: "mobile.intervention.closure.verification",
+  },
+];
+
+/** Clôture structurée : choix fermés, lisibles avec des gants (ISO 14224). */
+function ClosureForm({
+  draft,
+  onChange,
+}: {
+  draft: ClosureDraft;
+  onChange: (draft: ClosureDraft) => void;
+}) {
+  const update = (change: Partial<ClosureDraft>) => onChange({ ...draft, ...change });
+  const updatePart = (index: number, change: Partial<ClosureDraft["parts"][number]>) =>
+    update({
+      parts: draft.parts.map((part, i) => (i === index ? { ...part, ...change } : part)),
+    });
+
+  return (
+    <View style={styles.closure}>
+      <Text style={styles.sectionTitle}>{t("mobile.intervention.closure.section")}</Text>
+      {SECTIONS.map(({ section, field, label }) => (
+        <View key={section}>
+          <Text style={styles.label}>{t(label)}</Text>
+          <View style={styles.choices}>
+            {CLOSURE_CODES[section].map((code) => (
+              <Pressable
+                key={code}
+                onPress={() => update({ [field]: code } as Partial<ClosureDraft>)}
+                style={[styles.choice, draft[field] === code && styles.choiceSelected]}
+              >
+                <Text>{t(`closure.${section}.${code}`)}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      ))}
+
+      <Text style={styles.label}>{t("mobile.intervention.closure.labor_minutes")}</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="number-pad"
+        value={draft.labor_minutes}
+        onChangeText={(labor_minutes) => update({ labor_minutes })}
+      />
+
+      <Text style={styles.label}>{t("mobile.intervention.closure.parts")}</Text>
+      {draft.parts.map((part, index) => (
+        <View key={index} style={styles.partRow}>
+          <TextInput
+            style={[styles.input, styles.partReference]}
+            placeholder={t("mobile.intervention.closure.part_reference")}
+            autoCapitalize="characters"
+            value={part.reference}
+            onChangeText={(reference) => updatePart(index, { reference })}
+          />
+          <TextInput
+            style={[styles.input, styles.partQuantity]}
+            placeholder={t("mobile.intervention.closure.part_quantity")}
+            keyboardType="decimal-pad"
+            value={part.quantity}
+            onChangeText={(quantity) => updatePart(index, { quantity })}
+          />
+          <Button
+            title={t("mobile.intervention.closure.remove_part")}
+            onPress={() => update({ parts: draft.parts.filter((_, i) => i !== index) })}
+          />
+        </View>
+      ))}
+      <Button
+        title={t("mobile.intervention.closure.add_part")}
+        onPress={() => update({ parts: [...draft.parts, { reference: "", quantity: "1" }] })}
+      />
+
+      <Text style={styles.label}>{t("mobile.intervention.closure.note")}</Text>
+      <TextInput
+        style={styles.textInput}
+        multiline
+        value={draft.note}
+        onChangeText={(note) => update({ note })}
+      />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  closure: {
+    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+    paddingTop: 8,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  choices: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 4,
+  },
+  choice: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  choiceSelected: {
+    borderColor: "#2563eb",
+    backgroundColor: "#dbeafe",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+  },
+  partRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  partReference: {
+    flex: 2,
+  },
+  partQuantity: {
+    flex: 1,
+  },
   container: {
     padding: 24,
     gap: 12,

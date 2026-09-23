@@ -117,6 +117,9 @@
 | Pas de réseau pendant l'intervention | Aucun | Saisie dans SQLite ; envoi au retour du réseau | Automatique | ✅ |
 | Réseau coupé entre deux étapes d'envoi | Aucun | Chaque étape est notée localement ; la reprise ne recommence pas une étape confirmée | Automatique | ✅ testé |
 | Réponse du serveur perdue après création | Aucun | Chaque envoi porte l'identifiant local (`client_ref`, unique par tenant en base) : un renvoi identique rend l'intervention ou la photo déjà créée (200), un contenu différent est refusé (409) | Automatique | ✅ testé (corrigé le 23 septembre 2026, migration `c0b50f293eec`) |
+| Clôture envoyée deux fois (réponse perdue) | Aucun | La clôture existante est rendue (200) ; un contenu différent est refusé (409), rien n'est réécrit | Automatique | ✅ testé |
+| Clôture refusée par le serveur (intervention déjà clôturée autrement) | L'intervention reste « en attente d'envoi » | Rien n'est perdu ni écrasé | Intervention manuelle | ⚠️ ⏳ file des envois rejetés (M3) |
+| Mise à jour de l'application avec des interventions en attente | Aucun | Base locale versionnée : seules les étapes manquantes s'appliquent, sans suppression | Automatique | ✅ testé (logique), non testé sur téléphone réel |
 | Passeport consulté sans réseau | Message « le passeport se consulte en ligne » | Le passeport n'est pas mis en cache (données vivantes : alarmes, mesures) | Réessayer avec du réseau | ✅ testé |
 | Accès à l'appareil photo refusé | Message : autoriser dans les réglages ou saisir le code | La saisie du code imprimé sous le QR reste possible | Autoriser l'accès ou saisir le code | ✅ (non testé sur téléphone réel) |
 | QR étranger à la plateforme (autre usage, publicité) | Message « n'est pas une étiquette de la plateforme » | Aucun appel au serveur | — | ✅ testé |

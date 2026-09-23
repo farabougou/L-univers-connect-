@@ -431,7 +431,7 @@ pour naître directement sous forme de configuration versionnée produisant un c
 | F2 | ✅ Livrée, CI verte | Plans 2D et IFC : ADR 011, plus tard |
 | F3 | ✅ Livrée, CI verte | File des messages rejetés : M3 |
 | F4 | ✅ Livrée, CI verte | Tables `diagnoses` / `recommendations` et statuts validé/approuvé : DEFER |
-| F5 | ✅ Serveur livré ; écran passeport mobile par saisie du code ou lecture du QR par l'appareil photo (`expo-camera` 57.0.5, version du SDK 57 ; autorisations réduites au seul appareil photo) | Saisie mobile de la clôture structurée (touche la file hors ligne) ; calcul CO₂ équivalent : DEFER ; essais sur téléphone réel |
+| F5 | ✅ Serveur livré ; écran passeport mobile par saisie du code ou lecture du QR par l'appareil photo (`expo-camera` 57.0.5, version du SDK 57 ; autorisations réduites au seul appareil photo) | Calcul CO₂ équivalent : DEFER ; essais sur téléphone réel. Clôture structurée saisie sur mobile hors ligne : faite (base locale versionnée, clôture rejouable côté API) |
 | F6 | ✅ Logs JSON (identifiant de requête, tenant, sans donnée personnelle) ; [modes de défaillance](../architecture/failure-modes.md) | Doublon mobile trouvé en rédigeant, corrigé ensuite (clé `client_ref`, migration `c0b50f293eec`, élargir seulement) ; faille corrigée au passage : la confirmation d'une photo acceptait une clé de stockage d'un autre client |
 
 ## Conséquences

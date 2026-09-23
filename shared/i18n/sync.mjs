@@ -20,7 +20,8 @@ const common = [
   "en/ui.json",
 ];
 const targets = {
-  "apps/mobile/src/i18n": common,
+  // Le mobile affiche aussi les libellés de clôture hors ligne.
+  "apps/mobile/src/i18n": [...common, "fr/closure.json", "en/closure.json"],
   // Le web affiche aussi les erreurs de l'API à partir de leur code.
   "apps/web/src/i18n": [...common, "fr/errors.json", "en/errors.json"],
 };

@@ -7,6 +7,7 @@ const db = vi.hoisted(() => ({
   deletePendingIntervention: vi.fn(),
   markInterventionCreated: vi.fn(),
   markPhotoUploaded: vi.fn(),
+  markClosureSent: vi.fn(),
   replaceFunctionalLocationsCache: vi.fn(),
 }));
 
@@ -25,6 +26,8 @@ function baseRow(overrides: Partial<PendingIntervention> = {}): PendingIntervent
     functional_location_id: null,
     server_id: null,
     photo_uploaded: 0,
+    closure: null,
+    closure_sent: 0,
     ...overrides,
   };
 }
@@ -152,5 +155,50 @@ describe("syncPendingInterventions", () => {
     expect(result).toEqual({ synced: 1, failed: 0 });
     expect(fetchMock).not.toHaveBeenCalled();
     expect(db.deletePendingIntervention).toHaveBeenCalledWith("local-1");
+  });
+
+  it("envoie la clôture après la photo, puis supprime la ligne", async () => {
+    const closure = JSON.stringify({ symptom_code: "no_heating", labor_minutes: 30 });
+    db.listPendingInterventions.mockResolvedValue([
+      baseRow({ server_id: "server-1", photo_uploaded: 1, closure }),
+    ]);
+    const fetchMock = vi.fn().mockResolvedValueOnce(jsonResponse({ id: "closure-1" }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await syncPendingInterventions("https://api.test", "token");
+
+    expect(result).toEqual({ synced: 1, failed: 0 });
+    expect(fetchMock).toHaveBeenCalledWith("https://api.test/interventions/server-1/closure", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer token" },
+      body: closure,
+    });
+    expect(db.markClosureSent).toHaveBeenCalledWith("local-1");
+    expect(db.deletePendingIntervention).toHaveBeenCalledWith("local-1");
+  });
+
+  it("garde la ligne si la clôture est refusée, sans la perdre", async () => {
+    db.listPendingInterventions.mockResolvedValue([
+      baseRow({ server_id: "server-1", photo_uploaded: 1, closure: "{}" }),
+    ]);
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(jsonResponse({}, false)));
+
+    const result = await syncPendingInterventions("https://api.test", "token");
+
+    expect(result).toEqual({ synced: 0, failed: 1 });
+    expect(db.markClosureSent).not.toHaveBeenCalled();
+    expect(db.deletePendingIntervention).not.toHaveBeenCalled();
+  });
+
+  it("ne renvoie pas une clôture déjà confirmée", async () => {
+    db.listPendingInterventions.mockResolvedValue([
+      baseRow({ server_id: "server-1", photo_uploaded: 1, closure: "{}", closure_sent: 1 }),
+    ]);
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    await syncPendingInterventions("https://api.test", "token");
+
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

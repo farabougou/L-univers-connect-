@@ -656,12 +656,13 @@ def read_closure_vocabulary(
 def create_closure(
     intervention_id: uuid.UUID,
     body: ClosureCreate,
+    response: Response,
     connection: Annotated[Connection, Depends(get_tenant_connection)],
     tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
     claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
 ) -> ClosureOut:
     try:
-        close_intervention(
+        _, created = close_intervention(
             connection,
             tenant_id=tenant_id,
             intervention_id=intervention_id,
@@ -680,20 +681,23 @@ def create_closure(
         raise api_error(exc, 409) from exc
     except ClosureError as exc:
         raise api_error(exc, 400) from exc
-    append_audit_entry(
-        connection,
-        tenant_id=tenant_id,
-        actor=_actor(claims),
-        action="intervention.closed",
-        entity_type="intervention",
-        entity_id=str(intervention_id),
-        payload={
-            "symptom_code": body.symptom_code,
-            "cause_code": body.cause_code,
-            "action_code": body.action_code,
-            "verification_result": body.verification_result,
-        },
-    )
+    if created:
+        append_audit_entry(
+            connection,
+            tenant_id=tenant_id,
+            actor=_actor(claims),
+            action="intervention.closed",
+            entity_type="intervention",
+            entity_id=str(intervention_id),
+            payload={
+                "symptom_code": body.symptom_code,
+                "cause_code": body.cause_code,
+                "action_code": body.action_code,
+                "verification_result": body.verification_result,
+            },
+        )
+    else:
+        response.status_code = status.HTTP_200_OK
     return ClosureOut(**get_closure(connection, intervention_id))
 
 

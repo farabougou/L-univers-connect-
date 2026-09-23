@@ -367,8 +367,12 @@ def test_an_intervention_is_closed_once_and_the_closure_is_immutable(two_tenants
     url = f"/interventions/{intervention_id}/closure"
 
     first = _call("POST", url, _tech(tenant_a), json=_CLOSURE)
-    second = _call("POST", url, _tech(tenant_a), json=_CLOSURE)
-    assert (first.status_code, second.status_code) == (201, 409)
+    # Renvoi identique (réponse perdue côté téléphone) : la même clôture.
+    resent = _call("POST", url, _tech(tenant_a), json=_CLOSURE)
+    different = _call("POST", url, _tech(tenant_a), json={**_CLOSURE, "labor_minutes": 60})
+    assert (first.status_code, resent.status_code) == (201, 200)
+    assert resent.json()["id"] == first.json()["id"]
+    assert (different.status_code, different.json()["code"]) == (409, "INTERVENTION_ALREADY_CLOSED")
 
     for statement, message in (
         ("UPDATE intervention_closures SET labor_minutes = 5", "modification interdite"),

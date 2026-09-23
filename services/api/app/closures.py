@@ -48,7 +48,8 @@ def close_intervention(
     verification_result: str,
     closed_by: str,
     note: str | None = None,
-) -> uuid.UUID:
+) -> tuple[uuid.UUID, bool]:
+    """Clôture l'intervention ; renvoie (identifiant, créée maintenant ?)."""
     for code, vocabulary, field in (
         (symptom_code, SYMPTOMS, "symptom_code"),
         (cause_code, CAUSES, "cause_code"),
@@ -65,12 +66,24 @@ def close_intervention(
     ).scalar()
     if not exists:
         raise ClosureNotFound("INTERVENTION_NOT_FOUND")
-    already = connection.execute(
-        text("SELECT 1 FROM intervention_closures WHERE intervention_id = :id"),
-        {"id": intervention_id},
-    ).scalar()
-    if already:
-        raise ClosureConflict("INTERVENTION_ALREADY_CLOSED")
+    existing = get_closure(connection, intervention_id)
+    if existing is not None:
+        # Renvoi d'une clôture déjà reçue (réponse perdue côté téléphone) :
+        # même contenu → la clôture existante ; contenu différent → refus,
+        # une clôture n'est jamais réécrite.
+        submitted = {
+            "symptom_code": symptom_code,
+            "cause_code": cause_code,
+            "action_code": action_code,
+            "parts": json.loads(json.dumps(parts)),
+            "labor_minutes": labor_minutes,
+            "verification_result": verification_result,
+            "note": note,
+            "closed_by": closed_by,
+        }
+        if any(existing[field] != value for field, value in submitted.items()):
+            raise ClosureConflict("INTERVENTION_ALREADY_CLOSED")
+        return existing["id"], False
 
     closure_id = uuid.uuid4()
     connection.execute(
@@ -95,7 +108,7 @@ def close_intervention(
             "closed_by": closed_by,
         },
     )
-    return closure_id
+    return closure_id, True
 
 
 def get_closure(connection: Connection, intervention_id: uuid.UUID) -> dict[str, Any] | None:

@@ -1,5 +1,8 @@
 import * as SQLite from "expo-sqlite";
 
+import type { ClosureBody } from "./closure";
+import { migrateLocalDatabase } from "./localSchema";
+
 /**
  * Stockage local des interventions créées hors ligne (voir ADR 010). Une
  * ligne disparaît de cette table dès qu'elle est entièrement synchronisée
@@ -15,6 +18,9 @@ export type PendingIntervention = {
   functional_location_id: string | null;
   server_id: string | null;
   photo_uploaded: 0 | 1;
+  /** Clôture structurée (JSON), ou null si l'intervention n'est pas clôturée. */
+  closure: string | null;
+  closure_sent: 0 | 1;
 };
 
 export type CachedFunctionalLocation = {
@@ -28,24 +34,7 @@ let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 function getDb(): Promise<SQLite.SQLiteDatabase> {
   if (!dbPromise) {
     dbPromise = SQLite.openDatabaseAsync("paios.db").then(async (db) => {
-      await db.execAsync(`
-        CREATE TABLE IF NOT EXISTS pending_interventions (
-          id TEXT PRIMARY KEY,
-          intervention_type TEXT NOT NULL,
-          summary TEXT,
-          checklist TEXT NOT NULL,
-          started_at TEXT NOT NULL,
-          photo_path TEXT NOT NULL,
-          functional_location_id TEXT,
-          server_id TEXT,
-          photo_uploaded INTEGER NOT NULL DEFAULT 0
-        );
-        CREATE TABLE IF NOT EXISTS functional_locations_cache (
-          id TEXT PRIMARY KEY,
-          code TEXT NOT NULL,
-          name TEXT NOT NULL
-        );
-      `);
+      await migrateLocalDatabase(db);
       return db;
     });
   }
@@ -60,10 +49,11 @@ export async function insertPendingIntervention(input: {
   startedAt: string;
   photoPath: string;
   functionalLocationId: string | null;
+  closure: ClosureBody | null;
 }): Promise<void> {
   const db = await getDb();
   await db.runAsync(
-    "INSERT INTO pending_interventions (id, intervention_type, summary, checklist, started_at, photo_path, functional_location_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    "INSERT INTO pending_interventions (id, intervention_type, summary, checklist, started_at, photo_path, functional_location_id, closure) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
     input.id,
     input.interventionType,
     input.summary,
@@ -71,6 +61,7 @@ export async function insertPendingIntervention(input: {
     input.startedAt,
     input.photoPath,
     input.functionalLocationId,
+    input.closure ? JSON.stringify(input.closure) : null,
   );
 }
 
@@ -124,4 +115,9 @@ export async function markPhotoUploaded(id: string): Promise<void> {
 export async function deletePendingIntervention(id: string): Promise<void> {
   const db = await getDb();
   await db.runAsync("DELETE FROM pending_interventions WHERE id = ?", id);
+}
+
+export async function markClosureSent(id: string): Promise<void> {
+  const db = await getDb();
+  await db.runAsync("UPDATE pending_interventions SET closure_sent = 1 WHERE id = ?", id);
 }

@@ -47,6 +47,12 @@ dans Expo, fonctionne dans Expo Go sans build natif dédié).
   aussi l'identifiant local (`client_ref`, unique par tenant en base) : le serveur
   rend l'intervention ou la photo déjà créée au lieu d'en créer une seconde (voir
   `docs/architecture/failure-modes.md`).
+- Complément du 24 septembre 2026 : la base locale est versionnée
+  (`PRAGMA user_version`, `apps/mobile/src/lib/localSchema.ts`). Une mise à jour
+  de l'application n'applique que les étapes manquantes, dans une transaction,
+  sans jamais supprimer de données : les interventions en attente survivent.
+  Première étape ajoutée : la clôture structurée saisie hors ligne, envoyée après
+  la photo et rejouable sans doublon (même contenu → clôture existante).
 - Une fois entièrement envoyée, la ligne locale est supprimée : ce n'est qu'une file
   d'attente temporaire, pas un historique (l'historique complet vit côté serveur, voir
   la règle non négociable 3).

@@ -46,7 +46,9 @@ describe("catalogues d'interface", () => {
   });
 
   it("vouvoient et n'emploient ni familiarité ni émoji", () => {
-    const familiar = /\b(tu|toi|ton|ta|tes|te)\b|-toi\b|\b(ça|ok|oups)\b/i;
+    // Limites de mot tenant compte des lettres accentuées (\b ne les connaît
+    // pas : il isolerait « te » dans « incomplète »).
+    const familiar = /(?<!\p{L})(tu|toi|ton|ta|tes|te|ça|ok|oups)(?!\p{L})|-toi(?!\p{L})/iu;
     const emoji = /\p{Extended_Pictographic}/u;
     for (const [key, text] of frEntries) {
       expect(familiar.test(text), `${key} : ${text}`).toBe(false);

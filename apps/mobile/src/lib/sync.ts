@@ -1,6 +1,7 @@
 import {
   deletePendingIntervention,
   listPendingInterventions,
+  markClosureSent,
   markInterventionCreated,
   markPhotoUploaded,
   replaceFunctionalLocationsCache,
@@ -33,6 +34,10 @@ export async function syncPendingInterventions(
       if (!row.photo_uploaded) {
         await uploadPhoto(apiUrl, accessToken, serverId, row);
         await markPhotoUploaded(row.id);
+      }
+      if (row.closure && !row.closure_sent) {
+        await sendClosure(apiUrl, accessToken, serverId, row.closure);
+        await markClosureSent(row.id);
       }
       await deletePendingIntervention(row.id);
       synced += 1;
@@ -137,5 +142,27 @@ async function uploadPhoto(
   });
   if (!confirmResponse.ok) {
     throw new Error(`confirmation photo : ${confirmResponse.status}`);
+  }
+}
+
+/**
+ * Clôture structurée, envoyée après la photo. Rejouable : si la réponse s'est
+ * perdue, le serveur rend la clôture déjà enregistrée (200) au lieu de la
+ * dupliquer ; un contenu différent est refusé (409) et la ligne reste en
+ * attente, visible, plutôt que d'être perdue.
+ */
+async function sendClosure(
+  apiUrl: string,
+  accessToken: string,
+  interventionId: string,
+  closure: string,
+): Promise<void> {
+  const response = await fetch(`${apiUrl}/interventions/${interventionId}/closure`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+    body: closure,
+  });
+  if (!response.ok) {
+    throw new Error(`clôture : ${response.status}`);
   }
 }
