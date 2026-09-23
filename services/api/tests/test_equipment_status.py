@@ -113,14 +113,14 @@ def test_equipment_without_status_point_has_an_unknown_state(tenants) -> None:
     tenant_a, _ = tenants
     status = _status(tenant_a, T0, location="bare")
     assert _axes(status) == ("unknown", "unknown", False)
-    assert status["reason"] == "NO_STATUS_POINT"
+    assert status["reason"] == "no_status_point"
 
 
 def test_status_points_without_measurement_give_an_unknown_state(tenants) -> None:
     tenant_a, _ = tenants
     status = _status(tenant_a, T0)
     assert _axes(status) == ("unknown", "unknown", False)
-    assert status["reason"] == "NO_MEASUREMENT"
+    assert status["reason"] == "no_measurement"
 
 
 @pytest.mark.parametrize(

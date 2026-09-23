@@ -89,7 +89,7 @@ def compute_equipment_status(
         "sources": [],
     }
     if not points:
-        result["reason"] = "NO_STATUS_POINT"
+        result["reason"] = "no_status_point"
         return result
 
     values: dict[str, float] = {}
@@ -113,7 +113,7 @@ def compute_equipment_status(
             freshness.append(at - latest["measured_at"] <= limit)
 
     if not result["sources"]:
-        result["reason"] = "NO_MEASUREMENT"
+        result["reason"] = "no_measurement"
         return result
 
     result["as_of"] = max(source["measured_at"] for source in result["sources"])

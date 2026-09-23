@@ -142,8 +142,8 @@ export async function fetchPassportByTag(
 export function statusMessage(
   status: EquipmentStatus,
 ): { key: string; params?: Record<string, string> } {
-  if (status.reason === "NO_STATUS_POINT") return { key: "mobile.passport.status_no_point" };
-  if (status.reason === "NO_MEASUREMENT" || !status.as_of) {
+  if (status.reason === "no_status_point") return { key: "mobile.passport.status_no_point" };
+  if (status.reason === "no_measurement" || !status.as_of) {
     return { key: "mobile.passport.status_no_measurement" };
   }
   const state = `operational_status.${status.operational_status}`;

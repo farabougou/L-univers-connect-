@@ -105,10 +105,10 @@ describe("statusMessage", () => {
 
   it("sans point d'état ni donnée : état non disponible", () => {
     const unknown = { operational_status: "unknown", communication_status: "unknown", current: false };
-    expect(statusMessage({ ...unknown, reason: "NO_STATUS_POINT", as_of: null }).key).toBe(
+    expect(statusMessage({ ...unknown, reason: "no_status_point", as_of: null }).key).toBe(
       "mobile.passport.status_no_point",
     );
-    expect(statusMessage({ ...unknown, reason: "NO_MEASUREMENT", as_of: null }).key).toBe(
+    expect(statusMessage({ ...unknown, reason: "no_measurement", as_of: null }).key).toBe(
       "mobile.passport.status_no_measurement",
     );
   });
