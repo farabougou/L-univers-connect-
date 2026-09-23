@@ -42,6 +42,11 @@ dans Expo, fonctionne dans Expo Go sans build natif dédié).
 - Chaque étape de l'envoi (créer l'intervention, puis envoyer sa photo) met à jour la
   ligne locale au fur et à mesure : si l'envoi s'interrompt en cours de route, reprendre
   plus tard ne recrée jamais une intervention en double.
+- Complément du 23 septembre 2026 : ce suivi local ne couvrait pas le cas où le
+  serveur crée l'intervention mais où la réponse se perd. Chaque envoi porte donc
+  aussi l'identifiant local (`client_ref`, unique par tenant en base) : le serveur
+  rend l'intervention ou la photo déjà créée au lieu d'en créer une seconde (voir
+  `docs/architecture/failure-modes.md`).
 - Une fois entièrement envoyée, la ligne locale est supprimée : ce n'est qu'une file
   d'attente temporaire, pas un historique (l'historique complet vit côté serveur, voir
   la règle non négociable 3).

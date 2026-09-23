@@ -65,6 +65,34 @@ describe("syncPendingInterventions", () => {
     expect(db.deletePendingIntervention).toHaveBeenCalledWith("local-1");
   });
 
+  it("envoie l'identifiant local comme client_ref : un renvoi après une réponse perdue ne crée pas de doublon", async () => {
+    db.listPendingInterventions.mockResolvedValue([baseRow({ id: "local-1727078400000-a1b2c3d4" })]);
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ id: "server-1" }))
+      .mockResolvedValueOnce(
+        jsonResponse({ upload_url: "https://storage/upload", object_key: "key.jpg" }),
+      )
+      .mockResolvedValueOnce({ blob: async () => new Blob() })
+      .mockResolvedValueOnce({ ok: true, status: 200 })
+      .mockResolvedValueOnce(jsonResponse({ id: "photo-1" }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await syncPendingInterventions("https://api.test", "token");
+
+    const bodyOf = (url: string) => {
+      const call = fetchMock.mock.calls.find(([u]) => u === url);
+      return JSON.parse((call?.[1] as RequestInit).body as string);
+    };
+    expect(bodyOf("https://api.test/interventions").client_ref).toBe(
+      "local-1727078400000-a1b2c3d4",
+    );
+    expect(bodyOf("https://api.test/interventions/server-1/photos").client_ref).toBe(
+      "local-1727078400000-a1b2c3d4",
+    );
+  });
+
   it("ne recrée jamais l'intervention si server_id est déjà connu (reprise après coupure)", async () => {
     db.listPendingInterventions.mockResolvedValue([
       baseRow({ server_id: "server-1", photo_uploaded: 0 }),

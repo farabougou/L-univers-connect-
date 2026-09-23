@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, time
 from typing import Literal
 
-from pydantic import AwareDatetime, BaseModel, Field
+from pydantic import AwareDatetime, BaseModel, Field, model_validator
 
 
 class SiteCreate(BaseModel):
@@ -163,6 +163,11 @@ class WorkOrderStatusHistoryOut(BaseModel):
     changed_at: datetime
 
 
+# Référence fournie par le client pour rejouer un envoi sans doublon :
+# identifiant local de la file hors ligne, sans espace ni accent.
+CLIENT_REF_PATTERN = r"^[A-Za-z0-9._:-]{8,100}$"
+
+
 class InterventionCreate(BaseModel):
     work_order_id: uuid.UUID | None = None
     functional_location_id: uuid.UUID | None = None
@@ -172,6 +177,17 @@ class InterventionCreate(BaseModel):
     ended_at: datetime | None = None
     summary: str | None = Field(default=None, max_length=2000)
     checklist: dict = Field(default_factory=dict)
+    client_ref: str | None = Field(default=None, pattern=CLIENT_REF_PATTERN)
+
+    @model_validator(mode="after")
+    def _replayable_needs_its_date(self) -> "InterventionCreate":
+        # Un envoi rejouable porte sa propre date avec son fuseau : sinon le
+        # serveur prendrait l'heure du renvoi et le prendrait pour un autre.
+        if self.client_ref is not None and (
+            self.started_at is None or self.started_at.tzinfo is None
+        ):
+            raise ValueError("client_ref exige started_at avec son fuseau horaire")
+        return self
 
 
 class InterventionOut(BaseModel):
@@ -186,6 +202,7 @@ class InterventionOut(BaseModel):
     summary: str | None
     checklist: dict
     created_at: datetime
+    client_ref: str | None = None
 
 
 class AlarmCreate(BaseModel):
@@ -234,6 +251,7 @@ class PhotoCreate(BaseModel):
     object_key: str = Field(min_length=1, max_length=500)
     caption: str | None = Field(default=None, max_length=500)
     taken_at: datetime | None = None
+    client_ref: str | None = Field(default=None, pattern=CLIENT_REF_PATTERN)
 
 
 class PhotoOut(BaseModel):

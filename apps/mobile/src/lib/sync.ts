@@ -87,6 +87,9 @@ async function ensureInterventionCreated(
       checklist: JSON.parse(row.checklist),
       started_at: row.started_at,
       functional_location_id: row.functional_location_id,
+      // Si la réponse se perd après la création, le renvoi porte la même
+      // référence : le serveur rend l'intervention déjà créée, sans doublon.
+      client_ref: row.id,
     }),
   });
   if (!response.ok) {
@@ -130,7 +133,7 @@ async function uploadPhoto(
   const confirmResponse = await fetch(`${apiUrl}/interventions/${interventionId}/photos`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
-    body: JSON.stringify({ object_key: objectKey, taken_at: row.started_at }),
+    body: JSON.stringify({ object_key: objectKey, taken_at: row.started_at, client_ref: row.id }),
   });
   if (!confirmResponse.ok) {
     throw new Error(`confirmation photo : ${confirmResponse.status}`);

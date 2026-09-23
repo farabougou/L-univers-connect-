@@ -59,6 +59,8 @@
 |---|---|---|---|---|
 | Stockage injoignable | L'envoi de la photo échoue côté mobile | L'intervention est créée, la photo reste en file locale | Nouvel essai à la prochaine synchronisation | ✅ |
 | URL d'envoi expirée | Envoi refusé par le stockage | Une nouvelle URL est demandée à chaque essai | Automatique | ✅ |
+| Photo renvoyée après une confirmation perdue | Aucun pour l'utilisateur | La première photo confirmée est gardée ; le second fichier reste dans le stockage sans lien en base | — | ⚠️ fichiers orphelins ; ⏳ nettoyage périodique des objets sans référence (tâche de fond) |
+| Clé de stockage d'un autre client ou d'une autre intervention | 422 | Refusée : la clé doit être dans le dossier `tenant/intervention/` de la requête (faille corrigée le 23 septembre 2026 : avant, connaître une clé suffisait pour obtenir un lien de téléchargement) | — | ✅ testé |
 | Photo supprimée du téléphone avant l'envoi | La ligne échoue à chaque synchronisation | Aucune file des envois rejetés | Intervention manuelle | ⚠️ ⏳ file des envois rejetés (M3) |
 
 ## 4. API (processus FastAPI)
@@ -102,7 +104,7 @@
 |---|---|---|---|---|
 | Pas de réseau pendant l'intervention | Aucun | Saisie dans SQLite ; envoi au retour du réseau | Automatique | ✅ |
 | Réseau coupé entre deux étapes d'envoi | Aucun | Chaque étape est notée localement ; la reprise ne recommence pas une étape confirmée | Automatique | ✅ testé |
-| **Réponse du serveur perdue après création** | **Intervention (ou photo) en double** | Le serveur a créé l'intervention, le téléphone ne l'a pas su et la recrée au prochain essai | — | ⚠️ **risque ouvert** : ajouter une clé d'idempotence (identifiant local envoyé, contrainte unique `(tenant_id, client_ref)`) — migration en trois temps, à valider avant d'être codée |
+| Réponse du serveur perdue après création | Aucun | Chaque envoi porte l'identifiant local (`client_ref`, unique par tenant en base) : un renvoi identique rend l'intervention ou la photo déjà créée (200), un contenu différent est refusé (409) | Automatique | ✅ testé (corrigé le 23 septembre 2026, migration `c0b50f293eec`) |
 | Passeport consulté sans réseau | Message « le passeport se consulte en ligne » | Le passeport n'est pas mis en cache (données vivantes : alarmes, mesures) | Réessayer avec du réseau | ✅ testé |
 | Étiquette révoquée scannée | Message « scannez la nouvelle étiquette » (410) | Un code révoqué n'est jamais réattribué | Poser la nouvelle étiquette | ✅ testé |
 

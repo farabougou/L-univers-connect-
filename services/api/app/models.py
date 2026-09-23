@@ -458,7 +458,10 @@ class Intervention(Base):
     """
 
     __tablename__ = "interventions"
-    __table_args__ = (UniqueConstraint("tenant_id", "id", name="uq_interventions_tenant_id_id"),)
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "id", name="uq_interventions_tenant_id_id"),
+        UniqueConstraint("tenant_id", "client_ref", name="uq_interventions_tenant_client_ref"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
@@ -484,6 +487,9 @@ class Intervention(Base):
         JSONB, nullable=False, server_default=text("'{}'::jsonb")
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # Référence fournie par le client pour rejouer un envoi sans doublon
+    # (identifiant local de la file hors ligne du téléphone).
+    client_ref: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
 
 class Alarm(Base):
@@ -536,6 +542,11 @@ class InterventionPhoto(Base):
     de la photo n'entre jamais dans PostgreSQL ni dans Git."""
 
     __tablename__ = "intervention_photos"
+    __table_args__ = (
+        UniqueConstraint(
+            "tenant_id", "client_ref", name="uq_intervention_photos_tenant_client_ref"
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
@@ -550,6 +561,7 @@ class InterventionPhoto(Base):
     uploaded_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+    client_ref: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
 
 class Point(Base):

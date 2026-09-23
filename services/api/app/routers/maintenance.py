@@ -2,7 +2,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
@@ -24,12 +24,15 @@ from app.closures import (
 )
 from app.deps import get_tenant_connection, get_tenant_id
 from app.maintenance import (
+    ClientRefConflict,
     change_alarm_status,
     change_work_order_status,
     create_work_order,
     log_intervention,
+    log_intervention_once,
     raise_alarm,
     record_photo,
+    record_photo_once,
 )
 from app.schemas import (
     AlarmCreate,
@@ -49,7 +52,12 @@ from app.schemas import (
     WorkOrderStatusHistoryOut,
     WorkOrderStatusUpdate,
 )
-from app.storage import build_object_key, create_presigned_download_url, create_presigned_upload_url
+from app.storage import (
+    build_object_key,
+    create_presigned_download_url,
+    create_presigned_upload_url,
+    key_belongs_to,
+)
 
 router = APIRouter()
 
@@ -237,13 +245,22 @@ def _read_work_order(connection: Connection, work_order_id: uuid.UUID) -> WorkOr
 # --- Interventions ------------------------------------------------
 
 
+_INTERVENTION_COLUMNS = (
+    "id, work_order_id, functional_location_id, physical_unit_id, technician, "
+    "intervention_type, started_at, ended_at, summary, checklist, created_at, client_ref"
+)
+
+
 @router.post("/interventions", response_model=InterventionOut, status_code=status.HTTP_201_CREATED)
 def create_intervention(
     body: InterventionCreate,
+    response: Response,
     connection: Annotated[Connection, Depends(get_tenant_connection)],
     tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
     claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
 ) -> InterventionOut:
+    """Avec `client_ref`, l'envoi est rejouable : un renvoi identique rend
+    l'intervention déjà créée (200) ; un contenu différent est refusé (409)."""
     if body.work_order_id is not None:
         exists = connection.execute(
             text("SELECT 1 FROM work_orders WHERE id = :id"), {"id": body.work_order_id}
@@ -258,38 +275,46 @@ def create_intervention(
         physical_unit_id=body.physical_unit_id,
     )
 
-    intervention_id = log_intervention(
-        connection,
-        tenant_id=tenant_id,
-        technician=_actor(claims),
-        started_at=body.started_at or datetime.now(UTC),
-        intervention_type=body.intervention_type,
-        ended_at=body.ended_at,
-        summary=body.summary,
-        checklist=body.checklist,
-        work_order_id=body.work_order_id,
-        functional_location_id=body.functional_location_id,
-        physical_unit_id=body.physical_unit_id,
-    )
-    append_audit_entry(
-        connection,
-        tenant_id=tenant_id,
-        actor=_actor(claims),
-        action="intervention.logged",
-        entity_type="intervention",
-        entity_id=str(intervention_id),
-        payload={
-            "work_order_id": str(body.work_order_id) if body.work_order_id else None,
-            "intervention_type": body.intervention_type,
-        },
-    )
+    fields = {
+        "tenant_id": tenant_id,
+        "technician": _actor(claims),
+        "started_at": body.started_at or datetime.now(UTC),
+        "intervention_type": body.intervention_type,
+        "ended_at": body.ended_at,
+        "summary": body.summary,
+        "checklist": body.checklist,
+        "work_order_id": body.work_order_id,
+        "functional_location_id": body.functional_location_id,
+        "physical_unit_id": body.physical_unit_id,
+    }
+    if body.client_ref is None:
+        intervention_id, created = log_intervention(connection, **fields), True
+    else:
+        try:
+            intervention_id, created = log_intervention_once(
+                connection, client_ref=body.client_ref, **fields
+            )
+        except ClientRefConflict as exc:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+
+    if created:
+        append_audit_entry(
+            connection,
+            tenant_id=tenant_id,
+            actor=_actor(claims),
+            action="intervention.logged",
+            entity_type="intervention",
+            entity_id=str(intervention_id),
+            payload={
+                "work_order_id": str(body.work_order_id) if body.work_order_id else None,
+                "intervention_type": body.intervention_type,
+            },
+        )
+    else:
+        response.status_code = status.HTTP_200_OK
     row = (
         connection.execute(
-            text(
-                "SELECT id, work_order_id, functional_location_id, physical_unit_id, "
-                "technician, intervention_type, started_at, ended_at, summary, checklist, "
-                "created_at FROM interventions WHERE id = :id"
-            ),
+            text(f"SELECT {_INTERVENTION_COLUMNS} FROM interventions WHERE id = :id"),
             {"id": intervention_id},
         )
         .mappings()
@@ -305,11 +330,7 @@ def list_interventions(
 ) -> list[InterventionOut]:
     rows = (
         connection.execute(
-            text(
-                "SELECT id, work_order_id, functional_location_id, physical_unit_id, "
-                "technician, intervention_type, started_at, ended_at, summary, checklist, "
-                "created_at FROM interventions ORDER BY started_at"
-            )
+            text(f"SELECT {_INTERVENTION_COLUMNS} FROM interventions ORDER BY started_at")
         )
         .mappings()
         .all()
@@ -362,29 +383,45 @@ def create_photo_upload_url(
 def create_photo(
     intervention_id: uuid.UUID,
     body: PhotoCreate,
+    response: Response,
     connection: Annotated[Connection, Depends(get_tenant_connection)],
     tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
     claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
 ) -> PhotoOut:
     _check_intervention_exists(connection, intervention_id)
+    if not key_belongs_to(body.object_key, tenant_id=tenant_id, intervention_id=intervention_id):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="clé de stockage étrangère à cette intervention",
+        )
 
-    photo_id = record_photo(
-        connection,
-        tenant_id=tenant_id,
-        intervention_id=intervention_id,
-        storage_key=body.object_key,
-        taken_at=body.taken_at or datetime.now(UTC),
-        caption=body.caption,
-    )
-    append_audit_entry(
-        connection,
-        tenant_id=tenant_id,
-        actor=_actor(claims),
-        action="intervention.photo_added",
-        entity_type="intervention_photo",
-        entity_id=str(photo_id),
-        payload={"intervention_id": str(intervention_id)},
-    )
+    fields = {
+        "tenant_id": tenant_id,
+        "intervention_id": intervention_id,
+        "storage_key": body.object_key,
+        "taken_at": body.taken_at or datetime.now(UTC),
+        "caption": body.caption,
+    }
+    if body.client_ref is None:
+        photo_id, created = record_photo(connection, **fields), True
+    else:
+        try:
+            photo_id, created = record_photo_once(connection, client_ref=body.client_ref, **fields)
+        except ClientRefConflict as exc:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+
+    if created:
+        append_audit_entry(
+            connection,
+            tenant_id=tenant_id,
+            actor=_actor(claims),
+            action="intervention.photo_added",
+            entity_type="intervention_photo",
+            entity_id=str(photo_id),
+            payload={"intervention_id": str(intervention_id)},
+        )
+    else:
+        response.status_code = status.HTTP_200_OK
     return _read_photo(connection, photo_id)
 
 

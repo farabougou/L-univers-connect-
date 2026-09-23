@@ -39,6 +39,17 @@ def build_object_key(*, tenant_id: uuid.UUID, intervention_id: uuid.UUID, filena
     return f"{tenant_id}/{intervention_id}/{uuid.uuid4()}-{safe_filename}"
 
 
+def key_belongs_to(object_key: str, *, tenant_id: uuid.UUID, intervention_id: uuid.UUID) -> bool:
+    """Vrai seulement pour une clé du dossier de cette intervention, chez ce
+    tenant, sans sous-dossier. Sans ce contrôle, connaître la clé d'une photo
+    d'un autre client suffirait pour obtenir un lien de téléchargement."""
+    prefix = f"{tenant_id}/{intervention_id}/"
+    if not object_key.startswith(prefix):
+        return False
+    name = object_key[len(prefix) :]
+    return bool(name) and "/" not in name and name not in (".", "..")
+
+
 def create_presigned_upload_url(object_key: str, *, content_type: str) -> str:
     """URL temporaire à usage unique : le client mobile envoie la photo
     directement au stockage, sans jamais recevoir les identifiants d'accès."""

@@ -432,7 +432,7 @@ pour naître directement sous forme de configuration versionnée produisant un c
 | F3 | ✅ Livrée, CI verte | File des messages rejetés : M3 |
 | F4 | ✅ Livrée, CI verte | Tables `diagnoses` / `recommendations` et statuts validé/approuvé : DEFER |
 | F5 | ✅ Serveur livré ; écran passeport mobile par saisie du code | Lecture du QR par la caméra (nouvelle dépendance native `expo-camera`, à valider) ; saisie mobile de la clôture structurée (touche la file hors ligne) ; calcul CO₂ équivalent : DEFER |
-| F6 | ✅ Logs JSON (identifiant de requête, tenant, sans donnée personnelle) ; [modes de défaillance](../architecture/failure-modes.md) | Risque ouvert trouvé en rédigeant : doublon possible d'intervention mobile si la réponse du serveur se perd (clé d'idempotence à ajouter, migration à valider) |
+| F6 | ✅ Logs JSON (identifiant de requête, tenant, sans donnée personnelle) ; [modes de défaillance](../architecture/failure-modes.md) | Doublon mobile trouvé en rédigeant, corrigé ensuite (clé `client_ref`, migration `c0b50f293eec`, élargir seulement) ; faille corrigée au passage : la confirmation d'une photo acceptait une clé de stockage d'un autre client |
 
 ## Conséquences
 

@@ -26,8 +26,11 @@ const CHECKLIST_ITEMS: { key: string; label: string }[] = [
   { key: "filtre_propre", label: "Filtre propre" },
 ];
 
+// Sert aussi de référence client côté serveur (anti-doublon) : unique chez
+// un même client, tous téléphones confondus. Date + 16 caractères aléatoires.
 function localId(): string {
-  return `local-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  const random = () => Math.random().toString(36).slice(2, 10).padEnd(8, "0");
+  return `local-${Date.now()}-${random()}${random()}`;
 }
 
 export default function NouvelleInterventionScreen() {
