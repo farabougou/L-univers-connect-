@@ -66,7 +66,7 @@ export default async function DashboardPage() {
             {locations.map((location) => (
               <tr key={location.id}>
                 <td style={{ borderBottom: "1px solid #eee", padding: "6px 0" }}>
-                  {location.code}
+                  <Link href={`/registre/${location.id}`}>{location.code}</Link>
                 </td>
                 <td style={{ borderBottom: "1px solid #eee", padding: "6px 0" }}>
                   {location.name}

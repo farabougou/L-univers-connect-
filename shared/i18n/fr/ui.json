@@ -258,7 +258,8 @@
       "tag_hint": "Ce QR ne contient qu’un code sans signification. Il peut être imprimé et collé sur l’équipement.",
       "tag_close": "Fermer",
       "creation_failed": "La création n’a pas pu être effectuée. Réessayez ; si le problème persiste, contactez votre administrateur.",
-      "site_timezone_placeholder": "Europe/Paris"
+      "site_timezone_placeholder": "Europe/Paris",
+      "equipment_not_found": "L’équipement demandé est introuvable."
     }
   }
 }

@@ -152,7 +152,9 @@ export default async function RegistrePage({
           <tbody>
             {locations.map((location) => (
               <tr key={location.id}>
-                <td style={cellStyle}>{location.code}</td>
+                <td style={cellStyle}>
+                  <Link href={`/registre/${location.id}`}>{location.code}</Link>
+                </td>
                 <td style={cellStyle}>{location.name}</td>
                 <td style={cellStyle}>{siteName(location.site_id)}</td>
                 <td style={cellStyle}>
