@@ -37,8 +37,9 @@
 | Équipement | Equipment | `functional_location` | Position technique stable remplissant une fonction (« CTA-02 — Bureaux R+1 »). Garde son historique quand l'appareil est remplacé. **Validé par défaut** (alternative écartée : « Poste technique », convention SAP) | Machine, appareil, position | ISO 14224, ISO 81346 |
 | Exemplaire | Unit | `physical_unit` | Appareil physique identifié par son numéro de série, installé à un équipement puis éventuellement déposé. **Validé par défaut** | Matériel, machine | ISO 14224 |
 | Modèle | Product model | `product_model` | Produit d'un fabricant : fabricant + référence commerciale. | Type, gamme | — |
-| Type d'équipement | Equipment type | `equipment_type` (étape L5) | Catégorie universelle normalisée (pompe à chaleur, groupe froid, centrale de traitement d'air…), indépendante de l'appellation du fabricant. | Catégorie libre | Brick (classes `Equipment`) |
-| Désignation constructeur | Manufacturer designation | `manufacturer_designation` (L5) | Nom donné par le fabricant, conservé tel quel. | — | — |
+| Type d'équipement | Equipment type | `equipment_type` | Catégorie universelle normalisée (pompe à chaleur, groupe froid, centrale de traitement d'air…), indépendante de l'appellation du fabricant. | Catégorie libre | Brick (classes `Equipment`) |
+| (types) | (types) | voir `shared/i18n/*/ui.json`, section `equipment_type` | Pompe à chaleur, Groupe froid, Aéroréfrigérant sec, Centrale de traitement d'air, Pompe, Sous-station de réseau de chaleur, Sous-station de réseau de froid, Chaudière, Ventilo-convecteur, Échangeur de chaleur, Autre type d'équipement. | PAC, GEF, CTA comme libellés officiels (acceptés comme alias de saisie) | Brick 1.3 quand la classe existe |
+| Désignation constructeur | Manufacturer designation | `manufacturer_designation` | Nom donné par le fabricant, conservé tel quel. | — | — |
 | Composant | Component | relation `hasPart` | Élément d'un équipement pouvant être maintenu séparément (compresseur, ventilateur, vanne). | Pièce (réservé aux pièces de rechange) | ISO 14224 (élément maintenable) |
 | Pièce de rechange | Spare part | `parts` (clôture) | Pièce consommée lors d'une intervention. | — | — |
 | Système | System | — (DEFER) | Ensemble d'équipements assurant ensemble une fonction (réseau d'eau glacée, ventilation d'un plateau). | Installation | Brick `System` |
@@ -47,7 +48,7 @@
 | Jumeau numérique | Digital twin | — | Représentation numérique vivante d'un site et de ses équipements, construite à partir du registre, du graphe, de la télémétrie et de l'historique. Pas une base séparée. | Maquette (réservé au BIM) | ADR 004, ADR 011 |
 | Étiquette | Tag | `asset_tag` | QR, NFC ou code-barres collé sur un équipement, contenant un code opaque. | QR code comme terme générique | — |
 | Passeport | Asset passport | `passport` | Fiche de synthèse d'un équipement, calculée selon les droits de la personne. | Fiche équipement | Règlement ESPR (passeport produit) |
-| Code d'inventaire | Asset code | `asset_code` (L5) | Code interne du client pour un exemplaire. | Référence (réservé au modèle) | — |
+| Code d'inventaire | Asset code | `asset_code` | Code interne du client pour un exemplaire. | Référence (réservé au modèle) | — |
 
 ## 3. Cycle de vie d'un exemplaire
 

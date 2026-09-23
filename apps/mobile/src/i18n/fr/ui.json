@@ -51,6 +51,19 @@
     "intervention": "Intervention",
     "ronde": "Ronde"
   },
+  "equipment_type": {
+    "heat_pump": "Pompe à chaleur",
+    "chiller": "Groupe froid",
+    "dry_cooler": "Aéroréfrigérant sec",
+    "air_handling_unit": "Centrale de traitement d’air",
+    "pump": "Pompe",
+    "district_heating_substation": "Sous-station de réseau de chaleur",
+    "district_cooling_substation": "Sous-station de réseau de froid",
+    "boiler": "Chaudière",
+    "fan_coil_unit": "Ventilo-convecteur",
+    "heat_exchanger": "Échangeur de chaleur",
+    "other": "Autre type d’équipement"
+  },
   "work_order": {
     "type": {
       "corrective": "Correctif",
@@ -130,6 +143,8 @@
       "unit": "Exemplaire installé",
       "no_unit": "Aucun exemplaire installé.",
       "serial": "N° de série : {serial}",
+      "equipment_type": "Type : {type}",
+      "asset_code": "Code d’inventaire : {code}",
       "state": "État : {state}",
       "latest": "Dernières mesures",
       "no_measurement": "Aucune mesure",

@@ -26,7 +26,10 @@ class SiteOut(BaseModel):
 class ProductModelCreate(BaseModel):
     manufacturer: str = Field(min_length=1, max_length=200)
     reference: str = Field(min_length=1, max_length=200)
-    category: str = Field(min_length=1, max_length=100)
+    # Code du vocabulaire universel (GET /equipment-types).
+    equipment_type: str = Field(min_length=1, max_length=40)
+    # Appellation du fabricant, conservée telle quelle.
+    manufacturer_designation: str | None = Field(default=None, max_length=200)
     description: str | None = Field(default=None, max_length=500)
 
 
@@ -34,7 +37,8 @@ class ProductModelOut(BaseModel):
     id: uuid.UUID
     manufacturer: str
     reference: str
-    category: str
+    equipment_type: str
+    manufacturer_designation: str | None
     description: str | None
     created_at: datetime
 
@@ -42,13 +46,19 @@ class ProductModelOut(BaseModel):
 class PhysicalUnitCreate(BaseModel):
     product_model_id: uuid.UUID
     serial_number: str = Field(min_length=1, max_length=200)
+    asset_code: str | None = Field(default=None, min_length=1, max_length=100)
     commissioned_at: datetime | None = None
+
+
+class AssetCodeUpdate(BaseModel):
+    asset_code: str = Field(min_length=1, max_length=100)
 
 
 class PhysicalUnitOut(BaseModel):
     id: uuid.UUID
     product_model_id: uuid.UUID
     serial_number: str
+    asset_code: str | None
     commissioned_at: datetime | None
     lifecycle_state: str
     created_at: datetime

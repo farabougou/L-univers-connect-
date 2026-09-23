@@ -2,7 +2,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
@@ -10,7 +10,13 @@ from app.assets import assign_physical_unit, get_current_occupant
 from app.audit import append_audit_entry
 from app.auth import require_any_role
 from app.deps import get_tenant_connection, get_tenant_id
+from app.equipment_vocabulary import (
+    EQUIPMENT_TYPES,
+    EQUIPMENT_VOCABULARY_VERSION,
+    suggest_equipment_type,
+)
 from app.errors import ApiError, api_error
+from app.i18n import load_catalog, negotiate_locale
 from app.lifecycle import (
     LifecycleError,
     LifecycleNotFound,
@@ -20,6 +26,7 @@ from app.lifecycle import (
     record_event,
 )
 from app.schemas import (
+    AssetCodeUpdate,
     AssignmentCreate,
     AssignmentOut,
     CurrentOccupantOut,
@@ -138,6 +145,44 @@ def list_sites(
     return [SiteOut(**row) for row in rows]
 
 
+_MODEL_COLUMNS = (
+    "id, manufacturer, reference, equipment_type, manufacturer_designation, description, "
+    "created_at"
+)
+_UNIT_COLUMNS = (
+    "id, product_model_id, serial_number, asset_code, commissioned_at, lifecycle_state, "
+    "created_at"
+)
+
+
+@router.get("/equipment-types")
+def list_equipment_types(
+    request: Request,
+    _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> dict[str, Any]:
+    """Types universels d'équipement, libellés dans la langue demandée."""
+    labels = load_catalog(negotiate_locale(request.headers.get("accept-language")), "ui")[
+        "equipment_type"
+    ]
+    return {
+        "version": EQUIPMENT_VOCABULARY_VERSION,
+        "types": [
+            {"code": code, "label": labels[code], "brick": equipment.brick}
+            for code, equipment in EQUIPMENT_TYPES.items()
+        ],
+    }
+
+
+@router.get("/equipment-types/suggestion")
+def suggest_equipment_type_route(
+    text_to_normalize: Annotated[str, Query(alias="text", min_length=1, max_length=200)],
+    _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> dict[str, str | None]:
+    """Type proposé pour l'appellation d'un fabricant ; `null` si aucune
+    correspondance certaine. Une personne confirme toujours le choix."""
+    return {"equipment_type": suggest_equipment_type(text_to_normalize)}
+
+
 @router.post("/product-models", response_model=ProductModelOut, status_code=status.HTTP_201_CREATED)
 def create_product_model(
     body: ProductModelCreate,
@@ -145,19 +190,22 @@ def create_product_model(
     tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
     claims: Annotated[dict, Depends(require_any_role(*_MANAGE_REGISTRY_ROLES))],
 ) -> ProductModelOut:
+    if body.equipment_type not in EQUIPMENT_TYPES:
+        raise ApiError(422, "EQUIPMENT_TYPE_UNKNOWN", equipment_type=body.equipment_type)
     product_model_id = uuid.uuid4()
     connection.execute(
         text(
-            "INSERT INTO product_models "
-            "(id, tenant_id, manufacturer, reference, category, description) "
-            "VALUES (:id, :tenant_id, :manufacturer, :reference, :category, :description)"
+            "INSERT INTO product_models (id, tenant_id, manufacturer, reference, equipment_type, "
+            "manufacturer_designation, description) VALUES (:id, :tenant_id, :manufacturer, "
+            ":reference, :equipment_type, :manufacturer_designation, :description)"
         ),
         {
             "id": product_model_id,
             "tenant_id": tenant_id,
             "manufacturer": body.manufacturer,
             "reference": body.reference,
-            "category": body.category,
+            "equipment_type": body.equipment_type,
+            "manufacturer_designation": body.manufacturer_designation,
             "description": body.description,
         },
     )
@@ -168,14 +216,15 @@ def create_product_model(
         action="product_model.created",
         entity_type="product_model",
         entity_id=str(product_model_id),
-        payload={"manufacturer": body.manufacturer, "reference": body.reference},
+        payload={
+            "manufacturer": body.manufacturer,
+            "reference": body.reference,
+            "equipment_type": body.equipment_type,
+        },
     )
     row = (
         connection.execute(
-            text(
-                "SELECT id, manufacturer, reference, category, description, created_at "
-                "FROM product_models WHERE id = :id"
-            ),
+            text(f"SELECT {_MODEL_COLUMNS} FROM product_models WHERE id = :id"),
             {"id": product_model_id},
         )
         .mappings()
@@ -190,16 +239,34 @@ def list_product_models(
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
 ) -> list[ProductModelOut]:
     rows = (
-        connection.execute(
-            text(
-                "SELECT id, manufacturer, reference, category, description, created_at "
-                "FROM product_models ORDER BY created_at"
-            )
-        )
+        connection.execute(text(f"SELECT {_MODEL_COLUMNS} FROM product_models ORDER BY created_at"))
         .mappings()
         .all()
     )
     return [ProductModelOut(**row) for row in rows]
+
+
+def _check_asset_code_free(connection: Connection, asset_code: str | None) -> None:
+    if asset_code is None:
+        return
+    taken = connection.execute(
+        text("SELECT 1 FROM physical_units WHERE asset_code = :code"), {"code": asset_code}
+    ).scalar()
+    if taken:
+        raise ApiError(409, "ASSET_CODE_ALREADY_USED", asset_code=asset_code)
+
+
+def _read_unit(connection: Connection, unit_id: uuid.UUID) -> PhysicalUnitOut:
+    row = (
+        connection.execute(
+            text(f"SELECT {_UNIT_COLUMNS} FROM physical_units WHERE id = :id"), {"id": unit_id}
+        )
+        .mappings()
+        .first()
+    )
+    if row is None:
+        raise ApiError(404, "PHYSICAL_UNIT_NOT_FOUND")
+    return PhysicalUnitOut(**row)
 
 
 @router.post("/physical-units", response_model=PhysicalUnitOut, status_code=status.HTTP_201_CREATED)
@@ -214,19 +281,22 @@ def create_physical_unit(
     ).scalar()
     if not model_exists:
         raise ApiError(404, "PRODUCT_MODEL_NOT_FOUND")
+    _check_asset_code_free(connection, body.asset_code)
 
     unit_id = uuid.uuid4()
     connection.execute(
         text(
             "INSERT INTO physical_units "
-            "(id, tenant_id, product_model_id, serial_number, commissioned_at) "
-            "VALUES (:id, :tenant_id, :product_model_id, :serial_number, :commissioned_at)"
+            "(id, tenant_id, product_model_id, serial_number, asset_code, commissioned_at) "
+            "VALUES (:id, :tenant_id, :product_model_id, :serial_number, :asset_code, "
+            ":commissioned_at)"
         ),
         {
             "id": unit_id,
             "tenant_id": tenant_id,
             "product_model_id": body.product_model_id,
             "serial_number": body.serial_number,
+            "asset_code": body.asset_code,
             "commissioned_at": body.commissioned_at,
         },
     )
@@ -247,21 +317,39 @@ def create_physical_unit(
         action="physical_unit.created",
         entity_type="physical_unit",
         entity_id=str(unit_id),
-        payload={"serial_number": body.serial_number},
+        payload={"serial_number": body.serial_number, "asset_code": body.asset_code},
     )
-    row = (
-        connection.execute(
-            text(
-                "SELECT id, product_model_id, serial_number, commissioned_at, lifecycle_state, "
-                "created_at "
-                "FROM physical_units WHERE id = :id"
-            ),
-            {"id": unit_id},
-        )
-        .mappings()
-        .one()
+    return _read_unit(connection, unit_id)
+
+
+@router.put("/physical-units/{physical_unit_id}/asset-code", response_model=PhysicalUnitOut)
+def set_asset_code(
+    physical_unit_id: uuid.UUID,
+    body: AssetCodeUpdate,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
+    claims: Annotated[dict, Depends(require_any_role(*_MANAGE_REGISTRY_ROLES))],
+) -> PhysicalUnitOut:
+    """Renseigne ou corrige le code d'inventaire ; l'ancienne valeur reste dans
+    le journal d'audit."""
+    previous = _read_unit(connection, physical_unit_id).asset_code
+    if previous == body.asset_code:
+        return _read_unit(connection, physical_unit_id)
+    _check_asset_code_free(connection, body.asset_code)
+    connection.execute(
+        text("UPDATE physical_units SET asset_code = :code WHERE id = :id"),
+        {"code": body.asset_code, "id": physical_unit_id},
     )
-    return PhysicalUnitOut(**row)
+    append_audit_entry(
+        connection,
+        tenant_id=tenant_id,
+        actor=_actor(claims),
+        action="physical_unit.asset_code_set",
+        entity_type="physical_unit",
+        entity_id=str(physical_unit_id),
+        payload={"previous": previous, "asset_code": body.asset_code},
+    )
+    return _read_unit(connection, physical_unit_id)
 
 
 @router.get("/physical-units", response_model=list[PhysicalUnitOut])
@@ -270,13 +358,7 @@ def list_physical_units(
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
 ) -> list[PhysicalUnitOut]:
     rows = (
-        connection.execute(
-            text(
-                "SELECT id, product_model_id, serial_number, commissioned_at, lifecycle_state, "
-                "created_at "
-                "FROM physical_units ORDER BY created_at"
-            )
-        )
+        connection.execute(text(f"SELECT {_UNIT_COLUMNS} FROM physical_units ORDER BY created_at"))
         .mappings()
         .all()
     )

@@ -28,15 +28,15 @@ def _create_tenant_with_asset(connection, *, tenant_name: str) -> dict:
     product_model_id = uuid.uuid4()
     connection.execute(
         text(
-            "INSERT INTO product_models (id, tenant_id, manufacturer, reference, category) "
-            "VALUES (:id, :tenant_id, :manufacturer, :reference, :category)"
+            "INSERT INTO product_models (id, tenant_id, manufacturer, reference, equipment_type) "
+            "VALUES (:id, :tenant_id, :manufacturer, :reference, :equipment_type)"
         ),
         {
             "id": product_model_id,
             "tenant_id": tenant_id,
             "manufacturer": "Fabricant Demo",
             "reference": "PAC-100",
-            "category": "pac",
+            "equipment_type": "heat_pump",
         },
     )
 

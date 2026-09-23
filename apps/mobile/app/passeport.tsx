@@ -173,7 +173,16 @@ function UnitView({ unit }: { unit: PassportUnit }) {
       <Text style={styles.strong}>
         {unit.manufacturer} {unit.reference}
       </Text>
+      <Text>
+        {t("mobile.passport.equipment_type", { type: t(`equipment_type.${unit.equipment_type}`) })}
+      </Text>
+      {unit.manufacturer_designation && (
+        <Text style={styles.muted}>{unit.manufacturer_designation}</Text>
+      )}
       <Text>{t("mobile.passport.serial", { serial: unit.serial_number })}</Text>
+      {unit.asset_code && (
+        <Text>{t("mobile.passport.asset_code", { code: unit.asset_code })}</Text>
+      )}
       <Text>{t("mobile.passport.state", { state: t(`lifecycle.${unit.lifecycle_state}`) })}</Text>
     </>
   );

@@ -40,10 +40,12 @@ export type PassportPoint = {
 export type PassportUnit = {
   id: string;
   serial_number: string;
+  asset_code: string | null;
   lifecycle_state: string;
   manufacturer: string;
   reference: string;
-  category: string;
+  equipment_type: string;
+  manufacturer_designation: string | null;
 };
 
 export type Passport = {

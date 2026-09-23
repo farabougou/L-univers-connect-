@@ -77,8 +77,9 @@ def _space_path(connection: Connection, space_id: uuid.UUID | None) -> list[dict
 def _unit_summary(connection: Connection, unit_id: uuid.UUID) -> dict[str, Any] | None:
     unit = _one(
         connection,
-        "SELECT u.id, u.serial_number, u.lifecycle_state, u.commissioned_at, "
-        "m.manufacturer, m.reference, m.category FROM physical_units u "
+        "SELECT u.id, u.serial_number, u.asset_code, u.lifecycle_state, u.commissioned_at, "
+        "m.manufacturer, m.reference, m.equipment_type, m.manufacturer_designation "
+        "FROM physical_units u "
         "JOIN product_models m ON m.id = u.product_model_id WHERE u.id = :id",
         {"id": unit_id},
     )

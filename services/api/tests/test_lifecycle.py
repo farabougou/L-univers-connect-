@@ -37,8 +37,9 @@ def _create_tenant(name: str) -> dict:
         )
         connection.execute(
             text(
-                "INSERT INTO product_models (id, tenant_id, manufacturer, reference, category) "
-                "VALUES (:model, :tenant_id, 'Fabricant Demo', 'PAC-1', 'pac')"
+                "INSERT INTO product_models "
+                "(id, tenant_id, manufacturer, reference, equipment_type) "
+                "VALUES (:model, :tenant_id, 'Fabricant Demo', 'PAC-1', 'heat_pump')"
             ),
             params,
         )

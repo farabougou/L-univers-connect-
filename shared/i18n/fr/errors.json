@@ -13,6 +13,7 @@
   },
   "codes": {
     "ALARM_NOT_FOUND": "L’alarme demandée est introuvable.",
+    "ASSET_CODE_ALREADY_USED": "Le code d’inventaire « {asset_code} » est déjà attribué à un autre exemplaire.",
     "AUTH_PROVIDER_UNAVAILABLE": "Le service d’authentification est momentanément indisponible. Réessayez dans quelques instants.",
     "CLIENT_REF_CONFLICT": "Cette référence client désigne déjà une autre intervention (champs différents : {fields}).",
     "CLIENT_REF_PHOTO_CONFLICT": "Cette référence client désigne déjà une autre photo.",
@@ -31,6 +32,7 @@
     "DESIRED_STATE_ALREADY_ENDED": "Cet état souhaité est déjà clos.",
     "DESIRED_STATE_NOT_FOUND": "L’état souhaité demandé est introuvable.",
     "END_BEFORE_START": "La date de fin doit être postérieure à la date de début.",
+    "EQUIPMENT_TYPE_UNKNOWN": "Type d’équipement inconnu : « {equipment_type} ». Consultez la liste des types disponibles.",
     "EXTERNAL_ID_ALREADY_USED": "Cet identifiant externe est déjà utilisé.",
     "EXTERNAL_ID_SCHEME_UNKNOWN": "Système d’identifiants inconnu : « {scheme} ».",
     "FINDING_ALREADY_CONFIRMED": "Ce constat est déjà confirmé.",

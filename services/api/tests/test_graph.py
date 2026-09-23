@@ -65,8 +65,9 @@ def _create_tenant_with_graph(name: str) -> dict:
         product_model_id = uuid.uuid4()
         connection.execute(
             text(
-                "INSERT INTO product_models (id, tenant_id, manufacturer, reference, category) "
-                "VALUES (:id, :tenant_id, 'Fabricant Demo', 'CTA-X', 'cta')"
+                "INSERT INTO product_models "
+                "(id, tenant_id, manufacturer, reference, equipment_type) "
+                "VALUES (:id, :tenant_id, 'Fabricant Demo', 'CTA-X', 'air_handling_unit')"
             ),
             {"id": product_model_id, "tenant_id": tenant_id},
         )

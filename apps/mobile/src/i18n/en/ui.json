@@ -51,6 +51,19 @@
     "intervention": "Intervention",
     "ronde": "Inspection round"
   },
+  "equipment_type": {
+    "heat_pump": "Heat pump",
+    "chiller": "Chiller",
+    "dry_cooler": "Dry cooler",
+    "air_handling_unit": "Air handling unit",
+    "pump": "Pump",
+    "district_heating_substation": "District heating substation",
+    "district_cooling_substation": "District cooling substation",
+    "boiler": "Boiler",
+    "fan_coil_unit": "Fan coil unit",
+    "heat_exchanger": "Heat exchanger",
+    "other": "Other equipment type"
+  },
   "work_order": {
     "type": {
       "corrective": "Corrective",
@@ -130,6 +143,8 @@
       "unit": "Installed unit",
       "no_unit": "No unit installed.",
       "serial": "Serial number: {serial}",
+      "equipment_type": "Type: {type}",
+      "asset_code": "Asset code: {code}",
       "state": "State: {state}",
       "latest": "Latest measurements",
       "no_measurement": "No measurement",

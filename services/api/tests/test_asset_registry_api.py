@@ -73,7 +73,12 @@ def test_full_asset_registry_flow_as_admin(tenant_id) -> None:
 
         model_response = client.post(
             "/product-models",
-            json={"manufacturer": "Fabricant Demo", "reference": "PAC-100", "category": "pac"},
+            json={
+                "manufacturer": "Fabricant Demo",
+                "reference": "PAC-100",
+                "equipment_type": "heat_pump",
+                "manufacturer_designation": "PAC air/eau réversible",
+            },
             headers=headers,
         )
         assert model_response.status_code == 201

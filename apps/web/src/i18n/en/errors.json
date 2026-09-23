@@ -13,6 +13,7 @@
   },
   "codes": {
     "ALARM_NOT_FOUND": "The requested alarm could not be found.",
+    "ASSET_CODE_ALREADY_USED": "The asset code “{asset_code}” is already assigned to another unit.",
     "AUTH_PROVIDER_UNAVAILABLE": "The authentication service is temporarily unavailable. Please try again in a few moments.",
     "CLIENT_REF_CONFLICT": "This client reference already identifies another intervention (differing fields: {fields}).",
     "CLIENT_REF_PHOTO_CONFLICT": "This client reference already identifies another photo.",
@@ -31,6 +32,7 @@
     "DESIRED_STATE_ALREADY_ENDED": "This desired state has already ended.",
     "DESIRED_STATE_NOT_FOUND": "The requested desired state could not be found.",
     "END_BEFORE_START": "The end date must be later than the start date.",
+    "EQUIPMENT_TYPE_UNKNOWN": "Unknown equipment type: “{equipment_type}”. See the list of available types.",
     "EXTERNAL_ID_ALREADY_USED": "This external identifier is already in use.",
     "EXTERNAL_ID_SCHEME_UNKNOWN": "Unknown identifier scheme: “{scheme}”.",
     "FINDING_ALREADY_CONFIRMED": "This finding has already been confirmed.",

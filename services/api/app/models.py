@@ -194,7 +194,10 @@ class ProductModel(Base):
     )
     manufacturer: Mapped[str] = mapped_column(String(200), nullable=False)
     reference: Mapped[str] = mapped_column(String(200), nullable=False)
-    category: Mapped[str] = mapped_column(String(100), nullable=False)
+    # Type universel (app.equipment_vocabulary) et appellation du fabricant,
+    # conservée telle quelle (ADR 013, étape L5).
+    equipment_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    manufacturer_designation: Mapped[str | None] = mapped_column(String(200), nullable=True)
     description: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
@@ -207,6 +210,13 @@ class PhysicalUnit(Base):
     __table_args__ = (
         _graph_node_fk("physical_units"),
         Index("physical_units_tenant_serial_idx", "tenant_id", "serial_number", unique=True),
+        Index(
+            "uq_physical_units_tenant_asset_code",
+            "tenant_id",
+            "asset_code",
+            unique=True,
+            postgresql_where=text("asset_code IS NOT NULL"),
+        ),
         UniqueConstraint("tenant_id", "id", name="uq_physical_units_tenant_id_id"),
         CheckConstraint(
             "lifecycle_state IN ('planned', 'ordered', 'in_stock', 'installed', 'commissioned', "
@@ -223,6 +233,8 @@ class PhysicalUnit(Base):
         UUID(as_uuid=True), ForeignKey("product_models.id"), nullable=False
     )
     serial_number: Mapped[str] = mapped_column(String(200), nullable=False)
+    # Code d'inventaire propre au client (unique chez lui s'il est renseigné).
+    asset_code: Mapped[str | None] = mapped_column(String(100), nullable=True)
     commissioned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     # État courant (app.lifecycle) ; la vérité historique vit dans
     # PhysicalUnitLifecycleEvent, jamais modifiée.
