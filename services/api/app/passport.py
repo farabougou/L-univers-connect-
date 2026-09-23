@@ -11,12 +11,14 @@ commande d'équipement n'existe (règle non négociable 1).
 """
 
 import uuid
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
 from app.closure_vocabulary import label as closure_label
+from app.equipment_status import compute_equipment_status
 from app.findings import displayed
 from app.graph import get_node
 from app.i18n import DEFAULT_LOCALE
@@ -215,6 +217,12 @@ def build_passport(
     )
     passport["open_findings"] = [displayed(finding, locale) for finding in open_findings]
     passport["site"] = _site(connection, _site_id(connection, node_type, node_id, location_id))
+    # État de fonctionnement et de communication de l'équipement (ADR 013, L6).
+    passport["status"] = (
+        compute_equipment_status(connection, location_id, datetime.now(UTC))
+        if location_id is not None
+        else None
+    )
     if location_id is not None:
         passport.update(_maintenance(connection, location_id, locale))
     return passport

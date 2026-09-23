@@ -51,6 +51,19 @@
     "intervention": "Intervention",
     "ronde": "Inspection round"
   },
+  "operational_status": {
+    "running": "Running",
+    "stopped": "Stopped",
+    "disabled": "Disabled",
+    "fault": "Fault",
+    "unknown": "Unknown state"
+  },
+  "communication_status": {
+    "online": "Online",
+    "offline": "Offline",
+    "unreachable": "Unreachable",
+    "unknown": "Communication cannot be verified"
+  },
   "equipment_type": {
     "heat_pump": "Heat pump",
     "chiller": "Chiller",
@@ -156,6 +169,12 @@
       "work_orders": "Current work orders",
       "interventions": "Latest interventions",
       "no_summary": "No report",
+      "status": "Equipment state",
+      "status_current": "{state} — {communication}",
+      "status_offline": "Offline since {since}. Last known state: {state}.",
+      "status_unverified": "Last known state: {state} ({since}). Whether this information is current cannot be verified.",
+      "status_no_point": "No status point is connected: the equipment state is not available.",
+      "status_no_measurement": "No status data has been received: the equipment state is not available.",
       "site_time": "Times shown in the site time zone ({timezone}).",
       "device_time": "Times shown in the device time zone: the site time zone has not been set."
     }

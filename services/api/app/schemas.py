@@ -668,3 +668,23 @@ class PropertyOut(BaseModel):
     recorded_at: datetime
     reason: str
     created_by: str
+
+
+class EquipmentStatusSource(BaseModel):
+    point_id: uuid.UUID
+    point_class: str
+    value: float
+    measured_at: datetime
+
+
+class EquipmentStatusOut(BaseModel):
+    """Deux axes distincts (ADR 013, 4.5). `current` est faux quand l'état
+    n'est que le dernier connu (hors ligne, ou actualité invérifiable)."""
+
+    operational_status: str
+    communication_status: str
+    current: bool
+    as_of: datetime | None
+    reason: str | None
+    evaluated_at: datetime
+    sources: list[EquipmentStatusSource]

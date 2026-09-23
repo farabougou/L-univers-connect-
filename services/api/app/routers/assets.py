@@ -10,6 +10,7 @@ from app.assets import assign_physical_unit, get_current_occupant
 from app.audit import append_audit_entry
 from app.auth import require_any_role
 from app.deps import get_tenant_connection, get_tenant_id
+from app.equipment_status import compute_equipment_status
 from app.equipment_vocabulary import (
     EQUIPMENT_TYPES,
     EQUIPMENT_VOCABULARY_VERSION,
@@ -30,6 +31,7 @@ from app.schemas import (
     AssignmentCreate,
     AssignmentOut,
     CurrentOccupantOut,
+    EquipmentStatusOut,
     FunctionalLocationCreate,
     FunctionalLocationOut,
     LifecycleChange,
@@ -603,3 +605,23 @@ def read_lifecycle(
     except LifecycleNotFound as exc:
         raise api_error(exc, 404) from exc
     return [LifecycleEventOut(**row) for row in lifecycle_history(connection, physical_unit_id)]
+
+
+@router.get(
+    "/functional-locations/{functional_location_id}/status", response_model=EquipmentStatusOut
+)
+def read_equipment_status(
+    functional_location_id: uuid.UUID,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> EquipmentStatusOut:
+    """État de fonctionnement et de communication, calculé à l'instant de la
+    demande à partir des points d'état validés."""
+    exists = connection.execute(
+        text("SELECT 1 FROM functional_locations WHERE id = :id"), {"id": functional_location_id}
+    ).scalar()
+    if not exists:
+        raise ApiError(404, "FUNCTIONAL_LOCATION_NOT_FOUND")
+    return EquipmentStatusOut(
+        **compute_equipment_status(connection, functional_location_id, datetime.now(UTC))
+    )

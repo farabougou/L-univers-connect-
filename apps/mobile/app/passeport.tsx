@@ -14,10 +14,12 @@ import { useAuth } from "../src/lib/auth";
 import { locale, t } from "../src/lib/i18n";
 import { formatDate, formatDateTime, formatNumber } from "../src/i18n/translator";
 import {
+  type EquipmentStatus,
   type Passport,
   type PassportUnit,
   fetchPassportByTag,
   parseTagCode,
+  statusMessage,
 } from "../src/lib/passport";
 
 // Saisie manuelle du code imprimé sous le QR. La lecture par la caméra
@@ -88,6 +90,12 @@ function PassportView({ passport }: { passport: Passport }) {
       )}
       {passport.space_path && passport.space_path.length > 0 && (
         <Text style={styles.muted}>{passport.space_path.map((s) => s.name).join(" › ")}</Text>
+      )}
+
+      {passport.status && (
+        <Section title={t("mobile.passport.status")}>
+          <StatusLine status={passport.status} timeZone={timeZone} />
+        </Section>
       )}
 
       <Section title={t("mobile.passport.unit")}>
@@ -165,6 +173,18 @@ function PassportView({ passport }: { passport: Passport }) {
       </Text>
     </View>
   );
+}
+
+function StatusLine({ status, timeZone }: { status: EquipmentStatus; timeZone: string | null }) {
+  const { key, params } = statusMessage(status);
+  // Les paramètres sont eux-mêmes des clés (états) ou une date à mettre en forme.
+  const rendered = Object.fromEntries(
+    Object.entries(params ?? {}).map(([name, value]) => [
+      name,
+      name === "since" ? formatDateTime(locale, value, timeZone) : t(value),
+    ]),
+  );
+  return <Text style={status.current ? styles.strong : undefined}>{t(key, rendered)}</Text>;
 }
 
 function UnitView({ unit }: { unit: PassportUnit }) {

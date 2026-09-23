@@ -16,7 +16,7 @@ from dataclasses import dataclass
 
 from app.errors import DomainError
 
-POINT_VOCABULARY_VERSION = "2026-09-23.1"
+POINT_VOCABULARY_VERSION = "2026-09-24.1"
 
 VALUE_TYPES = ("number", "boolean", "multistate")
 
@@ -82,6 +82,8 @@ POINT_CLASSES: dict[str, PointClass] = {
         PointClass("energy_meter_reading", "meter", "number", "energy", "brick:Energy_Sensor"),
         PointClass("run_status", "status", "boolean", None, "brick:Run_Status"),
         PointClass("fault_status", "alarm", "boolean", None, "brick:Fault_Status"),
+        # Autorisation de marche : 1 = autorisé, 0 = désactivé (ADR 013, L6).
+        PointClass("enable_status", "status", "boolean", None, "brick:Enable_Status"),
         PointClass(
             "temperature_setpoint",
             "setpoint",

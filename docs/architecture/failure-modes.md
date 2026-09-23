@@ -84,6 +84,14 @@
 | Erreur pendant l'évaluation des règles | Le relevé est refusé (500) | Choix délibéré : mesure et règles dans la même transaction, jamais « enregistré à moitié » ; le contenu des règles est validé à leur création | L'émetteur renvoie (idempotent) après correction | ⚠️ une règle défaillante bloque l'ingestion de ses points ; ⏳ évaluation en tâche de fond (M3) |
 | Relevé impossible à enregistrer (point inconnu, unité fausse) | 404 / 422 | Refusé, rien n'est gardé | — | ⏳ file des messages rejetés (M3) |
 
+## 5 bis. État des équipements
+
+| Défaillance | Effet visible | Comportement actuel | Reprise | Statut |
+|---|---|---|---|---|
+| Plus aucune donnée d'état (GTB ou passerelle en panne) | « Hors ligne depuis … Dernier état connu : … » | Jamais d'état présenté comme actuel sans donnée récente | Automatique au retour des données | ✅ testé |
+| Points d'état remontés seulement sur changement (sans intervalle attendu) | « L'actualité de cette information ne peut pas être vérifiée » | La communication n'est pas déclarée « en ligne » par supposition | Déclarer un intervalle attendu (ou attendre l'Edge en M3) | ✅ testé |
+| Valeur d'état douteuse (horloge, hors plage) | Aucun | Ignorée pour le calcul | — | ✅ testé |
+
 ## 6. Règles, constats, alarmes
 
 | Défaillance | Effet visible | Comportement actuel | Reprise | Statut |

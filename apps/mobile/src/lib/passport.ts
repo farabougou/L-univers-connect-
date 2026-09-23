@@ -48,8 +48,17 @@ export type PassportUnit = {
   manufacturer_designation: string | null;
 };
 
+export type EquipmentStatus = {
+  operational_status: string;
+  communication_status: string;
+  current: boolean;
+  as_of: string | null;
+  reason: string | null;
+};
+
 export type Passport = {
   node_id: string;
+  status?: EquipmentStatus | null;
   site?: { id: string; name: string; timezone: string | null } | null;
   node_type: "functional_location" | "physical_unit" | "space" | "point";
   allowed_actions: string[];
@@ -124,4 +133,31 @@ export async function fetchPassportByTag(
         params: { status: response.status },
       };
   }
+}
+
+/**
+ * Phrase d'état : jamais un état présenté comme actuel sans donnée récente
+ * (ADR 013, 4.5). Renvoie la clé du catalogue et ses paramètres.
+ */
+export function statusMessage(
+  status: EquipmentStatus,
+): { key: string; params?: Record<string, string> } {
+  if (status.reason === "NO_STATUS_POINT") return { key: "mobile.passport.status_no_point" };
+  if (status.reason === "NO_MEASUREMENT" || !status.as_of) {
+    return { key: "mobile.passport.status_no_measurement" };
+  }
+  const state = `operational_status.${status.operational_status}`;
+  if (status.current) {
+    return {
+      key: "mobile.passport.status_current",
+      params: { state, communication: `communication_status.${status.communication_status}` },
+    };
+  }
+  return {
+    key:
+      status.communication_status === "offline"
+        ? "mobile.passport.status_offline"
+        : "mobile.passport.status_unverified",
+    params: { state, since: status.as_of },
+  };
 }

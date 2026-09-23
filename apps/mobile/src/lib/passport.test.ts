@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { fetchPassportByTag, parseTagCode } from "./passport";
+import { fetchPassportByTag, parseTagCode, statusMessage } from "./passport";
 
 describe("parseTagCode", () => {
   it("accepte le contenu brut d'un QR", () => {
@@ -61,5 +61,55 @@ describe("fetchPassportByTag", () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Network request failed")));
     const result = await fetchPassportByTag("https://api.test", "jeton", "Ab3_x-9Zk2LmN0pQ", "fr");
     expect(result).toEqual({ ok: false, messageKey: "mobile.passport.offline" });
+  });
+});
+
+describe("statusMessage", () => {
+  const base = { reason: null, as_of: "2026-09-24T08:00:00Z" };
+
+  it("n'affirme un état actuel qu'avec une communication en ligne", () => {
+    expect(
+      statusMessage({
+        ...base,
+        operational_status: "running",
+        communication_status: "online",
+        current: true,
+      }).key,
+    ).toBe("mobile.passport.status_current");
+  });
+
+  it("hors ligne : dernier état connu et sa date", () => {
+    expect(
+      statusMessage({
+        ...base,
+        operational_status: "running",
+        communication_status: "offline",
+        current: false,
+      }),
+    ).toEqual({
+      key: "mobile.passport.status_offline",
+      params: { state: "operational_status.running", since: "2026-09-24T08:00:00Z" },
+    });
+  });
+
+  it("actualité invérifiable : le dit explicitement", () => {
+    expect(
+      statusMessage({
+        ...base,
+        operational_status: "disabled",
+        communication_status: "unknown",
+        current: false,
+      }).key,
+    ).toBe("mobile.passport.status_unverified");
+  });
+
+  it("sans point d'état ni donnée : état non disponible", () => {
+    const unknown = { operational_status: "unknown", communication_status: "unknown", current: false };
+    expect(statusMessage({ ...unknown, reason: "NO_STATUS_POINT", as_of: null }).key).toBe(
+      "mobile.passport.status_no_point",
+    );
+    expect(statusMessage({ ...unknown, reason: "NO_MEASUREMENT", as_of: null }).key).toBe(
+      "mobile.passport.status_no_measurement",
+    );
   });
 });

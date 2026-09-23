@@ -51,6 +51,19 @@
     "intervention": "Intervention",
     "ronde": "Ronde"
   },
+  "operational_status": {
+    "running": "En fonctionnement",
+    "stopped": "Arrêté",
+    "disabled": "Désactivé",
+    "fault": "En défaut",
+    "unknown": "État inconnu"
+  },
+  "communication_status": {
+    "online": "En ligne",
+    "offline": "Hors ligne",
+    "unreachable": "Injoignable",
+    "unknown": "Communication non vérifiable"
+  },
   "equipment_type": {
     "heat_pump": "Pompe à chaleur",
     "chiller": "Groupe froid",
@@ -156,6 +169,12 @@
       "work_orders": "Ordres de travail en cours",
       "interventions": "Dernières interventions",
       "no_summary": "Sans compte rendu",
+      "status": "État de l’équipement",
+      "status_current": "{state} — {communication}",
+      "status_offline": "Hors ligne depuis le {since}. Dernier état connu : {state}.",
+      "status_unverified": "Dernier état connu : {state} ({since}). L’actualité de cette information ne peut pas être vérifiée.",
+      "status_no_point": "Aucun point d’état n’est raccordé : l’état de l’équipement n’est pas disponible.",
+      "status_no_measurement": "Aucune donnée d’état n’a été reçue : l’état de l’équipement n’est pas disponible.",
       "site_time": "Heures affichées dans le fuseau du site ({timezone}).",
       "device_time": "Heures affichées dans le fuseau de l’appareil : le fuseau du site n’est pas renseigné."
     }
