@@ -27,15 +27,18 @@ export default function HomeScreen() {
       return;
     }
     setApiError(null);
-    fetch(`${config.apiUrl}/me`, {
-      headers: { Authorization: `Bearer ${auth.accessToken}` },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-        return res.json();
+    auth.getAccessToken().then((token) => {
+      if (!token) return;
+      fetch(`${config.apiUrl}/me`, {
+        headers: { Authorization: `Bearer ${token}` },
       })
-      .then(setMe)
-      .catch((err: Error) => setApiError(err.message));
+        .then((res) => {
+          if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+          return res.json();
+        })
+        .then(setMe)
+        .catch((err: Error) => setApiError(err.message));
+    });
   }, [auth.accessToken]);
 
   async function refreshPendingCount() {
@@ -43,9 +46,10 @@ export default function HomeScreen() {
   }
 
   async function runSync() {
-    if (!auth.accessToken) return;
-    await syncPendingInterventions(config.apiUrl, auth.accessToken);
-    await refreshFunctionalLocationsCache(config.apiUrl, auth.accessToken).catch(() => {});
+    const token = await auth.getAccessToken();
+    if (!token) return;
+    await syncPendingInterventions(config.apiUrl, token);
+    await refreshFunctionalLocationsCache(config.apiUrl, token).catch(() => {});
     await refreshPendingCount();
   }
 

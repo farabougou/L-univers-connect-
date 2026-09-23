@@ -18,15 +18,18 @@ export default function HistoriqueScreen() {
 
   useEffect(() => {
     if (!auth.accessToken) return;
-    fetch(`${config.apiUrl}/interventions`, {
-      headers: { Authorization: `Bearer ${auth.accessToken}` },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error(`${res.status}`);
-        return res.json();
+    auth.getAccessToken().then((token) => {
+      if (!token) return;
+      fetch(`${config.apiUrl}/interventions`, {
+        headers: { Authorization: `Bearer ${token}` },
       })
-      .then((data: Intervention[]) => setInterventions(data.reverse()))
-      .catch((err: Error) => setError(err.message));
+        .then((res) => {
+          if (!res.ok) throw new Error(`${res.status}`);
+          return res.json();
+        })
+        .then((data: Intervention[]) => setInterventions(data.reverse()))
+        .catch((err: Error) => setError(err.message));
+    });
   }, [auth.accessToken]);
 
   return (

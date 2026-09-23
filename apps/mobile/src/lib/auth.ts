@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as AuthSession from "expo-auth-session";
 import * as SecureStore from "expo-secure-store";
 import * as WebBrowser from "expo-web-browser";
@@ -9,7 +9,7 @@ import { config } from "./config";
 // le retour de Keycloak vers l'application (voir la doc expo-web-browser).
 WebBrowser.maybeCompleteAuthSession();
 
-const ACCESS_TOKEN_KEY = "paios_access_token";
+const TOKENS_STORE_KEY = "paios_tokens";
 
 // Endpoints standards OpenID Connect exposés par tout serveur Keycloak, pour
 // le realm "paios" (voir docs/adr/002-authentification.md). Pas de découverte
@@ -21,6 +21,23 @@ function discovery(): AuthSession.DiscoveryDocument {
   };
 }
 
+async function loadStoredTokens(): Promise<AuthSession.TokenResponse | null> {
+  const raw = await SecureStore.getItemAsync(TOKENS_STORE_KEY);
+  if (!raw) return null;
+  try {
+    return new AuthSession.TokenResponse(JSON.parse(raw));
+  } catch {
+    return null;
+  }
+}
+
+async function persistTokens(tokenResponse: AuthSession.TokenResponse): Promise<void> {
+  await SecureStore.setItemAsync(
+    TOKENS_STORE_KEY,
+    JSON.stringify(tokenResponse.getRequestConfig()),
+  );
+}
+
 /**
  * Connexion via le flux standard "Authorization Code + PKCE" (voir
  * infra/README.md) : jamais de mot de passe saisi dans l'application elle-même,
@@ -30,6 +47,7 @@ export function useAuth() {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const tokenResponseRef = useRef<AuthSession.TokenResponse | null>(null);
 
   // Sans argument, Expo choisit automatiquement la bonne adresse de retour :
   // une adresse de test dans Expo Go (utilisé maintenant), une adresse
@@ -51,9 +69,11 @@ export function useAuth() {
   // Au démarrage, réutilise un jeton déjà obtenu précédemment plutôt que de
   // redemander une connexion à chaque ouverture de l'application.
   useEffect(() => {
-    SecureStore.getItemAsync(ACCESS_TOKEN_KEY)
-      .then(setAccessToken)
-      .finally(() => setIsLoading(false));
+    loadStoredTokens().then((tokenResponse) => {
+      tokenResponseRef.current = tokenResponse;
+      setAccessToken(tokenResponse?.accessToken ?? null);
+      setIsLoading(false);
+    });
   }, []);
 
   useEffect(() => {
@@ -68,9 +88,10 @@ export function useAuth() {
         },
         discovery(),
       )
-        .then((tokenResponse) => {
+        .then(async (tokenResponse) => {
+          tokenResponseRef.current = tokenResponse;
+          await persistTokens(tokenResponse);
           setAccessToken(tokenResponse.accessToken);
-          return SecureStore.setItemAsync(ACCESS_TOKEN_KEY, tokenResponse.accessToken);
         })
         .catch((exchangeError: Error) => setError(exchangeError.message));
     } else if (response?.type === "error") {
@@ -78,8 +99,39 @@ export function useAuth() {
     }
   }, [response, request, redirectUri]);
 
+  /**
+   * Renvoie un jeton garanti valide, en le rafraîchissant silencieusement si
+   * besoin. Sans ça, la session expirerait au bout de quelques minutes
+   * (durée de vie par défaut d'un jeton Keycloak) en pleine intervention sur
+   * le terrain — toujours appeler ceci juste avant un appel à l'API plutôt
+   * que d'utiliser `accessToken` directement.
+   */
+  async function getAccessToken(): Promise<string | null> {
+    const tokenResponse = tokenResponseRef.current;
+    if (!tokenResponse) {
+      return null;
+    }
+    if (!tokenResponse.shouldRefresh()) {
+      return tokenResponse.accessToken;
+    }
+    try {
+      await tokenResponse.refreshAsync({ clientId: config.oidcClientId }, discovery());
+      await persistTokens(tokenResponse);
+      setAccessToken(tokenResponse.accessToken);
+      return tokenResponse.accessToken;
+    } catch {
+      // Le jeton de rafraîchissement lui-même a expiré ou a été révoqué :
+      // il n'y a pas d'autre choix que de redemander une connexion.
+      tokenResponseRef.current = null;
+      await SecureStore.deleteItemAsync(TOKENS_STORE_KEY);
+      setAccessToken(null);
+      return null;
+    }
+  }
+
   async function signOut() {
-    await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
+    tokenResponseRef.current = null;
+    await SecureStore.deleteItemAsync(TOKENS_STORE_KEY);
     setAccessToken(null);
   }
 
@@ -90,5 +142,6 @@ export function useAuth() {
     canSignIn: Boolean(request),
     signIn: () => promptAsync(),
     signOut,
+    getAccessToken,
   };
 }

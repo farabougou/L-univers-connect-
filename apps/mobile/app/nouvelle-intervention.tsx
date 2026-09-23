@@ -76,8 +76,9 @@ export default function NouvelleInterventionScreen() {
       // Tentative d'envoi immédiat si le réseau est disponible maintenant ;
       // sinon la ligne reste en attente et sera reprise plus tard (voir
       // ADR 010 et le déclenchement automatique sur l'écran d'accueil).
-      if (auth.accessToken) {
-        await syncPendingInterventions(config.apiUrl, auth.accessToken).catch(() => {});
+      const token = await auth.getAccessToken();
+      if (token) {
+        await syncPendingInterventions(config.apiUrl, token).catch(() => {});
       }
 
       router.back();
