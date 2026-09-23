@@ -324,7 +324,9 @@
       "rule_reason": "Motif",
       "activate_rule": "Activer",
       "retire_rule": "Retirer",
-      "retire_reason": "Motif du retrait"
+      "retire_reason": "Motif du retrait",
+      "restore_rule": "Restaurer",
+      "restore_reason": "Motif de restauration"
     }
   },
   "space_type": {

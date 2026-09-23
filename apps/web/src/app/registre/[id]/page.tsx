@@ -18,6 +18,7 @@ import {
   createWorkOrderForEquipment,
   declareDesiredState,
   endDesiredState,
+  restoreRule,
   retireRule,
   revokeTag,
   setAssetCode,
@@ -567,6 +568,14 @@ function RulesBlock({
               <input type="hidden" name="node_id" value={nodeId} />
               <input name="reason" required placeholder={t("web.registre.retire_reason")} />
               <button type="submit">{t("web.registre.retire_rule")}</button>
+            </form>
+          )}
+          {canManage && version.status === "retired" && (
+            <form action={restoreRule} style={{ display: "inline-flex", gap: 4, marginLeft: 8 }}>
+              <input type="hidden" name="version_id" value={version.id} />
+              <input type="hidden" name="node_id" value={nodeId} />
+              <input name="reason" required placeholder={t("web.registre.restore_reason")} />
+              <button type="submit">{t("web.registre.restore_rule")}</button>
             </form>
           )}
         </p>

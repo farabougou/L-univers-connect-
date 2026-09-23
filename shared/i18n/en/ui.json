@@ -324,7 +324,9 @@
       "rule_reason": "Reason",
       "activate_rule": "Activate",
       "retire_rule": "Retire",
-      "retire_reason": "Reason for retiring"
+      "retire_reason": "Reason for retiring",
+      "restore_rule": "Restore",
+      "restore_reason": "Reason for restoring"
     }
   },
   "space_type": {

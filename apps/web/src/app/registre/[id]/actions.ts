@@ -178,6 +178,22 @@ export async function activateRule(formData: FormData) {
   revalidatePath(`/registre/${nodeId}`);
 }
 
+export async function restoreRule(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+  const versionId = formData.get("version_id");
+
+  const response = await apiFetch(`/configs/${versionId}/restore`, accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reason: formData.get("reason") }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  revalidatePath(`/registre/${nodeId}`);
+}
+
 export async function retireRule(formData: FormData) {
   const accessToken = await requireAccessToken();
   const nodeId = String(formData.get("node_id"));
