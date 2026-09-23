@@ -84,6 +84,13 @@ jamais de redémarrage du projet à zéro.
 | Intelligence de flotte (analyse comparative multi-sites/multi-clients) | ❌ Absent | Argument marketing fort chez Honeywell Forge et JCI OpenBlue (portefeuilles multi-bâtiments) | Basse actuellement | Brique **Fleet Intelligence**, s'appuie sur RLS multi-tenant existant | ADD (tardif) | Dépend d'un volume réel de sites/actifs pour être utile — prématuré avant plusieurs clients actifs avec plusieurs sites chacun. |
 | API/connecteurs ouverts pour intégrations tierces | ⚠️ Partiel — API FastAPI interne existe, pas encore pensée comme API publique versionnée pour des tiers | Marketplace de connecteurs chez les grands éditeurs (hors périmètre 12 mois chez nous, décision déjà actée) | Basse (déjà explicitement hors périmètre 12 mois) | `services/api` | Pas de décision — conforme à la portée déjà actée | Rien à faire : notre propre feuille de route exclut déjà la marketplace de connecteurs pour 12 mois. Pas de changement de cap pour suivre un concurrent. |
 | Web console responsable d'exploitation (registre d'actifs, planification d'ordres de travail) | ✅ Fait (vertical slice M1) | Équivalent chez tous les concurrents cités | Haute | `apps/web` | KEEP | — |
+| Hiérarchie spatiale (Portfolio → Site → Bâtiment → Étage → Zone/Pièce), équipement rattaché à son emplacement | ⚠️ Partiel — `sites` + arbre `functional_locations` sans notion spatiale | Standard chez Siemens, Schneider, Honeywell, Johnson Controls et dans les logiciels de gestion immobilière (connaissance générale, non revérifiée) | Haute | ADR 011 : nouvelle table `spaces` + `functional_locations.space_id` / `kind` | ADD (S1) + REFACTOR par ajout de colonnes | Notre approche sépare l'arbre spatial et l'arbre technique, comme IFC et Brick Schema : une CTA peut être au sous-sol et desservir cinq étages sans contorsion. Prépare aussi les périmètres du futur ReBAC (ADR 003). |
+| Plans 2D interactifs (visionneuse/éditeur, placement de pièces, équipements, capteurs, compteurs) | ❌ Absent | Synoptiques graphiques des GTB (Siemens Desigo CC, Schneider EcoStruxure Building Operation…) ; plateforme multisite de Smart & Connective (détail non vérifié) | Haute | ADR 011 : `floor_plans` (versionnés) + `plan_placements` | ADD (S3, S4) | Approche volontairement différente : dans une GTB classique, chaque synoptique est dessiné à la main et relié à des adresses de points, ce qui duplique la liste des équipements. Chez nous, le plan ne fait que référencer les identifiants du registre : aucune seconde base d'équipements. |
+| Aucun plan obligatoire (construction manuelle Bâtiment → Étage → Pièce → Équipement) | ❌ Absent (possible seulement via l'arbre technique, sans typage) | Variable selon les éditeurs | Haute | ADR 011 : `spaces`, console web | ADD (S1, S2) | Beaucoup de bâtiments tertiaires existants n'ont ni BIM ni plan à jour : c'est le cas le plus fréquent du wedge. |
+| Affichage temps réel sur plan (température, qualité d'air, alarmes, maintenance, énergie) | ❌ Absent | Standard dans les GTB et les plateformes des grands éditeurs | Haute, après les points | ADR 011 : `points` + mesures + alarmes/OT existants | ADD (S5, avec le premier connecteur réel M3) | Les alarmes et ordres de travail existants s'afficheront sans modification, via l'emplacement de leur position fonctionnelle. Occupation uniquement agrégée (vie privée). |
+| Import BIM/IFC vers le registre d'actifs | ❌ Absent | Jumeaux numériques fondés sur le BIM chez les grands éditeurs (connaissance générale, non revérifiée) | Moyenne | ADR 011 : `external_identifiers` + propositions à valider, adaptateur IFC | ADD (S6) | IFC est une norme ouverte (ISO 16739) ; la bibliothèque de lecture reste derrière un adaptateur. L'import produit des propositions, jamais des données considérées fiables sans validation. |
+| Analyse assistée par IA des plans et modèles BIM | ❌ Absent | Fonction émergente sur le marché (acteurs non vérifiés) | Basse | ADR 011 : même circuit de propositions que l'IFC | ADD (S7) | Toute détection reste une proposition vérifiable et corrigeable ; aucune automatisation ne peut s'appuyer sur une donnée non validée. |
+| Visualisation 3D / BIM | ❌ Absent | Grands éditeurs | Basse pour le lancement | ADR 011 : visionneuse IFC open source reliée à nos identifiants | ADD (S8) | Le modèle sépare identité et géométrie : la 3D s'ajoutera comme une vue, sans modifier le modèle fondamental. |
 | Zero-Trust / sécurité des accès (rôles, permissions fines) | ⚠️ Partiel — rôles Keycloak de base ; pas de modèle de permissions fin (ReBAC) | Modèle de permissions souvent plus fin chez les grands éditeurs (multi-niveaux d'organisation) | Moyenne | `services/api` (autorisations, ADR 003) | Pas de décision immédiate (REFACTOR différé) | Règle des trois déjà appliquée : un modèle ReBAC complet a été volontairement reporté faute de 3 cas réels distincts. Cette matrice confirme que ce report reste correct — à revoir dès qu'un vrai besoin (ex. sous-traitant avec accès limité) apparaît. |
 
 ## Décisions techniques actuelles signalées comme à risque de blocage futur
@@ -99,11 +106,12 @@ gardé en tête pour ne pas devoir réécrire plus tard :
    connecteur était codé directement contre un protocole précis sans
    passer par un adaptateur générique (règle non négociable 8) — donc
    vigilance à avoir explicitement au moment de M3, pas maintenant.
-2. **FunctionalLocation sans typage de hiérarchie.** Pas bloquant tant
-   qu'un seul type de site est géré. Si un client avec plusieurs niveaux
-   de portefeuille (ex. groupe → site → bâtiment → zone) arrive avant M2,
-   il faudra une migration en trois temps (élargir/migrer/contracter,
-   règle 6) plutôt qu'un ajout de colonne improvisé.
+2. **FunctionalLocation sans typage de hiérarchie.** Tranché le 23/09/2026
+   par l'ADR 011 : les bâtiments, étages, pièces et zones vont dans une
+   table `spaces` séparée ; `functional_locations` garde le rôle technique
+   (système → équipement → composant) et reçoit `space_id` et `kind`. À
+   appliquer dès maintenant : ne plus créer de nœud spatial comme position
+   fonctionnelle.
 3. **Modèle de permissions Keycloak actuel (rôles simples).** Suffisant
    pour un seul niveau d'organisation par tenant. Si un client demande un
    sous-traitant avec accès restreint à un sous-ensemble de sites avant

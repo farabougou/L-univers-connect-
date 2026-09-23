@@ -9,7 +9,7 @@ Physical Asset Intelligence OS — instructions pour Claude Code
 	•	Vise des solutions robustes et durables. Pas de raccourcis « suffisants pour l'instant » sur la sécurité, l'isolation des clients ou l'historique des données.
 	•	Avant toute action risquée (suppression, migration destructive, changement de dépendances majeur), explique-moi et demande mon accord.
 2. Le produit en bref
-Plateforme mondiale de gestion et d'intelligence des actifs physiques (multi-clients, edge-first). Vision complète : docs/spec/Cahier_des_charges_Physical_Asset_Intelligence_OS_v1.1.docx. Le cahier a une Partie I (vision v1.0) et une Partie II (décisions d'ingénierie v1.1, sections 25 à 39). En cas de conflit, la Partie II et la section 36 (plan MVP) priment pour le démarrage.
+Plateforme mondiale de gestion et d'intelligence des actifs physiques (multi-clients, edge-first). Vision complète : docs/spec/Cahier_des_charges_Physical_Asset_Intelligence_OS_v1.1.docx. Le cahier a une Partie I (vision v1.0) et une Partie II (décisions d'ingénierie v1.1, sections 25 à 39). En cas de conflit, la Partie II et la section 36 (plan MVP) priment pour le démarrage. Ajouts au cahier : docs/spec/vision-cible-physical-asset-intelligence-automation-os.md (ADR 004) et docs/spec/spatial-bim-engine.md (ADR 011).
 Premier produit (wedge) : maintenance et suivi des installations CVC, froid et chaud du tertiaire (PAC, groupes froids, dry coolers, CTA, pompes, sous-stations de réseaux urbains).
 Ordre de construction : registre d'actifs + application technicien hors ligne (M1), puis squelette de bout en bout (M2), puis télémétrie en lecture seule (M3), puis Edge durci (M4), puis énergie et conformité (M5).
 3. Règles non négociables
