@@ -275,7 +275,17 @@
       "acknowledge": "Acquitter",
       "close_signal": "Clore",
       "clear_condition": "Déclarer le retour à la normale",
-      "false_positive": "Marquer comme faux positif"
+      "false_positive": "Marquer comme faux positif",
+      "desired_state_title": "État souhaité",
+      "desired_state_value": "Valeur attendue",
+      "desired_state_reason": "Motif",
+      "desired_state_daily_start": "Heure de début (facultatif)",
+      "desired_state_daily_end": "Heure de fin (facultatif)",
+      "desired_state_timezone": "Fuseau horaire de la plage (obligatoire si des heures sont renseignées)",
+      "declare_desired_state": "Déclarer un état souhaité",
+      "end_desired_state": "Arrêter",
+      "no_desired_state": "Aucun état souhaité déclaré.",
+      "desired_state_active": "Attendu : {value} depuis le {since}"
     }
   },
   "space_type": {

@@ -5,7 +5,22 @@ import { errorMessage, getLocale, getTranslator } from "@/lib/i18n";
 import { type EquipmentStatus, type Passport, type PassportUnit, statusMessage } from "@/lib/passport";
 import { type Locale, formatDate, formatDateTime, formatNumber } from "@/i18n/translator";
 
-import { acknowledgeSignal, clearAlarm, createWorkOrderForEquipment, setHandling } from "./actions";
+import {
+  acknowledgeSignal,
+  clearAlarm,
+  createWorkOrderForEquipment,
+  declareDesiredState,
+  endDesiredState,
+  setHandling,
+} from "./actions";
+
+type DesiredState = {
+  id: string;
+  point_id: string;
+  value: number;
+  valid_from: string;
+  valid_to: string | null;
+};
 
 type Me = { roles: string[] };
 
@@ -67,6 +82,17 @@ export default async function EquipmentPage({
   const unit = passport.physical_unit ?? passport.current_unit ?? null;
   const timeZone = passport.site?.timezone ?? null;
   const alarms = passport.open_alarms ?? [];
+  const points = passport.points ?? [];
+
+  const desiredStatesByPoint = Object.fromEntries(
+    await Promise.all(
+      points.map(async (point) => {
+        const desiredResponse = await apiFetch(`/points/${point.id}/desired-states`, accessToken);
+        const states: DesiredState[] = desiredResponse.ok ? await desiredResponse.json() : [];
+        return [point.id, states.filter((state) => state.valid_to === null)] as const;
+      }),
+    ),
+  );
 
   return (
     <main style={{ maxWidth: 720, margin: "40px auto", padding: "0 16px" }}>
@@ -91,23 +117,33 @@ export default async function EquipmentPage({
         {unit ? <UnitView unit={unit} t={t} /> : <p>{t("mobile.passport.no_unit")}</p>}
       </section>
 
-      {passport.points && passport.points.length > 0 && (
+      {points.length > 0 && (
         <section style={sectionStyle}>
           <h2 style={sectionTitleStyle}>{t("mobile.passport.latest")}</h2>
-          {passport.points.map((point) => (
-            <p key={point.id}>
-              {point.name} —{" "}
-              {point.latest
-                ? `${formatNumber(locale, point.latest.value)} ${point.unit} (${formatDateTime(
-                    locale,
-                    point.latest.measured_at,
-                    timeZone,
-                  )})`
-                : t("mobile.passport.no_measurement")}
-              {point.latest && point.latest.quality_flags.length > 0
-                ? ` — ${t("mobile.passport.flagged")}`
-                : ""}
-            </p>
+          {points.map((point) => (
+            <div key={point.id} style={{ marginBottom: 12 }}>
+              <p style={{ margin: 0 }}>
+                {point.name} —{" "}
+                {point.latest
+                  ? `${formatNumber(locale, point.latest.value)} ${point.unit} (${formatDateTime(
+                      locale,
+                      point.latest.measured_at,
+                      timeZone,
+                    )})`
+                  : t("mobile.passport.no_measurement")}
+                {point.latest && point.latest.quality_flags.length > 0
+                  ? ` — ${t("mobile.passport.flagged")}`
+                  : ""}
+              </p>
+              <DesiredStateBlock
+                point={point}
+                desiredStates={desiredStatesByPoint[point.id] ?? []}
+                nodeId={id}
+                canManage={canManage}
+                t={t}
+                locale={locale}
+              />
+            </div>
           ))}
         </section>
       )}
@@ -278,6 +314,78 @@ function SignalActions({
           <input type="hidden" name="handling_status" value="false_positive" />
           <button type="submit">{t("web.registre.false_positive")}</button>
         </form>
+      )}
+    </div>
+  );
+}
+
+function DesiredStateBlock({
+  point,
+  desiredStates,
+  nodeId,
+  canManage,
+  t,
+  locale,
+}: {
+  point: { id: string };
+  desiredStates: DesiredState[];
+  nodeId: string;
+  canManage: boolean;
+  t: (key: string, params?: Record<string, string>) => string;
+  locale: Locale;
+}) {
+  return (
+    <div style={{ marginLeft: 16 }}>
+      {desiredStates.map((state) => (
+        <p key={state.id} style={mutedStyle}>
+          {t("web.registre.desired_state_active", {
+            value: formatNumber(locale, state.value),
+            since: formatDate(locale, state.valid_from, null),
+          })}
+          {canManage && (
+            <form action={endDesiredState} style={{ display: "inline", marginLeft: 8 }}>
+              <input type="hidden" name="desired_state_id" value={state.id} />
+              <input type="hidden" name="node_id" value={nodeId} />
+              <button type="submit">{t("web.registre.end_desired_state")}</button>
+            </form>
+          )}
+        </p>
+      ))}
+      {canManage && desiredStates.length === 0 && (
+        <details>
+          <summary>{t("web.registre.declare_desired_state")}</summary>
+          <form action={declareDesiredState} style={{ maxWidth: 360 }}>
+            <input type="hidden" name="node_id" value={nodeId} />
+            <input type="hidden" name="point_id" value={point.id} />
+            <label>
+              {t("web.registre.desired_state_value")}
+              <input name="value" type="number" step="any" required style={fieldStyle} />
+            </label>
+            <label style={labelStyle}>
+              {t("web.registre.desired_state_reason")}
+              <input name="reason" required style={fieldStyle} />
+            </label>
+            <label style={labelStyle}>
+              {t("web.registre.desired_state_daily_start")}
+              <input name="daily_start" type="time" style={fieldStyle} />
+            </label>
+            <label style={labelStyle}>
+              {t("web.registre.desired_state_daily_end")}
+              <input name="daily_end" type="time" style={fieldStyle} />
+            </label>
+            <label style={labelStyle}>
+              {t("web.registre.desired_state_timezone")}
+              <input
+                name="timezone"
+                placeholder={t("web.registre.site_timezone_placeholder")}
+                style={fieldStyle}
+              />
+            </label>
+            <button type="submit" style={submitStyle}>
+              {t("web.registre.submit")}
+            </button>
+          </form>
+        </details>
       )}
     </div>
   );

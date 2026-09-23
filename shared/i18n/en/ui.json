@@ -275,7 +275,17 @@
       "acknowledge": "Acknowledge",
       "close_signal": "Close",
       "clear_condition": "Declare return to normal",
-      "false_positive": "Mark as false positive"
+      "false_positive": "Mark as false positive",
+      "desired_state_title": "Desired state",
+      "desired_state_value": "Expected value",
+      "desired_state_reason": "Reason",
+      "desired_state_daily_start": "Start time (optional)",
+      "desired_state_daily_end": "End time (optional)",
+      "desired_state_timezone": "Time zone of the window (required if times are set)",
+      "declare_desired_state": "Declare a desired state",
+      "end_desired_state": "Stop",
+      "no_desired_state": "No desired state declared.",
+      "desired_state_active": "Expected: {value} since {since}"
     }
   },
   "space_type": {

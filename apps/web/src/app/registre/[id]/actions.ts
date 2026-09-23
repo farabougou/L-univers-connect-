@@ -78,6 +78,47 @@ export async function clearAlarm(formData: FormData) {
   revalidatePath(`/registre/${nodeId}`);
 }
 
+export async function declareDesiredState(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+  const pointId = formData.get("point_id");
+  const dailyStart = formData.get("daily_start");
+  const dailyEnd = formData.get("daily_end");
+  const timezone = formData.get("timezone");
+
+  const response = await apiFetch(`/points/${pointId}/desired-states`, accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      value: Number(formData.get("value")),
+      reason: formData.get("reason"),
+      daily_start: dailyStart || null,
+      daily_end: dailyEnd || null,
+      timezone: timezone || null,
+    }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  revalidatePath(`/registre/${nodeId}`);
+}
+
+export async function endDesiredState(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+  const desiredStateId = formData.get("desired_state_id");
+
+  const response = await apiFetch(`/desired-states/${desiredStateId}/end`, accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({}),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  revalidatePath(`/registre/${nodeId}`);
+}
+
 export async function createWorkOrderForEquipment(formData: FormData) {
   const accessToken = await requireAccessToken();
   const nodeId = String(formData.get("node_id"));
