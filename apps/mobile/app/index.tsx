@@ -107,6 +107,7 @@ export default function HomeScreen() {
         onPress={() => router.push("/nouvelle-intervention")}
       />
       <Button title="Historique" onPress={() => router.push("/historique")} />
+      <Button title="Passeport équipement" onPress={() => router.push("/passeport")} />
 
       <Text>
         {pendingCount > 0
