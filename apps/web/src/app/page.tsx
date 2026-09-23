@@ -42,8 +42,9 @@ export default async function DashboardPage() {
       </header>
       <p>{t("web.dashboard.signed_in_as", { user: me.sub, roles: me.roles.join(", ") })}</p>
 
-      <nav style={{ margin: "16px 0" }}>
+      <nav style={{ margin: "16px 0", display: "flex", flexDirection: "column", gap: 8 }}>
         <Link href="/ordres-de-travail">{t("web.dashboard.work_orders_link")} →</Link>
+        <Link href="/registre">{t("web.dashboard.registry_link")} →</Link>
       </nav>
 
       <h2>{t("web.dashboard.equipment")}</h2>

@@ -216,7 +216,8 @@
       "equipment": "Equipment",
       "no_equipment": "No equipment registered yet.",
       "code": "Code",
-      "name": "Name"
+      "name": "Name",
+      "registry_link": "Asset registry"
     },
     "work_orders": {
       "title": "Work orders",
@@ -229,6 +230,35 @@
       "submit": "Create",
       "title_required": "The title is required.",
       "creation_failed": "The work order could not be created. Please try again."
+    },
+    "registre": {
+      "title": "Asset registry",
+      "access_denied": "This screen is restricted to operations managers and administrators.",
+      "sites_title": "Sites",
+      "no_sites": "No site registered yet.",
+      "site_timezone_label": "Time zone",
+      "create_site_title": "Add a site",
+      "site_name": "Site name",
+      "site_timezone": "Time zone (IANA identifier, for example Europe/Paris)",
+      "submit": "Create",
+      "equipment_title": "Equipment",
+      "no_equipment": "No equipment registered yet.",
+      "no_sites_yet": "Add a site first to be able to create equipment.",
+      "create_equipment_title": "Add equipment",
+      "equipment_site": "Site",
+      "equipment_code": "Equipment code",
+      "equipment_name": "Equipment name",
+      "equipment_type": "Equipment type",
+      "manufacturer": "Manufacturer",
+      "reference": "Reference",
+      "serial_number": "Serial number",
+      "tag_action": "Tag",
+      "tag_banner_title": "Tag created for {name}",
+      "tag_code_label": "Code to enter in the technician app",
+      "tag_hint": "This QR code only contains a meaningless code. It can be printed and stuck on the equipment.",
+      "tag_close": "Close",
+      "creation_failed": "The creation could not be completed. Try again; if the problem persists, contact your administrator.",
+      "site_timezone_placeholder": "Europe/Paris"
     }
   }
 }

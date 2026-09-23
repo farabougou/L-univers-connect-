@@ -216,7 +216,8 @@
       "equipment": "Équipements",
       "no_equipment": "Aucun équipement enregistré pour le moment.",
       "code": "Code",
-      "name": "Nom"
+      "name": "Nom",
+      "registry_link": "Registre d’actifs"
     },
     "work_orders": {
       "title": "Ordres de travail",
@@ -229,6 +230,35 @@
       "submit": "Créer",
       "title_required": "L’intitulé est obligatoire.",
       "creation_failed": "La création de l’ordre de travail n’a pas pu être effectuée. Réessayez."
+    },
+    "registre": {
+      "title": "Registre d’actifs",
+      "access_denied": "Cet écran est réservé aux responsables d’exploitation et aux administrateurs.",
+      "sites_title": "Sites",
+      "no_sites": "Aucun site enregistré pour le moment.",
+      "site_timezone_label": "Fuseau horaire",
+      "create_site_title": "Ajouter un site",
+      "site_name": "Nom du site",
+      "site_timezone": "Fuseau horaire (identifiant IANA, par exemple Europe/Paris)",
+      "submit": "Créer",
+      "equipment_title": "Équipements",
+      "no_equipment": "Aucun équipement enregistré pour le moment.",
+      "no_sites_yet": "Ajoutez d’abord un site pour pouvoir créer un équipement.",
+      "create_equipment_title": "Ajouter un équipement",
+      "equipment_site": "Site",
+      "equipment_code": "Code de l’équipement",
+      "equipment_name": "Nom de l’équipement",
+      "equipment_type": "Type d’équipement",
+      "manufacturer": "Fabricant",
+      "reference": "Référence",
+      "serial_number": "Numéro de série",
+      "tag_action": "Étiquette",
+      "tag_banner_title": "Étiquette créée pour {name}",
+      "tag_code_label": "Code à saisir dans l’application technicien",
+      "tag_hint": "Ce QR ne contient qu’un code sans signification. Il peut être imprimé et collé sur l’équipement.",
+      "tag_close": "Fermer",
+      "creation_failed": "La création n’a pas pu être effectuée. Réessayez ; si le problème persiste, contactez votre administrateur.",
+      "site_timezone_placeholder": "Europe/Paris"
     }
   }
 }

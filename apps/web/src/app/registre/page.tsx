@@ -1,0 +1,223 @@
+import Link from "next/link";
+import QRCode from "qrcode";
+
+import type { Translator } from "@/i18n/translator";
+import { apiFetch, requireAccessToken } from "@/lib/api";
+import { errorMessage, getTranslator } from "@/lib/i18n";
+
+import { createEquipment, createSite, showTag } from "./actions";
+
+type Me = { roles: string[] };
+type Site = { id: string; name: string; timezone: string | null };
+type EquipmentType = { code: string; label: string };
+type FunctionalLocation = { id: string; site_id: string; code: string; name: string };
+
+const MANAGE_ROLES = ["responsable_exploitation", "admin_tenant"];
+
+const fieldStyle = { display: "block", width: "100%", padding: 8, marginTop: 4 };
+const labelStyle = { display: "block", marginTop: 12 };
+const submitStyle = {
+  marginTop: 16,
+  padding: "10px 20px",
+  background: "#2563eb",
+  color: "white",
+  border: "none",
+  borderRadius: 8,
+};
+const cellStyle = { borderBottom: "1px solid #eee", padding: "6px 8px", textAlign: "left" as const };
+const headerCellStyle = { borderBottom: "1px solid #ddd", padding: "6px 8px", textAlign: "left" as const };
+
+function creationError(translator: Translator, code: string | undefined): string | null {
+  if (!code) return null;
+  return errorMessage(translator.locale, code) ?? translator.t("web.registre.creation_failed");
+}
+
+export default async function RegistrePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; tag?: string; label?: string }>;
+}) {
+  const accessToken = await requireAccessToken();
+  const translator = await getTranslator();
+  const { t } = translator;
+  const params = await searchParams;
+  const error = creationError(translator, params.error);
+
+  const meResponse = await apiFetch("/me", accessToken);
+  const me: Me = meResponse.ok ? await meResponse.json() : { roles: [] };
+  const canManage = me.roles.some((role) => MANAGE_ROLES.includes(role));
+
+  if (!canManage) {
+    return (
+      <main style={{ maxWidth: 720, margin: "40px auto", padding: "0 16px" }}>
+        <Link href="/">← {t("common.back")}</Link>
+        <h1>{t("web.registre.title")}</h1>
+        <p>{t("web.registre.access_denied")}</p>
+      </main>
+    );
+  }
+
+  const [sitesResponse, locationsResponse, typesResponse] = await Promise.all([
+    apiFetch("/sites", accessToken),
+    apiFetch("/functional-locations", accessToken),
+    apiFetch("/equipment-types", accessToken),
+  ]);
+  const sites: Site[] = sitesResponse.ok ? await sitesResponse.json() : [];
+  const locations: FunctionalLocation[] = locationsResponse.ok ? await locationsResponse.json() : [];
+  const equipmentTypes: EquipmentType[] = typesResponse.ok
+    ? (await typesResponse.json()).types
+    : [];
+  const siteName = (siteId: string) => sites.find((site) => site.id === siteId)?.name ?? siteId;
+
+  let tagSvg: string | null = null;
+  if (params.tag) {
+    tagSvg = await QRCode.toString(params.tag, { type: "svg", margin: 1, width: 220 });
+  }
+
+  return (
+    <main style={{ maxWidth: 720, margin: "40px auto", padding: "0 16px" }}>
+      <Link href="/">← {t("common.back")}</Link>
+      <h1>{t("web.registre.title")}</h1>
+      {error && <p style={{ color: "#c0392b" }}>{error}</p>}
+
+      {params.tag && tagSvg && (
+        <section
+          style={{ border: "1px solid #2563eb", borderRadius: 8, padding: 16, margin: "16px 0" }}
+        >
+          <h2>{t("web.registre.tag_banner_title", { name: params.label ?? "" })}</h2>
+          <div dangerouslySetInnerHTML={{ __html: tagSvg }} />
+          <p>
+            {t("web.registre.tag_code_label")} : <strong>{params.tag}</strong>
+          </p>
+          <p style={{ color: "#666" }}>{t("web.registre.tag_hint")}</p>
+          <Link href="/registre">{t("web.registre.tag_close")}</Link>
+        </section>
+      )}
+
+      <h2>{t("web.registre.sites_title")}</h2>
+      {sites.length === 0 ? (
+        <p>{t("web.registre.no_sites")}</p>
+      ) : (
+        <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 24 }}>
+          <thead>
+            <tr>
+              <th style={headerCellStyle}>{t("web.registre.site_name")}</th>
+              <th style={headerCellStyle}>{t("web.registre.site_timezone_label")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sites.map((site) => (
+              <tr key={site.id}>
+                <td style={cellStyle}>{site.name}</td>
+                <td style={cellStyle}>{site.timezone}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      <h3>{t("web.registre.create_site_title")}</h3>
+      <form action={createSite} style={{ maxWidth: 400 }}>
+        <label>
+          {t("web.registre.site_name")}
+          <input name="name" required style={fieldStyle} />
+        </label>
+        <label style={labelStyle}>
+          {t("web.registre.site_timezone")}
+          <input
+            name="timezone"
+            required
+            placeholder={t("web.registre.site_timezone_placeholder")}
+            style={fieldStyle}
+          />
+        </label>
+        <button type="submit" style={submitStyle}>
+          {t("web.registre.submit")}
+        </button>
+      </form>
+
+      <h2 style={{ marginTop: 40 }}>{t("web.registre.equipment_title")}</h2>
+      {locations.length === 0 ? (
+        <p>{t("web.registre.no_equipment")}</p>
+      ) : (
+        <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 24 }}>
+          <thead>
+            <tr>
+              <th style={headerCellStyle}>{t("web.dashboard.code")}</th>
+              <th style={headerCellStyle}>{t("web.dashboard.name")}</th>
+              <th style={headerCellStyle}>{t("web.registre.equipment_site")}</th>
+              <th style={headerCellStyle} />
+            </tr>
+          </thead>
+          <tbody>
+            {locations.map((location) => (
+              <tr key={location.id}>
+                <td style={cellStyle}>{location.code}</td>
+                <td style={cellStyle}>{location.name}</td>
+                <td style={cellStyle}>{siteName(location.site_id)}</td>
+                <td style={cellStyle}>
+                  <form action={showTag}>
+                    <input type="hidden" name="functional_location_id" value={location.id} />
+                    <input type="hidden" name="label" value={location.name} />
+                    <button type="submit">{t("web.registre.tag_action")}</button>
+                  </form>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      <h3>{t("web.registre.create_equipment_title")}</h3>
+      {sites.length === 0 ? (
+        <p>{t("web.registre.no_sites_yet")}</p>
+      ) : (
+        <form action={createEquipment} style={{ maxWidth: 400 }}>
+          <label>
+            {t("web.registre.equipment_site")}
+            <select name="site_id" required style={fieldStyle}>
+              {sites.map((site) => (
+                <option key={site.id} value={site.id}>
+                  {site.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label style={labelStyle}>
+            {t("web.registre.equipment_code")}
+            <input name="code" required style={fieldStyle} />
+          </label>
+          <label style={labelStyle}>
+            {t("web.registre.equipment_name")}
+            <input name="name" required style={fieldStyle} />
+          </label>
+          <label style={labelStyle}>
+            {t("web.registre.equipment_type")}
+            <select name="equipment_type" required style={fieldStyle}>
+              {equipmentTypes.map((type) => (
+                <option key={type.code} value={type.code}>
+                  {type.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label style={labelStyle}>
+            {t("web.registre.manufacturer")}
+            <input name="manufacturer" required style={fieldStyle} />
+          </label>
+          <label style={labelStyle}>
+            {t("web.registre.reference")}
+            <input name="reference" required style={fieldStyle} />
+          </label>
+          <label style={labelStyle}>
+            {t("web.registre.serial_number")}
+            <input name="serial_number" required style={fieldStyle} />
+          </label>
+          <button type="submit" style={submitStyle}>
+            {t("web.registre.submit")}
+          </button>
+        </form>
+      )}
+    </main>
+  );
+}
