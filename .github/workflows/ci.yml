@@ -76,6 +76,9 @@ jobs:
       - name: Vérification des types (TypeScript)
         run: npm run typecheck
 
+      - name: Tests (vitest)
+        run: npm test
+
   web:
     runs-on: ubuntu-latest
     defaults:
