@@ -54,6 +54,7 @@ export type Passport = {
     certainty: string;
     condition_state: string;
     ack_state: string;
+    handling_status: string;
   }[];
   open_alarms?: {
     id: string;
@@ -61,6 +62,7 @@ export type Passport = {
     message: string;
     condition_state: string;
     ack_state: string;
+    handling_status: string;
   }[];
   open_work_orders?: { id: string; title: string; status: string }[];
   recent_interventions?: {

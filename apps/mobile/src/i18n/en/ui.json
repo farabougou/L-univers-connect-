@@ -270,7 +270,11 @@
       "space_code": "Code",
       "space_name": "Name",
       "equipment_space": "Location (optional)",
-      "equipment_space_none": "No precise location"
+      "equipment_space_none": "No precise location",
+      "acknowledge": "Acknowledge",
+      "close_signal": "Close",
+      "clear_condition": "Declare return to normal",
+      "false_positive": "Mark as false positive"
     }
   },
   "space_type": {

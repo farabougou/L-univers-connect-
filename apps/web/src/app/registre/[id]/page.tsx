@@ -1,21 +1,35 @@
 import Link from "next/link";
 
 import { apiFetch, requireAccessToken } from "@/lib/api";
-import { getLocale, getTranslator } from "@/lib/i18n";
+import { errorMessage, getLocale, getTranslator } from "@/lib/i18n";
 import { type EquipmentStatus, type Passport, type PassportUnit, statusMessage } from "@/lib/passport";
 import { type Locale, formatDate, formatDateTime, formatNumber } from "@/i18n/translator";
+
+import { acknowledgeSignal, clearAlarm, setHandling } from "./actions";
 
 const sectionStyle = { borderTop: "1px solid #eee", paddingTop: 12, marginTop: 16 };
 const sectionTitleStyle = { fontSize: 16, fontWeight: 600 as const, marginBottom: 8 };
 const mutedStyle = { color: "#666" };
 const strongStyle = { fontWeight: 600 as const };
+const signalActionsStyle = { display: "flex", gap: 8, marginTop: 4 };
+const HANDLING_OPEN = ["open", "in_progress"];
 
-export default async function EquipmentPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EquipmentPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string }>;
+}) {
   const { id } = await params;
+  const { error: errorCode } = await searchParams;
   const accessToken = await requireAccessToken();
   const translator = await getTranslator();
   const locale = await getLocale();
   const { t } = translator;
+  const error = errorCode
+    ? (errorMessage(translator.locale, errorCode) ?? t("web.registre.creation_failed"))
+    : null;
 
   const response = await apiFetch(`/graph/nodes/${id}/passport`, accessToken);
   if (!response.ok) {
@@ -42,6 +56,7 @@ export default async function EquipmentPage({ params }: { params: Promise<{ id: 
           {passport.functional_location.code} — {passport.functional_location.name}
         </h1>
       )}
+      {error && <p style={{ color: "#c0392b" }}>{error}</p>}
 
       {passport.status && (
         <section style={sectionStyle}>
@@ -79,20 +94,28 @@ export default async function EquipmentPage({ params }: { params: Promise<{ id: 
       <section style={sectionStyle}>
         <h2 style={sectionTitleStyle}>{t("mobile.passport.signals")}</h2>
         {alarms.map((alarm) => (
-          <p key={alarm.id}>
-            {t("mobile.passport.alarm")} · {t(`severity.${alarm.severity}`)} ·{" "}
-            {t(`condition_state.${alarm.condition_state}`)} · {t(`ack_state.${alarm.ack_state}`)}
-            <br />
-            {alarm.message}
-          </p>
+          <div key={alarm.id} style={{ marginBottom: 12 }}>
+            <p style={{ margin: 0 }}>
+              {t("mobile.passport.alarm")} · {t(`severity.${alarm.severity}`)} ·{" "}
+              {t(`condition_state.${alarm.condition_state}`)} · {t(`ack_state.${alarm.ack_state}`)} ·{" "}
+              {t(`handling_status.${alarm.handling_status}`)}
+              <br />
+              {alarm.message}
+            </p>
+            <SignalActions kind="alarm" signal={alarm} nodeId={id} t={t} />
+          </div>
         ))}
         {passport.open_findings.map((finding) => (
-          <p key={finding.id}>
-            {t("mobile.passport.finding")} · {t(`severity.${finding.severity}`)} ·{" "}
-            {t(`certainty.${finding.certainty}`)} · {t(`condition_state.${finding.condition_state}`)}
-            <br />
-            {finding.title}
-          </p>
+          <div key={finding.id} style={{ marginBottom: 12 }}>
+            <p style={{ margin: 0 }}>
+              {t("mobile.passport.finding")} · {t(`severity.${finding.severity}`)} ·{" "}
+              {t(`certainty.${finding.certainty}`)} · {t(`condition_state.${finding.condition_state}`)} ·{" "}
+              {t(`handling_status.${finding.handling_status}`)}
+              <br />
+              {finding.title}
+            </p>
+            <SignalActions kind="finding" signal={finding} nodeId={id} t={t} />
+          </div>
         ))}
         {alarms.length === 0 && passport.open_findings.length === 0 && (
           <p>{t("mobile.passport.nothing_open")}</p>
@@ -151,6 +174,60 @@ function StatusLine({
     ]),
   );
   return <p style={status.current ? strongStyle : undefined}>{t(key, rendered)}</p>;
+}
+
+function SignalActions({
+  kind,
+  signal,
+  nodeId,
+  t,
+}: {
+  kind: "alarm" | "finding";
+  signal: { id: string; ack_state: string; handling_status: string; condition_state: string };
+  nodeId: string;
+  t: (key: string) => string;
+}) {
+  const hidden = (
+    <>
+      <input type="hidden" name="kind" value={kind} />
+      <input type="hidden" name="signal_id" value={signal.id} />
+      <input type="hidden" name="node_id" value={nodeId} />
+    </>
+  );
+  const handlingOpen = HANDLING_OPEN.includes(signal.handling_status);
+  return (
+    <div style={signalActionsStyle}>
+      {signal.ack_state === "unacknowledged" && (
+        <form action={acknowledgeSignal}>
+          {hidden}
+          <button type="submit">{t("web.registre.acknowledge")}</button>
+        </form>
+      )}
+      {/* Un signalement ne peut être clos tant que sa condition est active
+          (voir app/signals.py, set_handling) : seul le retour à la normale
+          (alarme) ou le faux positif restent alors possibles. */}
+      {kind === "alarm" && signal.condition_state === "active" && (
+        <form action={clearAlarm}>
+          {hidden}
+          <button type="submit">{t("web.registre.clear_condition")}</button>
+        </form>
+      )}
+      {handlingOpen && signal.condition_state === "cleared" && (
+        <form action={setHandling}>
+          {hidden}
+          <input type="hidden" name="handling_status" value="closed" />
+          <button type="submit">{t("web.registre.close_signal")}</button>
+        </form>
+      )}
+      {handlingOpen && (
+        <form action={setHandling}>
+          {hidden}
+          <input type="hidden" name="handling_status" value="false_positive" />
+          <button type="submit">{t("web.registre.false_positive")}</button>
+        </form>
+      )}
+    </div>
+  );
 }
 
 function UnitView({

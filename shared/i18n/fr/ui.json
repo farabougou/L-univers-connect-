@@ -270,7 +270,11 @@
       "space_code": "Code",
       "space_name": "Nom",
       "equipment_space": "Emplacement (facultatif)",
-      "equipment_space_none": "Aucun emplacement précis"
+      "equipment_space_none": "Aucun emplacement précis",
+      "acknowledge": "Acquitter",
+      "close_signal": "Clore",
+      "clear_condition": "Déclarer le retour à la normale",
+      "false_positive": "Marquer comme faux positif"
     }
   },
   "space_type": {
