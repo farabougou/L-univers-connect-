@@ -78,6 +78,24 @@ type DeviceMappingVersion = {
   content: DeviceMappingContent;
   parent_version_id: string | null;
 };
+// Un résultat de performance normalisée (app/energy/normalization.py) : voir
+// aussi CLAUDE.md, section M5 — jamais présenté comme un calcul OPERAT.
+type EnergyNormalizedResult = {
+  id: string;
+  period_start: string;
+  period_end: string;
+  raw_consumption: number;
+  raw_consumption_unit: string;
+  normalization_status: "ok" | "no_weather_data" | "zero_degree_days";
+  normalized_consumption: number | null;
+  computed_at: string;
+};
+type EnergyComparison = {
+  comparable: boolean;
+  percent_deviation: number | null;
+  reduced: boolean | null;
+};
+
 // Même catalogue que app/connectors/sdm120.py (SDM120_POINTS) : un seul
 // modèle d'appareil pour l'instant, pas de saisie libre du registre.
 const SDM120_REGISTERS = ["voltage", "current", "active_power", "frequency", "total_active_energy"];
@@ -202,6 +220,25 @@ export default async function EquipmentPage({
   const relayPointId = activeRelayMapping?.content.points[0]?.point_id ?? null;
   const relayPoint = relayPointId ? points.find((point) => point.id === relayPointId) : null;
   const lastCommand: PassportCommand | null = relayPoint?.commands[0] ?? null;
+
+  // La performance énergétique porte sur un équipement (functional_location),
+  // jamais sur un exemplaire ou un espace (voir app/energy/normalization.py).
+  let energyResults: EnergyNormalizedResult[] = [];
+  let energyComparison: EnergyComparison | null = null;
+  if (passport.node_type === "functional_location") {
+    const energyResponse = await apiFetch(
+      `/energy/normalized-results?functional_location_id=${id}`,
+      accessToken,
+    );
+    energyResults = energyResponse.ok ? await energyResponse.json() : [];
+    if (energyResults.length >= 2) {
+      const comparisonResponse = await apiFetch(
+        `/energy/comparison?reference_result_id=${energyResults[1].id}&analyzed_result_id=${energyResults[0].id}`,
+        accessToken,
+      );
+      energyComparison = comparisonResponse.ok ? await comparisonResponse.json() : null;
+    }
+  }
 
   return (
     <main style={{ maxWidth: 720, margin: "40px auto", padding: "0 16px" }}>
@@ -355,6 +392,19 @@ export default async function EquipmentPage({
             relayPointId={relayPointId}
             lastCommand={lastCommand}
             canSendCommand={canSendCommand}
+            locale={locale}
+            timeZone={timeZone}
+            t={t}
+          />
+        </section>
+      )}
+
+      {passport.node_type === "functional_location" && (
+        <section style={sectionStyle}>
+          <h2 style={sectionTitleStyle}>{t("web.registre.energy_section_title")}</h2>
+          <EnergyBlock
+            results={energyResults}
+            comparison={energyComparison}
             locale={locale}
             timeZone={timeZone}
             t={t}
@@ -1117,6 +1167,69 @@ function CommandBlock({
           <p style={mutedStyle}>{t("web.registre.command_no_command")}</p>
         )}
       </div>
+    </div>
+  );
+}
+
+function EnergyBlock({
+  results,
+  comparison,
+  locale,
+  timeZone,
+  t,
+}: {
+  results: EnergyNormalizedResult[];
+  comparison: EnergyComparison | null;
+  locale: Locale;
+  timeZone: string | null;
+  t: (key: string, params?: Record<string, string>) => string;
+}) {
+  const latest = results[0] ?? null;
+  if (!latest) {
+    return <p style={mutedStyle}>{t("web.registre.energy_no_result")}</p>;
+  }
+  return (
+    <div>
+      <p style={{ margin: 0 }}>
+        {t("web.registre.energy_period", {
+          start: formatDate(locale, latest.period_start, null),
+          end: formatDate(locale, latest.period_end, null),
+        })}
+      </p>
+      <p style={{ margin: 0 }}>
+        {t("web.registre.energy_raw_consumption", {
+          value: formatNumber(locale, latest.raw_consumption),
+          unit: latest.raw_consumption_unit,
+        })}
+      </p>
+      {latest.normalization_status === "ok" && latest.normalized_consumption !== null ? (
+        <p style={{ margin: 0 }}>
+          {t("web.registre.energy_normalized_consumption", {
+            value: formatNumber(locale, latest.normalized_consumption),
+            unit: latest.raw_consumption_unit,
+          })}
+        </p>
+      ) : (
+        <p style={mutedStyle}>{t(`web.registre.energy_status_${latest.normalization_status}`)}</p>
+      )}
+      {comparison &&
+        (comparison.comparable && comparison.percent_deviation !== null ? (
+          <p style={{ margin: 0 }}>
+            {t(
+              comparison.reduced
+                ? "web.registre.energy_comparison_reduced"
+                : "web.registre.energy_comparison_increased",
+              { percent: formatNumber(locale, Math.abs(comparison.percent_deviation)) },
+            )}
+          </p>
+        ) : (
+          <p style={mutedStyle}>{t("web.registre.energy_comparison_unavailable")}</p>
+        ))}
+      <p style={mutedStyle}>
+        {t("web.registre.energy_computed_at", {
+          when: formatDateTime(locale, latest.computed_at, timeZone),
+        })}
+      </p>
     </div>
   );
 }

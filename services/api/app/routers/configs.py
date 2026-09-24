@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.engine import Connection
 
 import app.connectors.device_mapping  # noqa: F401  (config « modbus_device_mapping »)
+import app.energy.baseline  # noqa: F401  (enregistre le type de configuration « energy_baseline »)
 import app.rules  # noqa: F401  (enregistre le type de configuration « alarm_rule »)
 from app.audit import append_audit_entry
 from app.auth import require_any_role

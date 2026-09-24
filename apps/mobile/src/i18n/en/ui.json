@@ -354,7 +354,19 @@
       "command_actual_value": "Actual value: {value}",
       "command_failure_reason": "Reason: {reason}",
       "command_at": "On {when}",
-      "modbus_test_relay_point_label": "Controlled point"
+      "modbus_test_relay_point_label": "Controlled point",
+      "energy_section_title": "Energy performance",
+      "energy_no_result": "No normalized performance has been computed for this equipment yet.",
+      "energy_period": "Period: {start} – {end}",
+      "energy_raw_consumption": "Raw consumption: {value} {unit}",
+      "energy_normalized_consumption": "Normalized consumption: {value} {unit}",
+      "energy_status_no_weather_data": "Missing weather data for this period: normalization not possible.",
+      "energy_status_zero_degree_days": "No degree days for this period: normalization not possible.",
+      "energy_comparison_title": "Comparison with the previous period",
+      "energy_comparison_reduced": "Normalized consumption down {percent}% from the previous period.",
+      "energy_comparison_increased": "Normalized consumption up {percent}% from the previous period.",
+      "energy_comparison_unavailable": "Comparison unavailable: one of the two periods could not be normalized.",
+      "energy_computed_at": "Computed on {when}"
     }
   },
   "space_type": {

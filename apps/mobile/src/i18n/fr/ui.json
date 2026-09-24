@@ -354,7 +354,19 @@
       "command_actual_value": "Valeur réelle : {value}",
       "command_failure_reason": "Motif : {reason}",
       "command_at": "Le {when}",
-      "modbus_test_relay_point_label": "Point piloté"
+      "modbus_test_relay_point_label": "Point piloté",
+      "energy_section_title": "Performance énergétique",
+      "energy_no_result": "Aucun calcul de performance normalisée pour cet équipement.",
+      "energy_period": "Période : {start} – {end}",
+      "energy_raw_consumption": "Consommation brute : {value} {unit}",
+      "energy_normalized_consumption": "Consommation normalisée : {value} {unit}",
+      "energy_status_no_weather_data": "Données météo manquantes sur cette période : normalisation impossible.",
+      "energy_status_zero_degree_days": "Aucun degré-jour sur cette période : normalisation impossible.",
+      "energy_comparison_title": "Comparaison à la période précédente",
+      "energy_comparison_reduced": "Consommation normalisée en baisse de {percent} % par rapport à la période précédente.",
+      "energy_comparison_increased": "Consommation normalisée en hausse de {percent} % par rapport à la période précédente.",
+      "energy_comparison_unavailable": "Comparaison indisponible : l’une des deux périodes n’a pas pu être normalisée.",
+      "energy_computed_at": "Calculé le {when}"
     }
   },
   "space_type": {
