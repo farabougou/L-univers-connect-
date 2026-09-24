@@ -153,9 +153,9 @@ def test_catalogs_have_the_same_codes_and_placeholders() -> None:
     assert fr["codes"].keys() == en["codes"].keys()
     assert fr["titles"].keys() == en["titles"].keys()
     for code, message in fr["codes"].items():
-        assert set(_PLACEHOLDER.findall(message)) == set(
-            _PLACEHOLDER.findall(en["codes"][code])
-        ), code
+        assert set(_PLACEHOLDER.findall(message)) == set(_PLACEHOLDER.findall(en["codes"][code])), (
+            code
+        )
 
 
 @pytest.mark.parametrize("locale", LOCALES)

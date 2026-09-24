@@ -148,12 +148,10 @@ def list_sites(
 
 
 _MODEL_COLUMNS = (
-    "id, manufacturer, reference, equipment_type, manufacturer_designation, description, "
-    "created_at"
+    "id, manufacturer, reference, equipment_type, manufacturer_designation, description, created_at"
 )
 _UNIT_COLUMNS = (
-    "id, product_model_id, serial_number, asset_code, commissioned_at, lifecycle_state, "
-    "created_at"
+    "id, product_model_id, serial_number, asset_code, commissioned_at, lifecycle_state, created_at"
 )
 
 
