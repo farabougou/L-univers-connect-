@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import type { Translator } from "@/i18n/translator";
 import { apiFetch, requireAccessToken } from "@/lib/api";
+import { cellStyle, fieldStyle, headerCellStyle, labelStyle, submitStyle } from "@/lib/formStyles";
 import { errorMessage, getTranslator } from "@/lib/i18n";
 
 import { createWorkOrder, updateWorkOrderStatus } from "./actions";
@@ -15,10 +16,6 @@ type WorkOrder = {
   functional_location_id: string | null;
 };
 type FunctionalLocation = { id: string; code: string; name: string };
-
-const cellStyle = { borderBottom: "1px solid #eee", padding: "6px 8px", textAlign: "left" as const };
-const headerCellStyle = { borderBottom: "1px solid #ddd", padding: "6px 8px", textAlign: "left" as const };
-const fieldStyle = { display: "block", width: "100%", padding: 8, marginTop: 4 };
 
 const TYPES = ["corrective", "preventive", "predictive", "inspection"];
 const PRIORITIES = ["low", "medium", "high", "urgent"];
@@ -109,7 +106,7 @@ export default async function WorkOrdersPage({
           {t("web.work_orders.col_title")}
           <input name="title" required style={fieldStyle} />
         </label>
-        <label style={{ display: "block", marginTop: 12 }}>
+        <label style={labelStyle}>
           {t("web.work_orders.col_type")}
           <select name="work_order_type" defaultValue="corrective" style={fieldStyle}>
             {TYPES.map((type) => (
@@ -119,7 +116,7 @@ export default async function WorkOrdersPage({
             ))}
           </select>
         </label>
-        <label style={{ display: "block", marginTop: 12 }}>
+        <label style={labelStyle}>
           {t("web.work_orders.col_priority")}
           <select name="priority" defaultValue="medium" style={fieldStyle}>
             {PRIORITIES.map((priority) => (
@@ -129,17 +126,7 @@ export default async function WorkOrdersPage({
             ))}
           </select>
         </label>
-        <button
-          type="submit"
-          style={{
-            marginTop: 16,
-            padding: "10px 20px",
-            background: "#2563eb",
-            color: "white",
-            border: "none",
-            borderRadius: 8,
-          }}
-        >
+        <button type="submit" style={submitStyle}>
           {t("web.work_orders.submit")}
         </button>
       </form>

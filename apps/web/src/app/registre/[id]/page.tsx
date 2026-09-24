@@ -2,6 +2,7 @@ import Link from "next/link";
 import QRCode from "qrcode";
 
 import { apiFetch, requireAccessToken } from "@/lib/api";
+import { fieldStyle, labelStyle, submitStyle } from "@/lib/formStyles";
 import { errorMessage, getLocale, getTranslator } from "@/lib/i18n";
 import { type EquipmentStatus, type Passport, type PassportUnit, statusMessage } from "@/lib/passport";
 import { type Locale, formatDate, formatDateTime, formatNumber } from "@/i18n/translator";
@@ -95,16 +96,6 @@ const sectionTitleStyle = { fontSize: 16, fontWeight: 600 as const, marginBottom
 const mutedStyle = { color: "#666" };
 const strongStyle = { fontWeight: 600 as const };
 const signalActionsStyle = { display: "flex", gap: 8, marginTop: 4 };
-const fieldStyle = { display: "block", width: "100%", padding: 8, marginTop: 4 };
-const labelStyle = { display: "block", marginTop: 12 };
-const submitStyle = {
-  marginTop: 16,
-  padding: "10px 20px",
-  background: "#2563eb",
-  color: "white",
-  border: "none",
-  borderRadius: 8,
-};
 const HANDLING_OPEN = ["open", "in_progress"];
 
 export default async function EquipmentPage({

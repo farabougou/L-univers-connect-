@@ -3,6 +3,13 @@ import QRCode from "qrcode";
 
 import type { Translator } from "@/i18n/translator";
 import { apiFetch, requireAccessToken } from "@/lib/api";
+import {
+  cellStyle,
+  fieldStyle,
+  headerCellStyle,
+  labelStyle,
+  submitStyle,
+} from "@/lib/formStyles";
 import { errorMessage, getTranslator } from "@/lib/i18n";
 
 import {
@@ -32,18 +39,6 @@ const MANAGE_ROLES = ["responsable_exploitation", "admin_tenant"];
 // types stables, comme les priorités d'ordre de travail plus bas.
 const SPACE_TYPES = ["building", "floor", "zone", "room", "outdoor_area"];
 
-const fieldStyle = { display: "block", width: "100%", padding: 8, marginTop: 4 };
-const labelStyle = { display: "block", marginTop: 12 };
-const submitStyle = {
-  marginTop: 16,
-  padding: "10px 20px",
-  background: "#2563eb",
-  color: "white",
-  border: "none",
-  borderRadius: 8,
-};
-const cellStyle = { borderBottom: "1px solid #eee", padding: "6px 8px", textAlign: "left" as const };
-const headerCellStyle = { borderBottom: "1px solid #ddd", padding: "6px 8px", textAlign: "left" as const };
 
 function creationError(translator: Translator, code: string | undefined): string | null {
   if (!code) return null;
