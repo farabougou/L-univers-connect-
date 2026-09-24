@@ -18,6 +18,8 @@ from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
 from app.closure_vocabulary import label as closure_label
+from app.commands import effective_status, list_commands_for_point
+from app.desired_states import list_desired_states
 from app.equipment_status import compute_equipment_status
 from app.findings import displayed
 from app.graph import get_node
@@ -90,7 +92,13 @@ def _unit_summary(connection: Connection, unit_id: uuid.UUID) -> dict[str, Any] 
     return unit
 
 
-def _points(connection: Connection, column: str, node_id: uuid.UUID) -> list[dict[str, Any]]:
+def _points(
+    connection: Connection, column: str, node_id: uuid.UUID, now: datetime
+) -> list[dict[str, Any]]:
+    """Le jumeau numérique d'un point (ADR 004, ADR 012 §2.3) : état réel
+    (dernière mesure), état souhaité déclaré (app/desired_states.py) et
+    commandes de test (app/commands.py, exception scopée à la règle non
+    négociable 1) — trois notions distinctes, réunies ici, jamais confondues."""
     points = _all(
         connection,
         f"SELECT id, code, name, point_class, kind, unit, mapping_status FROM points "
@@ -104,6 +112,11 @@ def _points(connection: Connection, column: str, node_id: uuid.UUID) -> list[dic
             "WHERE point_id = :id ORDER BY measured_at DESC LIMIT 1",
             {"id": point["id"]},
         )
+        point["desired_states"] = list_desired_states(connection, point["id"])
+        point["commands"] = [
+            {**command, "status": effective_status(command, now=now)}
+            for command in list_commands_for_point(connection, point_id=point["id"], limit=5)
+        ]
     return points
 
 
@@ -154,6 +167,7 @@ def build_passport(
     node = get_node(connection, node_id)
     if node is None:
         return None
+    now = datetime.now(UTC)
     node_type = node["node_type"]
     passport: dict[str, Any] = {
         "node_id": node_id,
@@ -180,7 +194,7 @@ def build_passport(
             {"id": node_id},
         ).scalar()
         passport["current_unit"] = _unit_summary(connection, occupant) if occupant else None
-        passport["points"] = _points(connection, "functional_location_id", node_id)
+        passport["points"] = _points(connection, "functional_location_id", node_id, now)
         location_id = node_id
 
     elif node_type == "physical_unit":
@@ -197,7 +211,7 @@ def build_passport(
 
     elif node_type == "space":
         passport["space_path"] = _space_path(connection, node_id)
-        passport["points"] = _points(connection, "space_id", node_id)
+        passport["points"] = _points(connection, "space_id", node_id, now)
 
     elif node_type == "point":
         passport["point"] = _one(
@@ -219,9 +233,7 @@ def build_passport(
     passport["site"] = _site(connection, _site_id(connection, node_type, node_id, location_id))
     # État de fonctionnement et de communication de l'équipement (ADR 013, L6).
     passport["status"] = (
-        compute_equipment_status(connection, location_id, datetime.now(UTC))
-        if location_id is not None
-        else None
+        compute_equipment_status(connection, location_id, now) if location_id is not None else None
     )
     if location_id is not None:
         passport.update(_maintenance(connection, location_id, locale))

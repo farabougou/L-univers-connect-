@@ -426,3 +426,69 @@ def test_closure_catalog_matches_the_codes_exactly(locale) -> None:
     catalog = load_catalog(locale, "closure")
     for section, codes in CLOSURE_SECTIONS.items():
         assert list(catalog[section]) == list(codes), section
+
+
+# --- Jumeau numérique : état souhaité et commandes sur un point ------------
+
+
+def test_passport_point_shows_desired_state_and_commands(two_tenants) -> None:
+    """Le jumeau numérique d'un point réunit son état réel (mesure), son état
+    souhaité déclaré et ses commandes de test — trois notions séparées, dans
+    la même réponse (ADR 004, ADR 012 §2.3)."""
+    from app.commands import create_command
+    from app.desired_states import declare_desired_state
+    from app.points import create_point, decide_point
+    from tests.modbus_fixtures import activate_device_mapping
+
+    tenant_a, _ = two_tenants
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_a["tenant_id"])
+        point_id = create_point(
+            connection,
+            tenant_id=tenant_a["tenant_id"],
+            code="PAC01-RELAIS",
+            name="Relais test",
+            value_type="boolean",
+            point_class="on_off_command",
+            unit=None,
+            functional_location_id=tenant_a["loc"],
+            created_by="test",
+        )
+        decide_point(connection, point_id=point_id, decision="validated")
+        declare_desired_state(
+            connection,
+            tenant_id=tenant_a["tenant_id"],
+            point_id=point_id,
+            value=1.0,
+            valid_from=T0,
+            reason="Test",
+            created_by="test",
+        )
+
+    activate_device_mapping(
+        tenant_id=tenant_a["tenant_id"],
+        equipment_id=tenant_a["loc"],
+        host="127.0.0.1",
+        port=5921,
+        device_type="simulated_relay",
+        points=[{"point_id": str(point_id), "register_name": "relay_state"}],
+    )
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_a["tenant_id"])
+        create_command(
+            connection,
+            tenant_id=tenant_a["tenant_id"],
+            point_id=point_id,
+            requested_value=1.0,
+            requested_by="mohamed",
+        )
+
+    response = _call("GET", f"/graph/nodes/{tenant_a['loc']}/passport", _tech(tenant_a))
+    assert response.status_code == 200
+    point = next(p for p in response.json()["points"] if p["id"] == str(point_id))
+
+    assert len(point["desired_states"]) == 1
+    assert point["desired_states"][0]["value"] == 1.0
+    assert len(point["commands"]) == 1
+    assert point["commands"][0]["status"] == "pending"
+    assert point["commands"][0]["requested_value"] == 1.0
