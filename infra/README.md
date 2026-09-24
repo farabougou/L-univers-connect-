@@ -1,5 +1,7 @@
 # Infrastructure locale
 
+Pour le passage en staging privé sur Railway, voir `RAILWAY_STAGING.md`.
+
 Démarrer la base de données PostgreSQL et le serveur d'authentification pour le
 développement local :
 

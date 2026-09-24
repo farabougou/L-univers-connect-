@@ -1,0 +1,70 @@
+{
+  "realm": "paios",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "roles": {
+    "realm": [
+      { "name": "technicien", "description": "Technicien de maintenance sur le terrain" },
+      { "name": "responsable_exploitation", "description": "Responsable d'exploitation multi-site" },
+      { "name": "admin_tenant", "description": "Administrateur du compte client (tenant)" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "paios-api",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "protocol": "openid-connect",
+      "redirectUris": [
+        "https://__WEB_STAGING_DOMAIN__/api/auth/callback",
+        "exp://*",
+        "paios://*"
+      ],
+      "webOrigins": ["https://__WEB_STAGING_DOMAIN__"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "protocolMappers": [
+        {
+          "name": "tenant_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "tenant_id",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "tenant_id",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "demo.technicien",
+      "enabled": true,
+      "firstName": "Demo",
+      "lastName": "Technicien",
+      "email": "demo.technicien@example.invalid",
+      "credentials": [{ "type": "password", "value": "demo-dev-only", "temporary": false }],
+      "realmRoles": ["technicien"],
+      "attributes": { "tenant_id": ["11111111-1111-1111-1111-111111111111"] }
+    },
+    {
+      "username": "demo.admin",
+      "enabled": true,
+      "firstName": "Demo",
+      "lastName": "Admin",
+      "email": "demo.admin@example.invalid",
+      "credentials": [{ "type": "password", "value": "demo-dev-only", "temporary": false }],
+      "realmRoles": ["admin_tenant"],
+      "attributes": { "tenant_id": ["11111111-1111-1111-1111-111111111111"] }
+    }
+  ]
+}
