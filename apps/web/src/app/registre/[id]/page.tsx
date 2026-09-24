@@ -16,6 +16,7 @@ import {
   confirmFinding,
   createDeviceMapping,
   createDivergenceRule,
+  createSimulatedRelayMapping,
   createTagForEquipment,
   createThresholdRule,
   createWorkOrderForEquipment,
@@ -24,6 +25,7 @@ import {
   restoreRule,
   retireRule,
   revokeTag,
+  sendTestCommand,
   setAssetCode,
   setHandling,
   setProperty,
@@ -102,6 +104,18 @@ type DesiredState = {
   value: number;
   valid_from: string;
   valid_to: string | null;
+};
+
+// Statuts possibles pour une commande (app/commands.py) : "unconfirmed" est
+// calculé à la lecture par l'API, jamais stocké tel quel.
+type CommandOut = {
+  id: string;
+  point_id: string;
+  requested_value: number;
+  status: string;
+  actual_value: number | null;
+  failure_reason: string | null;
+  created_at: string;
 };
 
 const WORK_ORDER_TYPES = ["corrective", "preventive", "predictive", "inspection"];
@@ -196,6 +210,20 @@ export default async function EquipmentPage({
   const deviceMappingVersions: DeviceMappingVersion[] = deviceMappingResponse.ok
     ? await deviceMappingResponse.json()
     : [];
+
+  // Le relais simulé (test de commande) est une version active dont le
+  // device_type le désigne explicitement — jamais un vrai appareil (voir
+  // CLAUDE.md, exception à la règle non négociable 1).
+  const activeRelayMapping = deviceMappingVersions.find(
+    (version) => version.status === "active" && version.content.device_type === "simulated_relay",
+  );
+  const relayPointId = activeRelayMapping?.content.points[0]?.point_id ?? null;
+  let lastCommand: CommandOut | null = null;
+  if (relayPointId) {
+    const commandsResponse = await apiFetch(`/commands?point_id=${relayPointId}&limit=1`, accessToken);
+    const commands: CommandOut[] = commandsResponse.ok ? await commandsResponse.json() : [];
+    lastCommand = commands[0] ?? null;
+  }
 
   return (
     <main style={{ maxWidth: 720, margin: "40px auto", padding: "0 16px" }}>
@@ -339,6 +367,22 @@ export default async function EquipmentPage({
           t={t}
         />
       </section>
+
+      {(activeRelayMapping || canManage) && (
+        <section style={sectionStyle}>
+          <h2 style={sectionTitleStyle}>{t("web.registre.command_section_title")}</h2>
+          <CommandBlock
+            nodeId={id}
+            points={points}
+            relayPointId={relayPointId}
+            lastCommand={lastCommand}
+            canManage={canManage}
+            locale={locale}
+            timeZone={timeZone}
+            t={t}
+          />
+        </section>
+      )}
 
       <section style={sectionStyle}>
         <h2 style={sectionTitleStyle}>{t("mobile.passport.signals")}</h2>
@@ -857,6 +901,43 @@ function DeviceMappingBlock({
             </form>
           </details>
         ))}
+      {canManage && points.length > 0 && (
+        <details>
+          <summary>{t("web.registre.modbus_create_test_relay_title")}</summary>
+          <p style={mutedStyle}>{t("web.registre.modbus_test_relay_note")}</p>
+          <form action={createSimulatedRelayMapping} style={{ maxWidth: 400 }}>
+            <input type="hidden" name="node_id" value={nodeId} />
+            <label>
+              {t("web.registre.modbus_host")}
+              <input name="host" required style={fieldStyle} />
+            </label>
+            <label style={labelStyle}>
+              {t("web.registre.modbus_port")}
+              <input name="port" type="number" defaultValue={5021} required style={fieldStyle} />
+            </label>
+            <label style={labelStyle}>
+              {t("web.registre.modbus_test_relay_point_label")}
+              <select name="point_id" required defaultValue="" style={fieldStyle}>
+                <option value="" disabled>
+                  {t("web.registre.modbus_register_none")}
+                </option>
+                {points.map((point) => (
+                  <option key={point.id} value={point.id}>
+                    {point.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label style={labelStyle}>
+              {t("web.registre.rule_reason")}
+              <input name="reason" required style={fieldStyle} />
+            </label>
+            <button type="submit" style={submitStyle}>
+              {t("web.registre.submit")}
+            </button>
+          </form>
+        </details>
+      )}
     </>
   );
 }
@@ -980,5 +1061,84 @@ function UnitView({
         </details>
       )}
     </>
+  );
+}
+
+function CommandBlock({
+  nodeId,
+  points,
+  relayPointId,
+  lastCommand,
+  canManage,
+  locale,
+  timeZone,
+  t,
+}: {
+  nodeId: string;
+  points: { id: string; name: string }[];
+  relayPointId: string | null;
+  lastCommand: CommandOut | null;
+  canManage: boolean;
+  locale: Locale;
+  timeZone: string | null;
+  t: (key: string, params?: Record<string, string>) => string;
+}) {
+  if (!relayPointId) {
+    return <p style={mutedStyle}>{t("web.registre.modbus_no_mapping")}</p>;
+  }
+  const pointName = points.find((point) => point.id === relayPointId)?.name ?? relayPointId;
+  return (
+    <div>
+      <p style={{ margin: 0 }}>{pointName}</p>
+      {canManage && (
+        <div style={signalActionsStyle}>
+          <form action={sendTestCommand}>
+            <input type="hidden" name="node_id" value={nodeId} />
+            <input type="hidden" name="point_id" value={relayPointId} />
+            <input type="hidden" name="requested_value" value="1" />
+            <button type="submit">{t("web.registre.command_turn_on")}</button>
+          </form>
+          <form action={sendTestCommand}>
+            <input type="hidden" name="node_id" value={nodeId} />
+            <input type="hidden" name="point_id" value={relayPointId} />
+            <input type="hidden" name="requested_value" value="0" />
+            <button type="submit">{t("web.registre.command_turn_off")}</button>
+          </form>
+        </div>
+      )}
+      <div style={{ marginTop: 8 }}>
+        <p style={{ ...mutedStyle, margin: 0, fontWeight: 600 }}>
+          {t("web.registre.command_last_title")}
+        </p>
+        {lastCommand ? (
+          <>
+            <p style={{ margin: 0 }}>
+              {t(`command_status.${lastCommand.status}`)} —{" "}
+              {t("web.registre.command_requested_value", {
+                value: formatNumber(locale, lastCommand.requested_value),
+              })}
+              {lastCommand.actual_value !== null &&
+                ` — ${t("web.registre.command_actual_value", {
+                  value: formatNumber(locale, lastCommand.actual_value),
+                })}`}
+            </p>
+            {lastCommand.failure_reason && (
+              <p style={{ margin: 0 }}>
+                {t("web.registre.command_failure_reason", {
+                  reason: t(`command_failure_reason.${lastCommand.failure_reason}`),
+                })}
+              </p>
+            )}
+            <p style={mutedStyle}>
+              {t("web.registre.command_at", {
+                when: formatDateTime(locale, lastCommand.created_at, timeZone),
+              })}
+            </p>
+          </>
+        ) : (
+          <p style={mutedStyle}>{t("web.registre.command_no_command")}</p>
+        )}
+      </div>
+    </div>
   );
 }

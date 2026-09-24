@@ -21,12 +21,14 @@ import {
   confirmFinding,
   createDeviceMapping,
   createDivergenceRule,
+  createSimulatedRelayMapping,
   createThresholdRule,
   createWorkOrderForEquipment,
   declareDesiredState,
   endDesiredState,
   retireRule,
   revokeTag,
+  sendTestCommand,
   setHandling,
   setProperty,
 } from "./actions";
@@ -393,6 +395,80 @@ describe("revokeTag", () => {
       "token-123",
       expect.objectContaining({ body: JSON.stringify({ reason: "Perdue" }) }),
     );
+  });
+});
+
+describe("createSimulatedRelayMapping", () => {
+  it("force device_type=simulated_relay et le registre relay_state", async () => {
+    apiFetch.mockResolvedValueOnce(ok());
+    await createSimulatedRelayMapping(
+      fd({
+        node_id: "node-1",
+        point_id: "point-1",
+        host: "127.0.0.1",
+        port: "5021",
+        reason: "Test du pilotage de commande",
+      }),
+    );
+
+    expect(apiFetch).toHaveBeenCalledWith(
+      "/configs",
+      "token-123",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          config_type: "modbus_device_mapping",
+          subject_key: "node-1",
+          reason: "Test du pilotage de commande",
+          content: {
+            device_type: "simulated_relay",
+            host: "127.0.0.1",
+            port: 5021,
+            points: [{ point_id: "point-1", register_name: "relay_state" }],
+          },
+        }),
+      }),
+    );
+  });
+
+  it("redirige avec le code d'erreur en cas d'échec", async () => {
+    apiFetch.mockResolvedValueOnce(fail("COMMAND_POINT_NOT_CONTROLLABLE"));
+    const url = await redirected(
+      createSimulatedRelayMapping(
+        fd({
+          node_id: "node-1",
+          point_id: "point-1",
+          host: "127.0.0.1",
+          port: "5021",
+          reason: "Test",
+        }),
+      ),
+    );
+    expect(url).toBe("/registre/node-1?error=COMMAND_POINT_NOT_CONTROLLABLE");
+  });
+});
+
+describe("sendTestCommand", () => {
+  it("envoie point_id et requested_value en nombre à /commands", async () => {
+    apiFetch.mockResolvedValueOnce(ok());
+    await sendTestCommand(fd({ node_id: "node-1", point_id: "point-1", requested_value: "1" }));
+
+    expect(apiFetch).toHaveBeenCalledWith(
+      "/commands",
+      "token-123",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ point_id: "point-1", requested_value: 1 }),
+      }),
+    );
+  });
+
+  it("redirige avec le code d'erreur en cas d'échec", async () => {
+    apiFetch.mockResolvedValueOnce(fail("COMMAND_POINT_NOT_CONTROLLABLE"));
+    const url = await redirected(
+      sendTestCommand(fd({ node_id: "node-1", point_id: "point-1", requested_value: "1" })),
+    );
+    expect(url).toBe("/registre/node-1?error=COMMAND_POINT_NOT_CONTROLLABLE");
   });
 });
 

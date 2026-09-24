@@ -382,6 +382,60 @@ export async function createDeviceMapping(formData: FormData) {
   revalidatePath(`/registre/${nodeId}`);
 }
 
+/**
+ * Relais simulé (exception scopée à la règle non négociable 1, voir
+ * CLAUDE.md) : une connexion Modbus dédiée, jamais celle d'un appareil réel,
+ * uniquement pour valider le pilotage logiciel de bout en bout.
+ */
+export async function createSimulatedRelayMapping(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+  const pointId = String(formData.get("point_id"));
+
+  const response = await apiFetch("/configs", accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      config_type: "modbus_device_mapping",
+      subject_key: nodeId,
+      reason: formData.get("reason"),
+      content: {
+        device_type: "simulated_relay",
+        host: formData.get("host"),
+        port: Number(formData.get("port")),
+        points: [{ point_id: pointId, register_name: "relay_state" }],
+      },
+    }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  revalidatePath(`/registre/${nodeId}`);
+}
+
+/**
+ * Déclenche une commande de test contre le relais simulé (voir
+ * app/commands.py) : l'API refuse elle-même toute cible qui ne serait pas
+ * un appareil explicitement simulé, ce formulaire ne fait qu'appeler la
+ * même route que n'importe quel autre appelant autorisé.
+ */
+export async function sendTestCommand(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+  const pointId = formData.get("point_id");
+  const requestedValue = formData.get("requested_value");
+
+  const response = await apiFetch("/commands", accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ point_id: pointId, requested_value: Number(requestedValue) }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  revalidatePath(`/registre/${nodeId}`);
+}
+
 export async function createWorkOrderForEquipment(formData: FormData) {
   const accessToken = await requireAccessToken();
   const nodeId = String(formData.get("node_id"));

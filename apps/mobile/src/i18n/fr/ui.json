@@ -338,7 +338,19 @@
       "modbus_host": "Adresse de l’appareil",
       "modbus_port": "Port",
       "modbus_create_title": "Configurer la connexion Modbus",
-      "modbus_register_none": "— (non relevé)"
+      "modbus_register_none": "— (non relevé)",
+      "modbus_create_test_relay_title": "Configurer un relais simulé (test de commande)",
+      "modbus_test_relay_note": "Un relais simulé valide uniquement le pilotage logiciel : jamais un équipement réel.",
+      "command_section_title": "Commande de test",
+      "command_no_command": "Aucune commande envoyée pour cet équipement.",
+      "command_turn_on": "Allumer (test)",
+      "command_turn_off": "Éteindre (test)",
+      "command_last_title": "Dernière commande",
+      "command_requested_value": "Valeur demandée : {value}",
+      "command_actual_value": "Valeur réelle : {value}",
+      "command_failure_reason": "Motif : {reason}",
+      "command_at": "Le {when}",
+      "modbus_test_relay_point_label": "Point piloté"
     }
   },
   "space_type": {
@@ -368,13 +380,28 @@
     "retired": "Retirée"
   },
   "modbus_device_type": {
-    "sdm120": "Compteur Eastron SDM120"
+    "sdm120": "Compteur Eastron SDM120",
+    "simulated_relay": "Relais simulé (test)"
   },
   "modbus_register": {
     "voltage": "Tension",
     "current": "Courant",
     "active_power": "Puissance active",
     "frequency": "Fréquence",
-    "total_active_energy": "Énergie active totale"
+    "total_active_energy": "Énergie active totale",
+    "relay_state": "État du relais"
+  },
+  "command_status": {
+    "pending": "En attente",
+    "sent": "Envoyée à l’appareil",
+    "acknowledged": "Reçue par l’appareil",
+    "verified": "Vérifiée",
+    "failed": "Échouée",
+    "unconfirmed": "Non confirmée"
+  },
+  "command_failure_reason": {
+    "ACTUAL_STATE_MISMATCH": "L’état réel ne correspond pas à la valeur demandée.",
+    "MODBUS_WRITE_ERROR": "L’appareil a refusé l’écriture.",
+    "COMMAND_POINT_NOT_IN_CONFIG": "Le point visé n’est plus dans la configuration active."
   }
 }

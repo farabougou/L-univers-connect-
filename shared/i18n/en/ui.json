@@ -338,7 +338,19 @@
       "modbus_host": "Device address",
       "modbus_port": "Port",
       "modbus_create_title": "Configure the Modbus connection",
-      "modbus_register_none": "— (not read)"
+      "modbus_register_none": "— (not read)",
+      "modbus_create_test_relay_title": "Configure a simulated relay (command test)",
+      "modbus_test_relay_note": "A simulated relay only validates the software command pipeline: never a real device.",
+      "command_section_title": "Test command",
+      "command_no_command": "No command has been sent for this equipment.",
+      "command_turn_on": "Turn on (test)",
+      "command_turn_off": "Turn off (test)",
+      "command_last_title": "Last command",
+      "command_requested_value": "Requested value: {value}",
+      "command_actual_value": "Actual value: {value}",
+      "command_failure_reason": "Reason: {reason}",
+      "command_at": "On {when}",
+      "modbus_test_relay_point_label": "Controlled point"
     }
   },
   "space_type": {
@@ -368,13 +380,28 @@
     "retired": "Retired"
   },
   "modbus_device_type": {
-    "sdm120": "Eastron SDM120 meter"
+    "sdm120": "Eastron SDM120 meter",
+    "simulated_relay": "Simulated relay (test)"
   },
   "modbus_register": {
     "voltage": "Voltage",
     "current": "Current",
     "active_power": "Active power",
     "frequency": "Frequency",
-    "total_active_energy": "Total active energy"
+    "total_active_energy": "Total active energy",
+    "relay_state": "Relay state"
+  },
+  "command_status": {
+    "pending": "Pending",
+    "sent": "Sent to the device",
+    "acknowledged": "Received by the device",
+    "verified": "Verified",
+    "failed": "Failed",
+    "unconfirmed": "Unconfirmed"
+  },
+  "command_failure_reason": {
+    "ACTUAL_STATE_MISMATCH": "The actual state does not match the requested value.",
+    "MODBUS_WRITE_ERROR": "The device refused the write.",
+    "COMMAND_POINT_NOT_IN_CONFIG": "The target point is no longer in the active configuration."
   }
 }
