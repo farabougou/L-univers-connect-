@@ -17,10 +17,13 @@ import { formatDate, formatDateTime, formatNumber } from "../src/i18n/translator
 import {
   type EquipmentStatus,
   type Passport,
+  type PassportCommand,
   type PassportUnit,
   fetchPassportByTag,
+  fetchSimulatedRelayPointId,
   isPlatformTag,
   parseTagCode,
+  sendCommand,
   statusMessage,
 } from "../src/lib/passport";
 
@@ -36,13 +39,18 @@ export default function PasseportScreen() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [passport, setPassport] = useState<Passport | null>(null);
+  const [relayPointId, setRelayPointId] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   // Un QR reste devant l'objectif plusieurs images de suite : une seule lecture.
   const handled = useRef(false);
+  // Retenu pour rafraîchir le passeport après l'envoi d'une commande, sans
+  // demander à la personne de rescanner l'étiquette.
+  const lastCode = useRef<string | null>(null);
 
   async function lookUp(raw: string) {
     setPassport(null);
+    setRelayPointId(null);
     const code = parseTagCode(raw);
     if (!code) {
       setMessage(t("mobile.passport.invalid_code"));
@@ -56,11 +64,39 @@ export default function PasseportScreen() {
     setLoading(true);
     setMessage(null);
     const result = await fetchPassportByTag(config.apiUrl, token, code, locale);
-    setLoading(false);
     if (result.ok) {
+      lastCode.current = code;
       setPassport(result.passport);
+      if (result.passport.node_type === "functional_location") {
+        setRelayPointId(
+          await fetchSimulatedRelayPointId(config.apiUrl, token, result.passport.node_id),
+        );
+      }
     } else {
       setMessage(t(result.messageKey, result.params));
+    }
+    setLoading(false);
+  }
+
+  async function sendTestCommand(pointId: string, requestedValue: number) {
+    const token = await auth.getAccessToken();
+    if (!token) {
+      setMessage(t("mobile.passport.sign_in_first"));
+      return;
+    }
+    setLoading(true);
+    setMessage(null);
+    const result = await sendCommand(config.apiUrl, token, pointId, requestedValue);
+    if (!result.ok) {
+      setMessage(t(result.messageKey, result.params));
+      setLoading(false);
+      return;
+    }
+    // Rejoue la lecture pour afficher l'état à jour de la commande.
+    if (lastCode.current) {
+      await lookUp(lastCode.current);
+    } else {
+      setLoading(false);
     }
   }
 
@@ -115,12 +151,29 @@ export default function PasseportScreen() {
       <Button title={t("mobile.passport.show")} onPress={() => lookUp(input)} disabled={loading} />
       {loading && <ActivityIndicator />}
       {message && <Text style={styles.error}>{message}</Text>}
-      {passport && <PassportView passport={passport} />}
+      {passport && (
+        <PassportView
+          passport={passport}
+          relayPointId={relayPointId}
+          onSendCommand={sendTestCommand}
+          sending={loading}
+        />
+      )}
     </ScrollView>
   );
 }
 
-function PassportView({ passport }: { passport: Passport }) {
+function PassportView({
+  passport,
+  relayPointId,
+  onSendCommand,
+  sending,
+}: {
+  passport: Passport;
+  relayPointId: string | null;
+  onSendCommand: (pointId: string, requestedValue: number) => void;
+  sending: boolean;
+}) {
   const unit = passport.physical_unit ?? passport.current_unit ?? null;
   // Heures du site dans son fuseau quand il est renseigné, sinon celles de
   // l'appareil, et on le dit (ADR 013 : ne jamais laisser croire).
@@ -166,6 +219,18 @@ function PassportView({ passport }: { passport: Passport }) {
                 : ""}
             </Text>
           ))}
+        </Section>
+      )}
+
+      {relayPointId && (
+        <Section title={t("web.registre.command_section_title")}>
+          <CommandSection
+            points={passport.points ?? []}
+            relayPointId={relayPointId}
+            onSendCommand={onSendCommand}
+            sending={sending}
+            timeZone={timeZone}
+          />
         </Section>
       )}
 
@@ -218,6 +283,77 @@ function PassportView({ passport }: { passport: Passport }) {
           ? t("mobile.passport.site_time", { timezone: timeZone })
           : t("mobile.passport.device_time")}
       </Text>
+    </View>
+  );
+}
+
+/**
+ * Boutons ON/OFF de test contre l'appareil explicitement simulé (exception
+ * scopée à la règle non négociable 1, voir CLAUDE.md) + dernière commande
+ * connue pour ce point. Même contenu que CommandBlock côté web
+ * (apps/web/src/app/registre/[id]/page.tsx), jamais deux fois la logique.
+ */
+function CommandSection({
+  points,
+  relayPointId,
+  onSendCommand,
+  sending,
+  timeZone,
+}: {
+  points: { id: string; name: string; commands: PassportCommand[] }[];
+  relayPointId: string;
+  onSendCommand: (pointId: string, requestedValue: number) => void;
+  sending: boolean;
+  timeZone: string | null;
+}) {
+  const point = points.find((candidate) => candidate.id === relayPointId);
+  const lastCommand = point?.commands[0] ?? null;
+  return (
+    <View style={{ gap: 4 }}>
+      <Text style={styles.strong}>{point?.name ?? relayPointId}</Text>
+      <View style={styles.commandButtons}>
+        <Button
+          title={t("web.registre.command_turn_on")}
+          onPress={() => onSendCommand(relayPointId, 1)}
+          disabled={sending}
+        />
+        <Button
+          title={t("web.registre.command_turn_off")}
+          onPress={() => onSendCommand(relayPointId, 0)}
+          disabled={sending}
+        />
+      </View>
+      <Text style={{ ...styles.muted, fontWeight: "600" }}>
+        {t("web.registre.command_last_title")}
+      </Text>
+      {lastCommand ? (
+        <>
+          <Text>
+            {t(`command_status.${lastCommand.status}`)} —{" "}
+            {t("web.registre.command_requested_value", {
+              value: formatNumber(locale, lastCommand.requested_value),
+            })}
+            {lastCommand.actual_value !== null &&
+              ` — ${t("web.registre.command_actual_value", {
+                value: formatNumber(locale, lastCommand.actual_value),
+              })}`}
+          </Text>
+          {lastCommand.failure_reason && (
+            <Text>
+              {t("web.registre.command_failure_reason", {
+                reason: t(`command_failure_reason.${lastCommand.failure_reason}`),
+              })}
+            </Text>
+          )}
+          <Text style={styles.muted}>
+            {t("web.registre.command_at", {
+              when: formatDateTime(locale, lastCommand.created_at, timeZone),
+            })}
+          </Text>
+        </>
+      ) : (
+        <Text style={styles.muted}>{t("web.registre.command_no_command")}</Text>
+      )}
     </View>
   );
 }
@@ -283,6 +419,10 @@ const styles = StyleSheet.create({
   },
   scanner: {
     gap: 8,
+  },
+  commandButtons: {
+    flexDirection: "row",
+    gap: 12,
   },
   camera: {
     height: 280,

@@ -1,6 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { fetchPassportByTag, isPlatformTag, parseTagCode, statusMessage } from "./passport";
+import {
+  fetchPassportByTag,
+  fetchSimulatedRelayPointId,
+  isPlatformTag,
+  parseTagCode,
+  sendCommand,
+  statusMessage,
+} from "./passport";
 
 describe("parseTagCode", () => {
   it("accepte le contenu brut d'un QR", () => {
@@ -60,6 +67,95 @@ describe("fetchPassportByTag", () => {
   it("signale l'absence de réseau", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Network request failed")));
     const result = await fetchPassportByTag("https://api.test", "jeton", "Ab3_x-9Zk2LmN0pQ", "fr");
+    expect(result).toEqual({ ok: false, messageKey: "mobile.passport.offline" });
+  });
+});
+
+describe("fetchSimulatedRelayPointId", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function stubFetch(status: number, body: unknown = []) {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: status >= 200 && status < 300,
+      status,
+      json: async () => body,
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    return fetchMock;
+  }
+
+  it("trouve le point de la connexion simulée active", async () => {
+    stubFetch(200, [
+      { status: "superseded", content: { device_type: "simulated_relay", points: [{ point_id: "old" }] } },
+      { status: "active", content: { device_type: "sdm120", points: [{ point_id: "compteur" }] } },
+      { status: "active", content: { device_type: "simulated_relay", points: [{ point_id: "relais-1" }] } },
+    ]);
+
+    const result = await fetchSimulatedRelayPointId("https://api.test", "jeton", "loc-1");
+
+    expect(result).toBe("relais-1");
+  });
+
+  it("renvoie null sans connexion simulée active", async () => {
+    stubFetch(200, []);
+    expect(await fetchSimulatedRelayPointId("https://api.test", "jeton", "loc-1")).toBeNull();
+  });
+
+  it("renvoie null si l'appel échoue", async () => {
+    stubFetch(500);
+    expect(await fetchSimulatedRelayPointId("https://api.test", "jeton", "loc-1")).toBeNull();
+  });
+
+  it("renvoie null hors ligne", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Network request failed")));
+    expect(await fetchSimulatedRelayPointId("https://api.test", "jeton", "loc-1")).toBeNull();
+  });
+});
+
+describe("sendCommand", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function stubFetch(status: number, body: unknown = {}) {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: status >= 200 && status < 300,
+      status,
+      json: async () => body,
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    return fetchMock;
+  }
+
+  it("envoie la commande et renvoie le résultat", async () => {
+    const command = { id: "cmd-1", point_id: "relais-1", requested_value: 1, status: "pending" };
+    const fetchMock = stubFetch(201, command);
+
+    const result = await sendCommand("https://api.test", "jeton", "relais-1", 1);
+
+    expect(result).toEqual({ ok: true, command });
+    expect(fetchMock).toHaveBeenCalledWith("https://api.test/commands", {
+      method: "POST",
+      headers: { Authorization: "Bearer jeton", "Content-Type": "application/json" },
+      body: JSON.stringify({ point_id: "relais-1", requested_value: 1 }),
+    });
+  });
+
+  it("traduit un échec en message générique", async () => {
+    stubFetch(422);
+    const result = await sendCommand("https://api.test", "jeton", "relais-1", 1);
+    expect(result).toEqual({
+      ok: false,
+      messageKey: "mobile.passport.server_error",
+      params: { status: 422 },
+    });
+  });
+
+  it("signale l'absence de réseau", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Network request failed")));
+    const result = await sendCommand("https://api.test", "jeton", "relais-1", 1);
     expect(result).toEqual({ ok: false, messageKey: "mobile.passport.offline" });
   });
 });

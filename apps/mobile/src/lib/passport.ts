@@ -5,7 +5,16 @@
  * L'étiquette ne contient qu'un code opaque (`paios:tag:<code>`). Le serveur
  * décide de tout : ce qui s'affiche et les actions permises dépendent des
  * droits de la personne connectée. L'application n'en déduit jamais rien
- * d'elle-même, et aucune action de commande d'équipement n'existe.
+ * d'elle-même.
+ *
+ * Exception scopée à la règle non négociable 1 (CLAUDE.md, décision de
+ * Mohamed du 24/09/2026) : une commande peut être envoyée à un appareil
+ * explicitement simulé, jamais à un équipement réel — voir `sendCommand` et
+ * `fetchSimulatedRelayPointId`. Les trois rôles de la plateforme
+ * (technicien, responsable_exploitation, admin_tenant) y sont tous
+ * autorisés (`_COMMAND_ROLES`, app/routers/commands.py) : pas de filtrage
+ * par rôle ici tant qu'aucun rôle n'en est exclu — l'API reste la seule
+ * autorité si ça change un jour.
  */
 
 export const QR_PREFIX = "paios:tag:";
@@ -33,6 +42,26 @@ export type PassportMeasurement = {
   quality_flags: string[];
 };
 
+export type DesiredState = {
+  id: string;
+  point_id: string;
+  value: number;
+  valid_from: string;
+  valid_to: string | null;
+};
+
+// Statuts possibles pour une commande (app/commands.py) : "unconfirmed" est
+// calculé à la lecture par l'API, jamais stocké tel quel.
+export type PassportCommand = {
+  id: string;
+  point_id: string;
+  requested_value: number;
+  status: string;
+  actual_value: number | null;
+  failure_reason: string | null;
+  created_at: string;
+};
+
 export type PassportPoint = {
   id: string;
   code: string;
@@ -40,6 +69,11 @@ export type PassportPoint = {
   unit: string;
   mapping_status: string;
   latest: PassportMeasurement | null;
+  // État souhaité déclaré (app/desired_states.py) et commandes de test
+  // (app/commands.py) — deux notions distinctes du jumeau numérique du
+  // point, jamais confondues (mêmes types que apps/web/src/lib/passport.ts).
+  desired_states: DesiredState[];
+  commands: PassportCommand[];
 };
 
 export type PassportUnit = {
@@ -138,6 +172,79 @@ export async function fetchPassportByTag(
         params: { status: response.status },
       };
   }
+}
+
+/**
+ * Le point pilotable par une commande de test est celui visé par la
+ * connexion Modbus active de type "simulated_relay" (jamais un vrai
+ * appareil) — même règle que apps/web/src/app/registre/[id]/page.tsx :
+ * `point_class` seul ne suffit pas, il faut une connexion réellement active
+ * pour qu'une commande ait un appareil qui la reçoive.
+ */
+export async function fetchSimulatedRelayPointId(
+  apiUrl: string,
+  accessToken: string,
+  functionalLocationId: string,
+): Promise<string | null> {
+  let response: Response;
+  try {
+    response = await fetch(
+      `${apiUrl}/configs?config_type=modbus_device_mapping&subject_key=${encodeURIComponent(
+        functionalLocationId,
+      )}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    );
+  } catch {
+    return null;
+  }
+  if (!response.ok) return null;
+  const versions = (await response.json()) as {
+    status: string;
+    content: { device_type: string; points: { point_id: string }[] };
+  }[];
+  const active = versions.find(
+    (version) => version.status === "active" && version.content.device_type === "simulated_relay",
+  );
+  return active?.content.points[0]?.point_id ?? null;
+}
+
+export type CommandResult =
+  | { ok: true; command: PassportCommand }
+  | { ok: false; messageKey: string; params?: Record<string, number> };
+
+/**
+ * Déclenche une commande de test (voir app/commands.py) : l'API refuse
+ * elle-même toute cible qui ne serait pas un appareil explicitement simulé,
+ * cet appel ne fait qu'atteindre la même route que la console web.
+ */
+export async function sendCommand(
+  apiUrl: string,
+  accessToken: string,
+  pointId: string,
+  requestedValue: number,
+): Promise<CommandResult> {
+  let response: Response;
+  try {
+    response = await fetch(`${apiUrl}/commands`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ point_id: pointId, requested_value: requestedValue }),
+    });
+  } catch {
+    return { ok: false, messageKey: "mobile.passport.offline" };
+  }
+  if (response.ok) {
+    const command = (await response.json()) as PassportCommand;
+    return { ok: true, command };
+  }
+  return {
+    ok: false,
+    messageKey: "mobile.passport.server_error",
+    params: { status: response.status },
+  };
 }
 
 /**
