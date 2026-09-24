@@ -194,7 +194,7 @@ def test_changement_de_configuration_pris_en_compte_au_tour_suivant(
         # l'ancienne configuration. Appel 3 : second tour, après le
         # changement fait "depuis la console" entre les deux tours.
         mappings = energy_mapping if calls["n"] <= 2 else power_mapping
-        return ("127.0.0.1", PORT, mappings)
+        return ("127.0.0.1", PORT, "sdm120", mappings)
 
     monkeypatch.setattr(daemon, "_load_config", fake_load_config)
 

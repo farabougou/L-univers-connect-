@@ -81,3 +81,30 @@ class EdgeApiClient:
     def post_measurements(self, items: list[dict[str, Any]]) -> dict[str, Any]:
         response = self._authorized_request("POST", "/edge/measurements", json={"items": items})
         return response.json()
+
+    def get_pending_commands(self, equipment_id: uuid.UUID) -> list[dict[str, Any]]:
+        """Récupère (et marque « sent » côté API) les commandes en attente
+        pour cet équipement — jamais renvoyées une seconde fois."""
+        response = self._authorized_request(
+            "GET", "/edge/commands", params={"equipment_id": str(equipment_id)}
+        )
+        return response.json()
+
+    def acknowledge_command(
+        self,
+        command_id: uuid.UUID,
+        *,
+        success: bool,
+        actual_value: float | None,
+        failure_reason: str | None,
+    ) -> dict[str, Any]:
+        response = self._authorized_request(
+            "POST",
+            f"/edge/commands/{command_id}/ack",
+            json={
+                "success": success,
+                "actual_value": actual_value,
+                "failure_reason": failure_reason,
+            },
+        )
+        return response.json()

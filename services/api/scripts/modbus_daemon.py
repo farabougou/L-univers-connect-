@@ -42,6 +42,8 @@ from app.connectors.edge_client import EdgeApiClient
 from app.connectors.modbus import ModbusReadError, find_register_by_name, read_modbus_points
 from app.connectors.offline_buffer import BufferedReading, OfflineBuffer
 from app.connectors.sdm120 import SDM120_POINTS
+from app.connectors.simulated_actuator import write_modbus_coil
+from app.connectors.simulated_relay import SIMULATED_RELAY_POINTS
 from app.observability import configure_logging
 
 logger = logging.getLogger("paios.modbus_daemon")
@@ -49,7 +51,14 @@ logger = logging.getLogger("paios.modbus_daemon")
 # Catalogues de registres connus de ce démon, par device_type — même
 # principe que app/connectors/device_mapping.py côté API, dupliqué ici
 # volontairement : le démon ne dépend plus des modules liés à la base.
-DEVICE_REGISTER_CATALOGS = {"sdm120": SDM120_POINTS}
+DEVICE_REGISTER_CATALOGS = {"sdm120": SDM120_POINTS, "simulated_relay": SIMULATED_RELAY_POINTS}
+
+# Les seuls device_type pour lesquels le démon va chercher des commandes en
+# attente — même liste que SIMULATED_DEVICE_TYPES côté API
+# (app/connectors/device_mapping.py), dupliquée ici pour la même raison que
+# DEVICE_REGISTER_CATALOGS. Exception scopée à la règle non négociable 1 de
+# CLAUDE.md : jamais le sdm120, jamais un vrai appareil.
+COMMANDABLE_DEVICE_TYPES = {"simulated_relay"}
 
 _stop = False
 
@@ -61,9 +70,9 @@ def _handle_stop(signum: int, frame: FrameType | None) -> None:
 
 def _load_config(
     api: EdgeApiClient, equipment_id: uuid.UUID
-) -> tuple[str, int, list[tuple[uuid.UUID, object]]] | None:
-    """None si aucune configuration active. Sinon (host, port, [(point_id,
-    registre), ...])."""
+) -> tuple[str, int, str, list[tuple[uuid.UUID, object]]] | None:
+    """None si aucune configuration active. Sinon (host, port, device_type,
+    [(point_id, registre), ...])."""
     content = api.get_config(equipment_id)
     if content is None:
         return None
@@ -72,7 +81,56 @@ def _load_config(
         (uuid.UUID(entry["point_id"]), find_register_by_name(catalog, entry["register_name"]))
         for entry in content["points"]
     ]
-    return content["host"], content["port"], mappings
+    return content["host"], content["port"], content["device_type"], mappings
+
+
+def _execute_pending_commands(
+    api: EdgeApiClient,
+    *,
+    equipment_id: uuid.UUID,
+    host: str,
+    port: int,
+    mappings: list[tuple[uuid.UUID, object]],
+) -> None:
+    """Récupère les commandes en attente pour cet équipement et les exécute
+    une à une : écriture de la bobine, relecture, accusé de réception. Une
+    commande dont l'exécution échoue n'empêche pas les suivantes."""
+    try:
+        pending_commands = api.get_pending_commands(equipment_id)
+    except httpx.HTTPError as exc:
+        logger.error(
+            f"API injoignable pour les commandes, nouvelle tentative au prochain tour : {exc}"
+        )
+        return
+
+    register_by_point = dict(mappings)
+    for command in pending_commands:
+        point_id = uuid.UUID(command["point_id"])
+        register = register_by_point.get(point_id)
+        failure_reason = None
+        actual_value = None
+        success = False
+        if register is None:
+            failure_reason = "COMMAND_POINT_NOT_IN_CONFIG"
+        else:
+            try:
+                write_modbus_coil(host, port, register.address, bool(command["requested_value"]))
+                actual_value = read_modbus_points(host, port, [register])[register.name]
+                success = True
+            except ModbusReadError as exc:
+                failure_reason = "MODBUS_WRITE_ERROR"
+                logger.error(f"exécution de la commande {command['id']} impossible : {exc}")
+
+        try:
+            api.acknowledge_command(
+                command["id"],
+                success=success,
+                actual_value=actual_value,
+                failure_reason=failure_reason,
+            )
+            logger.info(f"commande {command['id']} : succès={success} valeur={actual_value}")
+        except httpx.HTTPError as exc:
+            logger.error(f"impossible d'accuser réception de la commande {command['id']} : {exc}")
 
 
 def run(
@@ -112,7 +170,11 @@ def run(
                 )
 
         if resolved is not None:
-            host, port, mappings = resolved
+            host, port, device_type, mappings = resolved
+            if device_type in COMMANDABLE_DEVICE_TYPES:
+                _execute_pending_commands(
+                    api, equipment_id=equipment_id, host=host, port=port, mappings=mappings
+                )
             try:
                 values = read_modbus_points(host, port, [register for _, register in mappings])
             except ModbusReadError as exc:
