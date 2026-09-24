@@ -1,5 +1,12 @@
-"""Démon de sondage Modbus : relève plusieurs points à intervalle régulier
+"""Démon de sondage Modbus : relève un équipement à intervalle régulier
 (M3→M4).
+
+L'adresse de l'appareil et l'association point ↔ registre viennent de la
+configuration versionnée « modbus_device_mapping » (voir
+app/connectors/device_mapping.py), pas d'arguments tapés à la main : cette
+configuration se crée et s'active via la console web ou l'API générique
+/configs, exactement comme une règle de détection. Le démon lit la version
+active au démarrage — un changement pris en compte suppose de le relancer.
 
 Précurseur minimal de l'agent Edge : une seule boucle, pas de gestion de
 flotte ni de PKI (DEFER, voir ADR 012 §2.10-2.12). Tous les points d'un même
@@ -13,13 +20,8 @@ différentes :
   jamais perdue, et repart avec les suivantes dès que la connexion revient.
 
 Usage :
-    python scripts/modbus_daemon.py --tenant <tenant_id> --host <host> \
-        --point <point_id>:<registre> [--point <point_id>:<registre> ...] \
-        [--port 502] [--interval 60] [--buffer fichier]
-
-Exemple (deux points du même compteur SDM120) :
-    python scripts/modbus_daemon.py --tenant ... --host 192.168.1.50 \
-        --point 8f2c...:total_active_energy --point a11b...:voltage
+    python scripts/modbus_daemon.py --tenant <tenant_id> --equipment <id> \
+        [--interval 60] [--buffer fichier] [--source sdm120]
 
 Arrêt propre : Ctrl+C ou SIGTERM. Le tampon, s'il contient des mesures en
 attente, reste sur disque et sera renvoyé au prochain démarrage.
@@ -34,10 +36,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from types import FrameType
 
-from app.connectors.ingest import PointModbusMapping
-from app.connectors.modbus import ModbusReadError, find_register_by_name, read_modbus_points
+from app.connectors.device_mapping import resolve_active_mapping
+from app.connectors.modbus import ModbusReadError, read_modbus_points
 from app.connectors.offline_buffer import BufferedReading, OfflineBuffer
-from app.connectors.sdm120 import SDM120_POINTS
 from app.db import engine
 from app.observability import configure_logging
 from app.telemetry import ingest_measurements
@@ -53,12 +54,22 @@ def _handle_stop(signum: int, frame: FrameType | None) -> None:
     _stop = True
 
 
+def _load_mappings(tenant_id: uuid.UUID, equipment_id: uuid.UUID):
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_id)
+        resolved = resolve_active_mapping(connection, equipment_id=equipment_id)
+    if resolved is None:
+        raise SystemExit(
+            f"Aucune configuration Modbus active pour l'équipement {equipment_id} "
+            "(console web : Connexion Modbus, ou POST /configs puis /activate)."
+        )
+    return resolved
+
+
 def run(
     *,
     tenant_id: uuid.UUID,
-    host: str,
-    port: int,
-    mappings: list[PointModbusMapping],
+    equipment_id: uuid.UUID,
     interval_seconds: float,
     buffer: OfflineBuffer,
     source: str = "sdm120",
@@ -66,6 +77,7 @@ def run(
 ) -> int:
     """Boucle de sondage. `max_cycles` (réservé aux tests) arrête après N
     tours au lieu d'attendre Ctrl+C ; renvoie le nombre de tours effectués."""
+    host, port, mappings = _load_mappings(tenant_id, equipment_id)
     logger.info(
         f"démon Modbus démarré : {host}:{port}, {len(mappings)} point(s), "
         f"toutes les {interval_seconds:g}s"
@@ -124,37 +136,14 @@ def run(
     return cycles_done
 
 
-def _parse_mapping(raw: str) -> PointModbusMapping:
-    try:
-        point_id_text, register_name = raw.split(":", 1)
-    except ValueError as exc:
-        raise argparse.ArgumentTypeError(
-            f"--point attend <point_id>:<registre>, reçu : {raw!r}"
-        ) from exc
-    try:
-        point_id = uuid.UUID(point_id_text)
-    except ValueError as exc:
-        raise argparse.ArgumentTypeError(f"point_id invalide : {point_id_text!r}") from exc
-    try:
-        register = find_register_by_name(SDM120_POINTS, register_name)
-    except ValueError as exc:
-        raise argparse.ArgumentTypeError(str(exc)) from exc
-    return PointModbusMapping(point_id=point_id, register=register)
-
-
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--tenant", required=True, type=uuid.UUID, help="Identifiant du client")
-    parser.add_argument("--host", required=True, help="Adresse de l'appareil Modbus")
-    parser.add_argument("--port", type=int, default=502)
     parser.add_argument(
-        "--point",
-        dest="mappings",
+        "--equipment",
         required=True,
-        action="append",
-        type=_parse_mapping,
-        metavar="POINT_ID:REGISTRE",
-        help="Un point du registre associé à un nom de registre SDM120 ; répétable",
+        type=uuid.UUID,
+        help="Identifiant de l'équipement (functional_location_id)",
     )
     parser.add_argument("--interval", type=float, default=60.0, help="Secondes entre deux tours")
     parser.add_argument("--buffer", type=Path, default=None, help="Fichier du tampon hors ligne")
@@ -167,12 +156,10 @@ def main() -> None:
     args = _parse_args()
     signal.signal(signal.SIGINT, _handle_stop)
     signal.signal(signal.SIGTERM, _handle_stop)
-    buffer_path = args.buffer or Path(f"modbus_buffer_{args.tenant}.jsonl")
+    buffer_path = args.buffer or Path(f"modbus_buffer_{args.equipment}.jsonl")
     run(
         tenant_id=args.tenant,
-        host=args.host,
-        port=args.port,
-        mappings=args.mappings,
+        equipment_id=args.equipment,
         interval_seconds=args.interval,
         buffer=OfflineBuffer(buffer_path),
         source=args.source,

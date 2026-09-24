@@ -1,12 +1,16 @@
 """Tenant + point de compteur d'énergie, réutilisé par les tests Modbus."""
 
 import uuid
+from datetime import UTC, datetime
 
 from sqlalchemy import text
 
+from app.config_versions import activate_version, create_version
+from app.connectors.device_mapping import MODBUS_DEVICE_MAPPING
 from app.db import engine
 from app.points import create_point, decide_point
 from app.tenancy import set_tenant_context
+from tests.db_helpers import purge_audit_log_for_tenant, purge_config_versions_for_tenant
 
 
 def create_tenant_with_energy_point(name: str) -> dict:
@@ -44,7 +48,7 @@ def create_tenant_with_energy_point(name: str) -> dict:
             created_by="test",
         )
         decide_point(connection, point_id=point_id, decision="validated")
-    return {"tenant_id": tenant_id, "point_id": point_id}
+    return {"tenant_id": tenant_id, "location_id": location_id, "point_id": point_id}
 
 
 def create_tenant_with_energy_and_power_points(name: str) -> dict:
@@ -99,17 +103,51 @@ def create_tenant_with_energy_and_power_points(name: str) -> dict:
         decide_point(connection, point_id=power_point_id, decision="validated")
     return {
         "tenant_id": tenant_id,
+        "location_id": location_id,
         "energy_point_id": energy_point_id,
         "power_point_id": power_point_id,
     }
 
 
-def cleanup_tenant(tenant: dict) -> None:
+def activate_device_mapping(
+    *, tenant_id: uuid.UUID, equipment_id: uuid.UUID, host: str, points: list[dict], port: int = 502
+) -> uuid.UUID:
+    """Crée et active une configuration modbus_device_mapping pour un test,
+    sans passer par l'API (voir app/connectors/device_mapping.py)."""
     with engine.begin() as connection:
-        set_tenant_context(connection, tenant["tenant_id"])
-        for table in ("measurements", "points", "functional_locations", "sites"):
+        set_tenant_context(connection, tenant_id)
+        version_id = create_version(
+            connection,
+            tenant_id=tenant_id,
+            config_type=MODBUS_DEVICE_MAPPING,
+            subject_key=str(equipment_id),
+            content={"device_type": "sdm120", "host": host, "port": port, "points": points},
+            author="test",
+            reason="test",
+        )
+        activate_version(
+            connection,
+            version_id=version_id,
+            activated_by="test",
+            activated_at=datetime.now(UTC),
+        )
+    return version_id
+
+
+def cleanup_tenant(tenant: dict) -> None:
+    tenant_id = tenant["tenant_id"]
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_id)
+        connection.execute(
+            text("DELETE FROM measurements WHERE tenant_id = :id"), {"id": tenant_id}
+        )
+    purge_config_versions_for_tenant(tenant_id)
+    purge_audit_log_for_tenant(tenant_id)
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_id)
+        for table in ("points", "functional_locations", "sites"):
             connection.execute(
-                text(f"DELETE FROM {table} WHERE tenant_id = :id"), {"id": tenant["tenant_id"]}
+                text(f"DELETE FROM {table} WHERE tenant_id = :id"), {"id": tenant_id}
             )
     with engine.begin() as connection:
-        connection.execute(text("DELETE FROM tenants WHERE id = :id"), {"id": tenant["tenant_id"]})
+        connection.execute(text("DELETE FROM tenants WHERE id = :id"), {"id": tenant_id})
