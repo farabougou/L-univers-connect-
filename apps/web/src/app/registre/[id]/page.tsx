@@ -1,11 +1,11 @@
 import Link from "next/link";
-import QRCode from "qrcode";
 
 import { apiFetch, requireAccessToken } from "@/lib/api";
 import { fieldStyle, labelStyle, submitStyle } from "@/lib/formStyles";
 import { errorMessage, getLocale, getTranslator } from "@/lib/i18n";
 import { type EquipmentStatus, type Passport, type PassportUnit, statusMessage } from "@/lib/passport";
 import { type Me, canManage as computeCanManage } from "@/lib/roles";
+import { renderTagQr } from "@/lib/tagQr";
 import { type Locale, formatDate, formatDateTime, formatNumber } from "@/i18n/translator";
 
 import {
@@ -145,7 +145,7 @@ export default async function EquipmentPage({
   const points = passport.points ?? [];
   const activeTag = passport.tags?.find((tag) => tag.status === "active") ?? null;
   const tagSvg = activeTag
-    ? await QRCode.toString(activeTag.payload, { type: "svg", margin: 1, width: 220 })
+    ? await renderTagQr(activeTag.payload)
     : null;
 
   const desiredStatesByPoint = Object.fromEntries(

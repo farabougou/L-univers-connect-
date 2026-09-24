@@ -1,5 +1,4 @@
 import Link from "next/link";
-import QRCode from "qrcode";
 
 import type { Translator } from "@/i18n/translator";
 import { apiFetch, requireAccessToken } from "@/lib/api";
@@ -12,6 +11,7 @@ import {
 } from "@/lib/formStyles";
 import { errorMessage, getTranslator } from "@/lib/i18n";
 import { type Me, canManage as computeCanManage } from "@/lib/roles";
+import { renderTagQr } from "@/lib/tagQr";
 
 import {
   closeSpace,
@@ -88,7 +88,7 @@ export default async function RegistrePage({
 
   let tagSvg: string | null = null;
   if (params.tag) {
-    tagSvg = await QRCode.toString(params.tag, { type: "svg", margin: 1, width: 220 });
+    tagSvg = await renderTagQr(params.tag);
   }
 
   return (
