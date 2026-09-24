@@ -1,3 +1,4 @@
+from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
 import pytest
@@ -8,6 +9,12 @@ from tests.analytics_fixtures import cleanup_tenant, create_tenant_with_points
 from tests.jwt_helpers import JWKS, make_token
 
 client = TestClient(app)
+
+
+def _recent(minutes_ago: int = 1) -> str:
+    """Horodatage récent, jamais une date calendaire figée qui finirait par
+    déclencher le drapeau d'arrivée tardive au fil du temps."""
+    return (datetime.now(UTC) - timedelta(minutes=minutes_ago)).isoformat()
 
 
 @pytest.fixture
@@ -73,7 +80,7 @@ def test_squelette_de_bout_en_bout_mesure_regle_constat_alarme_ordre_de_travail(
         json={
             "point_id": str(tenant_a["sensor"]),
             "value": 86.5,
-            "measured_at": "2026-09-23T08:00:00+00:00",
+            "measured_at": _recent(5),
             "origin": "simulated",
             "source": "simulator",
         },
@@ -98,7 +105,7 @@ def test_squelette_de_bout_en_bout_mesure_regle_constat_alarme_ordre_de_travail(
         json={
             "point_id": str(tenant_a["sensor"]),
             "value": 45.0,
-            "measured_at": "2026-09-23T08:05:00+00:00",
+            "measured_at": _recent(0),
             "origin": "simulated",
             "source": "simulator",
         },

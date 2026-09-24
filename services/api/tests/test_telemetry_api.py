@@ -1,4 +1,5 @@
 import uuid
+from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
 import pytest
@@ -12,6 +13,12 @@ from tests.db_helpers import purge_audit_log_for_tenant
 from tests.jwt_helpers import JWKS, make_token
 
 client = TestClient(app)
+
+
+def _recent(minutes_ago: int = 1) -> str:
+    """Horodatage récent, jamais une date calendaire figée qui finirait par
+    déclencher le drapeau d'arrivée tardive au fil du temps."""
+    return (datetime.now(UTC) - timedelta(minutes=minutes_ago)).isoformat()
 
 
 def _create_tenant(name: str) -> dict:
@@ -124,7 +131,7 @@ def test_squelette_de_bout_en_bout_point_simule_puis_lecture(two_tenants) -> Non
         json={
             "point_id": point_id,
             "value": 45.5,
-            "measured_at": "2026-09-23T08:00:00+00:00",
+            "measured_at": _recent(),
             "origin": "simulated",
             "source": "simulator",
         },
