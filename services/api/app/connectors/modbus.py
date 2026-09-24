@@ -35,6 +35,14 @@ class ModbusRegisterPoint:
     scale: float = 1.0
 
 
+def find_register_by_name(points: list[ModbusRegisterPoint], name: str) -> ModbusRegisterPoint:
+    for point in points:
+        if point.name == name:
+            return point
+    known = ", ".join(point.name for point in points)
+    raise ValueError(f"Registre inconnu : {name} (connus : {known})")
+
+
 def read_modbus_points(
     host: str,
     port: int,

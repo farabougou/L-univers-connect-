@@ -17,17 +17,10 @@ import sys
 import uuid
 
 from app.connectors.ingest import PointModbusMapping, poll_and_record
+from app.connectors.modbus import find_register_by_name
 from app.connectors.sdm120 import SDM120_POINTS
 from app.db import engine
 from app.tenancy import set_tenant_context
-
-
-def _find_register(name: str):
-    for point in SDM120_POINTS:
-        if point.name == name:
-            return point
-    known = ", ".join(point.name for point in SDM120_POINTS)
-    raise SystemExit(f"Registre inconnu : {name} (connus : {known})")
 
 
 def main() -> None:
@@ -40,7 +33,12 @@ def main() -> None:
     point_id = uuid.UUID(sys.argv[2])
     host = sys.argv[3]
     port = int(sys.argv[4]) if len(sys.argv) > 4 else 502
-    register = _find_register(sys.argv[5] if len(sys.argv) > 5 else "total_active_energy")
+    try:
+        register = find_register_by_name(
+            SDM120_POINTS, sys.argv[5] if len(sys.argv) > 5 else "total_active_energy"
+        )
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
 
     with engine.begin() as connection:
         set_tenant_context(connection, tenant_id)
