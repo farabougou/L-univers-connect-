@@ -35,6 +35,8 @@ EVENT_TYPES = frozenset(
         "COMMAND_VERIFIED",
         "COMMAND_FAILED",
         "COMMAND_TIMED_OUT",
+        "DATA_BECAME_STALE",
+        "DATA_FRESHNESS_RESTORED",
     }
 )
 

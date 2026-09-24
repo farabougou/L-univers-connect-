@@ -243,6 +243,59 @@ def test_trust_endpoint(two_tenants) -> None:
     assert "components" in response.json()
 
 
+def test_lire_la_confiance_d_un_point_perime_leve_puis_referme_une_alerte(two_tenants) -> None:
+    """Directive de Mohamed du 24/09/2026 (État → Événement → Politique →
+    Alerte) : lire la confiance d'un point périmé par l'API en fait plus
+    qu'un simple affichage — une vraie alerte apparaît, qu'un relevé frais
+    referme automatiquement."""
+    tenant_a, _ = two_tenants
+    technicien = _headers(tenant_a, ["technicien"])
+    old_measurement = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
+    _call(
+        "POST",
+        "/measurements",
+        technicien,
+        json={
+            "point_id": str(tenant_a["sensor"]),
+            "value": 42.0,
+            "measured_at": old_measurement,
+            "origin": "measured",
+            "source": "test",
+        },
+    )
+
+    stale = _call("GET", f"/points/{tenant_a['sensor']}/trust", technicien)
+    assert stale.json()["components"]["stale"] is True
+    findings = _call(
+        "GET", "/findings", technicien, params={"subject_node_id": str(tenant_a["ahu"])}
+    ).json()
+    stale_finding = next(f for f in findings if f["point_id"] == str(tenant_a["sensor"]))
+    assert stale_finding["reason_code"] == "DATA_QUALITY_STALE"
+    assert stale_finding["condition_state"] == "active"
+
+    _call(
+        "POST",
+        "/measurements",
+        technicien,
+        json={
+            "point_id": str(tenant_a["sensor"]),
+            "value": 42.0,
+            "measured_at": _recent(),
+            "origin": "measured",
+            "source": "test",
+        },
+    )
+    fresh = _call("GET", f"/points/{tenant_a['sensor']}/trust", technicien)
+    assert fresh.json()["components"]["stale"] is False
+    # Le constat n'est pas supprimé : il repasse « revenu à la normale »
+    # (seule une personne le clôt, voir app/findings.py::clear_finding_by_key).
+    findings_after = _call(
+        "GET", "/findings", technicien, params={"subject_node_id": str(tenant_a["ahu"])}
+    ).json()
+    cleared_finding = next(f for f in findings_after if f["point_id"] == str(tenant_a["sensor"]))
+    assert cleared_finding["condition_state"] == "cleared"
+
+
 def test_other_tenant_rules_and_findings_are_invisible(two_tenants) -> None:
     tenant_a, tenant_b = two_tenants
     version_a = _active_rule(tenant_a)

@@ -11,10 +11,15 @@ from app.db import engine
 from app.devices import provision_device
 from app.equipment_status import compute_equipment_status
 from app.events import list_events_for_subject
-from app.monitoring import evaluate_command_timeout, evaluate_communication_status
-from app.points import create_point, decide_point
+from app.monitoring import (
+    evaluate_command_timeout,
+    evaluate_communication_status,
+    evaluate_data_freshness,
+)
+from app.points import create_point, decide_point, get_point
 from app.telemetry import ingest_measurements
 from app.tenancy import set_tenant_context
+from app.trust import compute_trust
 from tests.modbus_fixtures import (
     activate_device_mapping,
     cleanup_tenant,
@@ -243,5 +248,128 @@ def test_commande_non_confirmee_leve_une_alerte():
                 )
             }
             assert "COMMAND_TIMED_OUT" in event_types
+    finally:
+        cleanup_tenant(tenant)
+
+
+def test_donnee_perimee_leve_une_alerte_puis_se_retablit():
+    tenant = _tenant_with_status_point()
+    try:
+        with engine.begin() as connection:
+            set_tenant_context(connection, tenant["tenant_id"])
+            ingest_measurements(
+                connection,
+                tenant_id=tenant["tenant_id"],
+                items=[
+                    {
+                        "point_id": tenant["status_point_id"],
+                        "value": 1.0,
+                        "measured_at": T0,
+                        "origin": "measured",
+                    }
+                ],
+                source="test",
+                received_at=T0,
+            )
+
+            later = T0 + timedelta(minutes=10)
+            point = get_point(connection, tenant["status_point_id"])
+            trust = compute_trust(connection, point, later)
+            assert trust["components"]["stale"] is True
+            evaluate_data_freshness(
+                connection, tenant_id=tenant["tenant_id"], point=point, trust=trust, at=later
+            )
+
+            finding = (
+                connection.execute(
+                    text(
+                        "SELECT reason_code, condition_state FROM findings "
+                        "WHERE point_id = :point_id"
+                    ),
+                    {"point_id": tenant["status_point_id"]},
+                )
+                .mappings()
+                .first()
+            )
+            assert finding["reason_code"] == "DATA_QUALITY_STALE"
+            assert finding["condition_state"] == "active"
+
+            event_types = {
+                e["event_type"]
+                for e in list_events_for_subject(
+                    connection, subject_type="point", subject_id=tenant["status_point_id"]
+                )
+            }
+            assert event_types == {"DATA_BECAME_STALE"}
+
+            # Un second appel avec la même situation ne duplique rien.
+            evaluate_data_freshness(
+                connection, tenant_id=tenant["tenant_id"], point=point, trust=trust, at=later
+            )
+            findings_again = connection.execute(
+                text("SELECT id FROM findings WHERE point_id = :point_id"),
+                {"point_id": tenant["status_point_id"]},
+            ).fetchall()
+            assert len(findings_again) == 1
+
+            # Retour à la normale : nouvelle mesure fraîche.
+            recovery = later + timedelta(minutes=1)
+            ingest_measurements(
+                connection,
+                tenant_id=tenant["tenant_id"],
+                items=[
+                    {
+                        "point_id": tenant["status_point_id"],
+                        "value": 1.0,
+                        "measured_at": recovery,
+                        "origin": "measured",
+                    }
+                ],
+                source="test",
+                received_at=recovery,
+            )
+            fresh_trust = compute_trust(connection, point, recovery)
+            assert fresh_trust["components"]["stale"] is False
+            evaluate_data_freshness(
+                connection,
+                tenant_id=tenant["tenant_id"],
+                point=point,
+                trust=fresh_trust,
+                at=recovery,
+            )
+
+            condition = connection.execute(
+                text("SELECT condition_state FROM findings WHERE point_id = :point_id"),
+                {"point_id": tenant["status_point_id"]},
+            ).scalar()
+            assert condition == "cleared"
+
+            event_types = {
+                e["event_type"]
+                for e in list_events_for_subject(
+                    connection, subject_type="point", subject_id=tenant["status_point_id"]
+                )
+            }
+            assert event_types == {"DATA_BECAME_STALE", "DATA_FRESHNESS_RESTORED"}
+    finally:
+        cleanup_tenant(tenant)
+
+
+def test_confiance_sans_intervalle_attendu_ne_declenche_rien():
+    tenant = create_tenant_with_energy_point("ClientSupervisionSansIntervalle")
+    try:
+        with engine.begin() as connection:
+            set_tenant_context(connection, tenant["tenant_id"])
+            point = get_point(connection, tenant["point_id"])
+            trust = compute_trust(connection, point, T0)
+            assert trust["components"]["stale"] is None
+            evaluate_data_freshness(
+                connection, tenant_id=tenant["tenant_id"], point=point, trust=trust, at=T0
+            )
+            findings = connection.execute(
+                text("SELECT id FROM findings WHERE point_id = :point_id"),
+                {"point_id": tenant["point_id"]},
+            ).fetchall()
+            assert findings == []
     finally:
         cleanup_tenant(tenant)

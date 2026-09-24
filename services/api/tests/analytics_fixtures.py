@@ -73,6 +73,7 @@ def cleanup_tenant(tenant: dict) -> None:
     with engine.begin() as connection:
         set_tenant_context(connection, tenant_id)
         for table in (
+            "events",
             "finding_status_history",
             "findings",
             "alarm_status_history",

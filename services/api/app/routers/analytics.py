@@ -19,6 +19,7 @@ from app.desired_states import (
 from app.errors import ApiError, api_error
 from app.findings import confirm_finding, displayed, get_finding, list_findings
 from app.i18n import negotiate_locale
+from app.monitoring import evaluate_data_freshness
 from app.points import get_point
 from app.schemas import (
     DesiredStateCreate,
@@ -280,10 +281,16 @@ def confirm_finding_route(
 def read_point_trust(
     point_id: uuid.UUID,
     connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
 ) -> TrustOut:
-    """Score de confiance du point maintenant, avec le détail de son calcul."""
+    """Score de confiance du point maintenant, avec le détail de son calcul.
+    Une donnée périmée détectée ici lève ou referme une alerte (directive de
+    Mohamed du 24/09/2026, voir app/monitoring.py)."""
     point = get_point(connection, point_id)
     if point is None:
         raise ApiError(404, "POINT_NOT_FOUND")
-    return TrustOut(**compute_trust(connection, point, datetime.now(UTC)))
+    at = datetime.now(UTC)
+    trust = compute_trust(connection, point, at)
+    evaluate_data_freshness(connection, tenant_id=tenant_id, point=point, trust=trust, at=at)
+    return TrustOut(**trust)
