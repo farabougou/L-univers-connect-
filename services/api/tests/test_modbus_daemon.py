@@ -1,5 +1,6 @@
-"""Démon de sondage : plusieurs tours, un tour raté n'arrête pas les suivants,
-et une mesure lue pendant une coupure de la base repart au lieu d'être perdue.
+"""Démon de sondage : plusieurs tours, plusieurs points en même temps, un tour
+raté n'arrête pas les suivants, et une mesure lue pendant une coupure de la
+base repart au lieu d'être perdue.
 
 `run(max_cycles=...)` (scripts/modbus_daemon.py) est le même code que celui
 lancé en continu sur site, juste borné pour le test.
@@ -13,6 +14,7 @@ from pymodbus.server import ServerStop, StartTcpServer
 from sqlalchemy import text
 
 import scripts.modbus_daemon as daemon
+from app.connectors.ingest import PointModbusMapping
 from app.connectors.modbus import find_register_by_name
 from app.connectors.offline_buffer import OfflineBuffer
 from app.connectors.sdm120 import SDM120_POINTS
@@ -20,10 +22,15 @@ from app.db import engine
 from app.tenancy import set_tenant_context
 from scripts.modbus_daemon import run
 from scripts.modbus_simulator import build_context
-from tests.modbus_fixtures import cleanup_tenant, create_tenant_with_energy_point
+from tests.modbus_fixtures import (
+    cleanup_tenant,
+    create_tenant_with_energy_and_power_points,
+    create_tenant_with_energy_point,
+)
 
 PORT = 5097
-REGISTER = find_register_by_name(SDM120_POINTS, "total_active_energy")
+ENERGY_REGISTER = find_register_by_name(SDM120_POINTS, "total_active_energy")
+POWER_REGISTER = find_register_by_name(SDM120_POINTS, "active_power")
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -48,6 +55,13 @@ def tenant():
     cleanup_tenant(created)
 
 
+@pytest.fixture
+def tenant_two_points():
+    created = create_tenant_with_energy_and_power_points("ClientModbusDaemonMulti")
+    yield created
+    cleanup_tenant(created)
+
+
 def _measurement_count(tenant_id) -> int:
     with engine.begin() as connection:
         set_tenant_context(connection, tenant_id)
@@ -56,13 +70,16 @@ def _measurement_count(tenant_id) -> int:
         ).scalar()
 
 
+def _energy_mapping(tenant: dict) -> PointModbusMapping:
+    return PointModbusMapping(point_id=tenant["point_id"], register=ENERGY_REGISTER)
+
+
 def test_plusieurs_tours_enregistrent_plusieurs_mesures(tenant, tmp_path):
     cycles = run(
         tenant_id=tenant["tenant_id"],
-        point_id=tenant["point_id"],
         host="127.0.0.1",
         port=PORT,
-        register=REGISTER,
+        mappings=[_energy_mapping(tenant)],
         interval_seconds=0.05,
         buffer=OfflineBuffer(tmp_path / "buffer.jsonl"),
         max_cycles=3,
@@ -72,6 +89,27 @@ def test_plusieurs_tours_enregistrent_plusieurs_mesures(tenant, tmp_path):
     assert _measurement_count(tenant["tenant_id"]) == 3
 
 
+def test_deux_points_du_meme_appareil_sont_releves_ensemble(tenant_two_points, tmp_path):
+    mappings = [
+        PointModbusMapping(point_id=tenant_two_points["energy_point_id"], register=ENERGY_REGISTER),
+        PointModbusMapping(point_id=tenant_two_points["power_point_id"], register=POWER_REGISTER),
+    ]
+
+    cycles = run(
+        tenant_id=tenant_two_points["tenant_id"],
+        host="127.0.0.1",
+        port=PORT,
+        mappings=mappings,
+        interval_seconds=0.05,
+        buffer=OfflineBuffer(tmp_path / "buffer.jsonl"),
+        max_cycles=1,
+    )
+
+    assert cycles == 1
+    # Un seul tour, deux points : deux mesures, pas une seule, pas un point câblé en dur.
+    assert _measurement_count(tenant_two_points["tenant_id"]) == 2
+
+
 def test_un_tour_rate_n_arrete_pas_le_demon(tenant, tmp_path):
     # Port sans rien qui écoute : chaque tour échoue, mais la boucle continue
     # jusqu'à max_cycles au lieu de lever une exception. Rien à mettre au
@@ -79,10 +117,9 @@ def test_un_tour_rate_n_arrete_pas_le_demon(tenant, tmp_path):
     buffer = OfflineBuffer(tmp_path / "buffer.jsonl")
     cycles = run(
         tenant_id=tenant["tenant_id"],
-        point_id=tenant["point_id"],
         host="127.0.0.1",
         port=1,
-        register=REGISTER,
+        mappings=[_energy_mapping(tenant)],
         interval_seconds=0.05,
         buffer=buffer,
         max_cycles=2,
@@ -102,10 +139,9 @@ def test_base_injoignable_met_en_tampon_puis_transmet_tout_au_retour(tenant, tmp
     monkeypatch.setattr(daemon, "ingest_measurements", _echoue_toujours)
     run(
         tenant_id=tenant["tenant_id"],
-        point_id=tenant["point_id"],
         host="127.0.0.1",
         port=PORT,
-        register=REGISTER,
+        mappings=[_energy_mapping(tenant)],
         interval_seconds=0.05,
         buffer=buffer,
         max_cycles=2,
@@ -118,10 +154,9 @@ def test_base_injoignable_met_en_tampon_puis_transmet_tout_au_retour(tenant, tmp
     monkeypatch.undo()
     cycles = run(
         tenant_id=tenant["tenant_id"],
-        point_id=tenant["point_id"],
         host="127.0.0.1",
         port=PORT,
-        register=REGISTER,
+        mappings=[_energy_mapping(tenant)],
         interval_seconds=0.05,
         buffer=buffer,
         max_cycles=1,
