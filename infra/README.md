@@ -70,3 +70,16 @@ portabilité vers un vrai fournisseur compatible S3 en production.
 
 Pour arrêter les services : `docker compose down` (les données restent dans le volume
 Docker). Pour tout effacer et repartir de zéro : `docker compose down -v`.
+
+## Balayage périodique de supervision
+
+La supervision (équipement hors ligne, donnée périmée) doit fonctionner même si personne ne
+consulte l'application. En local, lancer le balayage en boucle à côté de l'API :
+
+```bash
+cd services/api
+python scripts/supervision_sweep.py --interval 60
+```
+
+En production (Railway), ce même script s'exécute avec `--once` sur un service Cron Jobs
+plutôt qu'en boucle : voir `app/supervision_sweep.py` pour le détail du mécanisme.
