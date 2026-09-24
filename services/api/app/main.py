@@ -10,6 +10,7 @@ from app.errors import ApiError, install_error_handlers
 from app.observability import RequestLoggingMiddleware, configure_logging
 from app.routers.analytics import router as analytics_router
 from app.routers.assets import router as asset_registry_router
+from app.routers.commands import router as commands_router
 from app.routers.configs import router as configs_router
 from app.routers.devices import router as devices_router
 from app.routers.graph import router as graph_router
@@ -30,6 +31,7 @@ app.include_router(spatial_router)
 app.include_router(points_router)
 app.include_router(configs_router)
 app.include_router(devices_router)
+app.include_router(commands_router)
 app.include_router(analytics_router)
 app.include_router(passport_router)
 app.include_router(maintenance_router)

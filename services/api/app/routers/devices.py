@@ -39,7 +39,7 @@ _MANAGE_ROLES = ("responsable_exploitation", "admin_tenant")
 # Un seul jeu de portées pour l'instant : suffisant pour la V1, conçu pour
 # devenir configurable par appareil (Mohamed, point 3 : évolution vers un
 # modèle de portées plus fin).
-_DEVICE_SCOPES = ["telemetry:write", "config:read"]
+_DEVICE_SCOPES = ["telemetry:write", "config:read", "command:execute"]
 
 
 class DeviceCreate(BaseModel):

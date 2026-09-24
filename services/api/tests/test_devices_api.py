@@ -105,7 +105,7 @@ def test_provisionner_puis_authentifier_un_appareil(tenant):
     assert auth.status_code == 200
     body = auth.json()
     assert body["token_type"] == "bearer"
-    assert set(body["scopes"]) == {"telemetry:write", "config:read"}
+    assert set(body["scopes"]) == {"telemetry:write", "config:read", "command:execute"}
     assert body["expires_in"] > 0
 
 
