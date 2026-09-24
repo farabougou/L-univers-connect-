@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     oidc_issuer: str = "http://localhost:8080/realms/paios"
     oidc_audience: str = "paios-api"
 
+    # Signature des jetons d'appareil Edge (M4, app/devices.py) : un flux
+    # séparé de l'OIDC humain, jamais mélangé. À changer en production
+    # (variable d'environnement), comme les autres secrets ci-dessous.
+    device_token_secret: str = "dev-only-change-me-in-production"
+
     # Stockage des photos, compatible S3 (MinIO en local, voir docs/adr/006).
     # Changer de fournisseur en production ne demande que ces variables,
     # jamais une modification du code applicatif.

@@ -439,6 +439,14 @@ class MeasurementBatch(BaseModel):
     items: list[MeasurementItem] = Field(min_length=1, max_length=1000)
 
 
+class EdgeMeasurementBatch(BaseModel):
+    """Sans `source` : pour un appareil authentifié, la source est son
+    identité vérifiée (voir app/routers/devices.py), jamais une valeur
+    annoncée dans le corps de la requête."""
+
+    items: list[MeasurementItem] = Field(min_length=1, max_length=1000)
+
+
 class MeasurementBatchError(BaseModel):
     index: int
     point_id: uuid.UUID
