@@ -11,7 +11,11 @@ import {
   type PassportUnit,
   statusMessage,
 } from "@/lib/passport";
-import { type Me, canManage as computeCanManage } from "@/lib/roles";
+import {
+  type Me,
+  canManage as computeCanManage,
+  canSendCommand as computeCanSendCommand,
+} from "@/lib/roles";
 import { renderTagQr } from "@/lib/tagQr";
 import { type Locale, formatDate, formatDateTime, formatNumber } from "@/i18n/translator";
 
@@ -147,6 +151,7 @@ export default async function EquipmentPage({
   ]);
   const me: Me = meResponse.ok ? await meResponse.json() : { roles: [] };
   const canManage = computeCanManage(me);
+  const canSendCommand = computeCanSendCommand(me);
   if (!response.ok) {
     return (
       <main style={{ maxWidth: 720, margin: "40px auto", padding: "0 16px" }}>
@@ -349,7 +354,7 @@ export default async function EquipmentPage({
             points={points}
             relayPointId={relayPointId}
             lastCommand={lastCommand}
-            canManage={canManage}
+            canSendCommand={canSendCommand}
             locale={locale}
             timeZone={timeZone}
             t={t}
@@ -1042,7 +1047,7 @@ function CommandBlock({
   points,
   relayPointId,
   lastCommand,
-  canManage,
+  canSendCommand,
   locale,
   timeZone,
   t,
@@ -1051,7 +1056,7 @@ function CommandBlock({
   points: { id: string; name: string }[];
   relayPointId: string | null;
   lastCommand: PassportCommand | null;
-  canManage: boolean;
+  canSendCommand: boolean;
   locale: Locale;
   timeZone: string | null;
   t: (key: string, params?: Record<string, string>) => string;
@@ -1063,7 +1068,7 @@ function CommandBlock({
   return (
     <div>
       <p style={{ margin: 0 }}>{pointName}</p>
-      {canManage && (
+      {canSendCommand && (
         <div style={signalActionsStyle}>
           <form action={sendTestCommand}>
             <input type="hidden" name="node_id" value={nodeId} />
