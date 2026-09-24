@@ -16,7 +16,7 @@ from pymodbus.client import ModbusTcpClient
 from pymodbus.client.mixin import ModbusClientMixin
 from pymodbus.exceptions import ModbusException
 
-RegisterKind = Literal["input", "holding"]
+RegisterKind = Literal["input", "holding", "coil"]
 
 
 class ModbusReadError(Exception):
@@ -30,8 +30,10 @@ class ModbusRegisterPoint:
     name: str
     address: int
     register_kind: RegisterKind
-    data_type: ModbusClientMixin.DATATYPE
     unit: str
+    # Sans objet pour une bobine (toujours un seul bit) : uniquement requis
+    # pour "input"/"holding", où il indique comment convertir les registres.
+    data_type: ModbusClientMixin.DATATYPE | None = None
     scale: float = 1.0
 
 
@@ -62,13 +64,18 @@ def read_modbus_points(
     values: dict[str, float] = {}
     try:
         for point in points:
-            register_count = point.data_type.value[1]
             try:
-                if point.register_kind == "input":
+                if point.register_kind == "coil":
+                    # Une bobine est un seul bit : pas de conversion de
+                    # registres, juste son état (0.0 ou 1.0).
+                    response = client.read_coils(point.address, count=1, device_id=device_id)
+                elif point.register_kind == "input":
+                    register_count = point.data_type.value[1]
                     response = client.read_input_registers(
                         point.address, count=register_count, device_id=device_id
                     )
                 else:
+                    register_count = point.data_type.value[1]
                     response = client.read_holding_registers(
                         point.address, count=register_count, device_id=device_id
                     )
@@ -78,8 +85,11 @@ def read_modbus_points(
             if response.isError():
                 raise ModbusReadError(f"Appareil en erreur pour « {point.name} »")
 
-            raw = ModbusClientMixin.convert_from_registers(response.registers, point.data_type)
-            values[point.name] = float(raw) * point.scale
+            if point.register_kind == "coil":
+                values[point.name] = float(response.bits[0]) * point.scale
+            else:
+                raw = ModbusClientMixin.convert_from_registers(response.registers, point.data_type)
+                values[point.name] = float(raw) * point.scale
     finally:
         client.close()
 

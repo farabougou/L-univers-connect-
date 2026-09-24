@@ -12,6 +12,7 @@
     "503": "Service unavailable"
   },
   "codes": {
+    "ACTUAL_STATE_MISMATCH": "The actual state read back after execution does not match the requested value.",
     "ALARM_NOT_FOUND": "The requested alarm could not be found.",
     "ASSET_CODE_ALREADY_USED": "The asset code “{asset_code}” is already assigned to another unit.",
     "AUTH_PROVIDER_UNAVAILABLE": "The authentication service is temporarily unavailable. Please try again in a few moments.",
@@ -20,6 +21,9 @@
     "CLOSURE_CODE_UNKNOWN": "Unknown code for the “{field}” field: “{code}”.",
     "CLOSURE_NOT_FOUND": "This intervention has not been closed yet.",
     "CLOSURE_REPLACEMENT_REQUIRES_PARTS": "A replacement must list the replaced parts.",
+    "COMMAND_ALREADY_ACKNOWLEDGED": "This command has already received a response.",
+    "COMMAND_NOT_FOUND": "The requested command could not be found.",
+    "COMMAND_POINT_NOT_CONTROLLABLE": "This point is not driven by a simulated device: no command is possible.",
     "CONFIG_ACTIVATION_REQUIRES_DRAFT": "Only a draft version can be activated; this version is “{status}”.",
     "CONFIG_DIFF_SUBJECT_MISMATCH": "The two versions do not relate to the same item.",
     "CONFIG_TYPE_UNKNOWN": "Unknown configuration type: “{config_type}”.",

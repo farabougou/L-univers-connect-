@@ -22,12 +22,18 @@ from app.config_versions import ConfigInvalid, list_versions, register_config_ty
 from app.connectors.ingest import PointModbusMapping
 from app.connectors.modbus import find_register_by_name
 from app.connectors.sdm120 import SDM120_POINTS
+from app.connectors.simulated_relay import SIMULATED_RELAY_POINTS
 from app.points import get_point
 
 MODBUS_DEVICE_MAPPING = "modbus_device_mapping"
 MODBUS_DEVICE_MAPPING_SCHEMA = "modbus_device_mapping/1"
 
-DEVICE_REGISTER_CATALOGS = {"sdm120": SDM120_POINTS}
+DEVICE_REGISTER_CATALOGS = {"sdm120": SDM120_POINTS, "simulated_relay": SIMULATED_RELAY_POINTS}
+
+# Les seuls device_type autorisés à recevoir une commande (app/commands.py) :
+# jamais le sdm120, jamais un futur type qui représenterait un vrai appareil
+# (CLAUDE.md, exception à la règle non négociable 1).
+SIMULATED_DEVICE_TYPES = frozenset({"simulated_relay"})
 
 
 class PointMapping(BaseModel):
@@ -41,7 +47,7 @@ class PointMapping(BaseModel):
 class ModbusDeviceMappingContent(BaseModel):
     model_config = {"extra": "forbid"}
 
-    device_type: Literal["sdm120"]
+    device_type: Literal["sdm120", "simulated_relay"]
     host: str = Field(min_length=1, max_length=255)
     port: int = Field(default=502, ge=1, le=65535)
     points: list[PointMapping] = Field(min_length=1)

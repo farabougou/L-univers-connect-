@@ -111,7 +111,13 @@ def create_tenant_with_energy_and_power_points(name: str) -> dict:
 
 
 def activate_device_mapping(
-    *, tenant_id: uuid.UUID, equipment_id: uuid.UUID, host: str, points: list[dict], port: int = 502
+    *,
+    tenant_id: uuid.UUID,
+    equipment_id: uuid.UUID,
+    host: str,
+    points: list[dict],
+    port: int = 502,
+    device_type: str = "sdm120",
 ) -> uuid.UUID:
     """Crée et active une configuration modbus_device_mapping pour un test,
     sans passer par l'API (voir app/connectors/device_mapping.py)."""
@@ -122,7 +128,7 @@ def activate_device_mapping(
             tenant_id=tenant_id,
             config_type=MODBUS_DEVICE_MAPPING,
             subject_key=str(equipment_id),
-            content={"device_type": "sdm120", "host": host, "port": port, "points": points},
+            content={"device_type": device_type, "host": host, "port": port, "points": points},
             author="test",
             reason="test",
         )
@@ -157,7 +163,7 @@ def cleanup_tenant(tenant: dict) -> None:
     purge_audit_log_for_tenant(tenant_id)
     with engine.begin() as connection:
         set_tenant_context(connection, tenant_id)
-        for table in ("edge_devices", "points", "functional_locations", "sites"):
+        for table in ("commands", "edge_devices", "points", "functional_locations", "sites"):
             connection.execute(
                 text(f"DELETE FROM {table} WHERE tenant_id = :id"), {"id": tenant_id}
             )

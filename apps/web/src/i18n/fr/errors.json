@@ -12,6 +12,7 @@
     "503": "Service indisponible"
   },
   "codes": {
+    "ACTUAL_STATE_MISMATCH": "L’état réel relevé après exécution ne correspond pas à la valeur demandée.",
     "ALARM_NOT_FOUND": "L’alarme demandée est introuvable.",
     "ASSET_CODE_ALREADY_USED": "Le code d’inventaire « {asset_code} » est déjà attribué à un autre exemplaire.",
     "AUTH_PROVIDER_UNAVAILABLE": "Le service d’authentification est momentanément indisponible. Réessayez dans quelques instants.",
@@ -20,6 +21,9 @@
     "CLOSURE_CODE_UNKNOWN": "Code inconnu pour le champ « {field} » : « {code} ».",
     "CLOSURE_NOT_FOUND": "Cette intervention n’a pas encore de clôture.",
     "CLOSURE_REPLACEMENT_REQUIRES_PARTS": "Un remplacement doit indiquer la ou les pièces remplacées.",
+    "COMMAND_ALREADY_ACKNOWLEDGED": "Cette commande a déjà reçu une réponse.",
+    "COMMAND_NOT_FOUND": "La commande demandée est introuvable.",
+    "COMMAND_POINT_NOT_CONTROLLABLE": "Ce point n’est pas piloté par un appareil simulé : aucune commande n’est possible.",
     "CONFIG_ACTIVATION_REQUIRES_DRAFT": "Seule une version brouillon peut être activée ; cette version est à l’état « {status} ».",
     "CONFIG_DIFF_SUBJECT_MISMATCH": "Les deux versions ne concernent pas le même élément.",
     "CONFIG_TYPE_UNKNOWN": "Type de configuration inconnu : « {config_type} ».",
