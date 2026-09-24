@@ -31,13 +31,23 @@ Statuts :
   valeur demandée.
 - failed : écriture refusée par l'appareil simulé, ou valeur relue
   différente de la valeur demandée.
+- timed_out : envoyée à l'Edge depuis plus de `UNCONFIRMED_AFTER` sans
+  accusé de réception — transition persistée par `mark_command_timed_out`
+  (voir app/monitoring.py), jamais depuis une simple lecture qui ne
+  changerait rien d'elle-même.
 - unconfirmed (calculé à la lecture, jamais stocké — même principe que
-  app/devices.py, `communication_status`) : envoyée à l'Edge depuis plus de
-  `UNCONFIRMED_AFTER` sans accusé de réception.
+  app/devices.py, `communication_status`) : utilisé uniquement par le
+  passeport (app/passport.py), qui reste une vue pure sans jamais écrire ;
+  partout ailleurs, `mark_command_timed_out` rend ce même constat durable.
+
+Chaque étape franchie par une commande produit un événement persistant
+(app/events.py) — État → Événement → Politique → Alerte, directive de
+Mohamed du 24/09/2026 : COMMAND_REQUESTED, COMMAND_DISPATCHED,
+COMMAND_VERIFIED, COMMAND_FAILED, COMMAND_TIMED_OUT.
 """
 
 import uuid
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import text
@@ -45,6 +55,7 @@ from sqlalchemy.engine import Connection
 
 from app.connectors.device_mapping import SIMULATED_DEVICE_TYPES, get_active_mapping
 from app.errors import DomainError
+from app.events import record_event
 
 _COLUMNS = (
     "id, tenant_id, point_id, requested_value, requested_by, status, actual_value, "
@@ -97,8 +108,10 @@ def create_command(
     point_id: uuid.UUID,
     requested_value: float,
     requested_by: str,
+    at: datetime | None = None,
 ) -> uuid.UUID:
     _assert_point_is_commandable(connection, point_id)
+    at = at or datetime.now(UTC)
 
     new_id = uuid.uuid4()
     connection.execute(
@@ -113,6 +126,15 @@ def create_command(
             "requested_value": requested_value,
             "requested_by": requested_by,
         },
+    )
+    record_event(
+        connection,
+        tenant_id=tenant_id,
+        event_type="COMMAND_REQUESTED",
+        subject_type="command",
+        subject_id=new_id,
+        payload={"point_id": str(point_id), "requested_value": requested_value},
+        occurred_at=at,
     )
     return new_id
 
@@ -161,7 +183,18 @@ def claim_pending_commands(
         ),
         {"at": at, "edge_device_id": edge_device_id, "equipment_id": equipment_id},
     ).mappings()
-    return [dict(row) for row in rows]
+    claimed = [dict(row) for row in rows]
+    for command in claimed:
+        record_event(
+            connection,
+            tenant_id=command["tenant_id"],
+            event_type="COMMAND_DISPATCHED",
+            subject_type="command",
+            subject_id=command["id"],
+            payload={"edge_device_id": str(edge_device_id)},
+            occurred_at=at,
+        )
+    return claimed
 
 
 def acknowledge_command(
@@ -202,13 +235,57 @@ def acknowledge_command(
             "id": command_id,
         },
     )
-    return get_command(connection, command_id)
+    updated = get_command(connection, command_id)
+    record_event(
+        connection,
+        tenant_id=updated["tenant_id"],
+        event_type="COMMAND_VERIFIED" if status == "verified" else "COMMAND_FAILED",
+        subject_type="command",
+        subject_id=command_id,
+        payload={"actual_value": actual_value, "failure_reason": updated["failure_reason"]},
+        occurred_at=at,
+    )
+    return updated
+
+
+def mark_command_timed_out(
+    connection: Connection, *, command_id: uuid.UUID, at: datetime
+) -> dict[str, Any] | None:
+    """Transition persistée sent → timed_out (voir app/monitoring.py, appelée
+    depuis les points de lecture dédiés à une commande — jamais depuis le
+    passeport, qui reste une vue pure sans effet de bord).
+
+    Idempotente : renvoie None si la commande n'était pas dans l'état
+    « sent » depuis plus de UNCONFIRMED_AFTER, sans lever d'erreur — un
+    appel « pour rien » (commande déjà vérifiée entre-temps, ou pas encore
+    au-delà du délai) est normal, pas une anomalie."""
+    updated_id = connection.execute(
+        text(
+            "UPDATE commands SET status = 'timed_out', failure_reason = 'COMMAND_TIMED_OUT' "
+            "WHERE id = :id AND status = 'sent' AND sent_at <= :deadline RETURNING id"
+        ),
+        {"id": command_id, "deadline": at - UNCONFIRMED_AFTER},
+    ).scalar()
+    if updated_id is None:
+        return None
+    command = get_command(connection, command_id)
+    record_event(
+        connection,
+        tenant_id=command["tenant_id"],
+        event_type="COMMAND_TIMED_OUT",
+        subject_type="command",
+        subject_id=command_id,
+        occurred_at=at,
+    )
+    return command
 
 
 def effective_status(command: dict[str, Any], *, now: datetime) -> str:
     """Le statut stocké, sauf « sent » depuis trop longtemps : dans ce cas
     « unconfirmed », calculé ici et jamais écrit (même principe que
-    app/devices.py, `communication_status`)."""
+    app/devices.py, `communication_status`). Réservé au passeport
+    (app/passport.py) : partout ailleurs, `mark_command_timed_out` rend ce
+    même constat durable plutôt que de le recalculer à chaque lecture."""
     if command["status"] == "sent" and now - command["sent_at"] > UNCONFIRMED_AFTER:
         return "unconfirmed"
     return command["status"]

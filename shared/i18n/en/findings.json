@@ -1,5 +1,7 @@
 {
   "titles": {
+    "COMMAND_UNCONFIRMED": "Unconfirmed command on point {point_code}: no response from the device within the expected delay",
+    "COMMUNICATION_OFFLINE": "Equipment {location_code} offline: no recent reading",
     "DATA_QUALITY_CLOCK_SUSPECT": "Suspicious timestamp on point {point_code}: reading dated in the future",
     "DATA_QUALITY_LOW_TRUST": "Rules not evaluated on point {point_code}: insufficient trust score ({score}/100)",
     "DATA_QUALITY_OUT_OF_RANGE": "Value outside the sensor's physical range on point {point_code}",
@@ -8,6 +10,8 @@
     "RULE_THRESHOLD_EXCEEDED": "Threshold crossed on point {point_code}: value {value} (condition {operator} {threshold})"
   },
   "actions": {
+    "COMMAND_UNCONFIRMED": "Check that the test device is reachable, then send the command again.",
+    "COMMUNICATION_OFFLINE": "Check power, network connection and the on-site Edge device.",
     "DATA_QUALITY_CLOCK_SUSPECT": "Check the clock of the gateway or sensor. Rules are not applied to this value.",
     "DATA_QUALITY_LOW_TRUST": "Check the sensor before relying on the alarms of this point.",
     "DATA_QUALITY_OUT_OF_RANGE": "Check the sensor and its wiring. Rules are not applied to this value.",

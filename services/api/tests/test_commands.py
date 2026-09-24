@@ -20,9 +20,11 @@ from app.commands import (
     effective_status,
     get_command,
     list_commands_for_point,
+    mark_command_timed_out,
 )
 from app.db import engine
 from app.devices import provision_device
+from app.events import list_events_for_subject
 from app.tenancy import set_tenant_context
 from tests.modbus_fixtures import (
     activate_device_mapping,
@@ -333,3 +335,80 @@ def test_statut_effectif_devient_unconfirmed_apres_le_delai():
 def test_statut_effectif_ne_change_pas_les_statuts_terminaux():
     verified_command = {"status": "verified", "sent_at": T0}
     assert effective_status(verified_command, now=T0 + timedelta(days=1)) == "verified"
+
+
+def test_chaque_etape_produit_un_evenement(commandable):
+    with engine.begin() as connection:
+        set_tenant_context(connection, commandable["tenant_id"])
+        device_id, _ = provision_device(
+            connection,
+            tenant_id=commandable["tenant_id"],
+            device_id="relais-test",
+            created_by="test",
+        )
+        command_id = create_command(
+            connection,
+            tenant_id=commandable["tenant_id"],
+            point_id=commandable["point_id"],
+            requested_value=1.0,
+            requested_by="mohamed",
+            at=T0,
+        )
+        claim_pending_commands(
+            connection, equipment_id=commandable["location_id"], edge_device_id=device_id, at=T0
+        )
+        acknowledge_command(
+            connection,
+            command_id=command_id,
+            success=True,
+            actual_value=1.0,
+            failure_reason=None,
+            at=T0,
+        )
+        events = list_events_for_subject(connection, subject_type="command", subject_id=command_id)
+
+    # Même horodatage pour les trois (T0) : l'ordre entre elles n'est pas
+    # garanti, seul l'ensemble compte ici.
+    assert {e["event_type"] for e in events} == {
+        "COMMAND_REQUESTED",
+        "COMMAND_DISPATCHED",
+        "COMMAND_VERIFIED",
+    }
+
+
+def test_commande_envoyee_depuis_trop_longtemps_devient_timed_out(commandable):
+    with engine.begin() as connection:
+        set_tenant_context(connection, commandable["tenant_id"])
+        device_id, _ = provision_device(
+            connection,
+            tenant_id=commandable["tenant_id"],
+            device_id="relais-test",
+            created_by="test",
+        )
+        command_id = create_command(
+            connection,
+            tenant_id=commandable["tenant_id"],
+            point_id=commandable["point_id"],
+            requested_value=1.0,
+            requested_by="mohamed",
+            at=T0,
+        )
+        claim_pending_commands(
+            connection, equipment_id=commandable["location_id"], edge_device_id=device_id, at=T0
+        )
+
+        too_soon = T0 + UNCONFIRMED_AFTER - timedelta(seconds=1)
+        assert mark_command_timed_out(connection, command_id=command_id, at=too_soon) is None
+
+        late = T0 + UNCONFIRMED_AFTER + timedelta(seconds=1)
+        timed_out = mark_command_timed_out(connection, command_id=command_id, at=late)
+        assert timed_out["status"] == "timed_out"
+        assert timed_out["failure_reason"] == "COMMAND_TIMED_OUT"
+
+        # Idempotente : un second appel ne fait rien (déjà dans un état terminal).
+        assert mark_command_timed_out(connection, command_id=command_id, at=late) is None
+
+        events = list_events_for_subject(connection, subject_type="command", subject_id=command_id)
+    assert [e["event_type"] for e in events if e["event_type"] == "COMMAND_TIMED_OUT"] == [
+        "COMMAND_TIMED_OUT"
+    ]

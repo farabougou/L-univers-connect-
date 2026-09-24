@@ -183,3 +183,49 @@ def test_status_through_the_api_and_the_passport(tenants) -> None:
     )
     assert passport.json()["status"]["operational_status"] == "running"
     assert hidden.status_code == 404
+
+
+def test_hors_ligne_leve_une_alerte_puis_se_retablit_via_l_api(tenants) -> None:
+    """Directive de Mohamed du 24/09/2026 (État → Événement → Politique →
+    Alerte) : lire le statut d'un équipement hors ligne par l'API en fait
+    plus qu'un simple affichage — une vraie alerte apparaît, qu'un retour à
+    la normale referme automatiquement."""
+    tenant_a, _ = tenants
+    _measure(tenant_a, "run", 1, datetime.now(UTC) - timedelta(hours=1))
+    headers = {"Authorization": f"Bearer {make_token(tenant_id=str(tenant_a['tenant_id']))}"}
+
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        offline_status = client.get(
+            f"/functional-locations/{tenant_a['ahu']}/status", headers=headers
+        )
+    assert offline_status.json()["communication_status"] == "offline"
+
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_a["tenant_id"])
+        finding = (
+            connection.execute(
+                text(
+                    "SELECT condition_state, reason_code FROM findings WHERE subject_node_id = :id"
+                ),
+                {"id": tenant_a["ahu"]},
+            )
+            .mappings()
+            .first()
+        )
+    assert finding["reason_code"] == "COMMUNICATION_OFFLINE"
+    assert finding["condition_state"] == "active"
+
+    _measure(tenant_a, "run", 1, datetime.now(UTC))
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        online_status = client.get(
+            f"/functional-locations/{tenant_a['ahu']}/status", headers=headers
+        )
+    assert online_status.json()["communication_status"] == "online"
+
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_a["tenant_id"])
+        condition = connection.execute(
+            text("SELECT condition_state FROM findings WHERE subject_node_id = :id"),
+            {"id": tenant_a["ahu"]},
+        ).scalar()
+    assert condition == "cleared"

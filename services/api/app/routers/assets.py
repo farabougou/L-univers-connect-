@@ -26,6 +26,7 @@ from app.lifecycle import (
     lifecycle_history,
     record_event,
 )
+from app.monitoring import evaluate_communication_status
 from app.schemas import (
     AssetCodeUpdate,
     AssignmentCreate,
@@ -611,15 +612,33 @@ def read_lifecycle(
 def read_equipment_status(
     functional_location_id: uuid.UUID,
     connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
 ) -> EquipmentStatusOut:
     """État de fonctionnement et de communication, calculé à l'instant de la
-    demande à partir des points d'état validés."""
-    exists = connection.execute(
-        text("SELECT 1 FROM functional_locations WHERE id = :id"), {"id": functional_location_id}
-    ).scalar()
-    if not exists:
-        raise ApiError(404, "FUNCTIONAL_LOCATION_NOT_FOUND")
-    return EquipmentStatusOut(
-        **compute_equipment_status(connection, functional_location_id, datetime.now(UTC))
+    demande à partir des points d'état validés.
+
+    Point de lecture dédié (pas le passeport, qui reste une vue pure) où la
+    transition de communication devient un événement persistant et, si
+    nécessaire, une alerte — voir app/monitoring.py."""
+    location = (
+        connection.execute(
+            text("SELECT code FROM functional_locations WHERE id = :id"),
+            {"id": functional_location_id},
+        )
+        .mappings()
+        .first()
     )
+    if location is None:
+        raise ApiError(404, "FUNCTIONAL_LOCATION_NOT_FOUND")
+    at = datetime.now(UTC)
+    equipment_status = compute_equipment_status(connection, functional_location_id, at)
+    evaluate_communication_status(
+        connection,
+        tenant_id=tenant_id,
+        functional_location_id=functional_location_id,
+        location_code=location["code"],
+        status=equipment_status,
+        at=at,
+    )
+    return EquipmentStatusOut(**equipment_status)

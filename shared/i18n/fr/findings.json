@@ -1,5 +1,7 @@
 {
   "titles": {
+    "COMMAND_UNCONFIRMED": "Commande non confirmée sur le point {point_code} : aucune réponse de l’appareil dans le délai attendu",
+    "COMMUNICATION_OFFLINE": "Équipement {location_code} hors ligne : aucune mesure récente",
     "DATA_QUALITY_CLOCK_SUSPECT": "Horodatage suspect sur le point {point_code} : relevé daté dans le futur",
     "DATA_QUALITY_LOW_TRUST": "Règles non évaluées sur le point {point_code} : score de confiance insuffisant ({score}/100)",
     "DATA_QUALITY_OUT_OF_RANGE": "Valeur hors de la plage physique du capteur sur le point {point_code}",
@@ -8,6 +10,8 @@
     "RULE_THRESHOLD_EXCEEDED": "Seuil franchi sur le point {point_code} : valeur {value} (condition {operator} {threshold})"
   },
   "actions": {
+    "COMMAND_UNCONFIRMED": "Vérifiez que l’appareil de test est joignable, puis renvoyez la commande.",
+    "COMMUNICATION_OFFLINE": "Vérifiez l’alimentation, la connexion réseau et l’appareil Edge sur site.",
     "DATA_QUALITY_CLOCK_SUSPECT": "Vérifiez l’horloge de la passerelle ou du capteur. Les règles ne sont pas appliquées à cette valeur.",
     "DATA_QUALITY_LOW_TRUST": "Contrôlez le capteur avant de vous fier aux alarmes de ce point.",
     "DATA_QUALITY_OUT_OF_RANGE": "Vérifiez le capteur et son câblage. Les règles ne sont pas appliquées à cette valeur.",

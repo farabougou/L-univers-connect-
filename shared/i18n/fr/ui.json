@@ -401,7 +401,8 @@
     "acknowledged": "Reçue par l’appareil",
     "verified": "Vérifiée",
     "failed": "Échouée",
-    "unconfirmed": "Non confirmée"
+    "unconfirmed": "Non confirmée",
+    "timed_out": "Non confirmée (délai dépassé)"
   },
   "command_failure_reason": {
     "ACTUAL_STATE_MISMATCH": "L’état réel ne correspond pas à la valeur demandée.",

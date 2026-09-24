@@ -24,6 +24,7 @@ _TABLES_IN_ORDER = (
     "work_order_status_history",
     "work_orders",
     "desired_states",
+    "events",
     "commands",
     "measurements",
     "external_identifiers",

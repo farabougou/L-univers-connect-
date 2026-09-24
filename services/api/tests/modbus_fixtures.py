@@ -163,7 +163,18 @@ def cleanup_tenant(tenant: dict) -> None:
     purge_audit_log_for_tenant(tenant_id)
     with engine.begin() as connection:
         set_tenant_context(connection, tenant_id)
-        for table in ("commands", "edge_devices", "points", "functional_locations", "sites"):
+        for table in (
+            "events",
+            "commands",
+            "edge_devices",
+            "finding_status_history",
+            "findings",
+            "alarm_status_history",
+            "alarms",
+            "points",
+            "functional_locations",
+            "sites",
+        ):
             connection.execute(
                 text(f"DELETE FROM {table} WHERE tenant_id = :id"), {"id": tenant_id}
             )

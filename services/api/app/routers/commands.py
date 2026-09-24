@@ -27,6 +27,7 @@ from app.commands import (
 from app.db import engine
 from app.deps import get_tenant_connection, get_tenant_id
 from app.errors import api_error
+from app.monitoring import evaluate_command_timeout
 from app.tenancy import set_tenant_context
 
 router = APIRouter()
@@ -109,26 +110,31 @@ def create_command_route(
 def get_command_route(
     command_id: uuid.UUID,
     connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
     _claims: Annotated[dict, Depends(get_current_claims)],
 ) -> CommandOut:
     command = get_command(connection, command_id)
     if command is None:
         raise api_error(CommandNotFound("COMMAND_NOT_FOUND", command_id=str(command_id)), 404)
-    return _out(command, now=datetime.now(UTC))
+    now = datetime.now(UTC)
+    command = evaluate_command_timeout(connection, tenant_id=tenant_id, command=command, at=now)
+    return _out(command, now=now)
 
 
 @router.get("/commands", response_model=list[CommandOut])
 def list_commands_route(
     connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
     _claims: Annotated[dict, Depends(get_current_claims)],
     point_id: Annotated[uuid.UUID, Query()],
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
 ) -> list[CommandOut]:
     now = datetime.now(UTC)
-    return [
-        _out(command, now=now)
+    commands = [
+        evaluate_command_timeout(connection, tenant_id=tenant_id, command=command, at=now)
         for command in list_commands_for_point(connection, point_id=point_id, limit=limit)
     ]
+    return [_out(command, now=now) for command in commands]
 
 
 @router.get("/edge/commands", response_model=list[EdgeCommandOut])

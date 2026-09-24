@@ -17,6 +17,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.errors import DomainError
+from app.events import EVENT_TYPES
 from app.i18n import load_catalog, negotiate_locale
 from app.main import app
 from tests.jwt_helpers import JWKS, make_token
@@ -211,7 +212,7 @@ def test_every_code_used_in_the_code_has_a_message_and_none_is_orphaned() -> Non
     error_codes = set(load_catalog("fr")["codes"])
     finding_codes = set(load_catalog("fr", "findings")["titles"])
     # Chaînes au même format qui ne sont pas des codes de message.
-    used = _codes_used_in_code() - {"I18N_DIR"}
+    used = _codes_used_in_code() - {"I18N_DIR"} - EVENT_TYPES
 
     assert used - error_codes - finding_codes == set(), "codes sans message"
     assert error_codes - used == set(), "messages d'erreur jamais utilisés"

@@ -4,6 +4,7 @@ négociable 1 — voir CLAUDE.md et app/commands.py.
 """
 
 import uuid
+from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
@@ -30,7 +31,18 @@ def _cleanup(tenant_id):
     purge_audit_log_for_tenant(tenant_id)
     with engine.begin() as connection:
         set_tenant_context(connection, tenant_id)
-        for table in ("commands", "edge_devices", "points", "functional_locations", "sites"):
+        for table in (
+            "events",
+            "commands",
+            "edge_devices",
+            "finding_status_history",
+            "findings",
+            "alarm_status_history",
+            "alarms",
+            "points",
+            "functional_locations",
+            "sites",
+        ):
             connection.execute(
                 text(f"DELETE FROM {table} WHERE tenant_id = :id"), {"id": tenant_id}
             )
@@ -268,5 +280,52 @@ def test_commande_inconnue_est_signalee():
             )
         assert response.status_code == 404
         assert response.json()["code"] == "COMMAND_NOT_FOUND"
+    finally:
+        _cleanup(tenant["tenant_id"])
+
+
+def test_commande_envoyee_depuis_trop_longtemps_devient_timed_out_a_la_lecture():
+    """Directive de Mohamed du 24/09/2026 : lire une commande envoyée
+    depuis trop longtemps sans réponse ne se contente pas de l'afficher —
+    elle devient réellement « timed_out » et lève une alerte."""
+    tenant = _commandable_tenant()
+    try:
+        with patch("app.auth.fetch_jwks", return_value=JWKS):
+            created = client.post(
+                "/commands",
+                json={"point_id": str(tenant["point_id"]), "requested_value": 1.0},
+                headers=_human_headers(tenant["tenant_id"]),
+            )
+        command_id = created.json()["id"]
+        token, device_id = _device_token(tenant)
+        client.get(
+            f"/edge/commands?equipment_id={tenant['location_id']}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        with engine.begin() as connection:
+            set_tenant_context(connection, tenant["tenant_id"])
+            connection.execute(
+                text("UPDATE commands SET sent_at = :sent_at WHERE id = :id"),
+                {"sent_at": datetime.now(UTC) - timedelta(minutes=10), "id": command_id},
+            )
+
+        with patch("app.auth.fetch_jwks", return_value=JWKS):
+            response = client.get(
+                f"/commands/{command_id}", headers=_human_headers(tenant["tenant_id"])
+            )
+        assert response.json()["status"] == "timed_out"
+
+        with engine.begin() as connection:
+            set_tenant_context(connection, tenant["tenant_id"])
+            finding = (
+                connection.execute(
+                    text("SELECT reason_code FROM findings WHERE point_id = :point_id"),
+                    {"point_id": tenant["point_id"]},
+                )
+                .mappings()
+                .first()
+            )
+        assert finding["reason_code"] == "COMMAND_UNCONFIRMED"
     finally:
         _cleanup(tenant["tenant_id"])

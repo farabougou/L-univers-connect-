@@ -401,7 +401,8 @@
     "acknowledged": "Received by the device",
     "verified": "Verified",
     "failed": "Failed",
-    "unconfirmed": "Unconfirmed"
+    "unconfirmed": "Unconfirmed",
+    "timed_out": "Unconfirmed (timed out)"
   },
   "command_failure_reason": {
     "ACTUAL_STATE_MISMATCH": "The actual state does not match the requested value.",
