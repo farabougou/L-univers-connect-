@@ -39,6 +39,14 @@ type ConfigVersion = {
   version: number;
   status: string;
   content: RuleContent;
+  parent_version_id: string | null;
+};
+type ConfigDiff = {
+  from_version: number;
+  to_version: number;
+  added: Record<string, unknown>;
+  removed: Record<string, unknown>;
+  changed: Record<string, { from: unknown; to: unknown }>;
 };
 
 const PROPERTY_SOURCES = ["nameplate", "document", "measurement", "manual"];
@@ -104,10 +112,10 @@ export default async function EquipmentPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; diff?: string; against?: string }>;
 }) {
   const { id } = await params;
-  const { error: errorCode } = await searchParams;
+  const { error: errorCode, diff: diffVersionId, against } = await searchParams;
   const accessToken = await requireAccessToken();
   const translator = await getTranslator();
   const locale = await getLocale();
@@ -115,6 +123,15 @@ export default async function EquipmentPage({
   const error = errorCode
     ? (errorMessage(translator.locale, errorCode) ?? t("web.registre.creation_failed"))
     : null;
+
+  let configDiff: ConfigDiff | null = null;
+  if (diffVersionId && against) {
+    const diffResponse = await apiFetch(
+      `/configs/${diffVersionId}/diff?against=${against}`,
+      accessToken,
+    );
+    configDiff = diffResponse.ok ? await diffResponse.json() : null;
+  }
 
   const [response, meResponse] = await Promise.all([
     apiFetch(`/graph/nodes/${id}/passport`, accessToken),
@@ -175,6 +192,38 @@ export default async function EquipmentPage({
         </h1>
       )}
       {error && <p style={{ color: "#c0392b" }}>{error}</p>}
+
+      {configDiff && (
+        <section
+          style={{ border: "1px solid #2563eb", borderRadius: 8, padding: 16, margin: "16px 0" }}
+        >
+          <h2 style={sectionTitleStyle}>
+            {t("web.registre.rule_diff_title", {
+              from: String(configDiff.from_version),
+              to: String(configDiff.to_version),
+            })}
+          </h2>
+          {Object.entries(configDiff.changed).map(([key, value]) => (
+            <p key={key} style={{ margin: 0 }}>
+              {key} : {String(value.from)} → {String(value.to)}
+            </p>
+          ))}
+          {Object.entries(configDiff.added).map(([key, value]) => (
+            <p key={key} style={{ margin: 0 }}>
+              + {key} : {String(value)}
+            </p>
+          ))}
+          {Object.entries(configDiff.removed).map(([key, value]) => (
+            <p key={key} style={{ margin: 0 }}>
+              − {key} : {String(value)}
+            </p>
+          ))}
+          {Object.keys(configDiff.changed).length === 0 &&
+            Object.keys(configDiff.added).length === 0 &&
+            Object.keys(configDiff.removed).length === 0 && <p>{t("web.registre.rule_diff_none")}</p>}
+          <Link href={`/registre/${id}`}>{t("web.registre.tag_close")}</Link>
+        </section>
+      )}
 
       {passport.status && (
         <section style={sectionStyle}>
@@ -555,6 +604,14 @@ function RulesBlock({
             ` (${version.content.operator === ">" ? t("web.registre.rule_operator_gt") : t("web.registre.rule_operator_lt")} ${version.content.threshold})`}
           {version.content.kind === "desired_state_divergence" &&
             ` (${t("web.registre.rule_tolerance")}: ${version.content.tolerance})`}
+          {version.parent_version_id && (
+            <>
+              {" — "}
+              <Link href={`/registre/${nodeId}?diff=${version.id}&against=${version.parent_version_id}`}>
+                {t("web.registre.rule_diff_link")}
+              </Link>
+            </>
+          )}
           {canManage && version.status === "draft" && (
             <form action={activateRule} style={{ display: "inline", marginLeft: 8 }}>
               <input type="hidden" name="version_id" value={version.id} />

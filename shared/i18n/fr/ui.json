@@ -326,7 +326,10 @@
       "retire_rule": "Retirer",
       "retire_reason": "Motif du retrait",
       "restore_rule": "Restaurer",
-      "restore_reason": "Motif de restauration"
+      "restore_reason": "Motif de restauration",
+      "rule_diff_title": "Changements entre la version {from} et la version {to}",
+      "rule_diff_none": "Aucune différence.",
+      "rule_diff_link": "Voir les changements"
     }
   },
   "space_type": {
