@@ -455,3 +455,65 @@ export async function createWorkOrderForEquipment(formData: FormData) {
   }
   revalidatePath(`/registre/${nodeId}`);
 }
+
+/**
+ * Référence énergétique (M5, app/energy/baseline.py) : une configuration
+ * versionnée de plus, brouillon puis activée séparément (voir activateRule,
+ * réutilisé ici). L'API refuse elle-même un point qui ne serait pas un
+ * compteur d'énergie validé — ce formulaire ne fait qu'appeler /configs.
+ */
+export async function createEnergyBaseline(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+  const pointId = String(formData.get("point_id"));
+
+  const response = await apiFetch("/configs", accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      config_type: "energy_baseline",
+      subject_key: nodeId,
+      reason: formData.get("reason"),
+      content: {
+        point_id: pointId,
+        method: "degree_day_ratio",
+        method_version: "v1",
+        reference_period: {
+          start: formData.get("reference_start"),
+          end: formData.get("reference_end"),
+        },
+        degree_day_base_temperature_celsius: Number(formData.get("base_temperature")),
+        degree_day_kind: formData.get("degree_day_kind"),
+      },
+    }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  revalidatePath(`/registre/${nodeId}`);
+}
+
+/**
+ * Calcule et persiste un résultat de performance normalisée (voir
+ * app/energy/normalization.py) : rien n'est écrasé, un nouveau calcul pour
+ * la même période crée une nouvelle ligne, jamais une mise à jour.
+ */
+export async function computeEnergyResult(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+  const baselineConfigVersionId = formData.get("baseline_config_version_id");
+
+  const response = await apiFetch("/energy/normalized-results", accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      baseline_config_version_id: baselineConfigVersionId,
+      period_start: formData.get("period_start"),
+      period_end: formData.get("period_end"),
+    }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  revalidatePath(`/registre/${nodeId}`);
+}

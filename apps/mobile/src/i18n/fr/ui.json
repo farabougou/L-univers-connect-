@@ -366,7 +366,19 @@
       "energy_comparison_reduced": "Consommation normalisée en baisse de {percent} % par rapport à la période précédente.",
       "energy_comparison_increased": "Consommation normalisée en hausse de {percent} % par rapport à la période précédente.",
       "energy_comparison_unavailable": "Comparaison indisponible : l’une des deux périodes n’a pas pu être normalisée.",
-      "energy_computed_at": "Calculé le {when}"
+      "energy_computed_at": "Calculé le {when}",
+      "energy_baseline_title": "Référence énergétique",
+      "energy_baseline_no_version": "Aucune référence énergétique configurée pour cet équipement.",
+      "energy_baseline_summary": "{point} — degrés-jours de {kind}, base {base} °C, référence du {start} au {end}",
+      "energy_baseline_create_title": "Configurer une référence énergétique",
+      "energy_baseline_point_label": "Point de mesure d’énergie",
+      "energy_baseline_reference_start": "Début de la période de référence",
+      "energy_baseline_reference_end": "Fin de la période de référence",
+      "energy_baseline_base_temperature": "Température de base (°C)",
+      "energy_baseline_kind_label": "Degrés-jours",
+      "energy_baseline_compute_title": "Calculer la performance normalisée",
+      "energy_baseline_compute_period_start": "Début de la période analysée",
+      "energy_baseline_compute_period_end": "Fin de la période analysée"
     }
   },
   "space_type": {
@@ -394,6 +406,10 @@
     "draft": "Brouillon",
     "active": "Active",
     "retired": "Retirée"
+  },
+  "degree_day_kind": {
+    "heating": "Chauffage",
+    "cooling": "Climatisation"
   },
   "modbus_device_type": {
     "sdm120": "Compteur Eastron SDM120",

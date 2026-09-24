@@ -24,9 +24,11 @@ import {
   activateRule,
   changeLifecycleState,
   clearAlarm,
+  computeEnergyResult,
   confirmFinding,
   createDeviceMapping,
   createDivergenceRule,
+  createEnergyBaseline,
   createSimulatedRelayMapping,
   createTagForEquipment,
   createThresholdRule,
@@ -94,6 +96,22 @@ type EnergyComparison = {
   comparable: boolean;
   percent_deviation: number | null;
   reduced: boolean | null;
+};
+
+// Référence énergétique (app/energy/baseline.py) : une configuration
+// versionnée de plus, figée une fois activée.
+type EnergyBaselineContent = {
+  point_id: string;
+  reference_period: { start: string; end: string };
+  degree_day_base_temperature_celsius: number;
+  degree_day_kind: "heating" | "cooling";
+};
+type EnergyBaselineVersion = {
+  id: string;
+  version: number;
+  status: string;
+  content: EnergyBaselineContent;
+  parent_version_id: string | null;
 };
 
 // Même catalogue que app/connectors/sdm120.py (SDM120_POINTS) : un seul
@@ -225,12 +243,14 @@ export default async function EquipmentPage({
   // jamais sur un exemplaire ou un espace (voir app/energy/normalization.py).
   let energyResults: EnergyNormalizedResult[] = [];
   let energyComparison: EnergyComparison | null = null;
+  let energyBaselineVersions: EnergyBaselineVersion[] = [];
   if (passport.node_type === "functional_location") {
-    const energyResponse = await apiFetch(
-      `/energy/normalized-results?functional_location_id=${id}`,
-      accessToken,
-    );
+    const [energyResponse, energyBaselineResponse] = await Promise.all([
+      apiFetch(`/energy/normalized-results?functional_location_id=${id}`, accessToken),
+      apiFetch(`/configs?config_type=energy_baseline&subject_key=${id}`, accessToken),
+    ]);
     energyResults = energyResponse.ok ? await energyResponse.json() : [];
+    energyBaselineVersions = energyBaselineResponse.ok ? await energyBaselineResponse.json() : [];
     if (energyResults.length >= 2) {
       const comparisonResponse = await apiFetch(
         `/energy/comparison?reference_result_id=${energyResults[1].id}&analyzed_result_id=${energyResults[0].id}`,
@@ -239,6 +259,7 @@ export default async function EquipmentPage({
       energyComparison = comparisonResponse.ok ? await comparisonResponse.json() : null;
     }
   }
+  const activeEnergyBaseline = energyBaselineVersions.find((version) => version.status === "active");
 
   return (
     <main style={{ maxWidth: 720, margin: "40px auto", padding: "0 16px" }}>
@@ -401,10 +422,27 @@ export default async function EquipmentPage({
 
       {passport.node_type === "functional_location" && (
         <section style={sectionStyle}>
+          <h2 style={sectionTitleStyle}>{t("web.registre.energy_baseline_title")}</h2>
+          <EnergyBaselineBlock
+            nodeId={id}
+            points={points}
+            versions={energyBaselineVersions}
+            canManage={canManage}
+            locale={locale}
+            t={t}
+          />
+        </section>
+      )}
+
+      {passport.node_type === "functional_location" && (
+        <section style={sectionStyle}>
           <h2 style={sectionTitleStyle}>{t("web.registre.energy_section_title")}</h2>
           <EnergyBlock
             results={energyResults}
             comparison={energyComparison}
+            activeBaseline={activeEnergyBaseline ?? null}
+            nodeId={id}
+            canManage={canManage}
             locale={locale}
             timeZone={timeZone}
             t={t}
@@ -1174,62 +1212,211 @@ function CommandBlock({
 function EnergyBlock({
   results,
   comparison,
+  activeBaseline,
+  nodeId,
+  canManage,
   locale,
   timeZone,
   t,
 }: {
   results: EnergyNormalizedResult[];
   comparison: EnergyComparison | null;
+  activeBaseline: EnergyBaselineVersion | null;
+  nodeId: string;
+  canManage: boolean;
   locale: Locale;
   timeZone: string | null;
   t: (key: string, params?: Record<string, string>) => string;
 }) {
   const latest = results[0] ?? null;
-  if (!latest) {
-    return <p style={mutedStyle}>{t("web.registre.energy_no_result")}</p>;
-  }
   return (
     <div>
-      <p style={{ margin: 0 }}>
-        {t("web.registre.energy_period", {
-          start: formatDate(locale, latest.period_start, null),
-          end: formatDate(locale, latest.period_end, null),
-        })}
-      </p>
-      <p style={{ margin: 0 }}>
-        {t("web.registre.energy_raw_consumption", {
-          value: formatNumber(locale, latest.raw_consumption),
-          unit: latest.raw_consumption_unit,
-        })}
-      </p>
-      {latest.normalization_status === "ok" && latest.normalized_consumption !== null ? (
-        <p style={{ margin: 0 }}>
-          {t("web.registre.energy_normalized_consumption", {
-            value: formatNumber(locale, latest.normalized_consumption),
-            unit: latest.raw_consumption_unit,
-          })}
-        </p>
-      ) : (
-        <p style={mutedStyle}>{t(`web.registre.energy_status_${latest.normalization_status}`)}</p>
-      )}
-      {comparison &&
-        (comparison.comparable && comparison.percent_deviation !== null ? (
+      {latest ? (
+        <>
           <p style={{ margin: 0 }}>
-            {t(
-              comparison.reduced
-                ? "web.registre.energy_comparison_reduced"
-                : "web.registre.energy_comparison_increased",
-              { percent: formatNumber(locale, Math.abs(comparison.percent_deviation)) },
+            {t("web.registre.energy_period", {
+              start: formatDate(locale, latest.period_start, null),
+              end: formatDate(locale, latest.period_end, null),
+            })}
+          </p>
+          <p style={{ margin: 0 }}>
+            {t("web.registre.energy_raw_consumption", {
+              value: formatNumber(locale, latest.raw_consumption),
+              unit: latest.raw_consumption_unit,
+            })}
+          </p>
+          {latest.normalization_status === "ok" && latest.normalized_consumption !== null ? (
+            <p style={{ margin: 0 }}>
+              {t("web.registre.energy_normalized_consumption", {
+                value: formatNumber(locale, latest.normalized_consumption),
+                unit: latest.raw_consumption_unit,
+              })}
+            </p>
+          ) : (
+            <p style={mutedStyle}>{t(`web.registre.energy_status_${latest.normalization_status}`)}</p>
+          )}
+          {comparison &&
+            (comparison.comparable && comparison.percent_deviation !== null ? (
+              <p style={{ margin: 0 }}>
+                {t(
+                  comparison.reduced
+                    ? "web.registre.energy_comparison_reduced"
+                    : "web.registre.energy_comparison_increased",
+                  { percent: formatNumber(locale, Math.abs(comparison.percent_deviation)) },
+                )}
+              </p>
+            ) : (
+              <p style={mutedStyle}>{t("web.registre.energy_comparison_unavailable")}</p>
+            ))}
+          <p style={mutedStyle}>
+            {t("web.registre.energy_computed_at", {
+              when: formatDateTime(locale, latest.computed_at, timeZone),
+            })}
+          </p>
+        </>
+      ) : (
+        <p style={mutedStyle}>{t("web.registre.energy_no_result")}</p>
+      )}
+      {canManage && activeBaseline && (
+        <details style={{ marginTop: 8 }}>
+          <summary>{t("web.registre.energy_baseline_compute_title")}</summary>
+          <form action={computeEnergyResult} style={{ maxWidth: 360 }}>
+            <input type="hidden" name="node_id" value={nodeId} />
+            <input type="hidden" name="baseline_config_version_id" value={activeBaseline.id} />
+            <label>
+              {t("web.registre.energy_baseline_compute_period_start")}
+              <input name="period_start" type="date" required style={fieldStyle} />
+            </label>
+            <label style={labelStyle}>
+              {t("web.registre.energy_baseline_compute_period_end")}
+              <input name="period_end" type="date" required style={fieldStyle} />
+            </label>
+            <button type="submit" style={submitStyle}>
+              {t("web.registre.submit")}
+            </button>
+          </form>
+        </details>
+      )}
+    </div>
+  );
+}
+
+function EnergyBaselineBlock({
+  nodeId,
+  points,
+  versions,
+  canManage,
+  locale,
+  t,
+}: {
+  nodeId: string;
+  points: { id: string; name: string }[];
+  versions: EnergyBaselineVersion[];
+  canManage: boolean;
+  locale: Locale;
+  t: (key: string, params?: Record<string, string>) => string;
+}) {
+  const pointName = (pointId: string) => points.find((p) => p.id === pointId)?.name ?? pointId;
+  return (
+    <>
+      {versions.length === 0 && <p style={mutedStyle}>{t("web.registre.energy_baseline_no_version")}</p>}
+      {versions.map((version) => (
+        <div key={version.id} style={{ marginBottom: 12 }}>
+          <p style={{ margin: 0 }}>
+            {t("web.registre.rule_version", { version: String(version.version) })} —{" "}
+            {t(`config_status.${version.status}`)}
+            {canManage && version.status === "draft" && (
+              <form action={activateRule} style={{ display: "inline", marginLeft: 8 }}>
+                <input type="hidden" name="version_id" value={version.id} />
+                <input type="hidden" name="node_id" value={nodeId} />
+                <button type="submit">{t("web.registre.activate_rule")}</button>
+              </form>
+            )}
+            {canManage && version.status !== "retired" && (
+              <form action={retireRule} style={{ display: "inline-flex", gap: 4, marginLeft: 8 }}>
+                <input type="hidden" name="version_id" value={version.id} />
+                <input type="hidden" name="node_id" value={nodeId} />
+                <input name="reason" required placeholder={t("web.registre.retire_reason")} />
+                <button type="submit">{t("web.registre.retire_rule")}</button>
+              </form>
+            )}
+            {canManage && version.status === "retired" && (
+              <form action={restoreRule} style={{ display: "inline-flex", gap: 4, marginLeft: 8 }}>
+                <input type="hidden" name="version_id" value={version.id} />
+                <input type="hidden" name="node_id" value={nodeId} />
+                <input name="reason" required placeholder={t("web.registre.restore_reason")} />
+                <button type="submit">{t("web.registre.restore_rule")}</button>
+              </form>
             )}
           </p>
+          <p style={{ ...mutedStyle, margin: 0, marginLeft: 16 }}>
+            {t("web.registre.energy_baseline_summary", {
+              point: pointName(version.content.point_id),
+              kind: t(`degree_day_kind.${version.content.degree_day_kind}`),
+              base: formatNumber(locale, version.content.degree_day_base_temperature_celsius),
+              start: formatDate(locale, version.content.reference_period.start, null),
+              end: formatDate(locale, version.content.reference_period.end, null),
+            })}
+          </p>
+        </div>
+      ))}
+      {canManage &&
+        (points.length === 0 ? (
+          <p style={mutedStyle}>{t("web.registre.modbus_no_points_for_mapping")}</p>
         ) : (
-          <p style={mutedStyle}>{t("web.registre.energy_comparison_unavailable")}</p>
+          <details>
+            <summary>{t("web.registre.energy_baseline_create_title")}</summary>
+            <form action={createEnergyBaseline} style={{ maxWidth: 360 }}>
+              <input type="hidden" name="node_id" value={nodeId} />
+              <label>
+                {t("web.registre.energy_baseline_point_label")}
+                <select name="point_id" required defaultValue="" style={fieldStyle}>
+                  <option value="" disabled>
+                    {t("web.registre.modbus_register_none")}
+                  </option>
+                  {points.map((point) => (
+                    <option key={point.id} value={point.id}>
+                      {point.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label style={labelStyle}>
+                {t("web.registre.energy_baseline_reference_start")}
+                <input name="reference_start" type="date" required style={fieldStyle} />
+              </label>
+              <label style={labelStyle}>
+                {t("web.registre.energy_baseline_reference_end")}
+                <input name="reference_end" type="date" required style={fieldStyle} />
+              </label>
+              <label style={labelStyle}>
+                {t("web.registre.energy_baseline_base_temperature")}
+                <input
+                  name="base_temperature"
+                  type="number"
+                  step="any"
+                  defaultValue={18}
+                  required
+                  style={fieldStyle}
+                />
+              </label>
+              <label style={labelStyle}>
+                {t("web.registre.energy_baseline_kind_label")}
+                <select name="degree_day_kind" defaultValue="heating" style={fieldStyle}>
+                  <option value="heating">{t("degree_day_kind.heating")}</option>
+                  <option value="cooling">{t("degree_day_kind.cooling")}</option>
+                </select>
+              </label>
+              <label style={labelStyle}>
+                {t("web.registre.rule_reason")}
+                <input name="reason" required style={fieldStyle} />
+              </label>
+              <button type="submit" style={submitStyle}>
+                {t("web.registre.submit")}
+              </button>
+            </form>
+          </details>
         ))}
-      <p style={mutedStyle}>
-        {t("web.registre.energy_computed_at", {
-          when: formatDateTime(locale, latest.computed_at, timeZone),
-        })}
-      </p>
-    </div>
+    </>
   );
 }

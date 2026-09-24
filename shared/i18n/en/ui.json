@@ -366,7 +366,19 @@
       "energy_comparison_reduced": "Normalized consumption down {percent}% from the previous period.",
       "energy_comparison_increased": "Normalized consumption up {percent}% from the previous period.",
       "energy_comparison_unavailable": "Comparison unavailable: one of the two periods could not be normalized.",
-      "energy_computed_at": "Computed on {when}"
+      "energy_computed_at": "Computed on {when}",
+      "energy_baseline_title": "Energy baseline",
+      "energy_baseline_no_version": "No energy baseline configured for this equipment.",
+      "energy_baseline_summary": "{point} — {kind} degree days, base {base}°C, reference from {start} to {end}",
+      "energy_baseline_create_title": "Configure an energy baseline",
+      "energy_baseline_point_label": "Energy meter point",
+      "energy_baseline_reference_start": "Reference period start",
+      "energy_baseline_reference_end": "Reference period end",
+      "energy_baseline_base_temperature": "Base temperature (°C)",
+      "energy_baseline_kind_label": "Degree days",
+      "energy_baseline_compute_title": "Compute normalized performance",
+      "energy_baseline_compute_period_start": "Analyzed period start",
+      "energy_baseline_compute_period_end": "Analyzed period end"
     }
   },
   "space_type": {
@@ -394,6 +406,10 @@
     "draft": "Draft",
     "active": "Active",
     "retired": "Retired"
+  },
+  "degree_day_kind": {
+    "heating": "Heating",
+    "cooling": "Cooling"
   },
   "modbus_device_type": {
     "sdm120": "Eastron SDM120 meter",
