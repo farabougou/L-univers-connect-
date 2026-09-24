@@ -11,6 +11,7 @@ import {
   submitStyle,
 } from "@/lib/formStyles";
 import { errorMessage, getTranslator } from "@/lib/i18n";
+import { type Me, canManage as computeCanManage } from "@/lib/roles";
 
 import {
   closeSpace,
@@ -21,7 +22,6 @@ import {
   updateSiteTimezone,
 } from "./actions";
 
-type Me = { roles: string[] };
 type Site = { id: string; name: string; timezone: string | null };
 type EquipmentType = { code: string; label: string };
 type FunctionalLocation = { id: string; site_id: string; code: string; name: string };
@@ -34,11 +34,9 @@ type Space = {
   name: string;
 };
 
-const MANAGE_ROLES = ["responsable_exploitation", "admin_tenant"];
 // Même vocabulaire que app/spatial_vocabulary.py (ADR 011) ; un jeu de cinq
 // types stables, comme les priorités d'ordre de travail plus bas.
 const SPACE_TYPES = ["building", "floor", "zone", "room", "outdoor_area"];
-
 
 function creationError(translator: Translator, code: string | undefined): string | null {
   if (!code) return null;
@@ -58,7 +56,7 @@ export default async function RegistrePage({
 
   const meResponse = await apiFetch("/me", accessToken);
   const me: Me = meResponse.ok ? await meResponse.json() : { roles: [] };
-  const canManage = me.roles.some((role) => MANAGE_ROLES.includes(role));
+  const canManage = computeCanManage(me);
 
   if (!canManage) {
     return (

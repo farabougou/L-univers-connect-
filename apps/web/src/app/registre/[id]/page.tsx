@@ -5,6 +5,7 @@ import { apiFetch, requireAccessToken } from "@/lib/api";
 import { fieldStyle, labelStyle, submitStyle } from "@/lib/formStyles";
 import { errorMessage, getLocale, getTranslator } from "@/lib/i18n";
 import { type EquipmentStatus, type Passport, type PassportUnit, statusMessage } from "@/lib/passport";
+import { type Me, canManage as computeCanManage } from "@/lib/roles";
 import { type Locale, formatDate, formatDateTime, formatNumber } from "@/i18n/translator";
 
 import {
@@ -85,9 +86,6 @@ type DesiredState = {
   valid_to: string | null;
 };
 
-type Me = { roles: string[] };
-
-const MANAGE_ROLES = ["responsable_exploitation", "admin_tenant"];
 const WORK_ORDER_TYPES = ["corrective", "preventive", "predictive", "inspection"];
 const WORK_ORDER_PRIORITIES = ["low", "medium", "high", "urgent"];
 
@@ -129,7 +127,7 @@ export default async function EquipmentPage({
     apiFetch("/me", accessToken),
   ]);
   const me: Me = meResponse.ok ? await meResponse.json() : { roles: [] };
-  const canManage = me.roles.some((role) => MANAGE_ROLES.includes(role));
+  const canManage = computeCanManage(me);
   if (!response.ok) {
     return (
       <main style={{ maxWidth: 720, margin: "40px auto", padding: "0 16px" }}>
