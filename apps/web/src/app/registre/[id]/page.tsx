@@ -3,7 +3,14 @@ import Link from "next/link";
 import { apiFetch, requireAccessToken } from "@/lib/api";
 import { fieldStyle, labelStyle, submitStyle } from "@/lib/formStyles";
 import { errorMessage, getLocale, getTranslator } from "@/lib/i18n";
-import { type EquipmentStatus, type Passport, type PassportUnit, statusMessage } from "@/lib/passport";
+import {
+  type DesiredState,
+  type EquipmentStatus,
+  type Passport,
+  type PassportCommand,
+  type PassportUnit,
+  statusMessage,
+} from "@/lib/passport";
 import { type Me, canManage as computeCanManage } from "@/lib/roles";
 import { renderTagQr } from "@/lib/tagQr";
 import { type Locale, formatDate, formatDateTime, formatNumber } from "@/i18n/translator";
@@ -98,26 +105,6 @@ const LIFECYCLE_TRANSITIONS: Record<string, string[]> = {
   disposed: [],
 };
 
-type DesiredState = {
-  id: string;
-  point_id: string;
-  value: number;
-  valid_from: string;
-  valid_to: string | null;
-};
-
-// Statuts possibles pour une commande (app/commands.py) : "unconfirmed" est
-// calculé à la lecture par l'API, jamais stocké tel quel.
-type CommandOut = {
-  id: string;
-  point_id: string;
-  requested_value: number;
-  status: string;
-  actual_value: number | null;
-  failure_reason: string | null;
-  created_at: string;
-};
-
 const WORK_ORDER_TYPES = ["corrective", "preventive", "predictive", "inspection"];
 const WORK_ORDER_PRIORITIES = ["low", "medium", "high", "urgent"];
 
@@ -180,16 +167,6 @@ export default async function EquipmentPage({
     ? await renderTagQr(activeTag.payload)
     : null;
 
-  const desiredStatesByPoint = Object.fromEntries(
-    await Promise.all(
-      points.map(async (point) => {
-        const desiredResponse = await apiFetch(`/points/${point.id}/desired-states`, accessToken);
-        const states: DesiredState[] = desiredResponse.ok ? await desiredResponse.json() : [];
-        return [point.id, states.filter((state) => state.valid_to === null)] as const;
-      }),
-    ),
-  );
-
   const rulesByPoint = Object.fromEntries(
     await Promise.all(
       points.map(async (point) => {
@@ -218,12 +195,8 @@ export default async function EquipmentPage({
     (version) => version.status === "active" && version.content.device_type === "simulated_relay",
   );
   const relayPointId = activeRelayMapping?.content.points[0]?.point_id ?? null;
-  let lastCommand: CommandOut | null = null;
-  if (relayPointId) {
-    const commandsResponse = await apiFetch(`/commands?point_id=${relayPointId}&limit=1`, accessToken);
-    const commands: CommandOut[] = commandsResponse.ok ? await commandsResponse.json() : [];
-    lastCommand = commands[0] ?? null;
-  }
+  const relayPoint = relayPointId ? points.find((point) => point.id === relayPointId) : null;
+  const lastCommand: PassportCommand | null = relayPoint?.commands[0] ?? null;
 
   return (
     <main style={{ maxWidth: 720, margin: "40px auto", padding: "0 16px" }}>
@@ -339,7 +312,7 @@ export default async function EquipmentPage({
               </p>
               <DesiredStateBlock
                 point={point}
-                desiredStates={desiredStatesByPoint[point.id] ?? []}
+                desiredStates={point.desired_states}
                 nodeId={id}
                 canManage={canManage}
                 t={t}
@@ -1077,7 +1050,7 @@ function CommandBlock({
   nodeId: string;
   points: { id: string; name: string }[];
   relayPointId: string | null;
-  lastCommand: CommandOut | null;
+  lastCommand: PassportCommand | null;
   canManage: boolean;
   locale: Locale;
   timeZone: string | null;

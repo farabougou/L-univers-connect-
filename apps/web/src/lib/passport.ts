@@ -18,6 +18,26 @@ export type PassportMeasurement = {
   quality_flags: string[];
 };
 
+export type DesiredState = {
+  id: string;
+  point_id: string;
+  value: number;
+  valid_from: string;
+  valid_to: string | null;
+};
+
+// Statuts possibles pour une commande (app/commands.py) : "unconfirmed" est
+// calculé à la lecture par l'API, jamais stocké tel quel.
+export type PassportCommand = {
+  id: string;
+  point_id: string;
+  requested_value: number;
+  status: string;
+  actual_value: number | null;
+  failure_reason: string | null;
+  created_at: string;
+};
+
 export type PassportPoint = {
   id: string;
   code: string;
@@ -25,6 +45,11 @@ export type PassportPoint = {
   unit: string;
   mapping_status: string;
   latest: PassportMeasurement | null;
+  // État souhaité déclaré (app/desired_states.py) et commandes de test
+  // (app/commands.py) — deux notions distinctes du jumeau numérique du
+  // point, réunies ici depuis le lot du 24/09/2026.
+  desired_states: DesiredState[];
+  commands: PassportCommand[];
 };
 
 export type Property = {
