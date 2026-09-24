@@ -148,6 +148,92 @@ def test_un_tour_rate_n_arrete_pas_le_demon(tenant, tmp_path):
     assert buffer.pending() == []
 
 
+def test_changement_de_configuration_pris_en_compte_au_tour_suivant(
+    tenant_two_points, tmp_path, monkeypatch
+):
+    from app.connectors.ingest import PointModbusMapping
+    from app.connectors.modbus import find_register_by_name
+    from app.connectors.sdm120 import SDM120_POINTS
+
+    energy_register = find_register_by_name(SDM120_POINTS, "total_active_energy")
+    power_register = find_register_by_name(SDM120_POINTS, "active_power")
+    energy_mapping = [
+        PointModbusMapping(point_id=tenant_two_points["energy_point_id"], register=energy_register)
+    ]
+    power_mapping = [
+        PointModbusMapping(point_id=tenant_two_points["power_point_id"], register=power_register)
+    ]
+
+    calls = {"n": 0}
+
+    def fake_resolve(connection, *, equipment_id):
+        calls["n"] += 1
+        # Appel 1 : vérification de démarrage. Appel 2 : premier tour, encore
+        # l'ancienne configuration. Appel 3 : second tour, après le
+        # changement fait "depuis la console" entre les deux tours.
+        mappings = energy_mapping if calls["n"] <= 2 else power_mapping
+        return ("127.0.0.1", PORT, mappings)
+
+    monkeypatch.setattr(daemon, "resolve_active_mapping", fake_resolve)
+
+    cycles = run(
+        tenant_id=tenant_two_points["tenant_id"],
+        equipment_id=tenant_two_points["location_id"],
+        interval_seconds=0.02,
+        buffer=OfflineBuffer(tmp_path / "buffer.jsonl"),
+        max_cycles=2,
+    )
+
+    assert cycles == 2
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_two_points["tenant_id"])
+        measured_points = (
+            connection.execute(
+                text("SELECT point_id FROM measurements WHERE tenant_id = :id"),
+                {"id": tenant_two_points["tenant_id"]},
+            )
+            .scalars()
+            .all()
+        )
+    # Le premier tour a mesuré le point d'énergie, le second le point de
+    # puissance : le changement de configuration a bien été relu entre les
+    # deux, sans redémarrer le démon.
+    assert {str(p) for p in measured_points} == {
+        str(tenant_two_points["energy_point_id"]),
+        str(tenant_two_points["power_point_id"]),
+    }
+
+
+def test_configuration_retiree_entre_deux_tours_n_arrete_pas_le_demon(
+    tenant, tmp_path, monkeypatch
+):
+    calls = {"n": 0}
+    real_resolve = daemon.resolve_active_mapping
+
+    def flaky_resolve(connection, *, equipment_id):
+        calls["n"] += 1
+        # Le troisième appel (second tour) simule la fenêtre où la
+        # configuration vient d'être retirée depuis la console.
+        if calls["n"] == 3:
+            return None
+        return real_resolve(connection, equipment_id=equipment_id)
+
+    monkeypatch.setattr(daemon, "resolve_active_mapping", flaky_resolve)
+
+    cycles = run(
+        tenant_id=tenant["tenant_id"],
+        equipment_id=tenant["location_id"],
+        interval_seconds=0.02,
+        buffer=OfflineBuffer(tmp_path / "buffer.jsonl"),
+        max_cycles=2,
+    )
+
+    assert cycles == 2
+    # Premier tour mesuré, second tour sauté (pas d'exception) faute de
+    # configuration active à ce moment précis.
+    assert _measurement_count(tenant["tenant_id"]) == 1
+
+
 def test_base_injoignable_met_en_tampon_puis_transmet_tout_au_retour(tenant, tmp_path, monkeypatch):
     buffer = OfflineBuffer(tmp_path / "buffer.jsonl")
 
