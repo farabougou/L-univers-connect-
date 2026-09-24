@@ -3,6 +3,8 @@
 import uuid
 from datetime import UTC, datetime
 
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ec
 from sqlalchemy import text
 
 from app.config_versions import activate_version, create_version
@@ -152,6 +154,32 @@ def provision_device_for_tenant(*, tenant_id: uuid.UUID, device_id: str) -> str:
     return secret
 
 
+def provision_device_by_public_key_for_tenant(*, tenant_id: uuid.UUID, device_id: str) -> str:
+    """Même mise en place que `provision_device_for_tenant`, modèle cible
+    (voir app/devices.py) : renvoie la clé privée PEM, jamais transmise au
+    serveur (seule la clé publique correspondante l'est)."""
+    private_key = ec.generate_private_key(ec.SECP256R1())
+    public_pem = (
+        private_key.public_key()
+        .public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo)
+        .decode()
+    )
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_id)
+        provision_device(
+            connection,
+            tenant_id=tenant_id,
+            device_id=device_id,
+            created_by="test",
+            public_key_pem=public_pem,
+        )
+    return private_key.private_bytes(
+        serialization.Encoding.PEM,
+        serialization.PrivateFormat.PKCS8,
+        serialization.NoEncryption(),
+    ).decode()
+
+
 def cleanup_tenant(tenant: dict) -> None:
     tenant_id = tenant["tenant_id"]
     with engine.begin() as connection:
@@ -166,6 +194,7 @@ def cleanup_tenant(tenant: dict) -> None:
         for table in (
             "events",
             "commands",
+            "device_assertion_nonces",
             "edge_devices",
             "finding_status_history",
             "findings",

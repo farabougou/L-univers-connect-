@@ -5,25 +5,85 @@ appareil parle au backend, jamais un accès direct à la base de données
 Le jeton d'appareil est renouvelé automatiquement avant son expiration, et
 une seule fois de plus sur un 401 inattendu (jeton révoqué, horloge
 décalée) — jamais une boucle de nouvelles tentatives.
+
+Deux façons de prouver son identité à `/devices/auth` (voir app/devices.py
+pour le détail du modèle) : `SharedSecretCredential` (compatibilité
+uniquement, à ne plus utiliser pour du nouveau matériel) ou
+`PrivateKeyCredential` (modèle cible — la clé privée ne quitte jamais ce
+processus, jamais transmise, jamais journalisée ; seule une preuve signée
+courte, à usage unique, est envoyée).
 """
 
 import time
 import uuid
-from typing import Any
+from datetime import UTC, datetime
+from typing import Any, Protocol
 
 import httpx
+from jose import jwt
+
+from app.devices import ASSERTION_ALGORITHM, MAX_ASSERTION_TTL
 
 _TOKEN_REFRESH_MARGIN_SECONDS = 30
 
 
+class DeviceCredential(Protocol):
+    def auth_payload(self) -> dict[str, Any]:
+        """Le contenu à ajouter au corps de POST /devices/auth."""
+        ...
+
+
+class SharedSecretCredential:
+    """Compatibilité uniquement (voir app/devices.py) : à ne plus utiliser
+    pour du nouveau matériel."""
+
+    def __init__(self, secret: str) -> None:
+        self._secret = secret
+
+    def auth_payload(self) -> dict[str, Any]:
+        return {"secret": self._secret}
+
+
+class PrivateKeyCredential:
+    """Modèle cible : une nouvelle preuve signée à chaque authentification,
+    jamais réutilisée (voir la protection contre le rejeu côté serveur,
+    `device_assertion_nonces`). La clé privée reste en mémoire de ce
+    processus le temps de signer, jamais journalisée ni transmise."""
+
+    def __init__(self, *, private_key_pem: str, device_id: str, tenant_id: uuid.UUID) -> None:
+        self._private_key_pem = private_key_pem
+        self._device_id = device_id
+        self._tenant_id = tenant_id
+
+    def auth_payload(self) -> dict[str, Any]:
+        now = datetime.now(UTC)
+        claims = {
+            "device_id": self._device_id,
+            "tenant_id": str(self._tenant_id),
+            "jti": uuid.uuid4().hex,
+            "iat": int(now.timestamp()),
+            "exp": int((now + MAX_ASSERTION_TTL).timestamp()),
+        }
+        assertion = jwt.encode(claims, self._private_key_pem, algorithm=ASSERTION_ALGORITHM)
+        return {"assertion": assertion}
+
+
 class EdgeApiClient:
     def __init__(
-        self, *, client: httpx.Client, tenant_id: uuid.UUID, device_id: str, secret: str
+        self,
+        *,
+        client: httpx.Client,
+        tenant_id: uuid.UUID,
+        device_id: str,
+        secret: str | None = None,
+        credential: DeviceCredential | None = None,
     ) -> None:
+        if (secret is None) == (credential is None):
+            raise ValueError("indiquer exactement un de secret ou credential")
         self.tenant_id = tenant_id
         self._client = client
         self._device_id = device_id
-        self._secret = secret
+        self._credential = credential or SharedSecretCredential(secret)
         self._token: str | None = None
         self._token_expires_at = 0.0
 
@@ -42,7 +102,7 @@ class EdgeApiClient:
             json={
                 "tenant_id": str(self.tenant_id),
                 "device_id": self._device_id,
-                "secret": self._secret,
+                **self._credential.auth_payload(),
             },
         )
         response.raise_for_status()

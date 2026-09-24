@@ -38,7 +38,7 @@ from types import FrameType
 
 import httpx
 
-from app.connectors.edge_client import EdgeApiClient
+from app.connectors.edge_client import EdgeApiClient, PrivateKeyCredential
 from app.connectors.modbus import ModbusReadError, find_register_by_name, read_modbus_points
 from app.connectors.offline_buffer import BufferedReading, OfflineBuffer
 from app.connectors.sdm120 import SDM120_POINTS
@@ -227,7 +227,20 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--secret",
         default=os.environ.get("EDGE_DEVICE_SECRET"),
-        help="Secret de l'appareil (par défaut : variable d'environnement EDGE_DEVICE_SECRET)",
+        help=(
+            "Secret de l'appareil (par défaut : variable d'environnement "
+            "EDGE_DEVICE_SECRET) — compatibilité uniquement, voir --private-key-file"
+        ),
+    )
+    parser.add_argument(
+        "--private-key-file",
+        type=Path,
+        default=os.environ.get("EDGE_DEVICE_PRIVATE_KEY_FILE"),
+        help=(
+            "Fichier de la clé privée de l'appareil (par défaut : variable "
+            "d'environnement EDGE_DEVICE_PRIVATE_KEY_FILE) — modèle cible, voir "
+            "scripts/generate_device_key.py. Remplace --secret, jamais les deux."
+        ),
     )
     parser.add_argument(
         "--equipment",
@@ -239,8 +252,11 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--buffer", type=Path, default=None, help="Fichier du tampon hors ligne")
     parser.add_argument("--source", default="sdm120")
     args = parser.parse_args()
-    if not args.secret:
-        parser.error("--secret requis (ou variable d'environnement EDGE_DEVICE_SECRET)")
+    if bool(args.secret) == bool(args.private_key_file):
+        parser.error(
+            "indiquer exactement un de --secret ou --private-key-file "
+            "(ou les variables d'environnement correspondantes)"
+        )
     return args
 
 
@@ -251,11 +267,21 @@ def main() -> None:
     signal.signal(signal.SIGTERM, _handle_stop)
     buffer_path = args.buffer or Path(f"modbus_buffer_{args.equipment}.jsonl")
 
+    if args.private_key_file:
+        credential = PrivateKeyCredential(
+            private_key_pem=args.private_key_file.read_text(),
+            device_id=args.device_id,
+            tenant_id=args.tenant,
+        )
+        client_kwargs = {"credential": credential}
+    else:
+        client_kwargs = {"secret": args.secret}
+
     with EdgeApiClient(
         client=httpx.Client(base_url=args.api_url, timeout=10.0),
         tenant_id=args.tenant,
         device_id=args.device_id,
-        secret=args.secret,
+        **client_kwargs,
     ) as api:
         run(
             api=api,

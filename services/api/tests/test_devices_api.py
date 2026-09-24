@@ -3,21 +3,54 @@ ingérer de la télémétrie par jeton d'appareil (M4, app/routers/devices.py).
 """
 
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
 import pytest
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ec
 from fastapi.testclient import TestClient
+from jose import jwt
 from sqlalchemy import text
 
 from app.config_versions import activate_version, create_version
 from app.connectors.device_mapping import MODBUS_DEVICE_MAPPING
 from app.db import engine
+from app.devices import ASSERTION_ALGORITHM
 from app.main import app
 from app.points import create_point, decide_point
 from app.tenancy import set_tenant_context
 from tests.db_helpers import purge_audit_log_for_tenant, purge_config_versions_for_tenant
 from tests.jwt_helpers import JWKS, make_token
+
+
+def _keypair() -> tuple[str, str]:
+    private_key = ec.generate_private_key(ec.SECP256R1())
+    private_pem = private_key.private_bytes(
+        serialization.Encoding.PEM,
+        serialization.PrivateFormat.PKCS8,
+        serialization.NoEncryption(),
+    ).decode()
+    public_pem = (
+        private_key.public_key()
+        .public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo)
+        .decode()
+    )
+    return private_pem, public_pem
+
+
+def _assertion(
+    private_pem: str, *, device_id: str, tenant_id, at: datetime, jti: str = "n1"
+) -> str:
+    claims = {
+        "device_id": device_id,
+        "tenant_id": str(tenant_id),
+        "jti": jti,
+        "iat": int(at.timestamp()),
+        "exp": int((at + timedelta(seconds=30)).timestamp()),
+    }
+    return jwt.encode(claims, private_pem, algorithm=ASSERTION_ALGORITHM)
+
 
 client = TestClient(app)
 T0 = datetime(2026, 9, 24, 8, 0, tzinfo=UTC)
@@ -71,6 +104,9 @@ def tenant():
     purge_audit_log_for_tenant(tenant_id)
     with engine.begin() as connection:
         set_tenant_context(connection, tenant_id)
+        connection.execute(
+            text("DELETE FROM device_assertion_nonces WHERE tenant_id = :id"), {"id": tenant_id}
+        )
         for table in ("edge_devices", "measurements", "points", "functional_locations", "sites"):
             connection.execute(
                 text(f"DELETE FROM {table} WHERE tenant_id = :id"), {"id": tenant_id}
@@ -332,3 +368,177 @@ def test_appareil_inconnu_dans_l_ingestion_est_signale_sans_planter(tenant):
     assert response.status_code == 200
     assert response.json()["rejected"] == 1
     assert response.json()["errors"][0]["code"] == "POINT_NOT_FOUND"
+
+
+# --- Identité par clé publique (modèle cible, Mohamed 24/09/2026) ---------
+
+
+def test_provisionner_par_cle_publique_puis_authentifier_par_assertion(tenant):
+    private_pem, public_pem = _keypair()
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        created = client.post(
+            "/devices",
+            json={"device_id": "edge-01", "public_key_pem": public_pem},
+            headers=_human_headers(tenant["tenant_id"]),
+        )
+    assert created.status_code == 201
+    body = created.json()
+    assert body["secret"] is None  # rien à transmettre, aucune clé privée côté serveur
+    assert "PRIVATE KEY" not in created.text
+
+    assertion = _assertion(
+        private_pem, device_id="edge-01", tenant_id=tenant["tenant_id"], at=datetime.now(UTC)
+    )
+    auth = client.post(
+        "/devices/auth",
+        json={
+            "tenant_id": str(tenant["tenant_id"]),
+            "device_id": "edge-01",
+            "assertion": assertion,
+        },
+    )
+    assert auth.status_code == 200
+    assert set(auth.json()["scopes"]) == {"telemetry:write", "config:read", "command:execute"}
+
+
+def test_creer_un_appareil_avec_une_cle_publique_invalide_est_refuse(tenant):
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        response = client.post(
+            "/devices",
+            json={"device_id": "edge-01", "public_key_pem": "pas une clé"},
+            headers=_human_headers(tenant["tenant_id"]),
+        )
+    assert response.status_code == 422
+    assert response.json()["code"] == "DEVICE_PUBLIC_KEY_INVALID"
+
+
+def test_auth_avec_secret_et_assertion_a_la_fois_est_refuse(tenant):
+    response = client.post(
+        "/devices/auth",
+        json={
+            "tenant_id": str(tenant["tenant_id"]),
+            "device_id": "edge-01",
+            "secret": "x",
+            "assertion": "y",
+        },
+    )
+    assert response.status_code == 422
+    assert response.json()["code"] == "VALIDATION_ERROR"
+
+
+def test_auth_sans_secret_ni_assertion_est_refuse(tenant):
+    response = client.post(
+        "/devices/auth", json={"tenant_id": str(tenant["tenant_id"]), "device_id": "edge-01"}
+    )
+    assert response.status_code == 422
+    assert response.json()["code"] == "VALIDATION_ERROR"
+
+
+def test_assertion_rejouee_est_refusee_via_l_api(tenant):
+    private_pem, public_pem = _keypair()
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        client.post(
+            "/devices",
+            json={"device_id": "edge-01", "public_key_pem": public_pem},
+            headers=_human_headers(tenant["tenant_id"]),
+        )
+    assertion = _assertion(
+        private_pem, device_id="edge-01", tenant_id=tenant["tenant_id"], at=datetime.now(UTC)
+    )
+    body = {"tenant_id": str(tenant["tenant_id"]), "device_id": "edge-01", "assertion": assertion}
+    first = client.post("/devices/auth", json=body)
+    second = client.post("/devices/auth", json=body)
+    assert first.status_code == 200
+    assert second.status_code == 401
+    assert second.json()["code"] == "DEVICE_AUTH_INVALID"
+
+
+def test_appareil_revoque_refuse_une_assertion_via_l_api(tenant):
+    private_pem, public_pem = _keypair()
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        created = client.post(
+            "/devices",
+            json={"device_id": "edge-01", "public_key_pem": public_pem},
+            headers=_human_headers(tenant["tenant_id"]),
+        )
+        client.post(
+            f"/devices/{created.json()['id']}/revoke",
+            json={"reason": "Perdu"},
+            headers=_human_headers(tenant["tenant_id"]),
+        )
+    assertion = _assertion(
+        private_pem, device_id="edge-01", tenant_id=tenant["tenant_id"], at=datetime.now(UTC)
+    )
+    response = client.post(
+        "/devices/auth",
+        json={
+            "tenant_id": str(tenant["tenant_id"]),
+            "device_id": "edge-01",
+            "assertion": assertion,
+        },
+    )
+    assert response.status_code == 401
+
+
+def test_migrer_un_appareil_shared_secret_vers_cle_publique_via_l_api(tenant):
+    private_pem, public_pem = _keypair()
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        created = client.post(
+            "/devices", json={"device_id": "edge-01"}, headers=_human_headers(tenant["tenant_id"])
+        )
+        secret = created.json()["secret"]
+        device_id = created.json()["id"]
+
+        migrated = client.post(
+            f"/devices/{device_id}/public-key",
+            json={"public_key_pem": public_pem, "reason": "Migration vers clé publique"},
+            headers=_human_headers(tenant["tenant_id"]),
+        )
+    assert migrated.status_code == 200
+    assert migrated.json()["credential_type"] == "public_key_assertion"
+    assert migrated.json()["key_fingerprint"]
+
+    old_auth = client.post(
+        "/devices/auth",
+        json={"tenant_id": str(tenant["tenant_id"]), "device_id": "edge-01", "secret": secret},
+    )
+    assert old_auth.status_code == 401
+
+    assertion = _assertion(
+        private_pem, device_id="edge-01", tenant_id=tenant["tenant_id"], at=datetime.now(UTC)
+    )
+    new_auth = client.post(
+        "/devices/auth",
+        json={
+            "tenant_id": str(tenant["tenant_id"]),
+            "device_id": "edge-01",
+            "assertion": assertion,
+        },
+    )
+    assert new_auth.status_code == 200
+
+
+def test_technicien_ne_peut_pas_installer_une_cle_publique(tenant):
+    _, public_pem = _keypair()
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        created = client.post(
+            "/devices", json={"device_id": "edge-01"}, headers=_human_headers(tenant["tenant_id"])
+        )
+        response = client.post(
+            f"/devices/{created.json()['id']}/public-key",
+            json={"public_key_pem": public_pem, "reason": "test"},
+            headers=_human_headers(tenant["tenant_id"], ["technicien"]),
+        )
+    assert response.status_code == 403
+
+
+def test_installer_une_cle_publique_sur_un_appareil_inconnu_est_refuse(tenant):
+    _, public_pem = _keypair()
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        response = client.post(
+            f"/devices/{uuid.uuid4()}/public-key",
+            json={"public_key_pem": public_pem, "reason": "test"},
+            headers=_human_headers(tenant["tenant_id"]),
+        )
+    assert response.status_code == 404
+    assert response.json()["code"] == "DEVICE_NOT_FOUND"

@@ -21,7 +21,7 @@ from sqlalchemy import text
 from starlette.testclient import TestClient
 
 import scripts.modbus_daemon as daemon
-from app.connectors.edge_client import EdgeApiClient
+from app.connectors.edge_client import EdgeApiClient, PrivateKeyCredential
 from app.connectors.offline_buffer import OfflineBuffer
 from app.db import engine
 from app.main import app
@@ -33,6 +33,7 @@ from tests.modbus_fixtures import (
     cleanup_tenant,
     create_tenant_with_energy_and_power_points,
     create_tenant_with_energy_point,
+    provision_device_by_public_key_for_tenant,
     provision_device_for_tenant,
 )
 
@@ -97,6 +98,36 @@ def tenant_two_points():
     secret = provision_device_for_tenant(tenant_id=created["tenant_id"], device_id="sdm120-daemon")
     yield {**created, "device_id": "sdm120-daemon", "secret": secret}
     cleanup_tenant(created)
+
+
+def test_plusieurs_tours_par_cle_publique_enregistrent_plusieurs_mesures(tenant, tmp_path):
+    """Même chemin HTTP réel que les autres tests de ce fichier, mais
+    authentifié par la preuve signée du modèle cible (Mohamed, 24/09/2026)
+    plutôt que par le secret partagé de compatibilité — voir app/devices.py."""
+    private_key_pem = provision_device_by_public_key_for_tenant(
+        tenant_id=tenant["tenant_id"], device_id="edge-cle-publique"
+    )
+    api = EdgeApiClient(
+        client=TestClient(app),
+        tenant_id=tenant["tenant_id"],
+        device_id="edge-cle-publique",
+        credential=PrivateKeyCredential(
+            private_key_pem=private_key_pem,
+            device_id="edge-cle-publique",
+            tenant_id=tenant["tenant_id"],
+        ),
+    )
+    with api:
+        cycles = run(
+            api=api,
+            equipment_id=tenant["location_id"],
+            interval_seconds=0.05,
+            buffer=OfflineBuffer(tmp_path / "buffer.jsonl"),
+            max_cycles=3,
+        )
+
+    assert cycles == 3
+    assert _measurement_count(tenant["tenant_id"]) == 3
 
 
 def _measurement_count(tenant_id) -> int:
