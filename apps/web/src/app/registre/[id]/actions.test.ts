@@ -19,6 +19,7 @@ import {
   changeLifecycleState,
   clearAlarm,
   confirmFinding,
+  createDeviceMapping,
   createDivergenceRule,
   createThresholdRule,
   createWorkOrderForEquipment,
@@ -198,6 +199,59 @@ describe("createDivergenceRule", () => {
       create_work_order: false,
       tolerance: 2.5,
     });
+  });
+});
+
+describe("createDeviceMapping", () => {
+  it("ne garde que les points auxquels un registre a été affecté", async () => {
+    apiFetch.mockResolvedValueOnce(ok());
+    await createDeviceMapping(
+      fd({
+        node_id: "node-1",
+        point_ids: "point-1,point-2",
+        host: "192.168.1.50",
+        port: "502",
+        reason: "Compteur principal",
+        "register_point-1": "total_active_energy",
+        "register_point-2": "",
+      }),
+    );
+
+    expect(apiFetch).toHaveBeenCalledWith(
+      "/configs",
+      "token-123",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          config_type: "modbus_device_mapping",
+          subject_key: "node-1",
+          reason: "Compteur principal",
+          content: {
+            device_type: "sdm120",
+            host: "192.168.1.50",
+            port: 502,
+            points: [{ point_id: "point-1", register_name: "total_active_energy" }],
+          },
+        }),
+      }),
+    );
+  });
+
+  it("redirige avec le code d'erreur en cas d'échec", async () => {
+    apiFetch.mockResolvedValueOnce(fail("MODBUS_REGISTER_UNKNOWN"));
+    const url = await redirected(
+      createDeviceMapping(
+        fd({
+          node_id: "node-1",
+          point_ids: "point-1",
+          host: "192.168.1.50",
+          port: "502",
+          reason: "Compteur principal",
+          "register_point-1": "inconnu",
+        }),
+      ),
+    );
+    expect(url).toBe("/registre/node-1?error=MODBUS_REGISTER_UNKNOWN");
   });
 });
 

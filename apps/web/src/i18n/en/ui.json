@@ -329,7 +329,16 @@
       "restore_reason": "Reason for restoring",
       "rule_diff_title": "Changes between version {from} and version {to}",
       "rule_diff_none": "No difference.",
-      "rule_diff_link": "View changes"
+      "rule_diff_link": "View changes",
+      "modbus_section_title": "Modbus connection",
+      "modbus_no_mapping": "No Modbus connection configured for this equipment.",
+      "modbus_no_points_for_mapping": "No measured points on this equipment: a Modbus connection cannot be configured.",
+      "modbus_summary": "{device} — {host}:{port}",
+      "modbus_points_title": "Points read",
+      "modbus_host": "Device address",
+      "modbus_port": "Port",
+      "modbus_create_title": "Configure the Modbus connection",
+      "modbus_register_none": "— (not read)"
     }
   },
   "space_type": {
@@ -357,5 +366,15 @@
     "draft": "Draft",
     "active": "Active",
     "retired": "Retired"
+  },
+  "modbus_device_type": {
+    "sdm120": "Eastron SDM120 meter"
+  },
+  "modbus_register": {
+    "voltage": "Voltage",
+    "current": "Current",
+    "active_power": "Active power",
+    "frequency": "Frequency",
+    "total_active_energy": "Total active energy"
   }
 }

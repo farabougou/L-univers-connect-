@@ -341,6 +341,47 @@ export async function createTagForEquipment(formData: FormData) {
   revalidatePath(`/registre/${nodeId}`);
 }
 
+/**
+ * Connexion Modbus d'un équipement (ADR 012 §2.11-2.12), en configuration
+ * versionnée comme les règles de détection : sujet = l'équipement. Une
+ * nouvelle version naît en brouillon, sans effet tant qu'elle n'est pas
+ * activée (voir activateRule, réutilisé ici — l'endpoint /configs ne dépend
+ * pas du type de configuration).
+ */
+export async function createDeviceMapping(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+  const pointIds = String(formData.get("point_ids"))
+    .split(",")
+    .filter(Boolean);
+  const points = pointIds
+    .map((pointId) => ({
+      point_id: pointId,
+      register_name: formData.get(`register_${pointId}`),
+    }))
+    .filter((entry) => entry.register_name);
+
+  const response = await apiFetch("/configs", accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      config_type: "modbus_device_mapping",
+      subject_key: nodeId,
+      reason: formData.get("reason"),
+      content: {
+        device_type: "sdm120",
+        host: formData.get("host"),
+        port: Number(formData.get("port")),
+        points,
+      },
+    }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  revalidatePath(`/registre/${nodeId}`);
+}
+
 export async function createWorkOrderForEquipment(formData: FormData) {
   const accessToken = await requireAccessToken();
   const nodeId = String(formData.get("node_id"));

@@ -14,6 +14,7 @@ import {
   changeLifecycleState,
   clearAlarm,
   confirmFinding,
+  createDeviceMapping,
   createDivergenceRule,
   createTagForEquipment,
   createThresholdRule,
@@ -50,6 +51,23 @@ type ConfigDiff = {
   removed: Record<string, unknown>;
   changed: Record<string, { from: unknown; to: unknown }>;
 };
+
+type DeviceMappingContent = {
+  device_type: string;
+  host: string;
+  port: number;
+  points: { point_id: string; register_name: string }[];
+};
+type DeviceMappingVersion = {
+  id: string;
+  version: number;
+  status: string;
+  content: DeviceMappingContent;
+  parent_version_id: string | null;
+};
+// Même catalogue que app/connectors/sdm120.py (SDM120_POINTS) : un seul
+// modèle d'appareil pour l'instant, pas de saisie libre du registre.
+const SDM120_REGISTERS = ["voltage", "current", "active_power", "frequency", "total_active_energy"];
 
 const PROPERTY_SOURCES = ["nameplate", "document", "measurement", "manual"];
 // Même vocabulaire fermé que app/properties.py (PROPERTIES) : une propriété
@@ -170,6 +188,14 @@ export default async function EquipmentPage({
       }),
     ),
   );
+
+  const deviceMappingResponse = await apiFetch(
+    `/configs?config_type=modbus_device_mapping&subject_key=${id}`,
+    accessToken,
+  );
+  const deviceMappingVersions: DeviceMappingVersion[] = deviceMappingResponse.ok
+    ? await deviceMappingResponse.json()
+    : [];
 
   return (
     <main style={{ maxWidth: 720, margin: "40px auto", padding: "0 16px" }}>
@@ -302,6 +328,17 @@ export default async function EquipmentPage({
           ))}
         </section>
       )}
+
+      <section style={sectionStyle}>
+        <h2 style={sectionTitleStyle}>{t("web.registre.modbus_section_title")}</h2>
+        <DeviceMappingBlock
+          nodeId={id}
+          points={points}
+          versions={deviceMappingVersions}
+          canManage={canManage}
+          t={t}
+        />
+      </section>
 
       <section style={sectionStyle}>
         <h2 style={sectionTitleStyle}>{t("mobile.passport.signals")}</h2>
@@ -716,6 +753,111 @@ function RulesBlock({
         </>
       )}
     </div>
+  );
+}
+
+function DeviceMappingBlock({
+  nodeId,
+  points,
+  versions,
+  canManage,
+  t,
+}: {
+  nodeId: string;
+  points: { id: string; name: string }[];
+  versions: DeviceMappingVersion[];
+  canManage: boolean;
+  t: (key: string, params?: Record<string, string>) => string;
+}) {
+  const pointName = (pointId: string) => points.find((p) => p.id === pointId)?.name ?? pointId;
+  return (
+    <>
+      {versions.length === 0 && <p style={mutedStyle}>{t("web.registre.modbus_no_mapping")}</p>}
+      {versions.map((version) => (
+        <div key={version.id} style={{ marginBottom: 12 }}>
+          <p style={{ margin: 0 }}>
+            {t("web.registre.rule_version", { version: String(version.version) })} —{" "}
+            {t(`config_status.${version.status}`)} —{" "}
+            {t("web.registre.modbus_summary", {
+              device: t(`modbus_device_type.${version.content.device_type}`),
+              host: version.content.host,
+              port: String(version.content.port),
+            })}
+            {canManage && version.status === "draft" && (
+              <form action={activateRule} style={{ display: "inline", marginLeft: 8 }}>
+                <input type="hidden" name="version_id" value={version.id} />
+                <input type="hidden" name="node_id" value={nodeId} />
+                <button type="submit">{t("web.registre.activate_rule")}</button>
+              </form>
+            )}
+            {canManage && version.status !== "retired" && (
+              <form action={retireRule} style={{ display: "inline-flex", gap: 4, marginLeft: 8 }}>
+                <input type="hidden" name="version_id" value={version.id} />
+                <input type="hidden" name="node_id" value={nodeId} />
+                <input name="reason" required placeholder={t("web.registre.retire_reason")} />
+                <button type="submit">{t("web.registre.retire_rule")}</button>
+              </form>
+            )}
+            {canManage && version.status === "retired" && (
+              <form action={restoreRule} style={{ display: "inline-flex", gap: 4, marginLeft: 8 }}>
+                <input type="hidden" name="version_id" value={version.id} />
+                <input type="hidden" name="node_id" value={nodeId} />
+                <input name="reason" required placeholder={t("web.registre.restore_reason")} />
+                <button type="submit">{t("web.registre.restore_rule")}</button>
+              </form>
+            )}
+          </p>
+          <p style={{ ...mutedStyle, margin: 0, marginLeft: 16 }}>
+            {t("web.registre.modbus_points_title")} :{" "}
+            {version.content.points
+              .map(
+                (entry) => `${pointName(entry.point_id)} (${t(`modbus_register.${entry.register_name}`)})`,
+              )
+              .join(", ")}
+          </p>
+        </div>
+      ))}
+      {canManage &&
+        (points.length === 0 ? (
+          <p style={mutedStyle}>{t("web.registre.modbus_no_points_for_mapping")}</p>
+        ) : (
+          <details>
+            <summary>{t("web.registre.modbus_create_title")}</summary>
+            <form action={createDeviceMapping} style={{ maxWidth: 400 }}>
+              <input type="hidden" name="node_id" value={nodeId} />
+              <input type="hidden" name="point_ids" value={points.map((point) => point.id).join(",")} />
+              <label>
+                {t("web.registre.modbus_host")}
+                <input name="host" required style={fieldStyle} />
+              </label>
+              <label style={labelStyle}>
+                {t("web.registre.modbus_port")}
+                <input name="port" type="number" defaultValue={502} required style={fieldStyle} />
+              </label>
+              {points.map((point) => (
+                <label key={point.id} style={labelStyle}>
+                  {point.name}
+                  <select name={`register_${point.id}`} defaultValue="" style={fieldStyle}>
+                    <option value="">{t("web.registre.modbus_register_none")}</option>
+                    {SDM120_REGISTERS.map((register) => (
+                      <option key={register} value={register}>
+                        {t(`modbus_register.${register}`)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ))}
+              <label style={labelStyle}>
+                {t("web.registre.rule_reason")}
+                <input name="reason" required style={fieldStyle} />
+              </label>
+              <button type="submit" style={submitStyle}>
+                {t("web.registre.submit")}
+              </button>
+            </form>
+          </details>
+        ))}
+    </>
   );
 }
 

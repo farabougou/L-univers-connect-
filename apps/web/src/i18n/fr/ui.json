@@ -329,7 +329,16 @@
       "restore_reason": "Motif de restauration",
       "rule_diff_title": "Changements entre la version {from} et la version {to}",
       "rule_diff_none": "Aucune différence.",
-      "rule_diff_link": "Voir les changements"
+      "rule_diff_link": "Voir les changements",
+      "modbus_section_title": "Connexion Modbus",
+      "modbus_no_mapping": "Aucune connexion Modbus configurée pour cet équipement.",
+      "modbus_no_points_for_mapping": "Aucun point mesuré sur cet équipement : impossible de configurer une connexion Modbus.",
+      "modbus_summary": "{device} — {host}:{port}",
+      "modbus_points_title": "Points relevés",
+      "modbus_host": "Adresse de l’appareil",
+      "modbus_port": "Port",
+      "modbus_create_title": "Configurer la connexion Modbus",
+      "modbus_register_none": "— (non relevé)"
     }
   },
   "space_type": {
@@ -357,5 +366,15 @@
     "draft": "Brouillon",
     "active": "Active",
     "retired": "Retirée"
+  },
+  "modbus_device_type": {
+    "sdm120": "Compteur Eastron SDM120"
+  },
+  "modbus_register": {
+    "voltage": "Tension",
+    "current": "Courant",
+    "active_power": "Puissance active",
+    "frequency": "Fréquence",
+    "total_active_energy": "Énergie active totale"
   }
 }
