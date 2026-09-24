@@ -38,6 +38,8 @@
     "DEVICE_ALREADY_REVOKED_OR_NOT_FOUND": "This device could not be found or is already revoked.",
     "DEVICE_AUTH_INVALID": "Invalid device identifier or secret.",
     "DEVICE_ID_ALREADY_USED": "This device identifier is already in use.",
+    "DEVICE_NOT_FOUND": "This device could not be found.",
+    "DEVICE_PUBLIC_KEY_INVALID": "This public key is not valid (expected the P-256 curve).",
     "DEVICE_SCOPE_FORBIDDEN": "This device is not allowed to perform this action.",
     "DEVICE_TOKEN_INVALID": "Invalid or expired device token.",
     "END_BEFORE_START": "The end date must be later than the start date.",
