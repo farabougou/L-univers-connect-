@@ -217,7 +217,11 @@
       "no_equipment": "Aucun équipement enregistré pour le moment.",
       "code": "Code",
       "name": "Nom",
-      "registry_link": "Registre d’actifs"
+      "registry_link": "Registre d’actifs",
+      "status_column": "État",
+      "alerts_column": "Alertes",
+      "alerts_none": "Aucune",
+      "alerts_open": "{count} ouverte(s)"
     },
     "work_orders": {
       "title": "Ordres de travail",

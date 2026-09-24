@@ -217,7 +217,11 @@
       "no_equipment": "No equipment registered yet.",
       "code": "Code",
       "name": "Name",
-      "registry_link": "Asset registry"
+      "registry_link": "Asset registry",
+      "status_column": "Status",
+      "alerts_column": "Alerts",
+      "alerts_none": "None",
+      "alerts_open": "{count} open"
     },
     "work_orders": {
       "title": "Work orders",
