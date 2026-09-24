@@ -1,4 +1,5 @@
-"""Démon de sondage : plusieurs tours, et un tour raté n'arrête pas les suivants.
+"""Démon de sondage : plusieurs tours, un tour raté n'arrête pas les suivants,
+et une mesure lue pendant une coupure de la base repart au lieu d'être perdue.
 
 `run(max_cycles=...)` (scripts/modbus_daemon.py) est le même code que celui
 lancé en continu sur site, juste borné pour le test.
@@ -11,7 +12,9 @@ import pytest
 from pymodbus.server import ServerStop, StartTcpServer
 from sqlalchemy import text
 
+import scripts.modbus_daemon as daemon
 from app.connectors.modbus import find_register_by_name
+from app.connectors.offline_buffer import OfflineBuffer
 from app.connectors.sdm120 import SDM120_POINTS
 from app.db import engine
 from app.tenancy import set_tenant_context
@@ -53,7 +56,7 @@ def _measurement_count(tenant_id) -> int:
         ).scalar()
 
 
-def test_plusieurs_tours_enregistrent_plusieurs_mesures(tenant):
+def test_plusieurs_tours_enregistrent_plusieurs_mesures(tenant, tmp_path):
     cycles = run(
         tenant_id=tenant["tenant_id"],
         point_id=tenant["point_id"],
@@ -61,6 +64,7 @@ def test_plusieurs_tours_enregistrent_plusieurs_mesures(tenant):
         port=PORT,
         register=REGISTER,
         interval_seconds=0.05,
+        buffer=OfflineBuffer(tmp_path / "buffer.jsonl"),
         max_cycles=3,
     )
 
@@ -68,9 +72,11 @@ def test_plusieurs_tours_enregistrent_plusieurs_mesures(tenant):
     assert _measurement_count(tenant["tenant_id"]) == 3
 
 
-def test_un_tour_rate_n_arrete_pas_le_demon(tenant):
+def test_un_tour_rate_n_arrete_pas_le_demon(tenant, tmp_path):
     # Port sans rien qui écoute : chaque tour échoue, mais la boucle continue
-    # jusqu'à max_cycles au lieu de lever une exception.
+    # jusqu'à max_cycles au lieu de lever une exception. Rien à mettre au
+    # tampon puisqu'aucune valeur n'a jamais été lue.
+    buffer = OfflineBuffer(tmp_path / "buffer.jsonl")
     cycles = run(
         tenant_id=tenant["tenant_id"],
         point_id=tenant["point_id"],
@@ -78,8 +84,51 @@ def test_un_tour_rate_n_arrete_pas_le_demon(tenant):
         port=1,
         register=REGISTER,
         interval_seconds=0.05,
+        buffer=buffer,
         max_cycles=2,
     )
 
     assert cycles == 2
     assert _measurement_count(tenant["tenant_id"]) == 0
+    assert buffer.pending() == []
+
+
+def test_base_injoignable_met_en_tampon_puis_transmet_tout_au_retour(tenant, tmp_path, monkeypatch):
+    buffer = OfflineBuffer(tmp_path / "buffer.jsonl")
+
+    def _echoue_toujours(*args, **kwargs):
+        raise RuntimeError("base injoignable (simulé)")
+
+    monkeypatch.setattr(daemon, "ingest_measurements", _echoue_toujours)
+    run(
+        tenant_id=tenant["tenant_id"],
+        point_id=tenant["point_id"],
+        host="127.0.0.1",
+        port=PORT,
+        register=REGISTER,
+        interval_seconds=0.05,
+        buffer=buffer,
+        max_cycles=2,
+    )
+
+    # Deux lectures réussies, deux échecs d'écriture : rien en base, tout au tampon.
+    assert _measurement_count(tenant["tenant_id"]) == 0
+    assert len(buffer.pending()) == 2
+
+    monkeypatch.undo()
+    cycles = run(
+        tenant_id=tenant["tenant_id"],
+        point_id=tenant["point_id"],
+        host="127.0.0.1",
+        port=PORT,
+        register=REGISTER,
+        interval_seconds=0.05,
+        buffer=buffer,
+        max_cycles=1,
+    )
+
+    # Le tour suivant, une fois la base à nouveau joignable, renvoie les deux
+    # mesures en attente en plus de la nouvelle : rien n'a été perdu.
+    assert cycles == 1
+    assert _measurement_count(tenant["tenant_id"]) == 3
+    assert buffer.pending() == []
