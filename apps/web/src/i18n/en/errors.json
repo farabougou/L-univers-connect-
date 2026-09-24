@@ -57,6 +57,7 @@
     "MEASUREMENT_CONFLICT": "A different value ({existing_value}) is already recorded for this point at this time.",
     "METHOD_NOT_ALLOWED": "This operation is not available at this address.",
     "MODBUS_MAPPING_CONTENT_INVALID": "The Modbus connection configuration contains invalid fields: {fields}.",
+    "MODBUS_MAPPING_NOT_FOUND": "No active Modbus configuration for this equipment.",
     "MODBUS_POINT_DUPLICATED": "The same point cannot appear more than once in this configuration.",
     "MODBUS_POINT_NOT_FOUND": "The configuration refers to a point that could not be found.",
     "MODBUS_POINT_NOT_VALIDATED": "The configuration must apply to a point validated during commissioning.",

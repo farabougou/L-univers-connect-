@@ -48,12 +48,14 @@ class BufferedReading:
             source=data["source"],
         )
 
-    def as_item(self) -> dict[str, Any]:
-        """Forme attendue par app.telemetry.ingest_measurements."""
+    def as_http_item(self) -> dict[str, Any]:
+        """Forme JSON attendue par POST /edge/measurements (voir
+        app.connectors.edge_client) : un appareil parle par HTTP, jamais en
+        objets Python directement à la base."""
         return {
-            "point_id": self.point_id,
+            "point_id": str(self.point_id),
             "value": self.value,
-            "measured_at": self.measured_at,
+            "measured_at": self.measured_at.isoformat(),
             "origin": self.origin,
         }
 

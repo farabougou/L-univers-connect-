@@ -49,3 +49,18 @@ def test_clear_vide_le_tampon(tmp_path):
 
 def test_clear_sans_fichier_ne_leve_rien(tmp_path):
     OfflineBuffer(tmp_path / "jamais-cree.jsonl").clear()
+
+
+def test_as_http_item_ne_contient_que_des_types_json():
+    reading = _reading()
+
+    item = reading.as_http_item()
+
+    assert item == {
+        "point_id": str(reading.point_id),
+        "value": reading.value,
+        "measured_at": reading.measured_at.isoformat(),
+        "origin": reading.origin,
+    }
+    assert "tenant_id" not in item
+    assert "source" not in item

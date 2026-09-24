@@ -8,6 +8,7 @@ from sqlalchemy import text
 from app.config_versions import activate_version, create_version
 from app.connectors.device_mapping import MODBUS_DEVICE_MAPPING
 from app.db import engine
+from app.devices import provision_device
 from app.points import create_point, decide_point
 from app.tenancy import set_tenant_context
 from tests.db_helpers import purge_audit_log_for_tenant, purge_config_versions_for_tenant
@@ -134,6 +135,17 @@ def activate_device_mapping(
     return version_id
 
 
+def provision_device_for_tenant(*, tenant_id: uuid.UUID, device_id: str) -> str:
+    """Provisionne un appareil directement (mise en place de test, pas le
+    chemin HTTP réel — voir POST /devices pour ça). Renvoie le secret en clair."""
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_id)
+        _, secret = provision_device(
+            connection, tenant_id=tenant_id, device_id=device_id, created_by="test"
+        )
+    return secret
+
+
 def cleanup_tenant(tenant: dict) -> None:
     tenant_id = tenant["tenant_id"]
     with engine.begin() as connection:
@@ -145,7 +157,7 @@ def cleanup_tenant(tenant: dict) -> None:
     purge_audit_log_for_tenant(tenant_id)
     with engine.begin() as connection:
         set_tenant_context(connection, tenant_id)
-        for table in ("points", "functional_locations", "sites"):
+        for table in ("edge_devices", "points", "functional_locations", "sites"):
             connection.execute(
                 text(f"DELETE FROM {table} WHERE tenant_id = :id"), {"id": tenant_id}
             )

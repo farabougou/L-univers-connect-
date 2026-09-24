@@ -3,20 +3,24 @@ ingérer de la télémétrie par jeton d'appareil (M4, app/routers/devices.py).
 """
 
 import uuid
+from datetime import UTC, datetime
 from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 
+from app.config_versions import activate_version, create_version
+from app.connectors.device_mapping import MODBUS_DEVICE_MAPPING
 from app.db import engine
 from app.main import app
 from app.points import create_point, decide_point
 from app.tenancy import set_tenant_context
-from tests.db_helpers import purge_audit_log_for_tenant
+from tests.db_helpers import purge_audit_log_for_tenant, purge_config_versions_for_tenant
 from tests.jwt_helpers import JWKS, make_token
 
 client = TestClient(app)
+T0 = datetime(2026, 9, 24, 8, 0, tzinfo=UTC)
 
 
 @pytest.fixture
@@ -56,8 +60,14 @@ def tenant():
         )
         decide_point(connection, point_id=point_id, decision="validated")
 
-    yield {"tenant_id": tenant_id, "site_id": site_id, "point_id": point_id}
+    yield {
+        "tenant_id": tenant_id,
+        "site_id": site_id,
+        "location_id": location_id,
+        "point_id": point_id,
+    }
 
+    purge_config_versions_for_tenant(tenant_id)
     purge_audit_log_for_tenant(tenant_id)
     with engine.begin() as connection:
         set_tenant_context(connection, tenant_id)
@@ -95,7 +105,7 @@ def test_provisionner_puis_authentifier_un_appareil(tenant):
     assert auth.status_code == 200
     body = auth.json()
     assert body["token_type"] == "bearer"
-    assert body["scopes"] == ["telemetry:write"]
+    assert set(body["scopes"]) == {"telemetry:write", "config:read"}
     assert body["expires_in"] > 0
 
 
@@ -262,6 +272,45 @@ def test_revoquer_puis_authentifier_echoue(tenant):
         json={"tenant_id": str(tenant["tenant_id"]), "device_id": "cpt01", "secret": secret},
     )
     assert auth.status_code == 401
+
+
+def test_edge_config_renvoie_la_configuration_active(tenant):
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant["tenant_id"])
+        version_id = create_version(
+            connection,
+            tenant_id=tenant["tenant_id"],
+            config_type=MODBUS_DEVICE_MAPPING,
+            subject_key=str(tenant["location_id"]),
+            content={
+                "device_type": "sdm120",
+                "host": "192.168.1.50",
+                "port": 502,
+                "points": [
+                    {"point_id": str(tenant["point_id"]), "register_name": "total_active_energy"}
+                ],
+            },
+            author="test",
+            reason="test",
+        )
+        activate_version(connection, version_id=version_id, activated_by="test", activated_at=T0)
+
+    token, _ = _device_token(tenant)
+    response = client.get(
+        f"/edge/config?equipment_id={tenant['location_id']}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 200
+    assert response.json()["host"] == "192.168.1.50"
+
+
+def test_edge_config_sans_configuration_active_renvoie_404(tenant):
+    token, _ = _device_token(tenant)
+    response = client.get(
+        f"/edge/config?equipment_id={uuid.uuid4()}", headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 404
+    assert response.json()["code"] == "MODBUS_MAPPING_NOT_FOUND"
 
 
 def test_appareil_inconnu_dans_l_ingestion_est_signale_sans_planter(tenant):

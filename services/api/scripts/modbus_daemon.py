@@ -1,29 +1,26 @@
 """Démon de sondage Modbus : relève un équipement à intervalle régulier
-(M3→M4).
+(M4). Parle à l'API par HTTP avec sa propre identité d'appareil — plus
+aucun accès direct à la base de données (voir app/routers/devices.py,
+app/connectors/edge_client.py).
 
-L'adresse de l'appareil et l'association point ↔ registre viennent de la
-configuration versionnée « modbus_device_mapping » (voir
-app/connectors/device_mapping.py), pas d'arguments tapés à la main : cette
-configuration se crée et s'active via la console web ou l'API générique
-/configs, exactement comme une règle de détection. Le démon relit la
-version active à chaque tour : changer l'adresse, ajouter un point ou
-retirer la configuration depuis la console prend effet au tour suivant,
-sans redémarrage.
-
-Précurseur minimal de l'agent Edge : une seule boucle, pas de gestion de
-flotte ni de PKI (DEFER, voir ADR 012 §2.10-2.12). Tous les points d'un même
-appareil sont lus en une seule connexion Modbus (voir read_modbus_points),
-puis enregistrés ensemble. Deux pannes distinctes, deux réponses
-différentes :
-- l'appareil est injoignable (Modbus) : rien à faire, on retentera au tour
+La configuration (adresse de l'appareil, association point ↔ registre)
+vient de GET /edge/config, relue à chaque tour : un changement fait depuis
+la console web prend effet au tour suivant, sans redémarrage. Trois pannes
+distinctes, trois réponses différentes :
+- l'appareil Modbus est injoignable : rien à faire, on retentera au tour
   suivant, il n'y a pas de valeur à conserver puisqu'aucune n'a été lue ;
-- la base est injoignable (réseau du site, coupure) après une lecture
-  réussie : chaque valeur lue est mise dans un tampon local (fichier),
-  jamais perdue, et repart avec les suivantes dès que la connexion revient.
+- l'API est injoignable après une lecture réussie : chaque valeur lue est
+  mise dans un tampon local (fichier), jamais perdue, et repart avec les
+  suivantes dès que la connexion revient ;
+- aucune configuration active (jamais créée, ou retirée entre deux tours) :
+  on journalise et on retente au tour suivant, jamais une exception qui
+  arrêterait le démon.
 
 Usage :
-    python scripts/modbus_daemon.py --tenant <tenant_id> --equipment <id> \
-        [--interval 60] [--buffer fichier] [--source sdm120]
+    python scripts/modbus_daemon.py --api-url http://localhost:8000 \
+        --tenant <tenant_id> --device-id sdm120-cpt01 --equipment <id> \
+        [--secret <secret> | variable d'environnement EDGE_DEVICE_SECRET] \
+        [--interval 60] [--buffer fichier]
 
 Arrêt propre : Ctrl+C ou SIGTERM. Le tampon, s'il contient des mesures en
 attente, reste sur disque et sera renvoyé au prochain démarrage.
@@ -31,6 +28,7 @@ attente, reste sur disque et sera renvoyé au prochain démarrage.
 
 import argparse
 import logging
+import os
 import signal
 import time
 import uuid
@@ -38,15 +36,20 @@ from datetime import UTC, datetime
 from pathlib import Path
 from types import FrameType
 
-from app.connectors.device_mapping import resolve_active_mapping
-from app.connectors.modbus import ModbusReadError, read_modbus_points
+import httpx
+
+from app.connectors.edge_client import EdgeApiClient
+from app.connectors.modbus import ModbusReadError, find_register_by_name, read_modbus_points
 from app.connectors.offline_buffer import BufferedReading, OfflineBuffer
-from app.db import engine
+from app.connectors.sdm120 import SDM120_POINTS
 from app.observability import configure_logging
-from app.telemetry import ingest_measurements
-from app.tenancy import set_tenant_context
 
 logger = logging.getLogger("paios.modbus_daemon")
+
+# Catalogues de registres connus de ce démon, par device_type — même
+# principe que app/connectors/device_mapping.py côté API, dupliqué ici
+# volontairement : le démon ne dépend plus des modules liés à la base.
+DEVICE_REGISTER_CATALOGS = {"sdm120": SDM120_POINTS}
 
 _stop = False
 
@@ -56,17 +59,25 @@ def _handle_stop(signum: int, frame: FrameType | None) -> None:
     _stop = True
 
 
-def _load_mappings(tenant_id: uuid.UUID, equipment_id: uuid.UUID):
-    """None si aucune configuration n'est active — jamais une exception pour
-    ce cas normal (retirée entre deux tours, pas encore créée)."""
-    with engine.begin() as connection:
-        set_tenant_context(connection, tenant_id)
-        return resolve_active_mapping(connection, equipment_id=equipment_id)
+def _load_config(
+    api: EdgeApiClient, equipment_id: uuid.UUID
+) -> tuple[str, int, list[tuple[uuid.UUID, object]]] | None:
+    """None si aucune configuration active. Sinon (host, port, [(point_id,
+    registre), ...])."""
+    content = api.get_config(equipment_id)
+    if content is None:
+        return None
+    catalog = DEVICE_REGISTER_CATALOGS[content["device_type"]]
+    mappings = [
+        (uuid.UUID(entry["point_id"]), find_register_by_name(catalog, entry["register_name"]))
+        for entry in content["points"]
+    ]
+    return content["host"], content["port"], mappings
 
 
 def run(
     *,
-    tenant_id: uuid.UUID,
+    api: EdgeApiClient,
     equipment_id: uuid.UUID,
     interval_seconds: float,
     buffer: OfflineBuffer,
@@ -74,12 +85,8 @@ def run(
     max_cycles: int | None = None,
 ) -> int:
     """Boucle de sondage. `max_cycles` (réservé aux tests) arrête après N
-    tours au lieu d'attendre Ctrl+C ; renvoie le nombre de tours effectués.
-
-    Refuse de démarrer si aucune configuration n'est active dès le premier
-    tour (rien à faire) ; une fois lancé, sa disparition plus tard (retirée
-    entre deux tours, base injoignable) n'arrête jamais le démon."""
-    if _load_mappings(tenant_id, equipment_id) is None:
+    tours au lieu d'attendre Ctrl+C ; renvoie le nombre de tours effectués."""
+    if _load_config(api, equipment_id) is None:
         raise SystemExit(
             f"Aucune configuration Modbus active pour l'équipement {equipment_id} "
             "(console web : Connexion Modbus, ou POST /configs puis /activate)."
@@ -91,10 +98,11 @@ def run(
         cycle_started = time.monotonic()
         resolved = None
         try:
-            resolved = _load_mappings(tenant_id, equipment_id)
-        except Exception as exc:  # noqa: BLE001 — base injoignable : on retente au tour suivant.
+            resolved = _load_config(api, equipment_id)
+        except httpx.HTTPError as exc:
             logger.error(
-                f"configuration Modbus injoignable, nouvelle tentative au prochain tour : {exc}"
+                f"API injoignable pour la configuration, "
+                f"nouvelle tentative au prochain tour : {exc}"
             )
         else:
             if resolved is None:
@@ -106,42 +114,34 @@ def run(
         if resolved is not None:
             host, port, mappings = resolved
             try:
-                values = read_modbus_points(host, port, [m.register for m in mappings])
+                values = read_modbus_points(host, port, [register for _, register in mappings])
             except ModbusReadError as exc:
                 logger.error(f"lecture impossible, nouvelle tentative au prochain tour : {exc}")
             else:
                 now = datetime.now(UTC)
                 new_readings = [
                     BufferedReading(
-                        tenant_id=tenant_id,
-                        point_id=mapping.point_id,
-                        value=values[mapping.register.name],
+                        tenant_id=api.tenant_id,
+                        point_id=point_id,
+                        value=values[register.name],
                         measured_at=now,
                         origin="measured",
                         source=source,
                     )
-                    for mapping in mappings
+                    for point_id, register in mappings
                 ]
                 pending = buffer.pending()
-                items = [reading.as_item() for reading in pending + new_readings]
+                items = [reading.as_http_item() for reading in pending + new_readings]
                 try:
-                    with engine.begin() as connection:
-                        set_tenant_context(connection, tenant_id)
-                        summary = ingest_measurements(
-                            connection,
-                            tenant_id=tenant_id,
-                            items=items,
-                            source=source,
-                            received_at=now,
-                        )
+                    summary = api.post_measurements(items)
                     buffer.clear()
                     renvoi = f", {len(pending)} mesure(s) en tampon renvoyée(s)" if pending else ""
                     logger.info(f"relève effectuée{renvoi} : {summary}")
-                except Exception as exc:  # noqa: BLE001 — coupure BD : les mesures partent au tampon.
+                except httpx.HTTPError as exc:
                     for reading in new_readings:
                         buffer.append(reading)
                     logger.error(
-                        f"base injoignable, {len(new_readings)} mesure(s) mise(s) en tampon local "
+                        f"API injoignable, {len(new_readings)} mesure(s) mise(s) en tampon local "
                         f"({len(pending) + len(new_readings)} en attente au total) : {exc}"
                     )
         cycles_done += 1
@@ -157,7 +157,16 @@ def run(
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--api-url", default="http://localhost:8000", help="Base de l'API")
     parser.add_argument("--tenant", required=True, type=uuid.UUID, help="Identifiant du client")
+    parser.add_argument(
+        "--device-id", required=True, help="Identifiant de cet appareil (voir POST /devices)"
+    )
+    parser.add_argument(
+        "--secret",
+        default=os.environ.get("EDGE_DEVICE_SECRET"),
+        help="Secret de l'appareil (par défaut : variable d'environnement EDGE_DEVICE_SECRET)",
+    )
     parser.add_argument(
         "--equipment",
         required=True,
@@ -167,7 +176,10 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--interval", type=float, default=60.0, help="Secondes entre deux tours")
     parser.add_argument("--buffer", type=Path, default=None, help="Fichier du tampon hors ligne")
     parser.add_argument("--source", default="sdm120")
-    return parser.parse_args()
+    args = parser.parse_args()
+    if not args.secret:
+        parser.error("--secret requis (ou variable d'environnement EDGE_DEVICE_SECRET)")
+    return args
 
 
 def main() -> None:
@@ -176,13 +188,20 @@ def main() -> None:
     signal.signal(signal.SIGINT, _handle_stop)
     signal.signal(signal.SIGTERM, _handle_stop)
     buffer_path = args.buffer or Path(f"modbus_buffer_{args.equipment}.jsonl")
-    run(
+
+    with EdgeApiClient(
+        client=httpx.Client(base_url=args.api_url, timeout=10.0),
         tenant_id=args.tenant,
-        equipment_id=args.equipment,
-        interval_seconds=args.interval,
-        buffer=OfflineBuffer(buffer_path),
-        source=args.source,
-    )
+        device_id=args.device_id,
+        secret=args.secret,
+    ) as api:
+        run(
+            api=api,
+            equipment_id=args.equipment,
+            interval_seconds=args.interval,
+            buffer=OfflineBuffer(buffer_path),
+            source=args.source,
+        )
 
 
 if __name__ == "__main__":

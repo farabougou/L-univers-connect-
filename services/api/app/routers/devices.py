@@ -13,6 +13,7 @@ from sqlalchemy.engine import Connection
 
 from app.audit import append_audit_entry
 from app.auth import DEVICE_TOKEN_TTL, issue_device_token, require_any_role, require_device_scope
+from app.connectors.device_mapping import ModbusDeviceMappingContent, get_active_mapping
 from app.db import engine
 from app.deps import get_connection, get_tenant_connection, get_tenant_id
 from app.devices import (
@@ -26,7 +27,7 @@ from app.devices import (
     revoke_device,
     touch_last_seen,
 )
-from app.errors import api_error
+from app.errors import ApiError, api_error
 from app.i18n import negotiate_locale, render
 from app.schemas import EdgeMeasurementBatch, MeasurementBatchResult
 from app.telemetry import ingest_measurements
@@ -35,7 +36,10 @@ from app.tenancy import set_tenant_context
 router = APIRouter()
 
 _MANAGE_ROLES = ("responsable_exploitation", "admin_tenant")
-_DEVICE_SCOPES = ["telemetry:write"]
+# Un seul jeu de portées pour l'instant : suffisant pour la V1, conçu pour
+# devenir configurable par appareil (Mohamed, point 3 : évolution vers un
+# modèle de portées plus fin).
+_DEVICE_SCOPES = ["telemetry:write", "config:read"]
 
 
 class DeviceCreate(BaseModel):
@@ -183,6 +187,23 @@ def authenticate_device_route(
         expires_in=int(DEVICE_TOKEN_TTL.total_seconds()),
         scopes=_DEVICE_SCOPES,
     )
+
+
+@router.get("/edge/config", response_model=ModbusDeviceMappingContent)
+def get_edge_config(
+    equipment_id: uuid.UUID,
+    claims: Annotated[dict, Depends(require_device_scope("config:read"))],
+) -> ModbusDeviceMappingContent:
+    """La configuration active pour cet équipement, sous le tenant de
+    l'appareil authentifié — jamais un autre tenant, quel que soit
+    l'equipment_id demandé (RLS)."""
+    tenant_id = uuid.UUID(claims["tenant_id"])
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_id)
+        content = get_active_mapping(connection, equipment_id=equipment_id)
+    if content is None:
+        raise ApiError(404, "MODBUS_MAPPING_NOT_FOUND")
+    return ModbusDeviceMappingContent(**content)
 
 
 @router.post("/edge/measurements", response_model=MeasurementBatchResult)
