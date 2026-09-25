@@ -22,4 +22,10 @@ COPY --from=builder /app/.next/static ./.next/static
 
 EXPOSE 3000
 ENV PORT=3000
+# Sans ceci, le serveur Next.js "standalone" écoute sur le nom d'hôte du
+# conteneur (celui que Docker fixe automatiquement dans $HOSTNAME, propre à
+# chaque conteneur) plutôt que sur toutes les adresses réseau — il devient
+# alors injoignable depuis l'extérieur du conteneur, y compris pour un
+# fichier statique.
+ENV HOSTNAME=0.0.0.0
 CMD ["node", "server.js"]
