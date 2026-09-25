@@ -18,11 +18,16 @@ from typing import Any
 SUPPORTED_LOCALES = ("fr", "en")
 DEFAULT_LOCALE = "fr"
 
-_DEFAULT_DIR = Path(__file__).resolve().parents[3] / "shared" / "i18n"
-
-
 def _catalog_dir() -> Path:
-    return Path(os.environ.get("I18N_DIR", _DEFAULT_DIR))
+    """`I18N_DIR` s'il est défini (voir Dockerfile de déploiement) ; sinon,
+    `shared/i18n` à la racine du dépôt, calculé seulement ici et pas au
+    chargement du module : en déploiement, `services/api/app/` n'est plus à la
+    même profondeur que dans un clone complet du dépôt, et ce calcul lèverait
+    une erreur avant même de lire la variable d'environnement censée l'éviter."""
+    override = os.environ.get("I18N_DIR")
+    if override:
+        return Path(override)
+    return Path(__file__).resolve().parents[3] / "shared" / "i18n"
 
 
 @cache
