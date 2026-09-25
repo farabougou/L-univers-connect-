@@ -186,6 +186,13 @@ condition (élevé avant M3, étape L3) ; **catégories d'équipement en texte l
 Convention proposée par l'ADR 011, à appliquer dès maintenant : les bâtiments, étages,
 pièces et zones ne sont plus créés comme positions fonctionnelles.
 
+Risque ajouté au choix du fournisseur de stockage photo pour le staging (ADR 006,
+25/09/2026) : la configuration de stockage est aujourd'hui unique pour toute la
+plateforme (un seul panier, un seul fournisseur). À faire évoluer vers une résolution
+par tenant avant qu'un client n'exige un hébergeur précis pour des raisons de
+conformité — non bloquant aujourd'hui, signalé pour ne pas le découvrir sous la
+pression d'un contrat signé.
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente

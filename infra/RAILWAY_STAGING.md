@@ -121,22 +121,22 @@ pour un client réel.
 
 ## Étape 6 — Stockage des photos
 
-**Décision à prendre avant d'activer quoi que ce soit** (nouveau compte,
-donc soumis à ton accord comme convenu) :
+**Décidé (Mohamed, 25/09/2026) : Cloudflare R2** — voir `docs/adr/006-stockage-des-photos.md`
+pour la justification complète et la condition qui garde ce choix réversible (n'utiliser
+que l'API S3 générique, jamais une fonctionnalité propre à Cloudflare).
 
-- **Option recommandée : Cloudflare R2.** Compatible S3 (aucun changement de
-  code, voir `app/storage.py`), 10 Go gratuits puis un tarif très bas, pas de
-  frais de sortie de données (contrairement à AWS S3). Nécessite un compte
-  Cloudflare (gratuit à créer) et la génération d'un jeton d'accès R2.
-- **Alternative : MinIO sur Railway**, comme en local. Pas de nouveau compte
-  ni de coût (inclus dans ton abonnement Railway), mais un service de plus à
-  administrer et sauvegarder toi-même — R2 gère ça pour toi.
+1. Créer un compte Cloudflare (gratuit) si besoin, puis un panier R2
+   (`paios-staging-photos`).
+2. Générer un jeton d'accès R2 avec droits lecture/écriture sur ce panier
+   uniquement (jamais un jeton "compte entier").
+3. `STORAGE_ENDPOINT_URL` = l'URL S3 du compte R2 (affichée dans le tableau
+   de bord Cloudflare, sous la forme
+   `https://<identifiant compte>.r2.cloudflarestorage.com`).
 
-Une fois le choix fait, les variables à définir sur le service API sont
-toujours les quatre mêmes (`app/storage.py` ne change jamais) :
-`STORAGE_ENDPOINT_URL`, `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`,
-`STORAGE_BUCKET`. Créer un panier dédié au staging (`paios-staging-photos`),
-jamais partagé avec un futur panier de production.
+Les variables à définir sur le service API sont toujours les quatre mêmes
+(`app/storage.py` ne change jamais) : `STORAGE_ENDPOINT_URL`,
+`STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, `STORAGE_BUCKET`. Ce panier de
+staging ne sera jamais partagé avec un futur panier de production.
 
 ## Étape 7 — Boucler les adresses
 
@@ -223,14 +223,14 @@ MIGRATIONS : OK / KO
 SMOKE TEST : OK / KO
 ```
 
-## Points qui restent à ta décision
+## Point qui reste à ta décision
 
-1. **Stockage photo** (étape 6) : Cloudflare R2 (recommandé) ou MinIO sur
-   Railway.
-2. **Exécution** : cette session n'a pas d'accès à ton compte Railway. Deux
-   options :
-   - tu suis ce guide toi-même (chaque étape est un clic ou un copier-coller
-     de variable) ;
-   - tu ajoutes un jeton d'accès Railway aux secrets de cet environnement de
-     développement (jamais collé dans la conversation) pour que la session
-     puisse exécuter les étapes elle-même via la CLI Railway.
+**Exécution** : cette session n'a pas d'accès à ton compte Railway (ni à un
+compte Cloudflare). Deux options :
+
+- tu suis ce guide toi-même (chaque étape est un clic ou un copier-coller de
+  variable) ;
+- tu ajoutes un jeton d'accès Railway (et, pour le stockage, un jeton R2)
+  aux secrets de cet environnement de développement (jamais collé dans la
+  conversation) pour que la session puisse exécuter les étapes elle-même via
+  leurs CLI respectives.
