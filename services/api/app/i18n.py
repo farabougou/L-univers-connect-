@@ -18,6 +18,7 @@ from typing import Any
 SUPPORTED_LOCALES = ("fr", "en")
 DEFAULT_LOCALE = "fr"
 
+
 def _catalog_dir() -> Path:
     """`I18N_DIR` s'il est défini (voir Dockerfile de déploiement) ; sinon,
     `shared/i18n` à la racine du dépôt, calculé seulement ici et pas au
