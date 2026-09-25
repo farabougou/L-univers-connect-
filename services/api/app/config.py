@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -14,6 +15,16 @@ class Settings(BaseSettings):
     # l'émetteur déclaré ici.
     oidc_issuer: str = "http://localhost:8080/realms/paios"
     oidc_audience: str = "paios-api"
+
+    @field_validator("oidc_issuer")
+    @classmethod
+    def _oidc_issuer_has_scheme(cls, value: str) -> str:
+        """Une adresse sans schéma (oubli fréquent en configuration manuelle)
+        casse silencieusement la vérification des jetons : la requête vers le
+        fournisseur OIDC échoue, ou pire, la comparaison avec le `iss` du
+        jeton échoue sans message clair. On complète plutôt que de propager
+        l'erreur plus loin."""
+        return value if value.startswith(("http://", "https://")) else f"https://{value}"
 
     # Signature des jetons d'appareil Edge (M4, app/devices.py) : un flux
     # séparé de l'OIDC humain, jamais mélangé. À changer en production
