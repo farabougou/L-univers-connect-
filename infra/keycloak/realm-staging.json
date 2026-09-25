@@ -19,11 +19,11 @@
       "directAccessGrantsEnabled": true,
       "protocol": "openid-connect",
       "redirectUris": [
-        "https://__WEB_STAGING_DOMAIN__/api/auth/callback",
+        "https://discerning-delight-staging.up.railway.app/api/auth/callback",
         "exp://*",
         "paios://*"
       ],
-      "webOrigins": ["https://__WEB_STAGING_DOMAIN__"],
+      "webOrigins": ["https://discerning-delight-staging.up.railway.app"],
       "attributes": {
         "pkce.code.challenge.method": "S256"
       },
