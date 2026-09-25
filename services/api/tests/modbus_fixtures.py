@@ -8,7 +8,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from sqlalchemy import text
 
 from app.config_versions import activate_version, create_version
-from app.connectors.device_mapping import MODBUS_DEVICE_MAPPING
+from app.connectors.device_mapping import BACNET_DEVICE_MAPPING, MODBUS_DEVICE_MAPPING
 from app.db import engine
 from app.devices import provision_device
 from app.points import create_point, decide_point
@@ -131,6 +131,35 @@ def activate_device_mapping(
             config_type=MODBUS_DEVICE_MAPPING,
             subject_key=str(equipment_id),
             content={"device_type": device_type, "host": host, "port": port, "points": points},
+            author="test",
+            reason="test",
+        )
+        activate_version(
+            connection,
+            version_id=version_id,
+            activated_by="test",
+            activated_at=datetime.now(UTC),
+        )
+    return version_id
+
+
+def activate_bacnet_device_mapping(
+    *,
+    tenant_id: uuid.UUID,
+    equipment_id: uuid.UUID,
+    address: str,
+    points: list[dict],
+) -> uuid.UUID:
+    """Même principe que activate_device_mapping, pour une configuration
+    bacnet_device_mapping (voir app/connectors/device_mapping.py)."""
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_id)
+        version_id = create_version(
+            connection,
+            tenant_id=tenant_id,
+            config_type=BACNET_DEVICE_MAPPING,
+            subject_key=str(equipment_id),
+            content={"address": address, "points": points},
             author="test",
             reason="test",
         )

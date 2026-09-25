@@ -14,7 +14,7 @@ from jose import jwt
 from sqlalchemy import text
 
 from app.config_versions import activate_version, create_version
-from app.connectors.device_mapping import MODBUS_DEVICE_MAPPING
+from app.connectors.device_mapping import BACNET_DEVICE_MAPPING, MODBUS_DEVICE_MAPPING
 from app.db import engine
 from app.devices import ASSERTION_ALGORITHM
 from app.main import app
@@ -347,6 +347,48 @@ def test_edge_config_sans_configuration_active_renvoie_404(tenant):
     )
     assert response.status_code == 404
     assert response.json()["code"] == "MODBUS_MAPPING_NOT_FOUND"
+
+
+def test_edge_config_bacnet_renvoie_la_configuration_active(tenant):
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant["tenant_id"])
+        version_id = create_version(
+            connection,
+            tenant_id=tenant["tenant_id"],
+            config_type=BACNET_DEVICE_MAPPING,
+            subject_key=str(tenant["location_id"]),
+            content={
+                "address": "192.168.1.60",
+                "points": [
+                    {
+                        "point_id": str(tenant["point_id"]),
+                        "object_type": "analog-input",
+                        "object_instance": 1,
+                    }
+                ],
+            },
+            author="test",
+            reason="test",
+        )
+        activate_version(connection, version_id=version_id, activated_by="test", activated_at=T0)
+
+    token, _ = _device_token(tenant)
+    response = client.get(
+        f"/edge/config/bacnet?equipment_id={tenant['location_id']}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 200
+    assert response.json()["address"] == "192.168.1.60"
+
+
+def test_edge_config_bacnet_sans_configuration_active_renvoie_404(tenant):
+    token, _ = _device_token(tenant)
+    response = client.get(
+        f"/edge/config/bacnet?equipment_id={uuid.uuid4()}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 404
+    assert response.json()["code"] == "BACNET_MAPPING_NOT_FOUND"
 
 
 def test_appareil_inconnu_dans_l_ingestion_est_signale_sans_planter(tenant):

@@ -14,7 +14,12 @@ from sqlalchemy.engine import Connection
 
 from app.audit import append_audit_entry
 from app.auth import DEVICE_TOKEN_TTL, issue_device_token, require_any_role, require_device_scope
-from app.connectors.device_mapping import ModbusDeviceMappingContent, get_active_mapping
+from app.connectors.device_mapping import (
+    BacnetDeviceMappingContent,
+    ModbusDeviceMappingContent,
+    get_active_bacnet_mapping,
+    get_active_mapping,
+)
 from app.db import engine
 from app.deps import get_connection, get_tenant_connection, get_tenant_id
 from app.devices import (
@@ -292,6 +297,22 @@ def get_edge_config(
     if content is None:
         raise ApiError(404, "MODBUS_MAPPING_NOT_FOUND")
     return ModbusDeviceMappingContent(**content)
+
+
+@router.get("/edge/config/bacnet", response_model=BacnetDeviceMappingContent)
+def get_edge_config_bacnet(
+    equipment_id: uuid.UUID,
+    claims: Annotated[dict, Depends(require_device_scope("config:read"))],
+) -> BacnetDeviceMappingContent:
+    """Même principe que /edge/config, pour un équipement relevé par BACnet
+    plutôt que Modbus — voir app/connectors/device_mapping.py."""
+    tenant_id = uuid.UUID(claims["tenant_id"])
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_id)
+        content = get_active_bacnet_mapping(connection, equipment_id=equipment_id)
+    if content is None:
+        raise ApiError(404, "BACNET_MAPPING_NOT_FOUND")
+    return BacnetDeviceMappingContent(**content)
 
 
 @router.post("/edge/measurements", response_model=MeasurementBatchResult)

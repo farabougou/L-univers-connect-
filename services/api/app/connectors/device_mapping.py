@@ -89,6 +89,82 @@ register_config_type(
 )
 
 
+BACNET_DEVICE_MAPPING = "bacnet_device_mapping"
+BACNET_DEVICE_MAPPING_SCHEMA = "bacnet_device_mapping/1"
+
+
+class BacnetPointMapping(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    point_id: uuid.UUID
+    object_type: str = Field(min_length=1)
+    object_instance: int = Field(ge=0)
+    property_identifier: str = Field(default="present-value", min_length=1)
+
+
+class BacnetDeviceMappingContent(BaseModel):
+    """Contrairement à Modbus, aucun `device_type` ici : BACnet normalise
+    déjà l'adressage d'un point (type d'objet + instance + propriété), donc
+    aucun catalogue de registres propre à un fabricant n'est nécessaire — la
+    carte de points est directement le contenu de cette configuration."""
+
+    model_config = {"extra": "forbid"}
+
+    address: str = Field(min_length=1, max_length=255)
+    points: list[BacnetPointMapping] = Field(min_length=1)
+
+
+def _validate_bacnet_device_mapping(
+    connection: Connection, content: dict[str, Any]
+) -> dict[str, Any]:
+    try:
+        mapping = BacnetDeviceMappingContent(**content)
+    except ValidationError as exc:
+        fields = sorted({".".join(str(p) for p in error["loc"]) for error in exc.errors()})
+        raise ConfigInvalid("BACNET_MAPPING_CONTENT_INVALID", fields=fields) from exc
+
+    seen_objects: set[tuple[str, int, str]] = set()
+    seen_points: set[uuid.UUID] = set()
+    for entry in mapping.points:
+        object_key = (entry.object_type, entry.object_instance, entry.property_identifier)
+        if object_key in seen_objects:
+            raise ConfigInvalid(
+                "BACNET_OBJECT_DUPLICATED",
+                object_type=entry.object_type,
+                object_instance=entry.object_instance,
+            )
+        seen_objects.add(object_key)
+        if entry.point_id in seen_points:
+            raise ConfigInvalid("BACNET_POINT_DUPLICATED", point_id=str(entry.point_id))
+        seen_points.add(entry.point_id)
+
+        point = get_point(connection, entry.point_id)
+        if point is None:
+            raise ConfigInvalid("BACNET_POINT_NOT_FOUND", point_id=str(entry.point_id))
+        if point["mapping_status"] != "validated":
+            raise ConfigInvalid("BACNET_POINT_NOT_VALIDATED", point_id=str(entry.point_id))
+
+    return mapping.model_dump(mode="json")
+
+
+register_config_type(
+    BACNET_DEVICE_MAPPING, BACNET_DEVICE_MAPPING_SCHEMA, _validate_bacnet_device_mapping
+)
+
+
+def get_active_bacnet_mapping(
+    connection: Connection, *, equipment_id: uuid.UUID
+) -> dict[str, Any] | None:
+    """Le contenu de la version active pour cet équipement, ou None (aucune
+    connexion BACnet configurée, ou seulement un brouillon)."""
+    for version in list_versions(
+        connection, config_type=BACNET_DEVICE_MAPPING, subject_key=str(equipment_id)
+    ):
+        if version["status"] == "active":
+            return version["content"]
+    return None
+
+
 def get_active_mapping(connection: Connection, *, equipment_id: uuid.UUID) -> dict[str, Any] | None:
     """Le contenu de la version active pour cet équipement, ou None (aucune
     connexion Modbus configurée, ou seulement un brouillon)."""
