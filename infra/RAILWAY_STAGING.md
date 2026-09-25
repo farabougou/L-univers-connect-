@@ -31,7 +31,9 @@ partagé entre deux environnements.
 | `services/api/scripts/docker-entrypoint.sh` | Vérifie que `shared/i18n` est bien présent, joue les migrations Alembic, puis démarre `uvicorn`. |
 | `apps/web/Dockerfile` | Image du web (Next.js en mode `standalone`, construit avec `apps/web` comme contexte). |
 | `.env.staging.example`, `apps/web/.env.staging.example`, `apps/mobile/.env.staging.example` | Noms des variables à définir dans Railway pour cet environnement (jamais de vraie valeur dans ces fichiers). |
-| `infra/keycloak/realm-staging.json` | Realm Keycloak de staging : mêmes rôles qu'en local, redirections resserrées (plus de `"*"`) — deux jetons `__WEB_STAGING_DOMAIN__` à remplacer une fois le domaine connu. |
+| `infra/keycloak/realm-staging.json` | Realm Keycloak de staging : mêmes rôles qu'en local, redirections resserrées (plus de `"*"`) — deux jetons `__WEB_STAGING_DOMAIN__` à remplacer une fois le domaine connu (déjà fait pour ce staging : `discerning-delight-staging.up.railway.app`). |
+| `railway.json` (racine) et `apps/web/railway.json` | Configuration Railway "as code" par service — chaque service Railway lit le `railway.json` de son propre "Root Directory", donc l'API (Root Directory = racine) et le web (Root Directory = `apps/web`) ont chacun le leur, pour ne jamais dépendre d'un réglage manuel de "Dockerfile Path" dans l'interface. |
+| `apps/web/public/.gitkeep` | Git ne suit pas les dossiers vides : sans ce fichier, `apps/web/public/` n'existe pas du tout dans un clone frais (dont celui de Railway), et l'étape `COPY --from=builder /app/public ./public` du Dockerfile web échoue. |
 
 ## Étape 1 — Projet et environnement Railway
 
@@ -95,24 +97,40 @@ navigateur appelle l'API directement, ajouter `CORSMiddleware` dans
 Keycloak se déploie comme une image Docker publique, sans build depuis le
 dépôt :
 
-1. "New" → "Empty Service", puis dans ses réglages, "Source" → "Docker Image"
-   → `quay.io/keycloak/keycloak:latest`.
+1. "New" → "Empty Service", puis dans ses réglages, "Source" → **"Connect
+   Image"** (pas "Root Directory", qui sert au dépôt Git et n'a rien à voir
+   avec l'image Docker — piège rencontré en pratique) → renseigner
+   `quay.io/keycloak/keycloak:latest`.
 2. Variables :
-   - `KEYCLOAK_ADMIN` et `KEYCLOAK_ADMIN_PASSWORD` : choisir un mot de passe
-     fort, propre à cet environnement (jamais celui du docker-compose local).
+   - `KC_BOOTSTRAP_ADMIN_USERNAME` et `KC_BOOTSTRAP_ADMIN_PASSWORD` (noms
+     à jour pour Keycloak 26+ ; les anciens noms `KEYCLOAK_ADMIN` /
+     `KC_ADMIN` ne sont plus reconnus par cette version et laissent
+     Keycloak démarrer sans compte admin, avec un écran "Local access
+     required" au lieu du formulaire de connexion). Choisir un mot de passe
+     fort, propre à cet environnement (jamais celui du docker-compose
+     local).
    - `KC_PROXY_HEADERS=xforwarded` (indispensable derrière le proxy TLS de
      Railway, sinon Keycloak génère des adresses `http://` au lieu de
      `https://` et les redirections échouent).
-   - `KC_HOSTNAME` = l'URL publique que Railway va assigner à ce service
-     (à reporter après le premier déploiement, comme pour `APP_URL`).
-3. **Start Command** : `start --optimized --http-enabled=true`
-4. Déployer. C'est ton domaine Keycloak (`OIDC_ISSUER` = `https://<ce
-   domaine>/realms/paios` pour l'API et le web).
+3. **Start Command** : `/opt/keycloak/bin/kc.sh start --http-enabled=true --hostname-strict=false`
+   — chemin complet obligatoire (Railway remplace toute la commande du
+   conteneur, `start` seul n'est pas un exécutable), et **sans**
+   `--optimized` : ce drapeau suppose une image reconstruite au préalable
+   avec `kc.sh build` (via un Dockerfile personnalisé), ce qu'on ne fait
+   pas ici — avec l'image stock, il bloque le démarrage en boucle avec un
+   avertissement répété.
+4. **Networking → Generate Domain**, port **8080** (port HTTP par défaut de
+   Keycloak). Déployer. C'est ton domaine Keycloak (`OIDC_ISSUER` =
+   `https://<ce domaine>/realms/paios` pour l'API et le web).
 5. Importer le realm : ouvrir `infra/keycloak/realm-staging.json`, remplacer
    les deux `__WEB_STAGING_DOMAIN__` par le vrai domaine du service web
    (étape 4), puis dans la console d'administration Keycloak
-   (`https://<domaine keycloak>/admin`) : "Create realm" → "Browse" →
-   sélectionner le fichier modifié → "Create".
+   (`https://<domaine keycloak>/admin`) : "Manage realms" → "Create realm" →
+   "Browse" → sélectionner le fichier modifié → "Create".
+6. Sécurité : la bannière orange "temporary admin user" invite à créer un
+   compte admin permanent puis à supprimer le compte temporaire — à faire
+   avant d'inviter qui que ce soit d'autre à administrer ce Keycloak (pas
+   bloquant pour valider le reste du staging).
 
 Le mot de passe `demo-dev-only` des deux comptes de démonstration
 (`demo.technicien`, `demo.admin`) vient du realm tel quel : à changer avant
@@ -223,13 +241,25 @@ MIGRATIONS : OK / KO
 SMOKE TEST : OK / KO
 ```
 
+## État actuel de ce staging (25/09/2026)
+
+- API, web et Keycloak déployés et actifs sur Railway (environnement
+  `staging`, projet `virtuous-rebirth`).
+- Domaines : API `l-univers-connect-staging.up.railway.app`, web
+  `discerning-delight-staging.up.railway.app`, Keycloak
+  `virtuous-communication-staging.up.railway.app`.
+- Realm `paios` importé dans Keycloak, `OIDC_ISSUER` renseigné sur l'API et
+  le web.
+- Reste à faire : stockage des photos (Cloudflare R2, en cours), smoke test
+  manuel complet, durcissement du compte admin temporaire Keycloak.
+
 ## Point qui reste à ta décision
 
 **Exécution** : cette session n'a pas d'accès à ton compte Railway (ni à un
 compte Cloudflare). Deux options :
 
 - tu suis ce guide toi-même (chaque étape est un clic ou un copier-coller de
-  variable) ;
+  variable) — c'est l'option suivie jusqu'ici ;
 - tu ajoutes un jeton d'accès Railway (et, pour le stockage, un jeton R2)
   aux secrets de cet environnement de développement (jamais collé dans la
   conversation) pour que la session puisse exécuter les étapes elle-même via
