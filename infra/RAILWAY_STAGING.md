@@ -34,6 +34,9 @@ partagé entre deux environnements.
 | `infra/keycloak/realm-staging.json` | Realm Keycloak de staging : mêmes rôles qu'en local, redirections resserrées (plus de `"*"`) — deux jetons `__WEB_STAGING_DOMAIN__` à remplacer une fois le domaine connu (déjà fait pour ce staging : `discerning-delight-staging.up.railway.app`). |
 | `railway.json` (racine) et `apps/web/railway.json` | Configuration Railway "as code" par service — chaque service Railway lit le `railway.json` de son propre "Root Directory", donc l'API (Root Directory = racine) et le web (Root Directory = `apps/web`) ont chacun le leur, pour ne jamais dépendre d'un réglage manuel de "Dockerfile Path" dans l'interface. |
 | `apps/web/public/.gitkeep` | Git ne suit pas les dossiers vides : sans ce fichier, `apps/web/public/` n'existe pas du tout dans un clone frais (dont celui de Railway), et l'étape `COPY --from=builder /app/public ./public` du Dockerfile web échoue. |
+| `apps/web/Dockerfile` (`ENV HOSTNAME=0.0.0.0`) | Sans ça, le serveur Next.js "standalone" écoute sur l'identifiant interne du conteneur (celui que Docker fixe automatiquement) plutôt que sur toutes les adresses réseau : injoignable de l'extérieur (502 systématique, y compris sur un fichier statique). |
+| `apps/web/src/app/api/health/route.ts` | Point de contrôle de santé dédié pour Railway, indépendant de `/login` (rendu dynamique, trop fragile pour ce rôle). |
+| `apps/web/src/lib/config.ts` | Complète `https://` devant `OIDC_ISSUER`, `API_URL`, `APP_URL` si la variable a été saisie sans schéma — évite un échec silencieux de l'échange OIDC. |
 
 ## Étape 1 — Projet et environnement Railway
 
@@ -83,7 +86,9 @@ navigateur appelle l'API directement, ajouter `CORSMiddleware` dans
 2. Réglages :
    - **Root Directory** : `apps/web`.
    - Railway détecte `Dockerfile` automatiquement.
-   - **Healthcheck Path** : `/login` (première page publique).
+   - **Healthcheck Path** : `/api/health` (réponse statique immédiate — la
+     page `/login` fait un rendu dynamique complet et est trop fragile pour
+     ce rôle, elle a provoqué un 502 permanent en pratique).
 3. Variables (`apps/web/.env.staging.example`) :
    - `OIDC_ISSUER` = celui de Keycloak (étape 5)
    - `OIDC_CLIENT_ID=paios-api`
@@ -101,7 +106,29 @@ dépôt :
    Image"** (pas "Root Directory", qui sert au dépôt Git et n'a rien à voir
    avec l'image Docker — piège rencontré en pratique) → renseigner
    `quay.io/keycloak/keycloak:latest`.
-2. Variables :
+2. **Base de données — non optionnel, à faire avant tout le reste.** Sans
+   base externe, Keycloak stocke tout (royaume, comptes, mots de passe) dans
+   une base intégrée qui vit uniquement dans le système de fichiers du
+   conteneur : **le moindre redéploiement ou redémarrage efface tout**, y
+   compris le royaume importé à l'étape 5 et le compte administrateur
+   (retour à l'écran "Local access required"). Ça s'est produit en pratique
+   sur ce staging — à ne plus refaire :
+   - Dans l'environnement `staging` : "New" → "Database" → "PostgreSQL",
+     puis renommer ce service (par exemple `Postgres-Keycloak`) pour ne pas
+     le confondre avec celui de l'API — **jamais la même base que l'API**,
+     l'isolation entre services fait partie des règles non négociables du
+     projet.
+   - Variables du service Keycloak (références à ce nouveau service, jamais
+     de valeur recopiée à la main) :
+     ```
+     KC_DB=postgres
+     KC_DB_URL=jdbc:postgresql://${{Postgres-Keycloak.PGHOST}}:${{Postgres-Keycloak.PGPORT}}/${{Postgres-Keycloak.PGDATABASE}}
+     KC_DB_USERNAME=${{Postgres-Keycloak.PGUSER}}
+     KC_DB_PASSWORD=${{Postgres-Keycloak.PGPASSWORD}}
+     ```
+     (remplacer `Postgres-Keycloak` par le nom réel donné au service si
+     différent).
+3. Variables restantes :
    - `KC_BOOTSTRAP_ADMIN_USERNAME` et `KC_BOOTSTRAP_ADMIN_PASSWORD` (noms
      à jour pour Keycloak 26+ ; les anciens noms `KEYCLOAK_ADMIN` /
      `KC_ADMIN` ne sont plus reconnus par cette version et laissent
@@ -112,22 +139,24 @@ dépôt :
    - `KC_PROXY_HEADERS=xforwarded` (indispensable derrière le proxy TLS de
      Railway, sinon Keycloak génère des adresses `http://` au lieu de
      `https://` et les redirections échouent).
-3. **Start Command** : `/opt/keycloak/bin/kc.sh start --http-enabled=true --hostname-strict=false`
+4. **Start Command** : `/opt/keycloak/bin/kc.sh start --http-enabled=true --hostname-strict=false`
    — chemin complet obligatoire (Railway remplace toute la commande du
    conteneur, `start` seul n'est pas un exécutable), et **sans**
    `--optimized` : ce drapeau suppose une image reconstruite au préalable
    avec `kc.sh build` (via un Dockerfile personnalisé), ce qu'on ne fait
    pas ici — avec l'image stock, il bloque le démarrage en boucle avec un
-   avertissement répété.
-4. **Networking → Generate Domain**, port **8080** (port HTTP par défaut de
+   avertissement répété. Avec cette commande, `KC_HOSTNAME` n'est pas
+   nécessaire : Keycloak déduit l'adresse depuis la requête.
+5. **Networking → Generate Domain**, port **8080** (port HTTP par défaut de
    Keycloak). Déployer. C'est ton domaine Keycloak (`OIDC_ISSUER` =
    `https://<ce domaine>/realms/paios` pour l'API et le web).
-5. Importer le realm : ouvrir `infra/keycloak/realm-staging.json`, remplacer
+6. Importer le realm : ouvrir `infra/keycloak/realm-staging.json`, remplacer
    les deux `__WEB_STAGING_DOMAIN__` par le vrai domaine du service web
    (étape 4), puis dans la console d'administration Keycloak
    (`https://<domaine keycloak>/admin`) : "Manage realms" → "Create realm" →
-   "Browse" → sélectionner le fichier modifié → "Create".
-6. Sécurité : la bannière orange "temporary admin user" invite à créer un
+   "Browse" → sélectionner le fichier modifié → "Create". **Cet import ne
+   tient que si l'étape 2 (base de données) a été faite d'abord.**
+7. Sécurité : la bannière orange "temporary admin user" invite à créer un
    compte admin permanent puis à supprimer le compte temporaire — à faire
    avant d'inviter qui que ce soit d'autre à administrer ce Keycloak (pas
    bloquant pour valider le reste du staging).
@@ -160,11 +189,15 @@ staging ne sera jamais partagé avec un futur panier de production.
 
 Une fois les trois domaines connus (API, web, Keycloak), reporter :
 
-- Service Keycloak : `KC_HOSTNAME` avec son propre domaine (étape 5).
 - Realm Keycloak : redirections avec le domaine web (étape 5, si pas déjà
   fait avant l'import).
 - Service API : `OIDC_ISSUER` avec le domaine Keycloak.
-- Service Web : `OIDC_ISSUER`, `API_URL`, `APP_URL`.
+- Service Web : `OIDC_ISSUER`, `API_URL`, `APP_URL` — ces adresses doivent
+  inclure `https://` ; une adresse sans schéma casse silencieusement
+  l'échange OIDC (Keycloak reçoit un `redirect_uri` invalide et affiche une
+  page "introuvable" sans message clair). Le code du web s'en protège
+  maintenant tout seul (`apps/web/src/lib/config.ts` complète `https://` si
+  absent), mais autant les saisir correctement dès le départ.
 - Mobile (poste de test, jamais commité) : copier
   `apps/mobile/.env.staging.example` vers `apps/mobile/.env`, avec les
   vraies adresses API et Keycloak, puis `expo start`.
@@ -243,15 +276,21 @@ SMOKE TEST : OK / KO
 
 ## État actuel de ce staging (25/09/2026)
 
-- API, web et Keycloak déployés et actifs sur Railway (environnement
+- API et web déployés, actifs et accessibles sur Railway (environnement
   `staging`, projet `virtuous-rebirth`).
 - Domaines : API `l-univers-connect-staging.up.railway.app`, web
   `discerning-delight-staging.up.railway.app`, Keycloak
   `virtuous-communication-staging.up.railway.app`.
-- Realm `paios` importé dans Keycloak, `OIDC_ISSUER` renseigné sur l'API et
-  le web.
-- Reste à faire : stockage des photos (Cloudflare R2, en cours), smoke test
-  manuel complet, durcissement du compte admin temporaire Keycloak.
+- Stockage des photos (Cloudflare R2) : configuré (panier
+  `paios-staging-photos`, jeton scopé à ce panier, variables `STORAGE_*`
+  sur l'API).
+- **Keycloak : à refaire.** Le royaume `paios` importé une première fois a
+  été perdu (pas de base de données externe — voir étape 5.2, corrigée dans
+  ce guide). Reprendre à l'étape 5.2 (créer `Postgres-Keycloak`, ajouter les
+  variables `KC_DB*`) avant de réimporter le royaume — une fois cette base
+  branchée, l'import ne se perdra plus.
+- Reste à faire ensuite : smoke test manuel complet, durcissement du compte
+  admin temporaire Keycloak.
 
 ## Point qui reste à ta décision
 
