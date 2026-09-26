@@ -24,7 +24,16 @@ def _client():
         aws_access_key_id=settings.storage_access_key,
         aws_secret_access_key=settings.storage_secret_key,
         region_name=settings.storage_region,
-        config=Config(signature_version="s3v4"),
+        # "path" impose des URL de la forme endpoint/bucket/clé plutôt que
+        # bucket.endpoint/clé (style "virtual-hosted"). boto3 choisit ce
+        # dernier par défaut dès que le nom du panier est compatible DNS (ex.
+        # "paios-staging-photos"), mais Cloudflare R2 ne le supporte pas sur
+        # son domaine générique <compte>.r2.cloudflarestorage.com : la
+        # signature calculée pour une URL "virtual-hosted" ne correspond
+        # alors jamais à celle que R2 recalcule côté serveur, quels que
+        # soient les identifiants — d'où "SignatureDoesNotMatch" même avec un
+        # jeton d'accès valide. Sans effet sur MinIO (compatible aussi).
+        config=Config(signature_version="s3v4", s3={"addressing_style": "path"}),
     )
 
 
