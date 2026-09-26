@@ -138,6 +138,53 @@ def test_squelette_de_bout_en_bout_mesure_regle_constat_alarme_ordre_de_travail(
     ]
 
 
+def test_creer_un_ordre_de_travail_depuis_un_constat(two_tenants) -> None:
+    """Un constat sans ordre de travail automatique (create_work_order=False
+    dans la règle) peut quand même en recevoir un ensuite, décidé par une
+    personne — jamais l'inverse d'automatique (app/routers/maintenance.py)."""
+    tenant_a, _ = two_tenants
+    _active_rule(tenant_a, create_work_order=False)
+    technicien = _headers(tenant_a, ["technicien"])
+    manager = _headers(tenant_a, ["responsable_exploitation"])
+
+    measurement = _call(
+        "POST",
+        "/measurements",
+        technicien,
+        json={
+            "point_id": str(tenant_a["sensor"]),
+            "value": 86.5,
+            "measured_at": _recent(5),
+            "origin": "simulated",
+            "source": "simulator",
+        },
+    )
+    assert measurement.status_code == 201, measurement.text
+    finding = _call(
+        "GET", "/findings", technicien, params={"handling_status": "open"}
+    ).json()[0]
+    assert finding["work_order_id"] is None
+    url = f"/findings/{finding['id']}/work-order"
+
+    forbidden = _call("POST", url, technicien, json={})
+    assert forbidden.status_code == 403
+
+    created = _call("POST", url, manager, json={})
+    assert created.status_code == 201, created.text
+    work_order = created.json()
+    assert work_order["title"] == "Départ d'eau trop chaud"
+    assert work_order["priority"] == "urgent"
+    assert work_order["functional_location_id"] == str(tenant_a["ahu"])
+    assert work_order["work_order_type"] == "corrective"
+
+    refreshed = _call("GET", f"/findings/{finding['id']}", technicien)
+    assert refreshed.json()["work_order_id"] == work_order["id"]
+
+    conflict = _call("POST", url, manager, json={})
+    assert conflict.status_code == 409
+    assert conflict.json()["code"] == "FINDING_WORK_ORDER_ALREADY_LINKED"
+
+
 def test_finding_titles_follow_the_requested_language(two_tenants) -> None:
     tenant_a, _ = two_tenants
     _active_rule(tenant_a)

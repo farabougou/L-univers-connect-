@@ -65,6 +65,7 @@
     "FINDING_CONFIRMATION_REQUIRES_PERSON": "Seule une personne peut confirmer un défaut.",
     "FINDING_NOT_FOUND": "Le constat demandé est introuvable.",
     "FINDING_PREDICTION_NOT_CONFIRMABLE": "Une prédiction ne peut pas être confirmée : elle porte sur un état futur.",
+    "FINDING_WORK_ORDER_ALREADY_LINKED": "Ce constat est déjà lié à un ordre de travail.",
     "FLOOR_PLAN_CONTENT_TYPE_UNSUPPORTED": "Format de fichier non pris en charge pour un plan : « {content_type} ». Seuls le PDF, le PNG et le JPEG sont acceptés.",
     "FLOOR_PLAN_NOT_FOUND": "Le plan demandé est introuvable.",
     "FLOOR_PLAN_STORAGE_KEY_FOREIGN": "La clé de stockage ne correspond pas à cet espace.",

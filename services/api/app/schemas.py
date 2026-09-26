@@ -154,6 +154,13 @@ class WorkOrderCreate(BaseModel):
     physical_unit_id: uuid.UUID | None = None
 
 
+class FindingWorkOrderCreate(BaseModel):
+    title: str | None = Field(default=None, max_length=200)
+    description: str | None = Field(default=None, max_length=2000)
+    work_order_type: Literal["corrective", "preventive", "predictive", "inspection"] = "corrective"
+    priority: Literal["low", "medium", "high", "urgent"] | None = None
+
+
 class WorkOrderOut(BaseModel):
     id: uuid.UUID
     functional_location_id: uuid.UUID | None

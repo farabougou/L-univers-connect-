@@ -65,6 +65,7 @@
     "FINDING_CONFIRMATION_REQUIRES_PERSON": "Only a person can confirm a fault.",
     "FINDING_NOT_FOUND": "The requested finding could not be found.",
     "FINDING_PREDICTION_NOT_CONFIRMABLE": "A prediction cannot be confirmed: it concerns a future state.",
+    "FINDING_WORK_ORDER_ALREADY_LINKED": "This finding is already linked to a work order.",
     "FLOOR_PLAN_CONTENT_TYPE_UNSUPPORTED": "Unsupported file format for a floor plan: “{content_type}”. Only PDF, PNG and JPEG are accepted.",
     "FLOOR_PLAN_NOT_FOUND": "The requested floor plan could not be found.",
     "FLOOR_PLAN_STORAGE_KEY_FOREIGN": "The storage key does not match this space.",

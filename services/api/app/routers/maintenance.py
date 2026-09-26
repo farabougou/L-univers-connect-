@@ -20,6 +20,8 @@ from app.closures import (
 )
 from app.deps import get_tenant_connection, get_tenant_id
 from app.errors import ApiError, api_error
+from app.findings import displayed, get_finding, link_finding
+from app.graph import get_node
 from app.i18n import negotiate_locale
 from app.maintenance import (
     ClientRefConflict,
@@ -31,11 +33,13 @@ from app.maintenance import (
     record_photo,
     record_photo_once,
 )
+from app.points import get_point
 from app.schemas import (
     AlarmCreate,
     AlarmOut,
     ClosureCreate,
     ClosureOut,
+    FindingWorkOrderCreate,
     HandlingStatus,
     InterventionCreate,
     InterventionOut,
@@ -51,6 +55,7 @@ from app.schemas import (
     WorkOrderStatusHistoryOut,
     WorkOrderStatusUpdate,
 )
+from app.signal_vocabulary import WORK_ORDER_PRIORITY
 from app.signals import acknowledge, clear_condition, get_axes, set_handling
 from app.signals import history as signal_history
 from app.storage import (
@@ -130,6 +135,74 @@ def create_work_order_route(
             "priority": body.priority,
             "work_order_type": body.work_order_type,
         },
+    )
+    return _read_work_order(connection, work_order_id)
+
+
+def _finding_functional_location_id(
+    connection: Connection, finding: dict[str, Any]
+) -> uuid.UUID | None:
+    """La position d'un ordre de travail créé depuis un constat, quand elle
+    se déduit sans ambiguïté : le sujet du constat lui-même s'il s'agit
+    d'une position fonctionnelle, sinon celle du point visé s'il en a une
+    (un point peut aussi être rattaché à un espace, pas à une position)."""
+    node = get_node(connection, finding["subject_node_id"])
+    if node is not None and node["node_type"] == "functional_location":
+        return finding["subject_node_id"]
+    if finding["point_id"] is not None:
+        point = get_point(connection, finding["point_id"])
+        if point is not None:
+            return point["functional_location_id"]
+    return None
+
+
+@router.post(
+    "/findings/{finding_id}/work-order",
+    response_model=WorkOrderOut,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_work_order_from_finding_route(
+    finding_id: uuid.UUID,
+    body: FindingWorkOrderCreate,
+    request: Request,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
+    claims: Annotated[dict, Depends(require_any_role(*_PLAN_ROLES))],
+) -> WorkOrderOut:
+    """Un constat confirmé peut donner lieu à un ordre de travail (jamais
+    l'inverse d'automatique : c'est toujours une personne qui déclenche
+    cette création, voir app/findings.py). Titre et description par défaut
+    viennent du constat, dans la langue de la personne ; ils restent du
+    texte libre modifiable ensuite, comme pour toute alarme ou tout ordre
+    de travail créé directement."""
+    finding = get_finding(connection, finding_id)
+    if finding is None:
+        raise ApiError(404, "FINDING_NOT_FOUND")
+    if finding["work_order_id"] is not None:
+        raise ApiError(409, "FINDING_WORK_ORDER_ALREADY_LINKED")
+
+    locale = negotiate_locale(request.headers.get("accept-language"))
+    rendered = displayed(finding, locale)
+
+    work_order_id = create_work_order(
+        connection,
+        tenant_id=tenant_id,
+        created_by=_actor(claims),
+        title=body.title or rendered["title"],
+        description=body.description or rendered["recommended_action"],
+        work_order_type=body.work_order_type,
+        priority=body.priority or WORK_ORDER_PRIORITY[finding["severity"]],
+        functional_location_id=_finding_functional_location_id(connection, finding),
+    )
+    link_finding(connection, finding_id=finding_id, work_order_id=work_order_id)
+    append_audit_entry(
+        connection,
+        tenant_id=tenant_id,
+        actor=_actor(claims),
+        action="finding.work_order_created",
+        entity_type="finding",
+        entity_id=str(finding_id),
+        payload={"work_order_id": str(work_order_id)},
     )
     return _read_work_order(connection, work_order_id)
 
