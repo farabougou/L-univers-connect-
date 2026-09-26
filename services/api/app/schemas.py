@@ -188,6 +188,17 @@ class WorkOrderStatusHistoryOut(BaseModel):
     changed_at: datetime
 
 
+class TimelineEntryOut(BaseModel):
+    kind: Literal["intervention", "work_order", "alarm", "finding", "lifecycle"]
+    at: datetime
+    reference_id: uuid.UUID
+    title: str | None
+    field: str | None
+    status: str | None
+    changed_by: str | None
+    note: str | None
+
+
 # Référence fournie par le client pour rejouer un envoi sans doublon :
 # identifiant local de la file hors ligne, sans espace ni accent.
 CLIENT_REF_PATTERN = r"^[A-Za-z0-9._:-]{8,100}$"

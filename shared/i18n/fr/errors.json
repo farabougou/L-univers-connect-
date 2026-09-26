@@ -166,6 +166,7 @@
     "TAG_REVOKED": "Cette étiquette a été révoquée ({reason}) : scannez la nouvelle étiquette de l’équipement.",
     "TAG_TYPE_UNKNOWN": "Type d’étiquette inconnu : « {tag_type} ».",
     "TAG_UNKNOWN": "Cette étiquette n’est pas reconnue.",
+    "TIMELINE_NODE_TYPE_UNSUPPORTED": "La chronologie n’est pas disponible pour ce type d’élément (« {node_type} »).",
     "TIMEZONE_UNKNOWN": "Fuseau horaire inconnu : « {timezone} ». Utilisez un identifiant IANA, par exemple « Europe/Paris ».",
     "TOKEN_INVALID": "Votre session n’est pas valide ou a expiré. Reconnectez-vous.",
     "TOKEN_MISSING": "Authentification requise : connectez-vous.",

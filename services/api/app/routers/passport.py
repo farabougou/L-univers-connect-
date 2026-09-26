@@ -9,11 +9,13 @@ from app.audit import append_audit_entry
 from app.auth import require_any_role
 from app.deps import get_tenant_connection, get_tenant_id
 from app.errors import ApiError, api_error
+from app.graph import get_node
 from app.i18n import negotiate_locale
 from app.passport import build_passport
 from app.properties import PropertyError, PropertyNotFound, list_properties, set_property
-from app.schemas import PropertyOut, PropertySet, TagCreate, TagOut, TagRevoke
+from app.schemas import PropertyOut, PropertySet, TagCreate, TagOut, TagRevoke, TimelineEntryOut
 from app.tags import TagNotFound, TagRevoked, create_tag, list_tags, resolve_tag, revoke_tag
+from app.timeline import SUPPORTED_NODE_TYPES, node_timeline
 
 router = APIRouter()
 
@@ -71,6 +73,42 @@ def scan_tag(
         "tag": TagOut(**tag),
         "passport": _passport_or_404(connection, tag["node_id"], claims, request),
     }
+
+
+@router.get("/graph/nodes/{node_id}/timeline", response_model=list[TimelineEntryOut])
+def read_timeline(
+    node_id: uuid.UUID,
+    request: Request,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+    before: datetime | None = None,
+    limit: int = 50,
+) -> list[TimelineEntryOut]:
+    """Chronologie fusionnée (interventions, ordres de travail, alarmes,
+    constats, cycle de vie), la plus récente d'abord — pour répondre à
+    « pourquoi cette configuration existe-t-elle, des années après » sans
+    ouvrir cinq écrans différents. Vue pure, comme le passeport : rien
+    n'est recalculé ni stocké ici."""
+    if limit < 1 or limit > 200:
+        raise ApiError(400, "QUERY_LIMIT_OUT_OF_RANGE", minimum=1, maximum=200)
+    if before is not None and before.tzinfo is None:
+        raise ApiError(400, "QUERY_SINCE_TIMEZONE_REQUIRED")
+    node = get_node(connection, node_id)
+    if node is None:
+        raise ApiError(404, "NODE_NOT_FOUND")
+    if node["node_type"] not in SUPPORTED_NODE_TYPES:
+        raise ApiError(422, "TIMELINE_NODE_TYPE_UNSUPPORTED", node_type=node["node_type"])
+
+    locale = negotiate_locale(request.headers.get("accept-language"))
+    entries = node_timeline(
+        connection,
+        node_id=node_id,
+        node_type=node["node_type"],
+        locale=locale,
+        before=before,
+        limit=limit,
+    )
+    return [TimelineEntryOut(**entry) for entry in entries]
 
 
 # --- Étiquettes ------------------------------------------------

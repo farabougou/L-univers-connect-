@@ -166,6 +166,7 @@
     "TAG_REVOKED": "This tag has been revoked ({reason}): scan the new tag on the equipment.",
     "TAG_TYPE_UNKNOWN": "Unknown tag type: “{tag_type}”.",
     "TAG_UNKNOWN": "This tag is not recognised.",
+    "TIMELINE_NODE_TYPE_UNSUPPORTED": "The timeline is not available for this type of item (“{node_type}”).",
     "TIMEZONE_UNKNOWN": "Unknown time zone: “{timezone}”. Use an IANA identifier, for example “Europe/Paris”.",
     "TOKEN_INVALID": "Your session is invalid or has expired. Please sign in again.",
     "TOKEN_MISSING": "Authentication required: please sign in.",
