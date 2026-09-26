@@ -249,3 +249,94 @@ export async function uploadFloorPlan(formData: FormData) {
   revalidatePath("/registre");
   redirect(`/registre?space=${spaceId}`);
 }
+
+/**
+ * Envoi d'un fichier IFC (ADR 011, section 2) : même dance en deux temps
+ * que les plans (URL présignée, puis envoi direct au stockage). L'analyse
+ * se fait côté serveur dès la confirmation ; le résultat (propositions ou
+ * échec) est déjà là au moment de la redirection.
+ */
+export async function uploadIfcImport(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const siteId = formData.get("site_id");
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    redirect("/registre?error=CREATION_FAILED");
+  }
+
+  const uploadUrlResponse = await apiFetch(`/sites/${siteId}/ifc-imports/upload-url`, accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ filename: file.name }),
+  });
+  if (!uploadUrlResponse.ok) {
+    await redirectOnFailure(uploadUrlResponse);
+  }
+  const { upload_url: uploadUrl, object_key: objectKey } = await uploadUrlResponse.json();
+
+  const bytes = await file.arrayBuffer();
+  const putResponse = await fetch(uploadUrl, {
+    method: "PUT",
+    body: bytes,
+    headers: { "Content-Type": "application/octet-stream" },
+  });
+  if (!putResponse.ok) {
+    redirect("/registre?error=CREATION_FAILED");
+  }
+
+  const sha256 = createHash("sha256").update(Buffer.from(bytes)).digest("hex");
+  const createResponse = await apiFetch(`/sites/${siteId}/ifc-imports`, accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ object_key: objectKey, filename: file.name, sha256 }),
+  });
+  if (!createResponse.ok) {
+    await redirectOnFailure(createResponse);
+  }
+  const batch = await createResponse.json();
+
+  revalidatePath("/registre");
+  redirect(`/registre?import_site=${siteId}&import_batch=${batch.id}`);
+}
+
+export async function acceptIfcImportProposal(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const proposalId = formData.get("proposal_id");
+  const siteId = formData.get("site_id");
+  const batchId = formData.get("batch_id");
+
+  const response = await apiFetch(`/ifc-import-proposals/${proposalId}/accept`, accessToken, {
+    method: "POST",
+  });
+  if (!response.ok) {
+    const problem = await response.json().catch(() => null);
+    redirect(
+      `/registre?import_site=${siteId}&import_batch=${batchId}&error=${encodeURIComponent(failureCode(problem))}`,
+    );
+  }
+
+  revalidatePath("/registre");
+  redirect(`/registre?import_site=${siteId}&import_batch=${batchId}`);
+}
+
+export async function rejectIfcImportProposal(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const proposalId = formData.get("proposal_id");
+  const siteId = formData.get("site_id");
+  const batchId = formData.get("batch_id");
+
+  const response = await apiFetch(`/ifc-import-proposals/${proposalId}/reject`, accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reason: formData.get("reason") }),
+  });
+  if (!response.ok) {
+    const problem = await response.json().catch(() => null);
+    redirect(
+      `/registre?import_site=${siteId}&import_batch=${batchId}&error=${encodeURIComponent(failureCode(problem))}`,
+    );
+  }
+
+  revalidatePath("/registre");
+  redirect(`/registre?import_site=${siteId}&import_batch=${batchId}`);
+}

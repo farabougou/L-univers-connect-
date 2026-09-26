@@ -14,13 +14,16 @@ import { type Me, canManage as computeCanManage } from "@/lib/roles";
 import { renderTagQr } from "@/lib/tagQr";
 
 import {
+  acceptIfcImportProposal,
   closeSpace,
   createEquipment,
   createSite,
   createSpace,
+  rejectIfcImportProposal,
   showTag,
   updateSiteTimezone,
   uploadFloorPlan,
+  uploadIfcImport,
 } from "./actions";
 
 type Site = { id: string; name: string; timezone: string | null };
@@ -42,6 +45,27 @@ type FloorPlan = {
   uploaded_by: string;
   uploaded_at: string;
 };
+type IfcImportBatch = {
+  id: string;
+  site_id: string;
+  filename: string;
+  status: string;
+  error_code: string | null;
+  space_proposal_count: number | null;
+  equipment_proposal_count: number | null;
+  skipped_element_count: number | null;
+  uploaded_by: string;
+  uploaded_at: string;
+};
+type IfcImportProposal = {
+  id: string;
+  batch_id: string;
+  proposal_type: string;
+  ifc_class: string;
+  name: string;
+  status: string;
+  rejection_reason: string | null;
+};
 
 // Même vocabulaire que app/spatial_vocabulary.py (ADR 011) ; un jeu de cinq
 // types stables, comme les priorités d'ordre de travail plus bas.
@@ -55,7 +79,14 @@ function creationError(translator: Translator, code: string | undefined): string
 export default async function RegistrePage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; tag?: string; label?: string; space?: string }>;
+  searchParams: Promise<{
+    error?: string;
+    tag?: string;
+    label?: string;
+    space?: string;
+    import_site?: string;
+    import_batch?: string;
+  }>;
 }) {
   const accessToken = await requireAccessToken();
   const translator = await getTranslator();
@@ -106,6 +137,24 @@ export default async function RegistrePage({
     const floorPlansResponse = await apiFetch(`/spaces/${params.space}/floor-plans`, accessToken);
     floorPlans = floorPlansResponse.ok ? await floorPlansResponse.json() : [];
   }
+
+  let ifcImportBatches: IfcImportBatch[] = [];
+  if (params.import_site) {
+    const batchesResponse = await apiFetch(
+      `/sites/${params.import_site}/ifc-imports`,
+      accessToken,
+    );
+    ifcImportBatches = batchesResponse.ok ? await batchesResponse.json() : [];
+  }
+  let ifcImportProposals: IfcImportProposal[] = [];
+  if (params.import_batch) {
+    const proposalsResponse = await apiFetch(
+      `/ifc-imports/${params.import_batch}/proposals`,
+      accessToken,
+    );
+    ifcImportProposals = proposalsResponse.ok ? await proposalsResponse.json() : [];
+  }
+  const selectedImportBatch = ifcImportBatches.find((batch) => batch.id === params.import_batch);
 
   return (
     <main style={{ maxWidth: 720, margin: "40px auto", padding: "0 16px" }}>
@@ -326,6 +375,144 @@ export default async function RegistrePage({
               {t("web.registre.submit")}
             </button>
           </form>
+        </section>
+      )}
+
+      <h2 style={{ marginTop: 40 }}>{t("web.registre.ifc_import_title")}</h2>
+      <form method="get" style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+        <label style={{ flex: 1 }}>
+          {t("web.registre.ifc_import_select_site")}
+          <select name="import_site" defaultValue={params.import_site ?? ""} style={fieldStyle}>
+            <option value="" disabled>
+              {t("web.registre.ifc_import_select_site")}
+            </option>
+            {sites.map((site) => (
+              <option key={site.id} value={site.id}>
+                {site.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button type="submit" style={submitStyle}>
+          {t("web.registre.ifc_import_view_button")}
+        </button>
+      </form>
+
+      {params.import_site && (
+        <section style={{ marginTop: 16 }}>
+          <h3>{t("web.registre.ifc_import_for", { name: siteName(params.import_site) })}</h3>
+          {ifcImportBatches.length === 0 ? (
+            <p>{t("web.registre.ifc_import_none")}</p>
+          ) : (
+            <ul>
+              {ifcImportBatches.map((batch) => (
+                <li key={batch.id} style={{ marginBottom: 8 }}>
+                  <strong>{batch.filename}</strong> —{" "}
+                  {t(`web.registre.ifc_import_status_${batch.status}`)}
+                  {batch.status === "ready" &&
+                    " — " +
+                      t("web.registre.ifc_import_counts", {
+                        spaces: batch.space_proposal_count ?? 0,
+                        equipment: batch.equipment_proposal_count ?? 0,
+                        skipped: batch.skipped_element_count ?? 0,
+                      })}
+                  {batch.status === "failed" &&
+                    ` — ${errorMessage(locale, batch.error_code ?? "") ?? batch.error_code}`}
+                  <br />
+                  <span style={{ color: "#666" }}>
+                    {t("web.registre.ifc_import_uploaded_by", {
+                      actor: batch.uploaded_by,
+                      date: formatDateTime(locale, batch.uploaded_at),
+                    })}
+                  </span>
+                  {batch.status === "ready" && (
+                    <>
+                      {" — "}
+                      <Link href={`/registre?import_site=${params.import_site}&import_batch=${batch.id}`}>
+                        {t("web.registre.ifc_import_view_proposals")}
+                      </Link>
+                    </>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <h4>{t("web.registre.ifc_import_upload_title")}</h4>
+          <form action={uploadIfcImport} style={{ maxWidth: 400 }}>
+            <input type="hidden" name="site_id" value={params.import_site} />
+            <label style={labelStyle}>
+              {t("web.registre.ifc_import_file_label")}
+              <input type="file" name="file" accept=".ifc" required style={fieldStyle} />
+            </label>
+            <button type="submit" style={submitStyle}>
+              {t("web.registre.submit")}
+            </button>
+          </form>
+
+          {selectedImportBatch && (
+            <section style={{ marginTop: 16 }}>
+              <h4>
+                {t("web.registre.ifc_import_proposals_title", {
+                  filename: selectedImportBatch.filename,
+                })}
+              </h4>
+              {ifcImportProposals.length === 0 ? (
+                <p>{t("web.registre.ifc_import_proposals_none")}</p>
+              ) : (
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr>
+                      <th style={headerCellStyle}>{t("web.dashboard.name")}</th>
+                      <th style={headerCellStyle} />
+                      <th style={headerCellStyle} />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ifcImportProposals.map((proposal) => (
+                      <tr key={proposal.id}>
+                        <td style={cellStyle}>
+                          {t(`web.registre.ifc_import_proposal_type_${proposal.proposal_type}`)} —{" "}
+                          {proposal.name} ({proposal.ifc_class})
+                        </td>
+                        <td style={cellStyle}>
+                          {proposal.status === "proposed" ? (
+                            <form action={acceptIfcImportProposal} style={{ display: "inline" }}>
+                              <input type="hidden" name="proposal_id" value={proposal.id} />
+                              <input type="hidden" name="site_id" value={params.import_site} />
+                              <input type="hidden" name="batch_id" value={selectedImportBatch.id} />
+                              <button type="submit">{t("web.registre.ifc_import_accept")}</button>
+                            </form>
+                          ) : proposal.status === "rejected" ? (
+                            t("web.registre.ifc_import_rejected_reason", {
+                              reason: proposal.rejection_reason ?? "",
+                            })
+                          ) : (
+                            t("web.registre.ifc_import_proposal_status_accepted")
+                          )}
+                        </td>
+                        <td style={cellStyle}>
+                          {proposal.status === "proposed" && (
+                            <form action={rejectIfcImportProposal} style={{ display: "flex", gap: 4 }}>
+                              <input type="hidden" name="proposal_id" value={proposal.id} />
+                              <input type="hidden" name="site_id" value={params.import_site} />
+                              <input type="hidden" name="batch_id" value={selectedImportBatch.id} />
+                              <input
+                                name="reason"
+                                required
+                                placeholder={t("web.registre.ifc_import_reject_reason_label")}
+                              />
+                              <button type="submit">{t("web.registre.ifc_import_reject")}</button>
+                            </form>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </section>
+          )}
         </section>
       )}
 
