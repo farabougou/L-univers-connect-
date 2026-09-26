@@ -1,17 +1,12 @@
 import { cookies } from "next/headers";
 
-import { config } from "./config";
+import { type TokenSet, fetchRefreshedTokens } from "./oidc-refresh";
 import { isAccessTokenExpired } from "./token-expiry";
 
 const TOKENS_COOKIE = "paios_tokens";
 const OAUTH_FLOW_COOKIE = "paios_oauth_flow";
 
-export type TokenSet = {
-  accessToken: string;
-  refreshToken: string;
-  /** Horodatage epoch (ms) d'expiration du jeton d'accès. */
-  expiresAt: number;
-};
+export type { TokenSet };
 
 /**
  * Jeux de jetons Keycloak stockés dans un cookie httpOnly : jamais
@@ -62,39 +57,16 @@ export async function getValidAccessToken(): Promise<string | null> {
     return tokens.accessToken;
   }
 
-  const refreshed = await refreshTokens(tokens.refreshToken);
-  if (!refreshed) {
-    await clearTokensCookie();
-    return null;
-  }
-  return refreshed.accessToken;
-}
-
-async function refreshTokens(refreshToken: string): Promise<TokenSet | null> {
-  const response = await fetch(`${config.oidcIssuer}/protocol/openid-connect/token`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "refresh_token",
-      client_id: config.oidcClientId,
-      refresh_token: refreshToken,
-    }),
-  });
-  if (!response.ok) {
-    return null;
-  }
-  const data = (await response.json()) as {
-    access_token: string;
-    refresh_token?: string;
-    expires_in: number;
-  };
-  const tokens: TokenSet = {
-    accessToken: data.access_token,
-    refreshToken: data.refresh_token ?? refreshToken,
-    expiresAt: Date.now() + data.expires_in * 1000,
-  };
-  await setTokensCookie(tokens);
-  return tokens;
+  // Ce composant serveur ne peut pas écrire de cookie (Next.js l'interdit
+  // hors Server Action / Route Handler / middleware) : le middleware
+  // rafraîchit déjà le jeton avant que la page ne s'exécute, donc ce point ne
+  // devrait normalement jamais être atteint avec un jeton expiré. S'il l'est
+  // quand même (horloge limite entre le middleware et le rendu), on lit le
+  // résultat sans écrire de cookie ici — la requête suivante sera rattrapée
+  // par le middleware, ou l'utilisateur sera renvoyé se connecter si le
+  // jeton de rafraîchissement est lui-même expiré.
+  const refreshed = await fetchRefreshedTokens(tokens.refreshToken);
+  return refreshed?.accessToken ?? null;
 }
 
 export type OAuthFlow = {
