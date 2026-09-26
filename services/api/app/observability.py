@@ -41,6 +41,9 @@ EVENT_FIELDS = (
     "duration_ms",
     "error_type",
     "frames",
+    "seq",
+    "entry_hash",
+    "audit_tenant_id",
 )
 
 logger = logging.getLogger("paios.http")

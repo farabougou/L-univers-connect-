@@ -85,3 +85,19 @@ python scripts/supervision_sweep.py --interval 60
 
 En production (Railway), ce même script s'exécute avec `--once` sur un service Cron Jobs
 plutôt qu'en boucle : voir `app/supervision_sweep.py` pour le détail du mécanisme.
+
+## Ancrage externe du journal d'audit
+
+Le journal d'audit (`app/audit.py`) est chaîné par hachage à l'intérieur de la base :
+modifier une entrée déjà écrite casse la chaîne. Ce balayage ajoute un témoin extérieur
+à Postgres, pour qu'un accès direct et complet à la base (pas le fonctionnement normal
+de l'application) ne permette pas de réécrire toute la chaîne sans que cela se voie.
+Même principe d'exécution que le balayage de supervision ci-dessus :
+
+```bash
+cd services/api
+python scripts/anchor_audit_log.py --interval 3600
+```
+
+En production (Railway), ce même script s'exécute avec `--once` sur un service Cron Jobs
+(une fois par heure suffit) : voir `app/audit_anchor.py` pour le détail du mécanisme.
