@@ -123,7 +123,9 @@ async function uploadPhoto(
     },
   );
   if (!uploadUrlResponse.ok) {
-    throw new Error(`url d'envoi photo : ${uploadUrlResponse.status}`);
+    throw new Error(
+      `url d'envoi photo : ${uploadUrlResponse.status} ${await uploadUrlResponse.text()}`,
+    );
   }
   const { upload_url: uploadUrl, object_key: objectKey } = await uploadUrlResponse.json();
 
@@ -135,7 +137,10 @@ async function uploadPhoto(
     headers: { "Content-Type": "image/jpeg" },
   });
   if (!putResponse.ok) {
-    throw new Error(`envoi photo : ${putResponse.status}`);
+    // Le corps de la réponse (pas seulement le code HTTP) contient le motif
+    // exact renvoyé par le stockage (R2) : signature invalide, identifiants,
+    // bucket... indispensable pour diagnostiquer un 403 depuis le terrain.
+    throw new Error(`envoi photo : ${putResponse.status} ${await putResponse.text()}`);
   }
 
   const confirmResponse = await fetch(`${apiUrl}/interventions/${interventionId}/photos`, {
@@ -144,7 +149,9 @@ async function uploadPhoto(
     body: JSON.stringify({ object_key: objectKey, taken_at: row.started_at, client_ref: row.id }),
   });
   if (!confirmResponse.ok) {
-    throw new Error(`confirmation photo : ${confirmResponse.status}`);
+    throw new Error(
+      `confirmation photo : ${confirmResponse.status} ${await confirmResponse.text()}`,
+    );
   }
 }
 
