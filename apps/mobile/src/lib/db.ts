@@ -34,6 +34,12 @@ let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 function getDb(): Promise<SQLite.SQLiteDatabase> {
   if (!dbPromise) {
     dbPromise = SQLite.openDatabaseAsync("paios.db").then(async (db) => {
+      // Le mode WAL autorise une lecture pendant qu'une écriture est en
+      // cours (ex. countPendingInterventions() au démarrage, en même temps
+      // que le rafraîchissement du cache des équipements dès que le réseau
+      // revient) : sans lui, SQLite renvoie "database is locked" dès que
+      // deux appels se chevauchent sur cette connexion.
+      await db.execAsync("PRAGMA journal_mode = WAL;");
       await migrateLocalDatabase(db);
       return db;
     });
