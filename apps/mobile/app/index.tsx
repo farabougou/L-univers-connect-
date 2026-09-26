@@ -50,7 +50,10 @@ export default function HomeScreen() {
     const token = await auth.getAccessToken();
     if (!token) return;
     await syncPendingInterventions(config.apiUrl, token);
-    await refreshFunctionalLocationsCache(config.apiUrl, token).catch(() => {});
+    await refreshFunctionalLocationsCache(config.apiUrl, token).catch((error) => {
+      // eslint-disable-next-line no-console -- diagnostic terrain (voir sync.ts).
+      console.error("Échec du rafraîchissement du cache des équipements", error);
+    });
     await refreshPendingCount();
   }
 

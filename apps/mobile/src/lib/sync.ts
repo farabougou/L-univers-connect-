@@ -41,7 +41,10 @@ export async function syncPendingInterventions(
       }
       await deletePendingIntervention(row.id);
       synced += 1;
-    } catch {
+    } catch (error) {
+      // eslint-disable-next-line no-console -- diagnostic terrain : sans ce
+      // log, un échec de synchronisation reste invisible (voir ADR 013).
+      console.error(`Échec de synchronisation de l'intervention ${row.id}`, error);
       failed += 1;
     }
   }
