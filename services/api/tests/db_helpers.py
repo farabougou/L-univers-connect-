@@ -67,6 +67,24 @@ def purge_audit_log_for_tenant(tenant_id) -> None:
         admin_engine.dispose()
 
 
+def purge_floor_plans_for_tenant(tenant_id) -> None:
+    """Un plan n'est jamais supprimé (migration f65006c6d8c7)."""
+    admin_engine = create_engine(ADMIN_DATABASE_URL)
+    try:
+        with admin_engine.begin() as connection:
+            connection.execute(
+                text("ALTER TABLE floor_plans DISABLE TRIGGER floor_plans_no_delete")
+            )
+            connection.execute(
+                text("DELETE FROM floor_plans WHERE tenant_id = :id"), {"id": tenant_id}
+            )
+            connection.execute(
+                text("ALTER TABLE floor_plans ENABLE TRIGGER floor_plans_no_delete")
+            )
+    finally:
+        admin_engine.dispose()
+
+
 def purge_intervention_closures_for_tenant(tenant_id) -> None:
     """Les clôtures d'intervention sont des preuves, protégées contre toute
     suppression (voir la migration a4a1fa8a4cfa)."""

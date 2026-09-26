@@ -14,6 +14,7 @@ from app.routers.commands import router as commands_router
 from app.routers.configs import router as configs_router
 from app.routers.devices import router as devices_router
 from app.routers.energy import router as energy_router
+from app.routers.floor_plans import router as floor_plans_router
 from app.routers.graph import router as graph_router
 from app.routers.maintenance import router as maintenance_router
 from app.routers.passport import router as passport_router
@@ -38,6 +39,7 @@ app.include_router(passport_router)
 app.include_router(maintenance_router)
 app.include_router(telemetry_router)
 app.include_router(energy_router)
+app.include_router(floor_plans_router)
 
 
 @app.get("/health")

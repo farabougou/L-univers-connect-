@@ -303,6 +303,34 @@ class PhotoOut(BaseModel):
     uploaded_at: datetime
 
 
+class FloorPlanUploadUrlRequest(BaseModel):
+    filename: str = Field(min_length=1, max_length=255)
+    content_type: str = Field(min_length=1, max_length=100)
+
+
+class FloorPlanUploadUrlOut(BaseModel):
+    upload_url: str
+    object_key: str
+
+
+class FloorPlanCreate(BaseModel):
+    object_key: str = Field(min_length=1, max_length=500)
+    filename: str = Field(min_length=1, max_length=255)
+    content_type: str = Field(min_length=1, max_length=100)
+    sha256: str = Field(min_length=64, max_length=64, pattern=r"^[0-9a-f]{64}$")
+
+
+class FloorPlanOut(BaseModel):
+    id: uuid.UUID
+    space_id: uuid.UUID
+    version: int
+    filename: str
+    content_type: str
+    download_url: str
+    uploaded_by: str
+    uploaded_at: datetime
+
+
 class GraphNodeOut(BaseModel):
     id: uuid.UUID
     node_type: str

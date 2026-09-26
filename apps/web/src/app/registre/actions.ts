@@ -1,5 +1,7 @@
 "use server";
 
+import { createHash } from "node:crypto";
+
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -188,4 +190,62 @@ export async function showTag(formData: FormData) {
   }
   const tag = await createResponse.json();
   redirect(`/registre?tag=${encodeURIComponent(tag.payload)}&label=${encodeURIComponent(String(label))}`);
+}
+
+/**
+ * Envoi d'un plan (ADR 011, étape S3) : le navigateur envoie le fichier ici,
+ * ce serveur fait le double aller-retour vers l'API (URL présignée, puis
+ * envoi direct au stockage) — pas de JavaScript côté client, comme le reste
+ * de cette page. L'empreinte SHA-256 exigée par l'API est calculée ici, sur
+ * les octets réellement envoyés.
+ */
+export async function uploadFloorPlan(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const spaceId = formData.get("space_id");
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    redirect("/registre?error=CREATION_FAILED");
+  }
+
+  const uploadUrlResponse = await apiFetch(
+    `/spaces/${spaceId}/floor-plans/upload-url`,
+    accessToken,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ filename: file.name, content_type: file.type }),
+    },
+  );
+  if (!uploadUrlResponse.ok) {
+    await redirectOnFailure(uploadUrlResponse);
+  }
+  const { upload_url: uploadUrl, object_key: objectKey } = await uploadUrlResponse.json();
+
+  const bytes = await file.arrayBuffer();
+  const putResponse = await fetch(uploadUrl, {
+    method: "PUT",
+    body: bytes,
+    headers: { "Content-Type": file.type },
+  });
+  if (!putResponse.ok) {
+    redirect("/registre?error=CREATION_FAILED");
+  }
+
+  const sha256 = createHash("sha256").update(Buffer.from(bytes)).digest("hex");
+  const createResponse = await apiFetch(`/spaces/${spaceId}/floor-plans`, accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      object_key: objectKey,
+      filename: file.name,
+      content_type: file.type,
+      sha256,
+    }),
+  });
+  if (!createResponse.ok) {
+    await redirectOnFailure(createResponse);
+  }
+
+  revalidatePath("/registre");
+  redirect(`/registre?space=${spaceId}`);
 }

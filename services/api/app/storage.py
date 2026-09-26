@@ -59,6 +59,29 @@ def key_belongs_to(object_key: str, *, tenant_id: uuid.UUID, intervention_id: uu
     return bool(name) and "/" not in name and name not in (".", "..")
 
 
+def build_floor_plan_object_key(
+    *, tenant_id: uuid.UUID, space_id: uuid.UUID, filename: str
+) -> str:
+    """Même principe que build_object_key, pour les plans (ADR 011, étape
+    S3) : un dossier par espace. Le numéro de version n'entre pas dans la
+    clé — c'est un fait décidé par le serveur au moment d'enregistrer le
+    plan (voir app/floor_plans.py), jamais une valeur fournie par le client."""
+    safe_filename = filename.replace("/", "_")
+    return f"{tenant_id}/floor-plans/{space_id}/{uuid.uuid4()}-{safe_filename}"
+
+
+def floor_plan_key_belongs_to(
+    object_key: str, *, tenant_id: uuid.UUID, space_id: uuid.UUID
+) -> bool:
+    """Vrai seulement pour une clé du dossier de cet espace, chez ce tenant,
+    sans sous-dossier (même contrôle que key_belongs_to pour les photos)."""
+    prefix = f"{tenant_id}/floor-plans/{space_id}/"
+    if not object_key.startswith(prefix):
+        return False
+    name = object_key[len(prefix) :]
+    return bool(name) and "/" not in name and name not in (".", "..")
+
+
 def create_presigned_upload_url(object_key: str, *, content_type: str) -> str:
     """URL temporaire à usage unique : le client mobile envoie la photo
     directement au stockage, sans jamais recevoir les identifiants d'accès.

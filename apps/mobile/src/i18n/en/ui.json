@@ -378,7 +378,17 @@
       "energy_baseline_kind_label": "Degree days",
       "energy_baseline_compute_title": "Compute normalized performance",
       "energy_baseline_compute_period_start": "Analyzed period start",
-      "energy_baseline_compute_period_end": "Analyzed period end"
+      "energy_baseline_compute_period_end": "Analyzed period end",
+      "floor_plans_title": "2D Plans",
+      "floor_plans_select_space": "Space",
+      "floor_plans_view_button": "View plans",
+      "floor_plans_for": "Plans for {name}",
+      "floor_plans_none": "No plan uploaded for this space yet.",
+      "floor_plans_version": "Version {version}",
+      "floor_plans_view_link": "View",
+      "floor_plans_uploaded_by": "Uploaded by {actor} on {date}",
+      "floor_plans_upload_title": "Upload a plan",
+      "floor_plans_file_label": "File (PDF, PNG or JPEG)"
     }
   },
   "space_type": {

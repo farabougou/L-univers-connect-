@@ -378,7 +378,17 @@
       "energy_baseline_kind_label": "Degrés-jours",
       "energy_baseline_compute_title": "Calculer la performance normalisée",
       "energy_baseline_compute_period_start": "Début de la période analysée",
-      "energy_baseline_compute_period_end": "Fin de la période analysée"
+      "energy_baseline_compute_period_end": "Fin de la période analysée",
+      "floor_plans_title": "Plans 2D",
+      "floor_plans_select_space": "Espace",
+      "floor_plans_view_button": "Voir les plans",
+      "floor_plans_for": "Plans de {name}",
+      "floor_plans_none": "Aucun plan envoyé pour cet espace.",
+      "floor_plans_version": "Version {version}",
+      "floor_plans_view_link": "Voir",
+      "floor_plans_uploaded_by": "Envoyé par {actor} le {date}",
+      "floor_plans_upload_title": "Envoyer un plan",
+      "floor_plans_file_label": "Fichier (PDF, PNG ou JPEG)"
     }
   },
   "space_type": {

@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import type { Translator } from "@/i18n/translator";
+import { type Translator, formatDateTime } from "@/i18n/translator";
 import { apiFetch, requireAccessToken } from "@/lib/api";
 import {
   cellStyle,
@@ -9,7 +9,7 @@ import {
   labelStyle,
   submitStyle,
 } from "@/lib/formStyles";
-import { errorMessage, getTranslator } from "@/lib/i18n";
+import { errorMessage, getLocale, getTranslator } from "@/lib/i18n";
 import { type Me, canManage as computeCanManage } from "@/lib/roles";
 import { renderTagQr } from "@/lib/tagQr";
 
@@ -20,6 +20,7 @@ import {
   createSpace,
   showTag,
   updateSiteTimezone,
+  uploadFloorPlan,
 } from "./actions";
 
 type Site = { id: string; name: string; timezone: string | null };
@@ -32,6 +33,14 @@ type Space = {
   space_type: string;
   code: string;
   name: string;
+};
+type FloorPlan = {
+  id: string;
+  version: number;
+  filename: string;
+  download_url: string;
+  uploaded_by: string;
+  uploaded_at: string;
 };
 
 // Même vocabulaire que app/spatial_vocabulary.py (ADR 011) ; un jeu de cinq
@@ -46,11 +55,12 @@ function creationError(translator: Translator, code: string | undefined): string
 export default async function RegistrePage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; tag?: string; label?: string }>;
+  searchParams: Promise<{ error?: string; tag?: string; label?: string; space?: string }>;
 }) {
   const accessToken = await requireAccessToken();
   const translator = await getTranslator();
   const { t } = translator;
+  const locale = await getLocale();
   const params = await searchParams;
   const error = creationError(translator, params.error);
 
@@ -89,6 +99,12 @@ export default async function RegistrePage({
   let tagSvg: string | null = null;
   if (params.tag) {
     tagSvg = await renderTagQr(params.tag);
+  }
+
+  let floorPlans: FloorPlan[] = [];
+  if (params.space) {
+    const floorPlansResponse = await apiFetch(`/spaces/${params.space}/floor-plans`, accessToken);
+    floorPlans = floorPlansResponse.ok ? await floorPlansResponse.json() : [];
   }
 
   return (
@@ -245,6 +261,72 @@ export default async function RegistrePage({
             {t("web.registre.submit")}
           </button>
         </form>
+      )}
+
+      <h2 style={{ marginTop: 40 }}>{t("web.registre.floor_plans_title")}</h2>
+      <form method="get" style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+        <label style={{ flex: 1 }}>
+          {t("web.registre.floor_plans_select_space")}
+          <select name="space" defaultValue={params.space ?? ""} style={fieldStyle}>
+            <option value="" disabled>
+              {t("web.registre.floor_plans_select_space")}
+            </option>
+            {spaces.map((space) => (
+              <option key={space.id} value={space.id}>
+                {siteName(space.site_id)} — {t(`space_type.${space.space_type}`)} — {space.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button type="submit" style={submitStyle}>
+          {t("web.registre.floor_plans_view_button")}
+        </button>
+      </form>
+
+      {params.space && (
+        <section style={{ marginTop: 16 }}>
+          <h3>{t("web.registre.floor_plans_for", { name: spaceLabel(params.space) })}</h3>
+          {floorPlans.length === 0 ? (
+            <p>{t("web.registre.floor_plans_none")}</p>
+          ) : (
+            <ul>
+              {floorPlans.map((plan) => (
+                <li key={plan.id}>
+                  {t("web.registre.floor_plans_version", { version: plan.version })} —{" "}
+                  {plan.filename} —{" "}
+                  <a href={plan.download_url} target="_blank" rel="noreferrer">
+                    {t("web.registre.floor_plans_view_link")}
+                  </a>
+                  <br />
+                  <span style={{ color: "#666" }}>
+                    {t("web.registre.floor_plans_uploaded_by", {
+                      actor: plan.uploaded_by,
+                      date: formatDateTime(locale, plan.uploaded_at),
+                    })}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <h4>{t("web.registre.floor_plans_upload_title")}</h4>
+          <form action={uploadFloorPlan} style={{ maxWidth: 400 }}>
+            <input type="hidden" name="space_id" value={params.space} />
+            <label style={labelStyle}>
+              {t("web.registre.floor_plans_file_label")}
+              <input
+                type="file"
+                name="file"
+                accept="application/pdf,image/png,image/jpeg"
+                required
+                style={fieldStyle}
+              />
+            </label>
+            <button type="submit" style={submitStyle}>
+              {t("web.registre.submit")}
+            </button>
+          </form>
+        </section>
       )}
 
       <h2 style={{ marginTop: 40 }}>{t("web.registre.equipment_title")}</h2>
