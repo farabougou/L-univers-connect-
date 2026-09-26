@@ -27,7 +27,7 @@ import {
   validateClosure,
 } from "../src/lib/closure";
 import { takePhoto } from "../src/lib/photos";
-import { syncPendingInterventions } from "../src/lib/sync";
+import { synchronize } from "../src/lib/sync";
 
 // Codes des vérifications (enregistrés tels quels) ; libellés dans le catalogue.
 const CHECKLIST_ITEMS = ["pression_ok", "bruit_anormal", "filtre_propre"];
@@ -98,9 +98,11 @@ export default function NouvelleInterventionScreen() {
       // Tentative d'envoi immédiat si le réseau est disponible maintenant ;
       // sinon la ligne reste en attente et sera reprise plus tard (voir
       // ADR 010 et le déclenchement automatique sur l'écran d'accueil).
+      // synchronize() partage un même verrou avec l'écran d'accueil : les
+      // deux ne peuvent jamais écrire dans la base locale en même temps.
       const token = await auth.getAccessToken();
       if (token) {
-        await syncPendingInterventions(config.apiUrl, token).catch(() => {});
+        await synchronize(config.apiUrl, token).catch(() => {});
       }
 
       router.back();

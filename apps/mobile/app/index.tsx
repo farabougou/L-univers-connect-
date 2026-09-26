@@ -7,7 +7,7 @@ import { config } from "../src/lib/config";
 import { t } from "../src/lib/i18n";
 import { useAuth } from "../src/lib/auth";
 import { countPendingInterventions } from "../src/lib/db";
-import { refreshFunctionalLocationsCache, syncPendingInterventions } from "../src/lib/sync";
+import { synchronize } from "../src/lib/sync";
 
 type MeResponse = {
   sub: string;
@@ -49,11 +49,7 @@ export default function HomeScreen() {
   async function runSync() {
     const token = await auth.getAccessToken();
     if (!token) return;
-    await syncPendingInterventions(config.apiUrl, token);
-    await refreshFunctionalLocationsCache(config.apiUrl, token).catch((error) => {
-      // eslint-disable-next-line no-console -- diagnostic terrain (voir sync.ts).
-      console.error("Échec du rafraîchissement du cache des équipements", error);
-    });
+    await synchronize(config.apiUrl, token);
     await refreshPendingCount();
   }
 

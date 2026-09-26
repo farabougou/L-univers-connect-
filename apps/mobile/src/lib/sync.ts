@@ -13,6 +13,37 @@ export type SyncResult = {
   failed: number;
 };
 
+let inFlightSync: Promise<SyncResult> | null = null;
+
+/**
+ * Point d'entrée unique pour synchroniser (interventions en attente puis
+ * cache des équipements). La création d'une intervention et le retour du
+ * réseau peuvent chacun déclencher une synchronisation à quelques
+ * millisecondes d'écart ; deux synchronisations en même temps écrivent
+ * toutes les deux dans la base locale, et SQLite n'autorise qu'un seul
+ * écrivain à la fois même en mode WAL — la seconde écriture échoue alors
+ * avec "database is locked". Un appel pendant qu'une synchronisation est
+ * déjà en cours attend simplement son résultat plutôt que d'en démarrer une
+ * seconde.
+ */
+export function synchronize(apiUrl: string, accessToken: string): Promise<SyncResult> {
+  if (!inFlightSync) {
+    inFlightSync = runSynchronize(apiUrl, accessToken).finally(() => {
+      inFlightSync = null;
+    });
+  }
+  return inFlightSync;
+}
+
+async function runSynchronize(apiUrl: string, accessToken: string): Promise<SyncResult> {
+  const result = await syncPendingInterventions(apiUrl, accessToken);
+  await refreshFunctionalLocationsCache(apiUrl, accessToken).catch((error) => {
+    // eslint-disable-next-line no-console -- diagnostic terrain (voir plus bas).
+    console.error("Échec du rafraîchissement du cache des équipements", error);
+  });
+  return result;
+}
+
 /**
  * Envoie les interventions créées hors ligne vers l'API, dans l'ordre où
  * elles ont été créées. Chaque étape (créer l'intervention, puis la photo)
