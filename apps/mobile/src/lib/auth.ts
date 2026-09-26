@@ -14,6 +14,16 @@ WebBrowser.maybeCompleteAuthSession();
 
 const TOKENS_STORE_KEY = "paios_tokens";
 
+/**
+ * Marge avant expiration à partir de laquelle rafraîchir le jeton. Le seuil
+ * par défaut d'expo-auth-session (10 minutes) suppose une durée de vie de
+ * jeton bien plus longue que les 5 minutes par défaut de Keycloak : avec ce
+ * défaut, un jeton fraîchement obtenu est déjà "à rafraîchir", ce qui
+ * déclenche un rafraîchissement à chaque rendu et boucle indéfiniment
+ * ("Maximum update depth exceeded").
+ */
+const REFRESH_MARGIN_SECONDS = 30;
+
 // Endpoints standards OpenID Connect exposés par tout serveur Keycloak, pour
 // le realm "paios" (voir docs/adr/002-authentification.md). Pas de découverte
 // automatique ici : ça évite un aller-retour réseau de plus au démarrage.
@@ -116,7 +126,7 @@ export function useAuth() {
     if (!tokenResponse) {
       return null;
     }
-    if (!tokenResponse.shouldRefresh()) {
+    if (AuthSession.TokenResponse.isTokenFresh(tokenResponse, -REFRESH_MARGIN_SECONDS)) {
       return tokenResponse.accessToken;
     }
     try {
