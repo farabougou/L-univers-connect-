@@ -1,0 +1,141 @@
+"""Vocabulaire interne versionné du graphe d'actifs (ADR 012, section 2.2).
+
+Aligné sur les standards sans en dépendre : chaque prédicat indique sa
+correspondance connue dans Brick Schema ou ASHRAE 223P, et `None` quand aucune
+correspondance n'a été vérifiée (mieux vaut l'absence qu'une correspondance
+inventée). Un seul sens est stocké ; l'inverse est seulement affiché.
+
+Modifier ce vocabulaire (ajout, retrait, changement de domaine) impose de
+changer VOCABULARY_VERSION : chaque relation garde la version sous laquelle
+elle a été créée.
+
+Historique :
+- 2026-09-23.1 : F1, sites, positions fonctionnelles, exemplaires.
+- 2026-09-23.2 : F2, ajout des espaces (bâtiment, étage, pièce, zone) et du
+  prédicat déduit « locatedIn ».
+- 2026-09-23.3 : F3, ajout des points de télémétrie, du prédicat déduit
+  « hasPoint », et d'un point comme objet possible de « measuredBy ».
+"""
+
+from dataclasses import dataclass
+
+from app.errors import DomainError
+
+VOCABULARY_VERSION = "2026-09-23.3"
+
+# Types de nœuds existants à ce jour. Les types futurs (edge_device,
+# organization) seront ajoutés avec leurs tables respectives.
+NODE_TYPES = ("site", "space", "functional_location", "physical_unit", "point")
+
+# Systèmes dont on accepte les identifiants (table external_identifiers).
+EXTERNAL_ID_SCHEMES = ("customer_code", "ifc_global_id", "bacnet_object", "haystack_id")
+
+
+@dataclass(frozen=True)
+class Predicate:
+    name: str
+    inverse: str
+    subject_types: tuple[str, ...]
+    object_types: tuple[str, ...]
+    # Déduit des arbres (colonnes parent_id, site_id, space_id) : jamais stocké
+    # dans la table relations, pour garder une seule source de vérité.
+    structural: bool = False
+    brick: str | None = None
+    s223: str | None = None
+
+
+_EQUIPMENT = ("functional_location",)
+_SPACE = ("space",)
+_EQUIPMENT_OR_SPACE = ("space", "functional_location")
+
+PREDICATES: dict[str, Predicate] = {
+    p.name: p
+    for p in (
+        Predicate(
+            "contains",
+            "isContainedIn",
+            ("site",),
+            _EQUIPMENT_OR_SPACE,
+            structural=True,
+        ),
+        Predicate(
+            "hasPart",
+            "isPartOf",
+            _EQUIPMENT_OR_SPACE,
+            _EQUIPMENT_OR_SPACE,
+            structural=True,
+            brick="brick:hasPart",
+        ),
+        Predicate(
+            "locatedIn",
+            "isLocationOf",
+            _EQUIPMENT,
+            _SPACE,
+            structural=True,
+            brick="brick:hasLocation",
+        ),
+        Predicate(
+            "hasPoint",
+            "isPointOf",
+            _EQUIPMENT_OR_SPACE,
+            ("point",),
+            structural=True,
+            brick="brick:hasPoint",
+        ),
+        # Une CTA alimente un autre équipement ou directement une zone.
+        Predicate("feeds", "isFedBy", _EQUIPMENT, _EQUIPMENT_OR_SPACE, brick="brick:feeds"),
+        Predicate("poweredBy", "powers", _EQUIPMENT, _EQUIPMENT),
+        # Mesuré par un compteur (équipement) ou par un point situé ailleurs
+        # (sonde d'ambiance d'une zone voisine, par exemple).
+        Predicate("measuredBy", "measures", _EQUIPMENT_OR_SPACE, ("functional_location", "point")),
+        Predicate("controlledBy", "controls", _EQUIPMENT, _EQUIPMENT),
+        Predicate(
+            "connectedTo",
+            "connectedTo",
+            _EQUIPMENT,
+            _EQUIPMENT,
+            s223="s223:connectedTo",
+        ),
+        # Une pièce desservie par une zone CVC qui la dépasse (zone transverse,
+        # ADR 011) : la zone, elle, est alimentée par la CTA via « feeds ».
+        Predicate("servedBy", "serves", _SPACE, _SPACE),
+        Predicate(
+            "maintainedBy",
+            "maintains",
+            ("site", "space", "functional_location", "physical_unit"),
+            (),
+        ),
+        Predicate(
+            "dependsOn",
+            "isDependencyOf",
+            ("site", "space", "functional_location"),
+            ("site", "space", "functional_location"),
+        ),
+        Predicate("protectedBy", "protects", _EQUIPMENT_OR_SPACE, _EQUIPMENT),
+    )
+}
+
+
+class VocabularyError(DomainError, ValueError):
+    pass
+
+
+def check_storable_relation(predicate: str, subject_type: str, object_type: str) -> Predicate:
+    """Vérifie qu'une relation peut être enregistrée avec ce vocabulaire.
+
+    Lève VocabularyError avec un message compréhensible sinon.
+    """
+    definition = PREDICATES.get(predicate)
+    if definition is None:
+        raise VocabularyError("PREDICATE_UNKNOWN", predicate=predicate)
+    if definition.structural:
+        raise VocabularyError("PREDICATE_STRUCTURAL", predicate=predicate)
+    if subject_type not in definition.subject_types:
+        raise VocabularyError(
+            "PREDICATE_SUBJECT_TYPE_INVALID", predicate=predicate, node_type=subject_type
+        )
+    if object_type not in definition.object_types:
+        raise VocabularyError(
+            "PREDICATE_OBJECT_TYPE_INVALID", predicate=predicate, node_type=object_type
+        )
+    return definition

@@ -1,0 +1,12 @@
+fastapi==0.141.1
+uvicorn[standard]==0.53.0
+sqlalchemy==2.0.54
+alembic==1.20.0
+psycopg[binary]==3.3.6
+pydantic-settings==2.15.0
+python-jose[cryptography]==3.5.0
+httpx==0.28.1
+boto3==1.43.100
+tzdata==2026.4
+pymodbus==3.15.0
+bacpypes3==0.0.110

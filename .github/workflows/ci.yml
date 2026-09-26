@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/api
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          # "postgres" est le compte d'administration, utilisé seulement pour
+          # créer le rôle applicatif non superutilisateur (voir l'étape
+          # dédiée ci-dessous). L'API et les tests utilisent ensuite ce rôle
+          # applicatif "paios", jamais le compte administrateur.
+          POSTGRES_PASSWORD: postgres_admin_dev_password
+          POSTGRES_DB: paios
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -d paios"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql+psycopg://paios:paios_dev_password@localhost:5432/paios
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Installer les dépendances
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Lint (ruff)
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: Créer le rôle applicatif non superutilisateur
+        env:
+          PGPASSWORD: postgres_admin_dev_password
+        run: psql -h localhost -U postgres -d paios -f ../../infra/init-db/01-create-app-role.sql
+
+      - name: Migrer la base de données (Alembic)
+        run: alembic upgrade head
+
+      - name: Tests (pytest)
+        run: pytest
+
+  mobile:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Vérification des types (TypeScript)
+        run: npm run typecheck
+
+      - name: Tests (vitest)
+        run: npm test
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Lint (ESLint)
+        run: npm run lint
+
+      - name: Vérification des types (TypeScript)
+        run: npm run typecheck
+
+      - name: Tests (vitest)
+        run: npm test
+
+      - name: Build
+        run: npm run build
