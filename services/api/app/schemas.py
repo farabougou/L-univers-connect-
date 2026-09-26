@@ -354,6 +354,22 @@ class PlanPlacementOut(BaseModel):
     validated_at: datetime | None
 
 
+class PlanPlacementLiveOut(BaseModel):
+    id: uuid.UUID
+    floor_plan_id: uuid.UUID
+    space_id: uuid.UUID | None
+    functional_location_id: uuid.UUID | None
+    point_id: uuid.UUID | None
+    x_ratio: float
+    y_ratio: float
+    point_value: float | None
+    point_value_type: str | None
+    point_unit: str | None
+    point_states: dict[str, str] | None
+    point_measured_at: datetime | None
+    point_trust_score: int | None
+
+
 class GraphNodeOut(BaseModel):
     id: uuid.UUID
     node_type: str

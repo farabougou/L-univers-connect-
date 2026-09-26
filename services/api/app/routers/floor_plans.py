@@ -3,6 +3,7 @@ un espace du registre ; il ne copie jamais son nom ni ses caractéristiques.
 """
 
 import uuid
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
@@ -20,6 +21,7 @@ from app.floor_plans import (
     list_floor_plans,
     record_floor_plan,
 )
+from app.monitoring import evaluate_data_freshness
 from app.plan_placements import (
     PlacementConflict,
     PlacementInvalid,
@@ -30,12 +32,14 @@ from app.plan_placements import (
     record_placement,
     validate_placement,
 )
+from app.points import get_point
 from app.schemas import (
     FloorPlanCreate,
     FloorPlanOut,
     FloorPlanUploadUrlOut,
     FloorPlanUploadUrlRequest,
     PlanPlacementCreate,
+    PlanPlacementLiveOut,
     PlanPlacementOut,
 )
 from app.spatial import get_space
@@ -45,6 +49,8 @@ from app.storage import (
     create_presigned_upload_url,
     floor_plan_key_belongs_to,
 )
+from app.telemetry import list_measurements
+from app.trust import compute_trust
 
 router = APIRouter()
 
@@ -267,6 +273,73 @@ def list_placements_route(
 ) -> list[PlanPlacementOut]:
     _check_floor_plan_exists(connection, floor_plan_id)
     return [_placement_to_out(row) for row in list_placements(connection, floor_plan_id)]
+
+
+def _live_placement_out(
+    connection: Connection, tenant_id: uuid.UUID, row: dict, at: datetime
+) -> PlanPlacementLiveOut:
+    """Enrichit un placement validé avec la dernière valeur connue du point
+    visé, quand il en vise un : dernière valeur mesurée, pas une commande, et
+    jamais présentée comme plus fraîche que sa date de mesure (ADR 013)."""
+    point_value: float | None = None
+    point_value_type: str | None = None
+    point_unit: str | None = None
+    point_states: dict[str, str] | None = None
+    point_measured_at: datetime | None = None
+    point_trust_score: int | None = None
+
+    if row["point_id"] is not None:
+        point = get_point(connection, row["point_id"])
+        if point is not None:
+            point_value_type = point["value_type"]
+            point_unit = point["unit"]
+            point_states = point["states"]
+            latest = list_measurements(connection, point_id=point["id"], limit=1)
+            if latest:
+                point_value = latest[0]["value"]
+                point_measured_at = latest[0]["measured_at"]
+            trust = compute_trust(connection, point, at)
+            evaluate_data_freshness(
+                connection, tenant_id=tenant_id, point=point, trust=trust, at=at
+            )
+            point_trust_score = trust["score"]
+
+    return PlanPlacementLiveOut(
+        id=row["id"],
+        floor_plan_id=row["floor_plan_id"],
+        space_id=row["space_id"],
+        functional_location_id=row["functional_location_id"],
+        point_id=row["point_id"],
+        x_ratio=float(row["x_ratio"]),
+        y_ratio=float(row["y_ratio"]),
+        point_value=point_value,
+        point_value_type=point_value_type,
+        point_unit=point_unit,
+        point_states=point_states,
+        point_measured_at=point_measured_at,
+        point_trust_score=point_trust_score,
+    )
+
+
+@router.get(
+    "/floor-plans/{floor_plan_id}/placements/live",
+    response_model=list[PlanPlacementLiveOut],
+)
+def list_live_placements_route(
+    floor_plan_id: uuid.UUID,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
+    _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> list[PlanPlacementLiveOut]:
+    """Affichage temps réel sur plan (matrice de comparaison) : seuls les
+    placements validés sont montrés — un placement encore proposé n'a pas
+    été confirmé comme correct, on ne l'affiche jamais comme une réalité."""
+    _check_floor_plan_exists(connection, floor_plan_id)
+    at = datetime.now(UTC)
+    validated = [
+        row for row in list_placements(connection, floor_plan_id) if row["status"] == "validated"
+    ]
+    return [_live_placement_out(connection, tenant_id, row, at) for row in validated]
 
 
 @router.post("/placements/{placement_id}/validate", response_model=PlanPlacementOut)

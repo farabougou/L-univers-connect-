@@ -2,6 +2,7 @@
 ou point, jamais deux à la fois, avec un cycle proposé → validé."""
 
 import uuid
+from datetime import UTC, datetime
 from unittest.mock import patch
 
 import pytest
@@ -11,7 +12,8 @@ from sqlalchemy import text
 from app.db import engine
 from app.floor_plans import record_floor_plan
 from app.main import app
-from app.points import create_point
+from app.points import create_point, get_point
+from app.telemetry import record_measurement
 from app.tenancy import set_tenant_context
 from tests.db_helpers import purge_audit_log_for_tenant, purge_floor_plans_for_tenant
 from tests.jwt_helpers import JWKS, make_token
@@ -88,7 +90,7 @@ def _cleanup(tenant: dict) -> None:
     purge_floor_plans_for_tenant(tenant_id)
     with engine.begin() as connection:
         set_tenant_context(connection, tenant_id)
-        for table in ("points", "functional_locations", "spaces", "sites"):
+        for table in ("measurements", "points", "functional_locations", "spaces", "sites"):
             connection.execute(
                 text(f"DELETE FROM {table} WHERE tenant_id = :id"), {"id": tenant_id}
             )
@@ -269,3 +271,56 @@ def test_placement_introuvable_renvoie_404(tenant) -> None:
     assert validate_response.json()["code"] == "PLAN_PLACEMENT_NOT_FOUND"
     assert delete_response.status_code == 404
     assert delete_response.json()["code"] == "PLAN_PLACEMENT_NOT_FOUND"
+
+
+def test_affichage_temps_reel_montre_la_derniere_valeur_du_point(tenant) -> None:
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant["tenant_id"])
+        point = get_point(connection, tenant["point_id"])
+        record_measurement(
+            connection,
+            tenant_id=tenant["tenant_id"],
+            point=point,
+            value=1.0,
+            measured_at=datetime.now(UTC),
+            origin="measured",
+            source="test",
+            received_at=datetime.now(UTC),
+        )
+
+    headers = _auth_headers(tenant["tenant_id"], ["admin_tenant"])
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        proposed = client.post(
+            f"/floor-plans/{tenant['floor_plan_id']}/placements",
+            json={"point_id": str(tenant["point_id"]), "x_ratio": 0.4, "y_ratio": 0.4},
+            headers=headers,
+        )
+        placement_id = proposed.json()["id"]
+        client.post(f"/placements/{placement_id}/validate", headers=headers)
+        live_response = client.get(
+            f"/floor-plans/{tenant['floor_plan_id']}/placements/live", headers=headers
+        )
+
+    assert live_response.status_code == 200
+    [live] = live_response.json()
+    assert live["id"] == placement_id
+    assert live["point_value"] == 1.0
+    assert live["point_value_type"] == "boolean"
+    assert live["point_measured_at"] is not None
+    assert isinstance(live["point_trust_score"], int)
+
+
+def test_affichage_temps_reel_masque_les_placements_encore_proposes(tenant) -> None:
+    headers = _auth_headers(tenant["tenant_id"], ["admin_tenant"])
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        client.post(
+            f"/floor-plans/{tenant['floor_plan_id']}/placements",
+            json={"space_id": str(tenant["space_id"]), "x_ratio": 0.5, "y_ratio": 0.5},
+            headers=headers,
+        )
+        live_response = client.get(
+            f"/floor-plans/{tenant['floor_plan_id']}/placements/live", headers=headers
+        )
+
+    assert live_response.status_code == 200
+    assert live_response.json() == []
