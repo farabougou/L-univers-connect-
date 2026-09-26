@@ -331,6 +331,29 @@ class FloorPlanOut(BaseModel):
     uploaded_at: datetime
 
 
+class PlanPlacementCreate(BaseModel):
+    space_id: uuid.UUID | None = None
+    functional_location_id: uuid.UUID | None = None
+    point_id: uuid.UUID | None = None
+    x_ratio: float = Field(ge=0, le=1)
+    y_ratio: float = Field(ge=0, le=1)
+
+
+class PlanPlacementOut(BaseModel):
+    id: uuid.UUID
+    floor_plan_id: uuid.UUID
+    space_id: uuid.UUID | None
+    functional_location_id: uuid.UUID | None
+    point_id: uuid.UUID | None
+    x_ratio: float
+    y_ratio: float
+    status: str
+    created_by: str
+    created_at: datetime
+    validated_by: str | None
+    validated_at: datetime | None
+
+
 class GraphNodeOut(BaseModel):
     id: uuid.UUID
     node_type: str

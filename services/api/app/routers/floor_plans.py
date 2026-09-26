@@ -6,6 +6,7 @@ import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
+from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
 from app.audit import append_audit_entry
@@ -19,11 +20,23 @@ from app.floor_plans import (
     list_floor_plans,
     record_floor_plan,
 )
+from app.plan_placements import (
+    PlacementConflict,
+    PlacementInvalid,
+    PlacementNotFound,
+    delete_placement,
+    get_placement,
+    list_placements,
+    record_placement,
+    validate_placement,
+)
 from app.schemas import (
     FloorPlanCreate,
     FloorPlanOut,
     FloorPlanUploadUrlOut,
     FloorPlanUploadUrlRequest,
+    PlanPlacementCreate,
+    PlanPlacementOut,
 )
 from app.spatial import get_space
 from app.storage import (
@@ -46,6 +59,52 @@ def _actor(claims: dict) -> str:
 def _check_space_exists(connection: Connection, space_id: uuid.UUID) -> None:
     if get_space(connection, space_id) is None:
         raise ApiError(404, "SPACE_NOT_FOUND")
+
+
+def _check_floor_plan_exists(connection: Connection, floor_plan_id: uuid.UUID) -> None:
+    if get_floor_plan(connection, floor_plan_id) is None:
+        raise ApiError(404, "FLOOR_PLAN_NOT_FOUND")
+
+
+def _check_placement_target_exists(
+    connection: Connection,
+    *,
+    space_id: uuid.UUID | None,
+    functional_location_id: uuid.UUID | None,
+    point_id: uuid.UUID | None,
+) -> None:
+    if space_id is not None:
+        _check_space_exists(connection, space_id)
+    elif functional_location_id is not None:
+        exists = connection.execute(
+            text("SELECT 1 FROM functional_locations WHERE id = :id"),
+            {"id": functional_location_id},
+        ).scalar()
+        if not exists:
+            raise ApiError(404, "FUNCTIONAL_LOCATION_NOT_FOUND")
+    elif point_id is not None:
+        exists = connection.execute(
+            text("SELECT 1 FROM points WHERE id = :id"), {"id": point_id}
+        ).scalar()
+        if not exists:
+            raise ApiError(404, "POINT_NOT_FOUND")
+
+
+def _placement_to_out(row: dict) -> PlanPlacementOut:
+    return PlanPlacementOut(
+        id=row["id"],
+        floor_plan_id=row["floor_plan_id"],
+        space_id=row["space_id"],
+        functional_location_id=row["functional_location_id"],
+        point_id=row["point_id"],
+        x_ratio=float(row["x_ratio"]),
+        y_ratio=float(row["y_ratio"]),
+        status=row["status"],
+        created_by=row["created_by"],
+        created_at=row["created_at"],
+        validated_by=row["validated_by"],
+        validated_at=row["validated_at"],
+    )
 
 
 def _to_out(row: dict) -> FloorPlanOut:
@@ -148,3 +207,108 @@ def get_floor_plan_route(
     if row is None:
         raise ApiError(404, "FLOOR_PLAN_NOT_FOUND")
     return _to_out(row)
+
+
+@router.post(
+    "/floor-plans/{floor_plan_id}/placements",
+    response_model=PlanPlacementOut,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_placement(
+    floor_plan_id: uuid.UUID,
+    body: PlanPlacementCreate,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
+    claims: Annotated[dict, Depends(require_any_role(*_MANAGE_REGISTRY_ROLES))],
+) -> PlanPlacementOut:
+    """Propose un placement (statut "proposed") : voir validate_placement
+    pour le confirmer. Le plan référence, il ne copie jamais un nom ni une
+    caractéristique de l'actif visé (ADR 011, section 3)."""
+    _check_floor_plan_exists(connection, floor_plan_id)
+    _check_placement_target_exists(
+        connection,
+        space_id=body.space_id,
+        functional_location_id=body.functional_location_id,
+        point_id=body.point_id,
+    )
+
+    try:
+        placement_id = record_placement(
+            connection,
+            tenant_id=tenant_id,
+            floor_plan_id=floor_plan_id,
+            space_id=body.space_id,
+            functional_location_id=body.functional_location_id,
+            point_id=body.point_id,
+            x_ratio=body.x_ratio,
+            y_ratio=body.y_ratio,
+            created_by=_actor(claims),
+        )
+    except PlacementInvalid as exc:
+        raise api_error(exc, exc.status) from exc
+
+    append_audit_entry(
+        connection,
+        tenant_id=tenant_id,
+        actor=_actor(claims),
+        action="plan_placement.proposed",
+        entity_type="plan_placement",
+        entity_id=str(placement_id),
+        payload={"floor_plan_id": str(floor_plan_id)},
+    )
+    return _placement_to_out(get_placement(connection, placement_id))
+
+
+@router.get("/floor-plans/{floor_plan_id}/placements", response_model=list[PlanPlacementOut])
+def list_placements_route(
+    floor_plan_id: uuid.UUID,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> list[PlanPlacementOut]:
+    _check_floor_plan_exists(connection, floor_plan_id)
+    return [_placement_to_out(row) for row in list_placements(connection, floor_plan_id)]
+
+
+@router.post("/placements/{placement_id}/validate", response_model=PlanPlacementOut)
+def validate_placement_route(
+    placement_id: uuid.UUID,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
+    claims: Annotated[dict, Depends(require_any_role(*_MANAGE_REGISTRY_ROLES))],
+) -> PlanPlacementOut:
+    try:
+        validate_placement(connection, placement_id=placement_id, validated_by=_actor(claims))
+    except (PlacementNotFound, PlacementConflict) as exc:
+        raise api_error(exc, exc.status) from exc
+
+    append_audit_entry(
+        connection,
+        tenant_id=tenant_id,
+        actor=_actor(claims),
+        action="plan_placement.validated",
+        entity_type="plan_placement",
+        entity_id=str(placement_id),
+    )
+    return _placement_to_out(get_placement(connection, placement_id))
+
+
+@router.delete("/placements/{placement_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_placement_route(
+    placement_id: uuid.UUID,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
+    claims: Annotated[dict, Depends(require_any_role(*_MANAGE_REGISTRY_ROLES))],
+) -> None:
+    try:
+        delete_placement(connection, placement_id)
+    except PlacementNotFound as exc:
+        raise api_error(exc, exc.status) from exc
+
+    append_audit_entry(
+        connection,
+        tenant_id=tenant_id,
+        actor=_actor(claims),
+        action="plan_placement.deleted",
+        entity_type="plan_placement",
+        entity_id=str(placement_id),
+    )
