@@ -412,8 +412,32 @@
       "ifc_import_accept": "Accept",
       "ifc_import_reject": "Reject",
       "ifc_import_reject_reason_label": "Reason for rejection",
-      "ifc_import_rejected_reason": "Reason: {reason}"
+      "ifc_import_rejected_reason": "Reason: {reason}",
+      "floor_plans_open_editor": "Open the editor"
     }
+  },
+  "plan_editor": {
+    "title": "Placement editor",
+    "plan_label": "Floor plan",
+    "version_label": "Version {version}",
+    "click_hint": "Click on the plan where the equipment, room or position should be marked.",
+    "no_coordinates_selected": "Click on the plan first to choose a location.",
+    "coordinates_selected": "Location chosen — complete the form below.",
+    "target_type_label": "Marker type",
+    "target_type_space": "Space",
+    "target_type_functional_location": "Functional location",
+    "target_id_label": "Item",
+    "add_marker": "Add the marker",
+    "markers_title": "Markers on this plan",
+    "markers_none": "No markers on this plan.",
+    "marker_status_proposed": "Proposed",
+    "marker_status_validated": "Validated",
+    "marker_validate": "Validate",
+    "marker_delete": "Delete",
+    "marker_unknown_target": "Item not found",
+    "marker_point_target": "Point",
+    "live_value_label": "Value",
+    "unsupported_content_type": "This editor only supports PNG or JPEG floor plans."
   },
   "space_type": {
     "building": "Building",

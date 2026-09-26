@@ -41,6 +41,7 @@ type FloorPlan = {
   id: string;
   version: number;
   filename: string;
+  content_type: string;
   download_url: string;
   uploaded_by: string;
   uploaded_at: string;
@@ -346,6 +347,14 @@ export default async function RegistrePage({
                   <a href={plan.download_url} target="_blank" rel="noreferrer">
                     {t("web.registre.floor_plans_view_link")}
                   </a>
+                  {(plan.content_type === "image/png" || plan.content_type === "image/jpeg") && (
+                    <>
+                      {" — "}
+                      <Link href={`/registre/plans/${plan.id}`}>
+                        {t("web.registre.floor_plans_open_editor")}
+                      </Link>
+                    </>
+                  )}
                   <br />
                   <span style={{ color: "#666" }}>
                     {t("web.registre.floor_plans_uploaded_by", {

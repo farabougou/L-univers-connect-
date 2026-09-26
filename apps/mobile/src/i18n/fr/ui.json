@@ -412,8 +412,32 @@
       "ifc_import_accept": "Accepter",
       "ifc_import_reject": "Refuser",
       "ifc_import_reject_reason_label": "Motif du refus",
-      "ifc_import_rejected_reason": "Motif : {reason}"
+      "ifc_import_rejected_reason": "Motif : {reason}",
+      "floor_plans_open_editor": "Ouvrir l’éditeur"
     }
+  },
+  "plan_editor": {
+    "title": "Éditeur de placement",
+    "plan_label": "Plan",
+    "version_label": "Version {version}",
+    "click_hint": "Cliquez sur le plan, à l’endroit de l’équipement, de la pièce ou de la position à repérer.",
+    "no_coordinates_selected": "Cliquez d’abord sur le plan pour choisir un emplacement.",
+    "coordinates_selected": "Emplacement choisi — complétez le formulaire ci-dessous.",
+    "target_type_label": "Type de repère",
+    "target_type_space": "Espace",
+    "target_type_functional_location": "Position fonctionnelle",
+    "target_id_label": "Élément",
+    "add_marker": "Ajouter le repère",
+    "markers_title": "Repères sur ce plan",
+    "markers_none": "Aucun repère sur ce plan.",
+    "marker_status_proposed": "Proposé",
+    "marker_status_validated": "Validé",
+    "marker_validate": "Valider",
+    "marker_delete": "Supprimer",
+    "marker_unknown_target": "Élément introuvable",
+    "marker_point_target": "Point",
+    "live_value_label": "Valeur",
+    "unsupported_content_type": "Cet éditeur ne prend en charge que les plans PNG ou JPEG."
   },
   "space_type": {
     "building": "Bâtiment",
