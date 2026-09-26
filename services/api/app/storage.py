@@ -61,10 +61,18 @@ def key_belongs_to(object_key: str, *, tenant_id: uuid.UUID, intervention_id: uu
 
 def create_presigned_upload_url(object_key: str, *, content_type: str) -> str:
     """URL temporaire à usage unique : le client mobile envoie la photo
-    directement au stockage, sans jamais recevoir les identifiants d'accès."""
+    directement au stockage, sans jamais recevoir les identifiants d'accès.
+
+    `content_type` n'entre volontairement pas dans la signature (paramètre
+    conservé pour la forme de l'appel, voir ADR 006) : un client HTTP mobile
+    ne maîtrise pas toujours l'en-tête Content-Type exact envoyé avec un
+    corps binaire (`fetch` peut le réécrire à partir du type du Blob). Si cet
+    en-tête faisait partie de la signature, la moindre différence produirait
+    un "SignatureDoesNotMatch" même avec des identifiants valides.
+    """
     return _client().generate_presigned_url(
         "put_object",
-        Params={"Bucket": settings.storage_bucket, "Key": object_key, "ContentType": content_type},
+        Params={"Bucket": settings.storage_bucket, "Key": object_key},
         ExpiresIn=_PRESIGNED_URL_EXPIRY_SECONDS,
     )
 
