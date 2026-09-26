@@ -10,3 +10,4 @@ boto3==1.43.100
 tzdata==2026.4
 pymodbus==3.15.0
 bacpypes3==0.0.110
+ifcopenshell==0.8.5

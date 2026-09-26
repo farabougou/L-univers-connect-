@@ -82,6 +82,21 @@ def floor_plan_key_belongs_to(
     return bool(name) and "/" not in name and name not in (".", "..")
 
 
+def build_ifc_import_object_key(*, tenant_id: uuid.UUID, site_id: uuid.UUID, filename: str) -> str:
+    """Même principe que build_floor_plan_object_key : un dossier par site,
+    isolé par tenant (ADR 011, section 2)."""
+    safe_filename = filename.replace("/", "_")
+    return f"{tenant_id}/ifc-imports/{site_id}/{uuid.uuid4()}-{safe_filename}"
+
+
+def ifc_import_key_belongs_to(object_key: str, *, tenant_id: uuid.UUID, site_id: uuid.UUID) -> bool:
+    prefix = f"{tenant_id}/ifc-imports/{site_id}/"
+    if not object_key.startswith(prefix):
+        return False
+    name = object_key[len(prefix) :]
+    return bool(name) and "/" not in name and name not in (".", "..")
+
+
 def create_presigned_upload_url(object_key: str, *, content_type: str) -> str:
     """URL temporaire à usage unique : le client mobile envoie la photo
     directement au stockage, sans jamais recevoir les identifiants d'accès.
@@ -106,3 +121,21 @@ def create_presigned_download_url(object_key: str) -> str:
         Params={"Bucket": settings.storage_bucket, "Key": object_key},
         ExpiresIn=_PRESIGNED_URL_EXPIRY_SECONDS,
     )
+
+
+class ObjectTooLarge(Exception):
+    """L'objet dépasse la limite donnée : jamais téléchargé en mémoire."""
+
+
+def download_object_bytes(object_key: str, *, max_size_bytes: int) -> bytes:
+    """Télécharge un objet déjà envoyé par un client, avec une garde de
+    taille vérifiée avant tout transfert (fichier d'origine externe, jamais
+    fiable par défaut — voir app/importers/ifc_parser.py)."""
+    client = _client()
+    size = client.head_object(Bucket=settings.storage_bucket, Key=object_key)["ContentLength"]
+    if size > max_size_bytes:
+        raise ObjectTooLarge(object_key)
+    body = client.get_object(Bucket=settings.storage_bucket, Key=object_key)["Body"].read()
+    if len(body) > max_size_bytes:
+        raise ObjectTooLarge(object_key)
+    return body

@@ -6,7 +6,14 @@ from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
-from app.assets import assign_physical_unit, get_current_occupant
+from app.assets import (
+    FunctionalLocationConflict,
+    FunctionalLocationNotFound,
+    assign_physical_unit,
+    create_functional_location,
+    get_current_occupant,
+    get_functional_location,
+)
 from app.audit import append_audit_entry
 from app.auth import require_any_role
 from app.deps import get_tenant_connection, get_tenant_id
@@ -45,12 +52,7 @@ from app.schemas import (
     SiteOut,
     SiteTimezoneUpdate,
 )
-from app.spatial import (
-    SpatialConflict,
-    SpatialNotFound,
-    check_space_for_location,
-    record_location_space,
-)
+from app.spatial import SpatialConflict, SpatialNotFound
 from app.timezones import check_timezone
 
 router = APIRouter()
@@ -371,62 +373,33 @@ def list_physical_units(
     response_model=FunctionalLocationOut,
     status_code=status.HTTP_201_CREATED,
 )
-def create_functional_location(
+def create_functional_location_route(
     body: FunctionalLocationCreate,
     connection: Annotated[Connection, Depends(get_tenant_connection)],
     tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
     claims: Annotated[dict, Depends(require_any_role(*_MANAGE_REGISTRY_ROLES))],
 ) -> FunctionalLocationOut:
-    site_exists = connection.execute(
-        text("SELECT 1 FROM sites WHERE id = :id"), {"id": body.site_id}
-    ).scalar()
-    if not site_exists:
-        raise ApiError(404, "SITE_NOT_FOUND")
-    if body.parent_id is not None:
-        # Lecture sous RLS : un parent d'un autre tenant est introuvable. La clé
-        # étrangère seule ne suffirait pas, elle ignore l'isolation des tenants.
-        parent_site = connection.execute(
-            text("SELECT site_id FROM functional_locations WHERE id = :id"),
-            {"id": body.parent_id},
-        ).scalar()
-        if parent_site is None:
-            raise ApiError(404, "PARENT_FUNCTIONAL_LOCATION_NOT_FOUND")
-        if parent_site != body.site_id:
-            raise ApiError(409, "PARENT_FUNCTIONAL_LOCATION_OTHER_SITE")
-    if body.space_id is not None:
-        try:
-            check_space_for_location(connection, space_id=body.space_id, site_id=body.site_id)
-        except SpatialNotFound as exc:
-            raise api_error(exc, 404) from exc
-        except SpatialConflict as exc:
-            raise api_error(exc, 409) from exc
-
-    location_id = uuid.uuid4()
-    connection.execute(
-        text(
-            "INSERT INTO functional_locations (id, tenant_id, site_id, parent_id, code, name, "
-            "kind) VALUES (:id, :tenant_id, :site_id, :parent_id, :code, :name, :kind)"
-        ),
-        {
-            "id": location_id,
-            "tenant_id": tenant_id,
-            "site_id": body.site_id,
-            "parent_id": body.parent_id,
-            "code": body.code,
-            "name": body.name,
-            "kind": body.kind,
-        },
-    )
-    if body.space_id is not None:
-        record_location_space(
+    try:
+        location_id = create_functional_location(
             connection,
             tenant_id=tenant_id,
-            functional_location_id=location_id,
+            site_id=body.site_id,
+            parent_id=body.parent_id,
+            code=body.code,
+            name=body.name,
+            kind=body.kind,
             space_id=body.space_id,
-            valid_from=datetime.now(UTC),
-            changed_by=_actor(claims),
-            reason="emplacement initial",
+            created_by=_actor(claims),
         )
+    except FunctionalLocationNotFound as exc:
+        raise api_error(exc, 404) from exc
+    except FunctionalLocationConflict as exc:
+        raise api_error(exc, 409) from exc
+    except SpatialNotFound as exc:
+        raise api_error(exc, 404) from exc
+    except SpatialConflict as exc:
+        raise api_error(exc, 409) from exc
+
     append_audit_entry(
         connection,
         tenant_id=tenant_id,
@@ -441,18 +414,7 @@ def create_functional_location(
             "space_id": str(body.space_id) if body.space_id else None,
         },
     )
-    row = (
-        connection.execute(
-            text(
-                "SELECT id, site_id, parent_id, code, name, kind, space_id, created_at "
-                "FROM functional_locations WHERE id = :id"
-            ),
-            {"id": location_id},
-        )
-        .mappings()
-        .one()
-    )
-    return FunctionalLocationOut(**row)
+    return FunctionalLocationOut(**get_functional_location(connection, location_id))
 
 
 @router.get("/functional-locations", response_model=list[FunctionalLocationOut])

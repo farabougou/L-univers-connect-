@@ -349,6 +349,58 @@ class FloorPlanOut(BaseModel):
     uploaded_at: datetime
 
 
+class IfcImportUploadUrlRequest(BaseModel):
+    filename: str = Field(min_length=1, max_length=255)
+
+
+class IfcImportUploadUrlOut(BaseModel):
+    upload_url: str
+    object_key: str
+
+
+class IfcImportBatchCreate(BaseModel):
+    object_key: str = Field(min_length=1, max_length=1000)
+    filename: str = Field(min_length=1, max_length=255)
+    sha256: str = Field(min_length=64, max_length=64, pattern=r"^[0-9a-f]{64}$")
+
+
+class IfcImportBatchOut(BaseModel):
+    id: uuid.UUID
+    site_id: uuid.UUID
+    filename: str
+    sha256: str
+    status: Literal["processing", "ready", "failed"]
+    error_code: str | None
+    ifc_schema: str | None
+    space_proposal_count: int | None
+    equipment_proposal_count: int | None
+    skipped_element_count: int | None
+    uploaded_by: str
+    uploaded_at: datetime
+
+
+class IfcImportProposalOut(BaseModel):
+    id: uuid.UUID
+    batch_id: uuid.UUID
+    proposal_type: Literal["space", "equipment"]
+    ifc_class: str
+    ifc_global_id: str
+    name: str
+    space_type: str | None
+    parent_ifc_global_id: str | None
+    containing_space_ifc_global_id: str | None
+    status: Literal["proposed", "accepted", "rejected"]
+    created_node_id: uuid.UUID | None
+    decided_by: str | None
+    decided_at: datetime | None
+    rejection_reason: str | None
+    created_at: datetime
+
+
+class IfcImportProposalReject(BaseModel):
+    reason: str = Field(min_length=1, max_length=500)
+
+
 class PlanPlacementCreate(BaseModel):
     space_id: uuid.UUID | None = None
     functional_location_id: uuid.UUID | None = None

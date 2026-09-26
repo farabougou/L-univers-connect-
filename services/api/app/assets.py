@@ -1,9 +1,11 @@
 import uuid
 from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
+from app.errors import DomainError
 from app.lifecycle import (
     INSTALLABLE_STATES,
     MOUNTED_STATES,
@@ -11,6 +13,95 @@ from app.lifecycle import (
     change_state,
     current_state,
 )
+from app.spatial import check_space_for_location, record_location_space
+
+
+class FunctionalLocationNotFound(DomainError, LookupError):
+    status = 404
+
+
+class FunctionalLocationConflict(DomainError, ValueError):
+    status = 409
+
+
+def create_functional_location(
+    connection: Connection,
+    *,
+    tenant_id: uuid.UUID,
+    site_id: uuid.UUID,
+    parent_id: uuid.UUID | None,
+    code: str,
+    name: str,
+    kind: str,
+    space_id: uuid.UUID | None,
+    created_by: str,
+) -> uuid.UUID:
+    """Crée une position fonctionnelle, avec son emplacement initial si
+    fourni. Utilisée à la fois par la console web (saisie directe) et par
+    l'import IFC (une fois une proposition acceptée) : un seul chemin de
+    création, jamais deux modèles de la même chose."""
+    site_exists = connection.execute(
+        text("SELECT 1 FROM sites WHERE id = :id"), {"id": site_id}
+    ).scalar()
+    if not site_exists:
+        raise FunctionalLocationNotFound("SITE_NOT_FOUND")
+    if parent_id is not None:
+        # Lecture sous RLS : un parent d'un autre tenant est introuvable. La clé
+        # étrangère seule ne suffirait pas, elle ignore l'isolation des tenants.
+        parent_site = connection.execute(
+            text("SELECT site_id FROM functional_locations WHERE id = :id"), {"id": parent_id}
+        ).scalar()
+        if parent_site is None:
+            raise FunctionalLocationNotFound("PARENT_FUNCTIONAL_LOCATION_NOT_FOUND")
+        if parent_site != site_id:
+            raise FunctionalLocationConflict("PARENT_FUNCTIONAL_LOCATION_OTHER_SITE")
+    if space_id is not None:
+        check_space_for_location(connection, space_id=space_id, site_id=site_id)
+
+    location_id = uuid.uuid4()
+    connection.execute(
+        text(
+            "INSERT INTO functional_locations (id, tenant_id, site_id, parent_id, code, name, "
+            "kind) VALUES (:id, :tenant_id, :site_id, :parent_id, :code, :name, :kind)"
+        ),
+        {
+            "id": location_id,
+            "tenant_id": tenant_id,
+            "site_id": site_id,
+            "parent_id": parent_id,
+            "code": code,
+            "name": name,
+            "kind": kind,
+        },
+    )
+    if space_id is not None:
+        record_location_space(
+            connection,
+            tenant_id=tenant_id,
+            functional_location_id=location_id,
+            space_id=space_id,
+            valid_from=datetime.now(UTC),
+            changed_by=created_by,
+            reason="emplacement initial",
+        )
+    return location_id
+
+
+def get_functional_location(
+    connection: Connection, location_id: uuid.UUID
+) -> dict[str, Any] | None:
+    row = (
+        connection.execute(
+            text(
+                "SELECT id, site_id, parent_id, code, name, kind, space_id, created_at "
+                "FROM functional_locations WHERE id = :id"
+            ),
+            {"id": location_id},
+        )
+        .mappings()
+        .first()
+    )
+    return dict(row) if row else None
 
 
 def assign_physical_unit(
