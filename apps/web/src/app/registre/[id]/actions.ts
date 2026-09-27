@@ -541,6 +541,92 @@ export async function declareMaintenanceProvider(formData: FormData) {
   revalidatePath(`/registre/${nodeId}`);
 }
 
+function optionalText(value: FormDataEntryValue | null): string | null {
+  const text = typeof value === "string" ? value.trim() : "";
+  return text.length > 0 ? text : null;
+}
+
+/**
+ * Scan BACnet (Who-Is puis inventaire des objets, lecture seule — voir
+ * app/bacnet_discovery.py) : referme toujours un lot, même en échec (appareil
+ * injoignable), jamais une erreur HTTP pour une simple indisponibilité
+ * réseau — la personne repart directement sur les propositions du scan.
+ */
+export async function scanBacnetDevice(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+  const timeout = Number(formData.get("timeout"));
+
+  const response = await apiFetch("/bacnet-discovery/scan", accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      equipment_id: nodeId,
+      address: formData.get("address"),
+      timeout: Number.isFinite(timeout) && timeout > 0 ? timeout : undefined,
+    }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  const batch = await response.json();
+  revalidatePath(`/registre/${nodeId}`);
+  redirect(`/registre/${nodeId}?bacnet_batch=${batch.id}`);
+}
+
+/**
+ * Accepte une proposition de découverte BACnet : crée le point réel par le
+ * même chemin que la saisie manuelle (voir app/bacnet_discovery.py,
+ * accept_proposal). Une personne peut corriger la classe ou l'unité
+ * proposées avant d'accepter ; un champ laissé vide garde la proposition
+ * automatique, jamais une chaîne vide envoyée à l'API.
+ */
+export async function acceptBacnetProposal(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+  const batchId = String(formData.get("batch_id"));
+  const proposalId = formData.get("proposal_id");
+
+  const response = await apiFetch(`/bacnet-discovery-proposals/${proposalId}/accept`, accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      point_class: optionalText(formData.get("point_class")),
+      unit: optionalText(formData.get("unit")),
+      name: optionalText(formData.get("name")),
+    }),
+  });
+  if (!response.ok) {
+    const problem = await response.json().catch(() => null);
+    redirect(
+      `/registre/${nodeId}?bacnet_batch=${batchId}&error=${encodeURIComponent(failureCode(problem))}`,
+    );
+  }
+  revalidatePath(`/registre/${nodeId}`);
+  redirect(`/registre/${nodeId}?bacnet_batch=${batchId}`);
+}
+
+export async function rejectBacnetProposal(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+  const batchId = String(formData.get("batch_id"));
+  const proposalId = formData.get("proposal_id");
+
+  const response = await apiFetch(`/bacnet-discovery-proposals/${proposalId}/reject`, accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reason: formData.get("reason") }),
+  });
+  if (!response.ok) {
+    const problem = await response.json().catch(() => null);
+    redirect(
+      `/registre/${nodeId}?bacnet_batch=${batchId}&error=${encodeURIComponent(failureCode(problem))}`,
+    );
+  }
+  revalidatePath(`/registre/${nodeId}`);
+  redirect(`/registre/${nodeId}?bacnet_batch=${batchId}`);
+}
+
 export async function endMaintenanceProvider(formData: FormData) {
   const accessToken = await requireAccessToken();
   const nodeId = String(formData.get("node_id"));

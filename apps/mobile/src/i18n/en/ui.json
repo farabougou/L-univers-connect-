@@ -442,7 +442,30 @@
       "declare_maintenance_provider": "Declare a provider",
       "maintenance_provider_select": "Provider",
       "end_maintenance_provider": "Remove",
-      "end_maintenance_provider_reason": "Reason"
+      "end_maintenance_provider_reason": "Reason",
+      "bacnet_section_title": "BACnet discovery",
+      "bacnet_no_batch": "No BACnet scan has been run for this equipment.",
+      "bacnet_batch_counts": "{proposals} proposal(s), {duplicates} duplicate(s)",
+      "bacnet_view_proposals": "View proposals",
+      "bacnet_proposals_title": "Scan proposals",
+      "bacnet_proposals_none": "No proposal for this scan.",
+      "bacnet_scan_title": "Run a BACnet scan",
+      "bacnet_address_label": "BACnet/IP address (host:port)",
+      "bacnet_timeout_label": "Maximum delay (seconds)",
+      "bacnet_scan_button": "Scan",
+      "bacnet_proposed_class_label": "Proposed match: {class}",
+      "bacnet_no_class_proposed": "No reliable match proposed: needs review.",
+      "bacnet_confidence_label": "confidence {percent}%",
+      "bacnet_value_preview_label": "Value read during the scan: {value}",
+      "bacnet_rejected_reason": "Rejection reason: {reason}",
+      "bacnet_accepted_point": "A point was created from this proposal.",
+      "bacnet_accept_button": "Accept",
+      "bacnet_accept_confirm": "Confirm acceptance",
+      "bacnet_class_override_label": "Corrected class (optional)",
+      "bacnet_unit_override_label": "Corrected unit (UCUM code, optional)",
+      "bacnet_name_override_label": "Point name (optional)",
+      "bacnet_reject_button": "Reject",
+      "bacnet_reject_reason_label": "Rejection reason"
     }
   },
   "plan_editor": {
@@ -535,5 +558,32 @@
     "ACTUAL_STATE_MISMATCH": "The actual state does not match the requested value.",
     "MODBUS_WRITE_ERROR": "The device refused the write.",
     "COMMAND_POINT_NOT_IN_CONFIG": "The target point is no longer in the active configuration."
+  },
+  "bacnet_batch_status": {
+    "processing": "In progress",
+    "ready": "Ready",
+    "failed": "Failed"
+  },
+  "bacnet_proposal_status": {
+    "proposed": "Proposed",
+    "accepted": "Accepted",
+    "rejected": "Rejected",
+    "duplicate": "Duplicate (already accepted)"
+  },
+  "point_class": {
+    "temperature_sensor": "Temperature sensor",
+    "supply_water_temperature_sensor": "Supply water temperature sensor",
+    "return_water_temperature_sensor": "Return water temperature sensor",
+    "supply_air_temperature_sensor": "Supply air temperature sensor",
+    "pressure_sensor": "Pressure sensor",
+    "humidity_sensor": "Humidity sensor",
+    "co2_sensor": "CO₂ sensor",
+    "electric_power_sensor": "Electric power sensor",
+    "energy_meter_reading": "Energy meter reading",
+    "run_status": "Run status",
+    "fault_status": "Fault status",
+    "enable_status": "Enable status",
+    "temperature_setpoint": "Temperature setpoint",
+    "on_off_command": "On/off command"
   }
 }

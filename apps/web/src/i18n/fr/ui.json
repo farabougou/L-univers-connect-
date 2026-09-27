@@ -442,7 +442,30 @@
       "declare_maintenance_provider": "Déclarer un prestataire",
       "maintenance_provider_select": "Prestataire",
       "end_maintenance_provider": "Retirer",
-      "end_maintenance_provider_reason": "Motif"
+      "end_maintenance_provider_reason": "Motif",
+      "bacnet_section_title": "Découverte BACnet",
+      "bacnet_no_batch": "Aucun scan BACnet effectué pour cet équipement.",
+      "bacnet_batch_counts": "{proposals} proposition(s), {duplicates} doublon(s)",
+      "bacnet_view_proposals": "Voir les propositions",
+      "bacnet_proposals_title": "Propositions du scan",
+      "bacnet_proposals_none": "Aucune proposition pour ce scan.",
+      "bacnet_scan_title": "Lancer un scan BACnet",
+      "bacnet_address_label": "Adresse BACnet/IP (hôte:port)",
+      "bacnet_timeout_label": "Délai maximal (secondes)",
+      "bacnet_scan_button": "Scanner",
+      "bacnet_proposed_class_label": "Correspondance proposée : {class}",
+      "bacnet_no_class_proposed": "Aucune correspondance fiable proposée : à revoir.",
+      "bacnet_confidence_label": "confiance {percent} %",
+      "bacnet_value_preview_label": "Valeur relevée lors du scan : {value}",
+      "bacnet_rejected_reason": "Motif du refus : {reason}",
+      "bacnet_accepted_point": "Point créé à partir de cette proposition.",
+      "bacnet_accept_button": "Accepter",
+      "bacnet_accept_confirm": "Confirmer l’acceptation",
+      "bacnet_class_override_label": "Classe corrigée (facultatif)",
+      "bacnet_unit_override_label": "Unité corrigée (code UCUM, facultatif)",
+      "bacnet_name_override_label": "Nom du point (facultatif)",
+      "bacnet_reject_button": "Refuser",
+      "bacnet_reject_reason_label": "Motif du refus"
     }
   },
   "plan_editor": {
@@ -535,5 +558,32 @@
     "ACTUAL_STATE_MISMATCH": "L’état réel ne correspond pas à la valeur demandée.",
     "MODBUS_WRITE_ERROR": "L’appareil a refusé l’écriture.",
     "COMMAND_POINT_NOT_IN_CONFIG": "Le point visé n’est plus dans la configuration active."
+  },
+  "bacnet_batch_status": {
+    "processing": "En cours",
+    "ready": "Prêt",
+    "failed": "Échoué"
+  },
+  "bacnet_proposal_status": {
+    "proposed": "Proposé",
+    "accepted": "Accepté",
+    "rejected": "Refusé",
+    "duplicate": "Doublon (déjà accepté)"
+  },
+  "point_class": {
+    "temperature_sensor": "Capteur de température",
+    "supply_water_temperature_sensor": "Capteur de température d’eau au départ",
+    "return_water_temperature_sensor": "Capteur de température d’eau au retour",
+    "supply_air_temperature_sensor": "Capteur de température d’air au départ",
+    "pressure_sensor": "Capteur de pression",
+    "humidity_sensor": "Capteur d’humidité",
+    "co2_sensor": "Capteur de CO₂",
+    "electric_power_sensor": "Capteur de puissance électrique",
+    "energy_meter_reading": "Relevé de compteur d’énergie",
+    "run_status": "État de fonctionnement",
+    "fault_status": "État de défaut",
+    "enable_status": "Autorisation de marche",
+    "temperature_setpoint": "Consigne de température",
+    "on_off_command": "Commande marche/arrêt"
   }
 }

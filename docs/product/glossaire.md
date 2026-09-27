@@ -81,6 +81,30 @@
 | Score de confiance | Trust score | `trust` | Note de 0 à 100 de la fiabilité récente d'un point. | Fiabilité (sans chiffre) | — |
 | Unité | Unit | code UCUM | Unité de la valeur de référence, toujours liée à une grandeur physique. | Texte libre | UCUM |
 
+### 4.1 Classes de points (`point_class`)
+
+Ajouté lors de la découverte BACnet V1 (27 septembre 2026) : ces classes existaient déjà
+dans le code (`app/point_vocabulary.py`, alignées sur Brick Schema, « règle des trois ») mais
+n'apparaissaient encore à l'écran nulle part ; ce tableau les nomme avant leur premier affichage
+(propositions de découverte BACnet, écran « Découverte BACnet » de la fiche équipement).
+
+| Français | English | Code | Définition |
+|---|---|---|---|
+| Capteur de température | Temperature sensor | `temperature_sensor` | Mesure une température, sans rôle précisé dans un circuit. |
+| Capteur de température d'eau au départ | Supply water temperature sensor | `supply_water_temperature_sensor` | Température de l'eau à la sortie d'une production ou d'un émetteur. |
+| Capteur de température d'eau au retour | Return water temperature sensor | `return_water_temperature_sensor` | Température de l'eau au retour vers une production ou un émetteur. |
+| Capteur de température d'air au départ | Supply air temperature sensor | `supply_air_temperature_sensor` | Température de l'air soufflé par une centrale de traitement d'air. |
+| Capteur de pression | Pressure sensor | `pressure_sensor` | Mesure une pression. |
+| Capteur d'humidité | Humidity sensor | `humidity_sensor` | Mesure une humidité relative. |
+| Capteur de CO₂ | CO₂ sensor | `co2_sensor` | Mesure une concentration de dioxyde de carbone. |
+| Capteur de puissance électrique | Electric power sensor | `electric_power_sensor` | Mesure une puissance électrique instantanée. |
+| Relevé de compteur d'énergie | Energy meter reading | `energy_meter_reading` | Relevé cumulatif d'un compteur d'énergie. |
+| État de fonctionnement | Run status | `run_status` | Indique si l'équipement fonctionne actuellement. |
+| État de défaut | Fault status | `fault_status` | Indique un défaut signalé par l'équipement lui-même. |
+| Autorisation de marche | Enable status | `enable_status` | Indique si le fonctionnement est autorisé (1) ou désactivé (0). |
+| Consigne de température | Temperature setpoint | `temperature_setpoint` | Valeur de température visée par la régulation. Lue seulement (niveau C0). |
+| Commande marche/arrêt | On/off command | `on_off_command` | Déclarable pour documenter une installation ; jamais inscriptible tant que la règle non négociable 1 s'applique. |
+
 ## 5. États d'un équipement (deux axes distincts)
 
 | Français | English | Code | Définition |

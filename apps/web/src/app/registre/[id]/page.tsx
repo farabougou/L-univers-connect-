@@ -20,6 +20,7 @@ import { renderTagQr } from "@/lib/tagQr";
 import { type Locale, formatDate, formatDateTime, formatNumber } from "@/i18n/translator";
 
 import {
+  acceptBacnetProposal,
   acknowledgeSignal,
   activateRule,
   changeLifecycleState,
@@ -37,9 +38,11 @@ import {
   declareMaintenanceProvider,
   endDesiredState,
   endMaintenanceProvider,
+  rejectBacnetProposal,
   restoreRule,
   retireRule,
   revokeTag,
+  scanBacnetDevice,
   sendTestCommand,
   setAssetCode,
   setHandling,
@@ -148,6 +151,45 @@ type EnergyBaselineVersion = {
   parent_version_id: string | null;
 };
 
+// Un lot de découverte BACnet (app/bacnet_discovery.py) : un scan produit
+// des propositions, jamais des points directement créés.
+type BacnetDiscoveryBatch = {
+  id: string;
+  equipment_id: string;
+  address: string;
+  device_instance: number | null;
+  status: "processing" | "ready" | "failed";
+  error_code: string | null;
+  object_count: number | null;
+  proposal_count: number | null;
+  duplicate_count: number | null;
+  scanned_by: string;
+  scanned_at: string;
+};
+type BacnetDiscoveryProposal = {
+  id: string;
+  batch_id: string;
+  object_type: string;
+  object_instance: number;
+  object_name: string | null;
+  description: string | null;
+  bacnet_units: string | null;
+  present_value_preview: string | null;
+  value_type: "number" | "boolean" | "multistate";
+  states: Record<string, string> | null;
+  proposed_point_class: string | null;
+  proposed_unit: string | null;
+  confidence: number | null;
+  reason_code: string;
+  reason_message: string;
+  status: "proposed" | "accepted" | "rejected" | "duplicate";
+  created_point_id: string | null;
+  decided_by: string | null;
+  decided_at: string | null;
+  rejection_reason: string | null;
+  created_at: string;
+};
+
 // Même catalogue que app/connectors/sdm120.py (SDM120_POINTS) : un seul
 // modèle d'appareil pour l'instant, pas de saisie libre du registre.
 const SDM120_REGISTERS = ["voltage", "current", "active_power", "frequency", "total_active_energy"];
@@ -199,6 +241,7 @@ export default async function EquipmentPage({
     diff?: string;
     against?: string;
     timeline_before?: string;
+    bacnet_batch?: string;
   }>;
 }) {
   const { id } = await params;
@@ -207,6 +250,7 @@ export default async function EquipmentPage({
     diff: diffVersionId,
     against,
     timeline_before: timelineBefore,
+    bacnet_batch: bacnetBatchId,
   } = await searchParams;
   const accessToken = await requireAccessToken();
   const translator = await getTranslator();
@@ -295,6 +339,26 @@ export default async function EquipmentPage({
   const relayPointId = activeRelayMapping?.content.points[0]?.point_id ?? null;
   const relayPoint = relayPointId ? points.find((point) => point.id === relayPointId) : null;
   const lastCommand: PassportCommand | null = relayPoint?.commands[0] ?? null;
+
+  // Découverte BACnet (BACnet V1, lecture seule) : mêmes principes que la
+  // connexion Modbus ci-dessus, sujet = l'équipement (voir
+  // app/bacnet_discovery.py). Un équipement introuvable côté API (nœud qui
+  // n'est pas un functional_location) laisse simplement la liste vide.
+  const bacnetBatchesResponse = await apiFetch(
+    `/bacnet-discovery/batches?equipment_id=${id}`,
+    accessToken,
+  );
+  const bacnetBatches: BacnetDiscoveryBatch[] = bacnetBatchesResponse.ok
+    ? await bacnetBatchesResponse.json()
+    : [];
+  let bacnetProposals: BacnetDiscoveryProposal[] = [];
+  if (bacnetBatchId) {
+    const bacnetProposalsResponse = await apiFetch(
+      `/bacnet-discovery/batches/${bacnetBatchId}/proposals`,
+      accessToken,
+    );
+    bacnetProposals = bacnetProposalsResponse.ok ? await bacnetProposalsResponse.json() : [];
+  }
 
   // La performance énergétique porte sur un équipement (functional_location),
   // jamais sur un exemplaire ou un espace (voir app/energy/normalization.py).
@@ -552,6 +616,20 @@ export default async function EquipmentPage({
           points={points}
           versions={deviceMappingVersions}
           canManage={canManage}
+          t={t}
+        />
+      </section>
+
+      <section style={sectionStyle}>
+        <h2 style={sectionTitleStyle}>{t("web.registre.bacnet_section_title")}</h2>
+        <BacnetDiscoveryBlock
+          nodeId={id}
+          batches={bacnetBatches}
+          selectedBatchId={bacnetBatchId ?? null}
+          proposals={bacnetProposals}
+          canManage={canManage}
+          locale={locale}
+          timeZone={timeZone}
           t={t}
         />
       </section>
@@ -1169,6 +1247,200 @@ function DeviceMappingBlock({
         </details>
       )}
     </>
+  );
+}
+
+function BacnetDiscoveryBlock({
+  nodeId,
+  batches,
+  selectedBatchId,
+  proposals,
+  canManage,
+  locale,
+  timeZone,
+  t,
+}: {
+  nodeId: string;
+  batches: BacnetDiscoveryBatch[];
+  selectedBatchId: string | null;
+  proposals: BacnetDiscoveryProposal[];
+  canManage: boolean;
+  locale: Locale;
+  timeZone: string | null;
+  t: (key: string, params?: Record<string, string>) => string;
+}) {
+  return (
+    <>
+      {batches.length === 0 && <p style={mutedStyle}>{t("web.registre.bacnet_no_batch")}</p>}
+      {batches.map((batch) => (
+        <p key={batch.id} style={{ margin: "0 0 4px" }}>
+          {formatDateTime(locale, batch.scanned_at, timeZone)} — {batch.address} —{" "}
+          {t(`bacnet_batch_status.${batch.status}`)}
+          {batch.status === "ready" &&
+            ` — ${t("web.registre.bacnet_batch_counts", {
+              proposals: String(batch.proposal_count ?? 0),
+              duplicates: String(batch.duplicate_count ?? 0),
+            })}`}
+          {batch.status === "failed" &&
+            batch.error_code &&
+            ` — ${errorMessage(locale, batch.error_code) ?? batch.error_code}`}
+          {" — "}
+          <Link href={`/registre/${nodeId}?bacnet_batch=${batch.id}`}>
+            {t("web.registre.bacnet_view_proposals")}
+          </Link>
+        </p>
+      ))}
+
+      {selectedBatchId && (
+        <div style={{ marginTop: 12, marginLeft: 16 }}>
+          <p style={{ ...mutedStyle, margin: 0, fontWeight: 600 }}>
+            {t("web.registre.bacnet_proposals_title")}
+          </p>
+          {proposals.length === 0 && (
+            <p style={mutedStyle}>{t("web.registre.bacnet_proposals_none")}</p>
+          )}
+          {proposals.map((proposal) => (
+            <BacnetProposalRow
+              key={proposal.id}
+              proposal={proposal}
+              nodeId={nodeId}
+              batchId={selectedBatchId}
+              canManage={canManage}
+              locale={locale}
+              t={t}
+            />
+          ))}
+        </div>
+      )}
+
+      {canManage && (
+        <details style={{ marginTop: 8 }}>
+          <summary>{t("web.registre.bacnet_scan_title")}</summary>
+          <form action={scanBacnetDevice} style={{ maxWidth: 360 }}>
+            <input type="hidden" name="node_id" value={nodeId} />
+            <label>
+              {t("web.registre.bacnet_address_label")}
+              <input name="address" required placeholder="192.168.1.50:47808" style={fieldStyle} />
+            </label>
+            <label style={labelStyle}>
+              {t("web.registre.bacnet_timeout_label")}
+              <input
+                name="timeout"
+                type="number"
+                min={0.5}
+                max={15}
+                step={0.5}
+                defaultValue={3}
+                style={fieldStyle}
+              />
+            </label>
+            <button type="submit" style={submitStyle}>
+              {t("web.registre.bacnet_scan_button")}
+            </button>
+          </form>
+        </details>
+      )}
+    </>
+  );
+}
+
+function BacnetProposalRow({
+  proposal,
+  nodeId,
+  batchId,
+  canManage,
+  locale,
+  t,
+}: {
+  proposal: BacnetDiscoveryProposal;
+  nodeId: string;
+  batchId: string;
+  canManage: boolean;
+  locale: Locale;
+  t: (key: string, params?: Record<string, string>) => string;
+}) {
+  const objectLabel = `${proposal.object_type} #${proposal.object_instance}${
+    proposal.object_name ? ` — ${proposal.object_name}` : ""
+  }`;
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <p style={{ margin: 0 }}>
+        <span style={strongStyle}>{objectLabel}</span> —{" "}
+        {t(`bacnet_proposal_status.${proposal.status}`)}
+      </p>
+      <p style={{ ...mutedStyle, margin: 0 }}>
+        {proposal.proposed_point_class
+          ? t("web.registre.bacnet_proposed_class_label", {
+              class: t(`point_class.${proposal.proposed_point_class}`),
+            })
+          : t("web.registre.bacnet_no_class_proposed")}
+        {proposal.confidence !== null &&
+          ` (${t("web.registre.bacnet_confidence_label", {
+            percent: formatNumber(locale, Math.round(proposal.confidence * 100)),
+          })})`}
+      </p>
+      <p style={{ ...mutedStyle, margin: 0 }}>{proposal.reason_message}</p>
+      {proposal.present_value_preview !== null && (
+        <p style={{ ...mutedStyle, margin: 0 }}>
+          {t("web.registre.bacnet_value_preview_label", { value: proposal.present_value_preview })}
+          {proposal.bacnet_units ? ` (${proposal.bacnet_units})` : ""}
+        </p>
+      )}
+      {proposal.status === "rejected" && proposal.rejection_reason && (
+        <p style={{ ...mutedStyle, margin: 0 }}>
+          {t("web.registre.bacnet_rejected_reason", { reason: proposal.rejection_reason })}
+        </p>
+      )}
+      {proposal.status === "accepted" && (
+        <p style={{ ...mutedStyle, margin: 0 }}>{t("web.registre.bacnet_accepted_point")}</p>
+      )}
+      {canManage && proposal.status === "proposed" && (
+        <div style={signalActionsStyle}>
+          <details>
+            <summary>{t("web.registre.bacnet_accept_button")}</summary>
+            <form action={acceptBacnetProposal} style={{ maxWidth: 320 }}>
+              <input type="hidden" name="node_id" value={nodeId} />
+              <input type="hidden" name="batch_id" value={batchId} />
+              <input type="hidden" name="proposal_id" value={proposal.id} />
+              <label>
+                {t("web.registre.bacnet_class_override_label")}
+                <input
+                  name="point_class"
+                  defaultValue={proposal.proposed_point_class ?? ""}
+                  style={fieldStyle}
+                />
+              </label>
+              <label style={labelStyle}>
+                {t("web.registre.bacnet_unit_override_label")}
+                <input
+                  name="unit"
+                  defaultValue={proposal.proposed_unit ?? ""}
+                  style={fieldStyle}
+                />
+              </label>
+              <label style={labelStyle}>
+                {t("web.registre.bacnet_name_override_label")}
+                <input
+                  name="name"
+                  defaultValue={proposal.object_name ?? ""}
+                  style={fieldStyle}
+                />
+              </label>
+              <button type="submit" style={submitStyle}>
+                {t("web.registre.bacnet_accept_confirm")}
+              </button>
+            </form>
+          </details>
+          <form action={rejectBacnetProposal} style={{ display: "inline-flex", gap: 4 }}>
+            <input type="hidden" name="node_id" value={nodeId} />
+            <input type="hidden" name="batch_id" value={batchId} />
+            <input type="hidden" name="proposal_id" value={proposal.id} />
+            <input name="reason" required placeholder={t("web.registre.bacnet_reject_reason_label")} />
+            <button type="submit">{t("web.registre.bacnet_reject_button")}</button>
+          </form>
+        </div>
+      )}
+    </div>
   );
 }
 
