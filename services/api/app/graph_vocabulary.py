@@ -15,17 +15,19 @@ Historique :
   prédicat déduit « locatedIn ».
 - 2026-09-23.3 : F3, ajout des points de télémétrie, du prédicat déduit
   « hasPoint », et d'un point comme objet possible de « measuredBy ».
+- 2026-09-27.1 : ajout des prestataires (`provider`), seul type pouvant être
+  l'objet de « maintainedBy » — jusqu'ici sans aucun objet possible.
 """
 
 from dataclasses import dataclass
 
 from app.errors import DomainError
 
-VOCABULARY_VERSION = "2026-09-23.3"
+VOCABULARY_VERSION = "2026-09-27.1"
 
-# Types de nœuds existants à ce jour. Les types futurs (edge_device,
-# organization) seront ajoutés avec leurs tables respectives.
-NODE_TYPES = ("site", "space", "functional_location", "physical_unit", "point")
+# Types de nœuds existants à ce jour. Les types futurs (edge_device) seront
+# ajoutés avec leurs tables respectives.
+NODE_TYPES = ("site", "space", "functional_location", "physical_unit", "point", "provider")
 
 # Systèmes dont on accepte les identifiants (table external_identifiers).
 EXTERNAL_ID_SCHEMES = ("customer_code", "ifc_global_id", "bacnet_object", "haystack_id")
@@ -103,7 +105,7 @@ PREDICATES: dict[str, Predicate] = {
             "maintainedBy",
             "maintains",
             ("site", "space", "functional_location", "physical_unit"),
-            (),
+            ("provider",),
         ),
         Predicate(
             "dependsOn",

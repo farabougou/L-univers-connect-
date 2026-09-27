@@ -49,6 +49,7 @@
 | Étiquette | Tag | `asset_tag` | QR, NFC ou code-barres collé sur un équipement, contenant un code opaque. | QR code comme terme générique | — |
 | Passeport | Asset passport | `passport` | Fiche de synthèse d'un équipement, calculée selon les droits de la personne. | Fiche équipement | Règlement ESPR (passeport produit) |
 | Code d'inventaire | Asset code | `asset_code` | Code interne du client pour un exemplaire. | Référence (réservé au modèle) | — |
+| Prestataire | Provider | `provider` | Organisation externe qui assure la maintenance d'un site, d'un espace, d'une position fonctionnelle ou d'un exemplaire (relation « maintainedBy »). Un répertoire, pas un compte : n'a pas d'accès à la plateforme. | Fournisseur (réservé au fabricant d'un modèle), sous-traitant comme terme générique | — |
 
 ## 3. Cycle de vie d'un exemplaire
 

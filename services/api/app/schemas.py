@@ -23,6 +23,30 @@ class SiteOut(BaseModel):
     created_at: datetime
 
 
+class ProviderCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    contact_name: str | None = Field(default=None, max_length=200)
+    contact_email: str | None = Field(default=None, max_length=320)
+    contact_phone: str | None = Field(default=None, max_length=50)
+
+
+class ProviderUpdate(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    contact_name: str | None = Field(default=None, max_length=200)
+    contact_email: str | None = Field(default=None, max_length=320)
+    contact_phone: str | None = Field(default=None, max_length=50)
+
+
+class ProviderOut(BaseModel):
+    id: uuid.UUID
+    name: str
+    contact_name: str | None
+    contact_email: str | None
+    contact_phone: str | None
+    created_by: str
+    created_at: datetime
+
+
 class ProductModelCreate(BaseModel):
     manufacturer: str = Field(min_length=1, max_length=200)
     reference: str = Field(min_length=1, max_length=200)

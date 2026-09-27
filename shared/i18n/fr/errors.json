@@ -143,6 +143,7 @@
     "PROPERTY_UNIT_QUANTITY_MISMATCH": "L’unité « {unit} » ne mesure pas une grandeur « {quantity} ».",
     "PROPERTY_UNKNOWN": "Propriété inconnue : « {key} ».",
     "PROPERTY_VALUE_NOT_ALLOWED": "Valeur non reconnue pour la propriété « {key} » : « {value} ».",
+    "PROVIDER_NOT_FOUND": "Le prestataire demandé est introuvable.",
     "QUERY_LIMIT_OUT_OF_RANGE": "Le paramètre « limit » doit être compris entre {minimum} et {maximum}.",
     "QUERY_SINCE_TIMEZONE_REQUIRED": "Le paramètre « since » doit préciser son fuseau horaire, par exemple 2026-09-23T08:00:00Z.",
     "RELATION_ALREADY_ENDED": "Cette relation est déjà close.",
