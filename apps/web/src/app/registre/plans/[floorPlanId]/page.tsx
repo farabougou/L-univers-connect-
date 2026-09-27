@@ -33,6 +33,8 @@ type LivePlacement = {
   point_value: number | null;
   point_unit: string | null;
 };
+type Point = { id: string; functional_location_id: string | null; space_id: string | null };
+type Finding = { subject_node_id: string };
 
 export default async function PlanEditorPage({
   params,
@@ -52,14 +54,25 @@ export default async function PlanEditorPage({
   const me: Me = meResponse.ok ? await meResponse.json() : { roles: [] };
   const canManage = computeCanManage(me);
 
-  const [planResponse, placementsResponse, liveResponse, spacesResponse, locationsResponse] =
-    await Promise.all([
-      apiFetch(`/floor-plans/${floorPlanId}`, accessToken),
-      apiFetch(`/floor-plans/${floorPlanId}/placements`, accessToken),
-      apiFetch(`/floor-plans/${floorPlanId}/placements/live`, accessToken),
-      apiFetch("/spaces", accessToken),
-      apiFetch("/functional-locations", accessToken),
-    ]);
+  const [
+    planResponse,
+    placementsResponse,
+    liveResponse,
+    spacesResponse,
+    locationsResponse,
+    pointsResponse,
+    openFindingsResponse,
+    inProgressFindingsResponse,
+  ] = await Promise.all([
+    apiFetch(`/floor-plans/${floorPlanId}`, accessToken),
+    apiFetch(`/floor-plans/${floorPlanId}/placements`, accessToken),
+    apiFetch(`/floor-plans/${floorPlanId}/placements/live`, accessToken),
+    apiFetch("/spaces", accessToken),
+    apiFetch("/functional-locations", accessToken),
+    apiFetch("/points", accessToken),
+    apiFetch("/findings?handling_status=open", accessToken),
+    apiFetch("/findings?handling_status=in_progress", accessToken),
+  ]);
 
   if (!planResponse.ok || !canManage) {
     return (
@@ -78,12 +91,29 @@ export default async function PlanEditorPage({
   const allLocations: FunctionalLocation[] = locationsResponse.ok
     ? await locationsResponse.json()
     : [];
+  const points: Point[] = pointsResponse.ok ? await pointsResponse.json() : [];
+  const openFindings: Finding[] = openFindingsResponse.ok ? await openFindingsResponse.json() : [];
+  const inProgressFindings: Finding[] = inProgressFindingsResponse.ok
+    ? await inProgressFindingsResponse.json()
+    : [];
 
   const currentSpace = allSpaces.find((space) => space.id === plan.space_id);
   const siteId = currentSpace?.site_id;
   const siteSpaces = allSpaces.filter((space) => space.site_id === siteId);
   const siteLocations = allLocations.filter((location) => location.site_id === siteId);
   const liveById = new Map(live.map((entry) => [entry.id, entry]));
+  const pointsById = new Map(points.map((point) => [point.id, point]));
+  // Même règle que app/rules.py (_subject) : le constat porte sur
+  // l'équipement du point, à défaut son espace, à défaut le point lui-même.
+  const subjectsWithOpenFinding = new Set(
+    [...openFindings, ...inProgressFindings].map((finding) => finding.subject_node_id),
+  );
+  function pointHasOpenFinding(pointId: string): boolean {
+    const point = pointsById.get(pointId);
+    if (!point) return false;
+    const subject = point.functional_location_id ?? point.space_id ?? point.id;
+    return subjectsWithOpenFinding.has(subject);
+  }
 
   function targetLabel(placement: Placement): string {
     if (placement.space_id) {
@@ -110,12 +140,15 @@ export default async function PlanEditorPage({
       value && value.point_value !== null
         ? ` — ${t("plan_editor.live_value_label")}: ${value.point_value}${value.point_unit ?? ""}`
         : "";
+    const warning = placement.point_id !== null && pointHasOpenFinding(placement.point_id);
+    const warningSuffix = warning ? ` — ${t("plan_editor.marker_open_finding")}` : "";
     return {
       id: placement.id,
       x: placement.x_ratio,
       y: placement.y_ratio,
       color: placement.status === "validated" ? "#16a34a" : "#9ca3af",
-      title: `${label} — ${status}${valueSuffix}`,
+      warning,
+      title: `${label} — ${status}${valueSuffix}${warningSuffix}`,
     };
   });
 
@@ -179,6 +212,9 @@ export default async function PlanEditorPage({
                 <td style={cellStyle}>
                   {targetLabel(placement)} —{" "}
                   {t(`plan_editor.marker_status_${placement.status}`)}
+                  {placement.point_id !== null && pointHasOpenFinding(placement.point_id) && (
+                    <span style={{ color: "#dc2626" }}> — {t("plan_editor.marker_open_finding")}</span>
+                  )}
                 </td>
                 <td style={cellStyle}>
                   {placement.status === "proposed" && (

@@ -11,6 +11,7 @@ type Marker = {
   x: number;
   y: number;
   color: string;
+  warning: boolean;
   title: string;
 };
 
@@ -84,7 +85,9 @@ export function PlacementEditor({
               borderRadius: "50%",
               background: marker.color,
               border: "2px solid white",
-              boxShadow: "0 0 0 1px rgba(0,0,0,0.3)",
+              boxShadow: marker.warning
+                ? "0 0 0 1px rgba(0,0,0,0.3), 0 0 0 4px #dc2626"
+                : "0 0 0 1px rgba(0,0,0,0.3)",
               transform: "translate(-50%, -50%)",
             }}
           />

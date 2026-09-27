@@ -453,7 +453,8 @@
     "marker_unknown_target": "Item not found",
     "marker_point_target": "Point",
     "live_value_label": "Value",
-    "unsupported_content_type": "This editor only supports PNG or JPEG floor plans."
+    "unsupported_content_type": "This editor only supports PNG or JPEG floor plans.",
+    "marker_open_finding": "Open finding"
   },
   "space_type": {
     "building": "Building",

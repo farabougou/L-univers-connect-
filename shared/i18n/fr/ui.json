@@ -453,7 +453,8 @@
     "marker_unknown_target": "Élément introuvable",
     "marker_point_target": "Point",
     "live_value_label": "Valeur",
-    "unsupported_content_type": "Cet éditeur ne prend en charge que les plans PNG ou JPEG."
+    "unsupported_content_type": "Cet éditeur ne prend en charge que les plans PNG ou JPEG.",
+    "marker_open_finding": "Constat ouvert"
   },
   "space_type": {
     "building": "Bâtiment",
