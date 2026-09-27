@@ -413,7 +413,23 @@
       "ifc_import_reject": "Reject",
       "ifc_import_reject_reason_label": "Reason for rejection",
       "ifc_import_rejected_reason": "Reason: {reason}",
-      "floor_plans_open_editor": "Open the editor"
+      "floor_plans_open_editor": "Open the editor",
+      "providers_title": "Maintenance providers",
+      "no_providers": "No provider registered yet.",
+      "create_provider_title": "Add a provider",
+      "provider_name": "Provider name",
+      "provider_contact_name": "Contact (optional)",
+      "provider_contact_email": "Email (optional)",
+      "provider_contact_phone": "Phone (optional)",
+      "edit_provider": "Edit",
+      "maintenance_provider_title": "Maintenance provider",
+      "no_maintenance_provider": "No provider declared for this equipment.",
+      "maintenance_provider_since": "Since {date}",
+      "no_providers_yet": "Add a provider in the registry first.",
+      "declare_maintenance_provider": "Declare a provider",
+      "maintenance_provider_select": "Provider",
+      "end_maintenance_provider": "Remove",
+      "end_maintenance_provider_reason": "Reason"
     }
   },
   "plan_editor": {

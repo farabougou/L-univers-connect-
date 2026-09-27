@@ -17,10 +17,12 @@ import {
   acceptIfcImportProposal,
   closeSpace,
   createEquipment,
+  createProvider,
   createSite,
   createSpace,
   rejectIfcImportProposal,
   showTag,
+  updateProvider,
   updateSiteTimezone,
   uploadFloorPlan,
   uploadIfcImport,
@@ -67,6 +69,13 @@ type IfcImportProposal = {
   status: string;
   rejection_reason: string | null;
 };
+type Provider = {
+  id: string;
+  name: string;
+  contact_name: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+};
 
 // Même vocabulaire que app/spatial_vocabulary.py (ADR 011) ; un jeu de cinq
 // types stables, comme les priorités d'ordre de travail plus bas.
@@ -110,18 +119,21 @@ export default async function RegistrePage({
     );
   }
 
-  const [sitesResponse, locationsResponse, typesResponse, spacesResponse] = await Promise.all([
-    apiFetch("/sites", accessToken),
-    apiFetch("/functional-locations", accessToken),
-    apiFetch("/equipment-types", accessToken),
-    apiFetch("/spaces", accessToken),
-  ]);
+  const [sitesResponse, locationsResponse, typesResponse, spacesResponse, providersResponse] =
+    await Promise.all([
+      apiFetch("/sites", accessToken),
+      apiFetch("/functional-locations", accessToken),
+      apiFetch("/equipment-types", accessToken),
+      apiFetch("/spaces", accessToken),
+      apiFetch("/providers", accessToken),
+    ]);
   const sites: Site[] = sitesResponse.ok ? await sitesResponse.json() : [];
   const locations: FunctionalLocation[] = locationsResponse.ok ? await locationsResponse.json() : [];
   const equipmentTypes: EquipmentType[] = typesResponse.ok
     ? (await typesResponse.json()).types
     : [];
   const spaces: Space[] = spacesResponse.ok ? await spacesResponse.json() : [];
+  const providers: Provider[] = providersResponse.ok ? await providersResponse.json() : [];
   const siteName = (siteId: string) => sites.find((site) => site.id === siteId)?.name ?? siteId;
   const spaceLabel = (spaceId: string) => {
     const space = spaces.find((candidate) => candidate.id === spaceId);
@@ -524,6 +536,95 @@ export default async function RegistrePage({
           )}
         </section>
       )}
+
+      <h2 style={{ marginTop: 40 }}>{t("web.registre.providers_title")}</h2>
+      {providers.length === 0 ? (
+        <p>{t("web.registre.no_providers")}</p>
+      ) : (
+        <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 24 }}>
+          <thead>
+            <tr>
+              <th style={headerCellStyle}>{t("web.registre.provider_name")}</th>
+              <th style={headerCellStyle}>{t("web.registre.provider_contact_name")}</th>
+              <th style={headerCellStyle}>{t("web.registre.provider_contact_email")}</th>
+              <th style={headerCellStyle}>{t("web.registre.provider_contact_phone")}</th>
+              <th style={headerCellStyle} />
+            </tr>
+          </thead>
+          <tbody>
+            {providers.map((provider) => (
+              <tr key={provider.id}>
+                <td style={cellStyle}>{provider.name}</td>
+                <td style={cellStyle}>{provider.contact_name ?? ""}</td>
+                <td style={cellStyle}>{provider.contact_email ?? ""}</td>
+                <td style={cellStyle}>{provider.contact_phone ?? ""}</td>
+                <td style={cellStyle}>
+                  <details>
+                    <summary>{t("web.registre.edit_provider")}</summary>
+                    <form action={updateProvider} style={{ maxWidth: 300 }}>
+                      <input type="hidden" name="provider_id" value={provider.id} />
+                      <label>
+                        {t("web.registre.provider_name")}
+                        <input name="name" defaultValue={provider.name} required style={fieldStyle} />
+                      </label>
+                      <label style={labelStyle}>
+                        {t("web.registre.provider_contact_name")}
+                        <input
+                          name="contact_name"
+                          defaultValue={provider.contact_name ?? ""}
+                          style={fieldStyle}
+                        />
+                      </label>
+                      <label style={labelStyle}>
+                        {t("web.registre.provider_contact_email")}
+                        <input
+                          name="contact_email"
+                          defaultValue={provider.contact_email ?? ""}
+                          style={fieldStyle}
+                        />
+                      </label>
+                      <label style={labelStyle}>
+                        {t("web.registre.provider_contact_phone")}
+                        <input
+                          name="contact_phone"
+                          defaultValue={provider.contact_phone ?? ""}
+                          style={fieldStyle}
+                        />
+                      </label>
+                      <button type="submit" style={submitStyle}>
+                        {t("web.registre.submit")}
+                      </button>
+                    </form>
+                  </details>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      <h3>{t("web.registre.create_provider_title")}</h3>
+      <form action={createProvider} style={{ maxWidth: 400 }}>
+        <label>
+          {t("web.registre.provider_name")}
+          <input name="name" required style={fieldStyle} />
+        </label>
+        <label style={labelStyle}>
+          {t("web.registre.provider_contact_name")}
+          <input name="contact_name" style={fieldStyle} />
+        </label>
+        <label style={labelStyle}>
+          {t("web.registre.provider_contact_email")}
+          <input name="contact_email" style={fieldStyle} />
+        </label>
+        <label style={labelStyle}>
+          {t("web.registre.provider_contact_phone")}
+          <input name="contact_phone" style={fieldStyle} />
+        </label>
+        <button type="submit" style={submitStyle}>
+          {t("web.registre.submit")}
+        </button>
+      </form>
 
       <h2 style={{ marginTop: 40 }}>{t("web.registre.equipment_title")}</h2>
       {locations.length === 0 ? (

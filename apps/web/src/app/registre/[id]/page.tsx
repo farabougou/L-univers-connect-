@@ -34,7 +34,9 @@ import {
   createThresholdRule,
   createWorkOrderForEquipment,
   declareDesiredState,
+  declareMaintenanceProvider,
   endDesiredState,
+  endMaintenanceProvider,
   restoreRule,
   retireRule,
   revokeTag,
@@ -96,6 +98,15 @@ type EnergyComparison = {
   comparable: boolean;
   percent_deviation: number | null;
   reduced: boolean | null;
+};
+
+type Provider = { id: string; name: string };
+type Relation = {
+  id: string | null;
+  predicate: string;
+  object_id: string;
+  object_type: string;
+  valid_from: string | null;
 };
 
 // Référence énergétique (app/energy/baseline.py) : une configuration
@@ -181,10 +192,17 @@ export default async function EquipmentPage({
     configDiff = diffResponse.ok ? await diffResponse.json() : null;
   }
 
-  const [response, meResponse] = await Promise.all([
+  const [response, meResponse, providersResponse, relationsResponse] = await Promise.all([
     apiFetch(`/graph/nodes/${id}/passport`, accessToken),
     apiFetch("/me", accessToken),
+    apiFetch("/providers", accessToken),
+    apiFetch(`/graph/nodes/${id}/relations`, accessToken),
   ]);
+  const providers: Provider[] = providersResponse.ok ? await providersResponse.json() : [];
+  const relations: Relation[] = relationsResponse.ok ? await relationsResponse.json() : [];
+  const maintenanceProviders = relations.filter((relation) => relation.predicate === "maintainedBy");
+  const providerName = (providerId: string) =>
+    providers.find((provider) => provider.id === providerId)?.name ?? providerId;
   const me: Me = meResponse.ok ? await meResponse.json() : { roles: [] };
   const canManage = computeCanManage(me);
   const canSendCommand = computeCanSendCommand(me);
@@ -317,6 +335,57 @@ export default async function EquipmentPage({
           <UnitView unit={unit} t={t} nodeId={id} canManage={canManage} locale={locale} />
         ) : (
           <p>{t("mobile.passport.no_unit")}</p>
+        )}
+      </section>
+
+      <section style={sectionStyle}>
+        <h2 style={sectionTitleStyle}>{t("web.registre.maintenance_provider_title")}</h2>
+        {maintenanceProviders.length === 0 ? (
+          <p style={mutedStyle}>{t("web.registre.no_maintenance_provider")}</p>
+        ) : (
+          maintenanceProviders.map((relation) => (
+            <p key={relation.id} style={{ margin: 0 }}>
+              {providerName(relation.object_id)}
+              {relation.valid_from &&
+                ` — ${t("web.registre.maintenance_provider_since", { date: formatDate(locale, relation.valid_from, timeZone) })}`}
+              {canManage && relation.id && (
+                <form
+                  action={endMaintenanceProvider}
+                  style={{ display: "inline-flex", gap: 4, marginLeft: 8 }}
+                >
+                  <input type="hidden" name="node_id" value={id} />
+                  <input type="hidden" name="relation_id" value={relation.id} />
+                  <input name="reason" required placeholder={t("web.registre.end_maintenance_provider_reason")} />
+                  <button type="submit">{t("web.registre.end_maintenance_provider")}</button>
+                </form>
+              )}
+            </p>
+          ))
+        )}
+        {canManage && (
+          <details style={{ marginTop: 8 }}>
+            <summary>{t("web.registre.declare_maintenance_provider")}</summary>
+            {providers.length === 0 ? (
+              <p style={mutedStyle}>{t("web.registre.no_providers_yet")}</p>
+            ) : (
+              <form action={declareMaintenanceProvider} style={{ maxWidth: 360 }}>
+                <input type="hidden" name="node_id" value={id} />
+                <label>
+                  {t("web.registre.maintenance_provider_select")}
+                  <select name="provider_id" required style={fieldStyle}>
+                    {providers.map((provider) => (
+                      <option key={provider.id} value={provider.id}>
+                        {provider.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button type="submit" style={submitStyle}>
+                  {t("web.registre.submit")}
+                </button>
+              </form>
+            )}
+          </details>
         )}
       </section>
 

@@ -517,3 +517,42 @@ export async function computeEnergyResult(formData: FormData) {
   }
   revalidatePath(`/registre/${nodeId}`);
 }
+
+/**
+ * Déclare un prestataire comme mainteneur (prédicat `maintainedBy`, voir
+ * app/graph_vocabulary.py) : une relation stockée, jamais un texte libre.
+ */
+export async function declareMaintenanceProvider(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+
+  const response = await apiFetch("/relations", accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      subject_id: nodeId,
+      predicate: "maintainedBy",
+      object_id: formData.get("provider_id"),
+    }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  revalidatePath(`/registre/${nodeId}`);
+}
+
+export async function endMaintenanceProvider(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+  const relationId = formData.get("relation_id");
+
+  const response = await apiFetch(`/relations/${relationId}/end`, accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reason: formData.get("reason") }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  revalidatePath(`/registre/${nodeId}`);
+}

@@ -340,3 +340,45 @@ export async function rejectIfcImportProposal(formData: FormData) {
   revalidatePath("/registre");
   redirect(`/registre?import_site=${siteId}&import_batch=${batchId}`);
 }
+
+function optionalText(value: FormDataEntryValue | null): string | null {
+  const text = typeof value === "string" ? value.trim() : "";
+  return text.length > 0 ? text : null;
+}
+
+export async function createProvider(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const response = await apiFetch("/providers", accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: formData.get("name"),
+      contact_name: optionalText(formData.get("contact_name")),
+      contact_email: optionalText(formData.get("contact_email")),
+      contact_phone: optionalText(formData.get("contact_phone")),
+    }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(response);
+  }
+  revalidatePath("/registre");
+}
+
+export async function updateProvider(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const providerId = formData.get("provider_id");
+  const response = await apiFetch(`/providers/${providerId}`, accessToken, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: formData.get("name"),
+      contact_name: optionalText(formData.get("contact_name")),
+      contact_email: optionalText(formData.get("contact_email")),
+      contact_phone: optionalText(formData.get("contact_phone")),
+    }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(response);
+  }
+  revalidatePath("/registre");
+}

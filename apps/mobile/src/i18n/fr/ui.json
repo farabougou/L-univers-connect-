@@ -413,7 +413,23 @@
       "ifc_import_reject": "Refuser",
       "ifc_import_reject_reason_label": "Motif du refus",
       "ifc_import_rejected_reason": "Motif : {reason}",
-      "floor_plans_open_editor": "Ouvrir l’éditeur"
+      "floor_plans_open_editor": "Ouvrir l’éditeur",
+      "providers_title": "Prestataires de maintenance",
+      "no_providers": "Aucun prestataire enregistré pour le moment.",
+      "create_provider_title": "Ajouter un prestataire",
+      "provider_name": "Nom du prestataire",
+      "provider_contact_name": "Contact (facultatif)",
+      "provider_contact_email": "Courriel (facultatif)",
+      "provider_contact_phone": "Téléphone (facultatif)",
+      "edit_provider": "Modifier",
+      "maintenance_provider_title": "Prestataire de maintenance",
+      "no_maintenance_provider": "Aucun prestataire déclaré pour cet équipement.",
+      "maintenance_provider_since": "Depuis le {date}",
+      "no_providers_yet": "Ajoutez d’abord un prestataire dans le registre.",
+      "declare_maintenance_provider": "Déclarer un prestataire",
+      "maintenance_provider_select": "Prestataire",
+      "end_maintenance_provider": "Retirer",
+      "end_maintenance_provider_reason": "Motif"
     }
   },
   "plan_editor": {
