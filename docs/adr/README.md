@@ -13,3 +13,4 @@ Un fichier par décision.
 - [011 — Modèle spatial, plans 2D et BIM/IFC](./011-modele-spatial-plans-et-bim.md)
 - [012 — Fondations de l'architecture V2 : impact et plan de migration](./012-fondations-architecture-v2.md)
 - [013 — Langage produit, terminologie, codes et internationalisation](./013-langage-produit-terminologie-i18n.md)
+- [015 — Découverte BACnet V1 (lecture seule) et correspondance sémantique](./015-decouverte-bacnet-v1.md)

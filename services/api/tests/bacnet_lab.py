@@ -7,7 +7,7 @@ prouve que le connecteur dialogue réellement en BACnet (Who-Is/I-Am,
 ReadProperty, décodage de propriété). C'est le palier SIMULATOR_TESTED,
 distinct de UNIT_TESTED (aucun réseau, ex. test_bacnet_semantics.py) et de
 FIELD_TESTED (un vrai appareil sur un vrai réseau, BLOCKED jusqu'aux essais
-terrain autorisés — voir docs/spec/bacnet-connector-v1-adr.md).
+terrain autorisés — voir docs/adr/015-decouverte-bacnet-v1.md).
 
 Le jeu d'objets par défaut couvre volontairement plusieurs typologies
 d'installation CVC/froid réelles (température avec unité, pression sans
