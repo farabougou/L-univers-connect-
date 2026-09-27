@@ -1,12 +1,13 @@
 from typing import Annotated, Any
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Response
 from sqlalchemy import text
 
 from app.auth import get_current_claims, require_role
 from app.config import settings
 from app.db import engine
 from app.errors import ApiError, install_error_handlers
+from app.metrics import render_latest
 from app.observability import RequestLoggingMiddleware, configure_logging
 from app.routers.analytics import router as analytics_router
 from app.routers.assets import router as asset_registry_router
@@ -60,6 +61,15 @@ def health_db() -> dict[str, str]:
         raise ApiError(503, "DATABASE_UNAVAILABLE") from exc
 
     return {"status": "ok"}
+
+
+@app.get("/metrics")
+def metrics() -> Response:
+    """Agrégats seulement (requêtes par méthode/route/statut, durée) : aucune
+    donnée métier ni par tenant — même niveau de sensibilité que /health,
+    donc sans authentification (voir app/metrics.py)."""
+    body, content_type = render_latest()
+    return Response(content=body, media_type=content_type)
 
 
 @app.get("/me")

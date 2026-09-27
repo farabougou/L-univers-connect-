@@ -26,6 +26,8 @@ from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
 
+from app.metrics import record_request
+
 REQUEST_ID_HEADER = "X-Request-ID"
 # Un identifiant reçu (Edge, application) est gardé s'il est court et sans
 # caractère spécial ; sinon on en crée un : un en-tête ne doit pas pouvoir
@@ -170,6 +172,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                     request_id=request_id,
                 )
             response.headers[REQUEST_ID_HEADER] = request_id
+            duration_seconds = time.perf_counter() - started
             logger.info(
                 "requête traitée",
                 extra={
@@ -177,8 +180,14 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                     "method": request.method,
                     "route": _route_template(request),
                     "status": response.status_code,
-                    "duration_ms": round((time.perf_counter() - started) * 1000, 2),
+                    "duration_ms": round(duration_seconds * 1000, 2),
                 },
+            )
+            record_request(
+                method=request.method,
+                route=_route_template(request),
+                status=response.status_code,
+                duration_seconds=duration_seconds,
             )
             return response
         finally:
