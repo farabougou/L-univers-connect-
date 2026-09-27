@@ -425,6 +425,61 @@ class IfcImportProposalReject(BaseModel):
     reason: str = Field(min_length=1, max_length=500)
 
 
+class BacnetDiscoveryScanRequest(BaseModel):
+    equipment_id: uuid.UUID
+    address: str = Field(min_length=1, max_length=255)
+    timeout: float = Field(default=3.0, ge=0.5, le=15.0)
+
+
+class BacnetDiscoveryBatchOut(BaseModel):
+    id: uuid.UUID
+    equipment_id: uuid.UUID
+    address: str
+    device_instance: int | None
+    status: Literal["processing", "ready", "failed"]
+    error_code: str | None
+    object_count: int | None
+    proposal_count: int | None
+    duplicate_count: int | None
+    scanned_by: str
+    scanned_at: datetime
+
+
+class BacnetDiscoveryProposalOut(BaseModel):
+    id: uuid.UUID
+    batch_id: uuid.UUID
+    object_type: str
+    object_instance: int
+    object_name: str | None
+    description: str | None
+    bacnet_units: str | None
+    present_value_preview: str | None
+    value_type: Literal["number", "boolean", "multistate"]
+    states: dict[str, str] | None
+    proposed_point_class: str | None
+    proposed_unit: str | None
+    confidence: float | None
+    reason_code: str
+    reason_message: str
+    status: Literal["proposed", "accepted", "rejected", "duplicate"]
+    created_point_id: uuid.UUID | None
+    decided_by: str | None
+    decided_at: datetime | None
+    rejection_reason: str | None
+    created_at: datetime
+
+
+class BacnetDiscoveryProposalAccept(BaseModel):
+    point_class: str | None = Field(default=None, max_length=100)
+    unit: str | None = Field(default=None, max_length=20)
+    code: str | None = Field(default=None, max_length=200)
+    name: str | None = Field(default=None, max_length=200)
+
+
+class BacnetDiscoveryProposalReject(BaseModel):
+    reason: str = Field(min_length=1, max_length=500)
+
+
 class PlanPlacementCreate(BaseModel):
     space_id: uuid.UUID | None = None
     functional_location_id: uuid.UUID | None = None

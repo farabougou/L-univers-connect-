@@ -211,12 +211,15 @@ def _codes_used_in_code() -> set[str]:
 def test_every_code_used_in_the_code_has_a_message_and_none_is_orphaned() -> None:
     error_codes = set(load_catalog("fr")["codes"])
     finding_codes = set(load_catalog("fr", "findings")["titles"])
+    bacnet_discovery_reason_codes = set(load_catalog("fr", "bacnet_discovery")["reasons"])
     # Chaînes au même format qui ne sont pas des codes de message.
     used = _codes_used_in_code() - {"I18N_DIR"} - EVENT_TYPES
 
-    assert used - error_codes - finding_codes == set(), "codes sans message"
+    known = error_codes | finding_codes | bacnet_discovery_reason_codes
+    assert used - known == set(), "codes sans message"
     assert error_codes - used == set(), "messages d'erreur jamais utilisés"
     assert finding_codes - used == set(), "messages de constat jamais utilisés"
+    assert bacnet_discovery_reason_codes - used == set(), "raisons de découverte jamais utilisées"
 
 
 def test_finding_catalogs_are_consistent_and_typographically_correct() -> None:

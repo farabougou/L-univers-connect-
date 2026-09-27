@@ -11,6 +11,7 @@ from app.metrics import render_latest
 from app.observability import RequestLoggingMiddleware, configure_logging
 from app.routers.analytics import router as analytics_router
 from app.routers.assets import router as asset_registry_router
+from app.routers.bacnet_discovery import router as bacnet_discovery_router
 from app.routers.commands import router as commands_router
 from app.routers.configs import router as configs_router
 from app.routers.devices import router as devices_router
@@ -31,6 +32,7 @@ app = FastAPI(title="Physical Asset Intelligence OS API")
 app.add_middleware(RequestLoggingMiddleware)
 install_error_handlers(app)
 app.include_router(asset_registry_router)
+app.include_router(bacnet_discovery_router)
 app.include_router(graph_router)
 app.include_router(spatial_router)
 app.include_router(points_router)

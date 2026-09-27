@@ -15,6 +15,8 @@ from tests.db_helpers import (
 )
 
 _TABLES_IN_ORDER = (
+    "bacnet_discovery_proposals",
+    "bacnet_discovery_batches",
     "finding_status_history",
     "findings",
     "alarm_status_history",
