@@ -26,8 +26,8 @@ def two_tenants():
         cleanup_tenant(tenant)
 
 
-def _headers(tenant: dict, roles: list[str]) -> dict[str, str]:
-    token = make_token(tenant_id=str(tenant["tenant_id"]), roles=roles)
+def _headers(tenant: dict, roles: list[str], sub: str = "technicien-test") -> dict[str, str]:
+    token = make_token(tenant_id=str(tenant["tenant_id"]), roles=roles, sub=sub)
     return {"Authorization": f"Bearer {token}"}
 
 
@@ -56,10 +56,13 @@ def _rule_body(tenant: dict, **overrides) -> dict:
 
 
 def _active_rule(tenant: dict, **overrides) -> str:
-    manager = _headers(tenant, ["responsable_exploitation"])
-    version = _call("POST", "/configs", manager, json=_rule_body(tenant, **overrides))
+    """Approbation à deux (app/config_versions.py) : proposée et activée par
+    deux personnes distinctes, même dans un test."""
+    author = _headers(tenant, ["responsable_exploitation"], sub="auteur-regle")
+    approver = _headers(tenant, ["responsable_exploitation"], sub="approbateur-regle")
+    version = _call("POST", "/configs", author, json=_rule_body(tenant, **overrides))
     assert version.status_code == 201, version.text
-    activated = _call("POST", f"/configs/{version.json()['id']}/activate", manager)
+    activated = _call("POST", f"/configs/{version.json()['id']}/activate", approver)
     assert activated.status_code == 200, activated.text
     return version.json()["id"]
 

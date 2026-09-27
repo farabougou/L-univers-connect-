@@ -131,6 +131,32 @@ def test_only_a_draft_can_be_activated(two_tenants) -> None:
             activate_version(connection, version_id=first, activated_by="r", activated_at=NOW)
 
 
+def test_the_author_cannot_activate_their_own_version(two_tenants) -> None:
+    """Approbation à deux : indispensable avant toute automatisation à
+    impact physique (feature-benchmark-matrix.md, gestion des changements).
+    `_new` propose toujours au nom de « responsable » (voir plus haut)."""
+    tenant_a, _ = two_tenants
+    with raises_code(ConfigConflict, "CONFIG_ACTIVATION_REQUIRES_SECOND_PERSON"):
+        with in_tenant(tenant_a) as connection:
+            first = _new(connection, tenant_a)
+            activate_version(
+                connection, version_id=first, activated_by="responsable", activated_at=NOW
+            )
+
+
+def test_a_different_person_can_activate_it(two_tenants) -> None:
+    tenant_a, _ = two_tenants
+    with in_tenant(tenant_a) as connection:
+        first = _new(connection, tenant_a)
+        activate_version(
+            connection, version_id=first, activated_by="admin_tenant_x", activated_at=NOW
+        )
+        version = get_version(connection, first)
+
+    assert version["status"] == "active"
+    assert version["activated_by"] == "admin_tenant_x"
+
+
 @pytest.mark.parametrize(
     "overrides",
     [{"kind": "magie"}, {"surprise": 1}, {"threshold": "chaud"}, {"severity": "apocalypse"}],

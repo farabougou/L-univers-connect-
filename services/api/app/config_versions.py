@@ -40,22 +40,41 @@ class ConfigInvalid(DomainError, ValueError):
     pass
 
 
-# config_type → (version du schéma, validateur). Le validateur reçoit la
-# connexion (pour vérifier ce que la configuration référence) et le contenu,
-# et renvoie le contenu normalisé ou lève ConfigInvalid.
+# config_type → (version du schéma, validateur, approbation à deux exigée).
+# Le validateur reçoit la connexion (pour vérifier ce que la configuration
+# référence) et le contenu, et renvoie le contenu normalisé ou lève
+# ConfigInvalid.
 Validator = Callable[[Connection, dict[str, Any]], dict[str, Any]]
-_REGISTRY: dict[str, tuple[str, Validator]] = {}
+_REGISTRY: dict[str, tuple[str, Validator, bool]] = {}
 
 
-def register_config_type(config_type: str, schema_version: str, validator: Validator) -> None:
-    _REGISTRY[config_type] = (schema_version, validator)
+def register_config_type(
+    config_type: str,
+    schema_version: str,
+    validator: Validator,
+    *,
+    requires_second_person: bool = False,
+) -> None:
+    """`requires_second_person` : celui qui active ne peut pas être celui qui
+    a proposé (indispensable avant toute automatisation à impact physique —
+    feature-benchmark-matrix.md, gestion des changements). Une configuration
+    de câblage (mapping Modbus/BACnet, paramètres énergétiques...) reste à
+    une seule personne : seule une règle qui peut déclencher une action
+    (ordre de travail, alarme) l'exige."""
+    _REGISTRY[config_type] = (schema_version, validator, requires_second_person)
 
 
 def _validate(connection: Connection, config_type: str, content: dict) -> tuple[str, dict]:
     if config_type not in _REGISTRY:
         raise ConfigInvalid("CONFIG_TYPE_UNKNOWN", config_type=config_type)
-    schema_version, validator = _REGISTRY[config_type]
+    schema_version, validator, _ = _REGISTRY[config_type]
     return schema_version, validator(connection, content)
+
+
+def _requires_second_person(config_type: str) -> bool:
+    if config_type not in _REGISTRY:
+        raise ConfigInvalid("CONFIG_TYPE_UNKNOWN", config_type=config_type)
+    return _REGISTRY[config_type][2]
 
 
 def content_hash(content: dict[str, Any]) -> str:
@@ -139,6 +158,20 @@ def activate_version(
     version = _require_version(connection, version_id)
     if version["status"] != "draft":
         raise ConfigConflict("CONFIG_ACTIVATION_REQUIRES_DRAFT", status=version["status"])
+    if _requires_second_person(version["config_type"]) and activated_by == version["author"]:
+        # Un brouillon refusé pour cette raison reste consultable ; une
+        # nouvelle version peut être proposée par la même personne, activée
+        # par une autre.
+        raise ConfigConflict("CONFIG_ACTIVATION_REQUIRES_SECOND_PERSON")
+    return _activate(
+        connection, version=version, activated_by=activated_by, activated_at=activated_at
+    )
+
+
+def _activate(
+    connection: Connection, *, version: dict[str, Any], activated_by: str, activated_at: datetime
+) -> uuid.UUID | None:
+    version_id = version["id"]
     _validate(connection, version["config_type"], version["content"])
 
     previous = connection.execute(
@@ -183,7 +216,11 @@ def restore_version(
     activated_at: datetime,
 ) -> uuid.UUID:
     """Retour arrière : crée et active une NOUVELLE version reprenant le contenu
-    d'une version antérieure. L'historique reste complet et lisible."""
+    d'une version antérieure. L'historique reste complet et lisible.
+
+    Action décisive d'une seule personne, jamais soumise à l'approbation à
+    deux : le contenu restauré était déjà actif et validé auparavant, ce
+    n'est pas un changement nouveau à faire réviser."""
     old = _require_version(connection, version_id)
     new_id = create_version(
         connection,
@@ -194,7 +231,8 @@ def restore_version(
         author=author,
         reason=reason,
     )
-    activate_version(connection, version_id=new_id, activated_by=author, activated_at=activated_at)
+    new_version = _require_version(connection, new_id)
+    _activate(connection, version=new_version, activated_by=author, activated_at=activated_at)
     return new_id
 
 

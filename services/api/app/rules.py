@@ -91,7 +91,9 @@ def _validate_alarm_rule(connection: Connection, content: dict[str, Any]) -> dic
     return rule.model_dump(mode="json", exclude_none=True)
 
 
-register_config_type(ALARM_RULE, ALARM_RULE_SCHEMA, _validate_alarm_rule)
+register_config_type(
+    ALARM_RULE, ALARM_RULE_SCHEMA, _validate_alarm_rule, requires_second_person=True
+)
 
 
 def _subject(point: dict[str, Any]) -> uuid.UUID:
