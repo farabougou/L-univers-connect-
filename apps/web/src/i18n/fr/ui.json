@@ -221,7 +221,20 @@
       "status_column": "État",
       "alerts_column": "Alertes",
       "alerts_none": "Aucune",
-      "alerts_open": "{count} ouverte(s)"
+      "alerts_open": "{count} ouverte(s)",
+      "portfolio_title": "Vue d’ensemble",
+      "kpi_sites": "Sites",
+      "kpi_equipment": "Équipements",
+      "kpi_alarms": "Alarmes ouvertes",
+      "kpi_findings": "Constats ouverts",
+      "kpi_work_orders": "Ordres de travail ouverts",
+      "site_column": "Site",
+      "edge_column": "Passerelles Edge",
+      "edge_none": "Aucune passerelle",
+      "drill_down": "Voir",
+      "site_equipment_title": "Équipements — {name}",
+      "back_to_portfolio": "Retour à la vue d’ensemble",
+      "no_sites": "Aucun site enregistré pour le moment."
     },
     "work_orders": {
       "title": "Ordres de travail",

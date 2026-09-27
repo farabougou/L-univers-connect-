@@ -221,7 +221,20 @@
       "status_column": "Status",
       "alerts_column": "Alerts",
       "alerts_none": "None",
-      "alerts_open": "{count} open"
+      "alerts_open": "{count} open",
+      "portfolio_title": "Overview",
+      "kpi_sites": "Sites",
+      "kpi_equipment": "Equipment",
+      "kpi_alarms": "Open alarms",
+      "kpi_findings": "Open findings",
+      "kpi_work_orders": "Open work orders",
+      "site_column": "Site",
+      "edge_column": "Edge gateways",
+      "edge_none": "No gateway",
+      "drill_down": "View",
+      "site_equipment_title": "Equipment — {name}",
+      "back_to_portfolio": "Back to overview",
+      "no_sites": "No site registered yet."
     },
     "work_orders": {
       "title": "Work orders",
