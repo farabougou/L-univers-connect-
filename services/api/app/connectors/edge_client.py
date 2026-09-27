@@ -151,6 +151,19 @@ class EdgeApiClient:
             raise
         return response.json()
 
+    def get_opcua_config(self, equipment_id: uuid.UUID) -> dict[str, Any] | None:
+        """Même principe que get_config, pour un équipement relevé par
+        OPC UA plutôt que Modbus (voir GET /edge/config/opcua)."""
+        try:
+            response = self._authorized_request(
+                "GET", "/edge/config/opcua", params={"equipment_id": str(equipment_id)}
+            )
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code == 404:
+                return None
+            raise
+        return response.json()
+
     def post_measurements(self, items: list[dict[str, Any]]) -> dict[str, Any]:
         response = self._authorized_request("POST", "/edge/measurements", json={"items": items})
         return response.json()

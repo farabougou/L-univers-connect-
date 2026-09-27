@@ -15,6 +15,7 @@ elle-même (règle non négociable 8).
 import uuid
 from typing import Any, Literal
 
+from asyncua import ua
 from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy.engine import Connection
 
@@ -159,6 +160,80 @@ def get_active_bacnet_mapping(
     connexion BACnet configurée, ou seulement un brouillon)."""
     for version in list_versions(
         connection, config_type=BACNET_DEVICE_MAPPING, subject_key=str(equipment_id)
+    ):
+        if version["status"] == "active":
+            return version["content"]
+    return None
+
+
+OPCUA_DEVICE_MAPPING = "opcua_device_mapping"
+OPCUA_DEVICE_MAPPING_SCHEMA = "opcua_device_mapping/1"
+
+
+class OpcuaPointMapping(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    point_id: uuid.UUID
+    node_id: str = Field(min_length=1, max_length=500)
+
+
+class OpcuaDeviceMappingContent(BaseModel):
+    """Même principe que BacnetDeviceMappingContent : OPC UA normalise déjà
+    l'adressage d'une variable (NodeId), aucun catalogue de registres propre
+    à un fabricant n'est nécessaire ici. `endpoint_url` est l'URL complète du
+    serveur (le protocole encode adresse et chemin dans une seule URL,
+    contrairement à Modbus et BACnet)."""
+
+    model_config = {"extra": "forbid"}
+
+    endpoint_url: str = Field(min_length=1, max_length=500)
+    points: list[OpcuaPointMapping] = Field(min_length=1)
+
+
+def _validate_opcua_device_mapping(
+    connection: Connection, content: dict[str, Any]
+) -> dict[str, Any]:
+    try:
+        mapping = OpcuaDeviceMappingContent(**content)
+    except ValidationError as exc:
+        fields = sorted({".".join(str(p) for p in error["loc"]) for error in exc.errors()})
+        raise ConfigInvalid("OPCUA_MAPPING_CONTENT_INVALID", fields=fields) from exc
+
+    seen_node_ids: set[str] = set()
+    seen_points: set[uuid.UUID] = set()
+    for entry in mapping.points:
+        try:
+            ua.NodeId.from_string(entry.node_id)
+        except (ua.UaError, ValueError) as exc:
+            raise ConfigInvalid("OPCUA_NODE_ID_INVALID", node_id=entry.node_id) from exc
+        if entry.node_id in seen_node_ids:
+            raise ConfigInvalid("OPCUA_NODE_ID_DUPLICATED", node_id=entry.node_id)
+        seen_node_ids.add(entry.node_id)
+        if entry.point_id in seen_points:
+            raise ConfigInvalid("OPCUA_POINT_DUPLICATED", point_id=str(entry.point_id))
+        seen_points.add(entry.point_id)
+
+        point = get_point(connection, entry.point_id)
+        if point is None:
+            raise ConfigInvalid("OPCUA_POINT_NOT_FOUND", point_id=str(entry.point_id))
+        if point["mapping_status"] != "validated":
+            raise ConfigInvalid("OPCUA_POINT_NOT_VALIDATED", point_id=str(entry.point_id))
+
+    return mapping.model_dump(mode="json")
+
+
+register_config_type(
+    OPCUA_DEVICE_MAPPING, OPCUA_DEVICE_MAPPING_SCHEMA, _validate_opcua_device_mapping
+)
+
+
+def get_active_opcua_mapping(
+    connection: Connection, *, equipment_id: uuid.UUID
+) -> dict[str, Any] | None:
+    """Le contenu de la version active pour cet équipement, ou None (aucune
+    connexion OPC UA configurée, ou seulement un brouillon)."""
+    for version in list_versions(
+        connection, config_type=OPCUA_DEVICE_MAPPING, subject_key=str(equipment_id)
     ):
         if version["status"] == "active":
             return version["content"]

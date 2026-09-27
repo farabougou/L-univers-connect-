@@ -154,7 +154,7 @@ simulation, Information non disponible).
 5. Erreurs : ce qui n'a pas pu être fait et ce que la personne peut faire ; jamais de
    détail technique ; l'identifiant de requête pour le support.
 6. Termes anglais standard conservés quand ils sont la norme du métier (BACnet, Modbus,
-   FDD, Brick), accompagnés d'une explication à la première occurrence.
+   OPC UA, FDD, Brick), accompagnés d'une explication à la première occurrence.
 7. Pas de ton alarmiste : la gravité est portée par le code de gravité, pas par les mots.
 
 | À éviter | À employer |
