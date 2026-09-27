@@ -354,3 +354,75 @@ def test_other_tenant_rules_and_findings_are_invisible(two_tenants) -> None:
     assert _call("GET", f"/configs/{version_a}", headers_b).status_code == 404
     assert _call("GET", "/configs", headers_b).json() == []
     assert _call("GET", "/findings", headers_b).json() == []
+
+
+def _measure_via_api(tenant, headers, value: float, minutes_ago: int) -> None:
+    response = _call(
+        "POST",
+        "/measurements",
+        headers,
+        json={
+            "point_id": str(tenant["sensor"]),
+            "value": value,
+            "measured_at": _recent(minutes_ago),
+            "origin": "simulated",
+            "source": "simulator",
+        },
+    )
+    assert response.status_code == 201, response.text
+
+
+def test_simulate_reports_which_measurements_would_breach_a_draft_rule(two_tenants) -> None:
+    """Simulation préalable (feature-benchmark-matrix.md, ligne « Gestion des
+    changements ») : une règle en brouillon, jamais activée, ne crée ni
+    constat ni alarme — seul l'historique dit ce qu'elle aurait fait."""
+    tenant_a, _ = two_tenants
+    technicien = _headers(tenant_a, ["technicien"])
+    for value in (50.0, 90.0, 95.0, 60.0):
+        _measure_via_api(tenant_a, technicien, value, minutes_ago=5)
+
+    draft = _call(
+        "POST",
+        "/configs",
+        _headers(tenant_a, ["responsable_exploitation"]),
+        json=_rule_body(tenant_a, threshold=80),
+    )
+    assert draft.status_code == 201, draft.text
+    version_id = draft.json()["id"]
+
+    simulation = _call("GET", f"/configs/{version_id}/simulate", technicien)
+
+    assert simulation.status_code == 200, simulation.text
+    assert simulation.json()["sample_size"] == 4
+    assert simulation.json()["breach_count"] == 2
+    # Un brouillon jamais activé ne déclenche jamais rien réellement.
+    assert _call("GET", "/findings", technicien).json() == []
+
+
+def test_simulate_refuses_a_config_type_that_is_not_a_rule(two_tenants) -> None:
+    tenant_a, _ = two_tenants
+    manager = _headers(tenant_a, ["responsable_exploitation"])
+    mapping = _call(
+        "POST",
+        "/configs",
+        manager,
+        json={
+            "config_type": "modbus_device_mapping",
+            "subject_key": str(tenant_a["ahu"]),
+            "content": {
+                "device_type": "sdm120",
+                "host": "127.0.0.1",
+                "port": 502,
+                "points": [{"point_id": str(tenant_a["sensor"]), "register_name": "voltage"}],
+            },
+            "reason": "test",
+        },
+    )
+    assert mapping.status_code == 201, mapping.text
+
+    simulation = _call(
+        "GET", f"/configs/{mapping.json()['id']}/simulate", _headers(tenant_a, ["technicien"])
+    )
+
+    assert simulation.status_code == 400
+    assert simulation.json()["code"] == "CONFIG_SIMULATION_NOT_SUPPORTED"

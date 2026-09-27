@@ -33,6 +33,7 @@
     "CONFIG_ACTIVATION_REQUIRES_DRAFT": "Only a draft version can be activated; this version is “{status}”.",
     "CONFIG_ACTIVATION_REQUIRES_SECOND_PERSON": "You proposed this version: someone else must activate it (two-person approval).",
     "CONFIG_DIFF_SUBJECT_MISMATCH": "The two versions do not relate to the same item.",
+    "CONFIG_SIMULATION_NOT_SUPPORTED": "Preview simulation is only available for detection rules.",
     "CONFIG_TYPE_UNKNOWN": "Unknown configuration type: “{config_type}”.",
     "CONFIG_VERSION_ALREADY_IN_STATUS": "This version is already “{status}”.",
     "CONFIG_VERSION_NOT_FOUND": "The requested configuration version could not be found.",

@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, time
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import AwareDatetime, BaseModel, Field, model_validator
 from pydantic_core import PydanticCustomError
@@ -680,6 +680,18 @@ class ConfigDiffOut(BaseModel):
     added: dict
     removed: dict
     changed: dict
+
+
+class RuleSimulationBreachOut(BaseModel):
+    measured_at: datetime
+    value: float
+    evidence: dict[str, Any]
+
+
+class RuleSimulationOut(BaseModel):
+    sample_size: int
+    breach_count: int
+    breaches: list[RuleSimulationBreachOut]
 
 
 class DesiredStateCreate(BaseModel):

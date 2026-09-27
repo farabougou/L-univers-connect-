@@ -33,6 +33,7 @@
     "CONFIG_ACTIVATION_REQUIRES_DRAFT": "Seule une version brouillon peut être activée ; cette version est à l’état « {status} ».",
     "CONFIG_ACTIVATION_REQUIRES_SECOND_PERSON": "Cette version a été proposée par vous : une autre personne doit l’activer (approbation à deux).",
     "CONFIG_DIFF_SUBJECT_MISMATCH": "Les deux versions ne concernent pas le même élément.",
+    "CONFIG_SIMULATION_NOT_SUPPORTED": "La simulation préalable n’existe que pour les règles de détection.",
     "CONFIG_TYPE_UNKNOWN": "Type de configuration inconnu : « {config_type} ».",
     "CONFIG_VERSION_ALREADY_IN_STATUS": "Cette version est déjà à l’état « {status} ».",
     "CONFIG_VERSION_NOT_FOUND": "La version de configuration demandée est introuvable.",

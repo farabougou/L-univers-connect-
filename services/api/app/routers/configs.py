@@ -7,7 +7,6 @@ from sqlalchemy.engine import Connection
 
 import app.connectors.device_mapping  # noqa: F401  (config « modbus_device_mapping »)
 import app.energy.baseline  # noqa: F401  (enregistre le type de configuration « energy_baseline »)
-import app.rules  # noqa: F401  (enregistre le type de configuration « alarm_rule »)
 from app.audit import append_audit_entry
 from app.auth import require_any_role
 from app.config_versions import (
@@ -24,7 +23,14 @@ from app.config_versions import (
 )
 from app.deps import get_tenant_connection, get_tenant_id
 from app.errors import ApiError, api_error
-from app.schemas import ConfigDiffOut, ConfigReason, ConfigVersionCreate, ConfigVersionOut
+from app.rules import ALARM_RULE, simulate_rule
+from app.schemas import (
+    ConfigDiffOut,
+    ConfigReason,
+    ConfigVersionCreate,
+    ConfigVersionOut,
+    RuleSimulationOut,
+)
 
 router = APIRouter()
 
@@ -137,6 +143,31 @@ def diff_config_versions(
         to_version=new["version"],
         **diff_versions(old["content"], new["content"]),
     )
+
+
+@router.get("/configs/{version_id}/simulate", response_model=RuleSimulationOut)
+def simulate_config_version(
+    version_id: uuid.UUID,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+    sample_size: int = 200,
+) -> RuleSimulationOut:
+    """Simulation préalable (feature-benchmark-matrix.md, ligne « Gestion
+    des changements ») : combien de mesures récentes auraient enfreint cette
+    règle, sans rien créer — pour une règle en brouillon avant activation,
+    aussi bien qu'une règle déjà active. Seul `alarm_rule` est concerné : les
+    autres types de configuration ne décrivent pas une condition à évaluer
+    contre une mesure."""
+    version = get_version(connection, version_id)
+    if version is None:
+        raise ApiError(404, "CONFIG_VERSION_NOT_FOUND")
+    if version["config_type"] != ALARM_RULE:
+        raise ApiError(400, "CONFIG_SIMULATION_NOT_SUPPORTED")
+    try:
+        result = simulate_rule(connection, content=version["content"], sample_size=sample_size)
+    except _ERRORS as exc:
+        raise _http_error(exc) from exc
+    return RuleSimulationOut(**result)
 
 
 @router.post("/configs/{version_id}/activate", response_model=ConfigVersionOut)

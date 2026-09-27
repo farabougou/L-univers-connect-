@@ -96,6 +96,43 @@ register_config_type(
 )
 
 
+def simulate_rule(
+    connection: Connection, *, content: dict[str, Any], sample_size: int = 200
+) -> dict[str, Any]:
+    """Simule une règle de seuil ou d'écart à la consigne contre l'historique
+    récent de son point, sans rien créer (aucun constat, aucune alarme,
+    aucun ordre de travail) : « simulation préalable »
+    (feature-benchmark-matrix.md, ligne « Gestion des changements »), pour
+    évaluer une règle avant de l'activer. Réutilise `_evaluate()` tel quel :
+    aucune nouvelle logique de règle, seulement une lecture."""
+    from app.telemetry import list_measurements  # import tardif : évite un cycle avec ce module
+
+    point = get_point(connection, uuid.UUID(content["point_id"]))
+    if point is None:
+        raise ConfigInvalid("RULE_POINT_NOT_FOUND")
+
+    measurements = list_measurements(connection, point_id=point["id"], limit=sample_size)
+    breaches = []
+    for measurement in measurements:
+        evidence = _evaluate(
+            connection, content, point, measurement["value"], measurement["measured_at"]
+        )
+        if evidence is not None:
+            breaches.append(
+                {
+                    "measured_at": measurement["measured_at"],
+                    "value": measurement["value"],
+                    "evidence": evidence,
+                }
+            )
+    return {
+        "sample_size": len(measurements),
+        "breach_count": len(breaches),
+        # Bornée : cette réponse est une aide au diagnostic, pas un export.
+        "breaches": breaches[:20],
+    }
+
+
 def _subject(point: dict[str, Any]) -> uuid.UUID:
     """Le constat porte sur l'équipement du point, à défaut son espace."""
     return point["functional_location_id"] or point["space_id"] or point["id"]
