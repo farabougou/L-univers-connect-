@@ -21,10 +21,12 @@ from app.graph import (
     list_node_relations,
 )
 from app.graph_vocabulary import VocabularyError
+from app.impact_analysis import impact_report
 from app.schemas import (
     ExternalIdentifierCreate,
     ExternalIdentifierOut,
     GraphNodeOut,
+    ImpactReportOut,
     RelationCreate,
     RelationEnd,
     RelationOut,
@@ -64,6 +66,22 @@ def read_node_relations(
     except NodeNotFound as exc:
         raise ApiError(404, "NODE_NOT_FOUND") from exc
     return [RelationOut(**edge) for edge in edges]
+
+
+@router.get("/graph/nodes/{node_id}/impact", response_model=ImpactReportOut)
+def read_impact_report(
+    node_id: uuid.UUID,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> ImpactReportOut:
+    """Ce qui dépend de ce nœud (relations « dependsOn »), et le nombre de
+    constats ouverts pour chacun en ce moment — pour repérer une avalanche
+    d'alarmes qui partage une même cause, jamais pour l'affirmer seul."""
+    try:
+        report = impact_report(connection, node_id)
+    except NodeNotFound as exc:
+        raise ApiError(404, "NODE_NOT_FOUND") from exc
+    return ImpactReportOut(**report)
 
 
 @router.get("/graph/nodes/{node_id}/external-ids", response_model=list[ExternalIdentifierOut])

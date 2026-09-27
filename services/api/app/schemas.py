@@ -470,6 +470,18 @@ class GraphNodeOut(BaseModel):
     created_at: datetime
 
 
+class ImpactedNodeOut(BaseModel):
+    node_id: uuid.UUID
+    node_type: str
+    open_finding_count: int
+
+
+class ImpactReportOut(BaseModel):
+    node_id: uuid.UUID
+    open_finding_count: int
+    impacted: list[ImpactedNodeOut]
+
+
 class RelationCreate(BaseModel):
     subject_id: uuid.UUID
     predicate: str = Field(min_length=1, max_length=50)
