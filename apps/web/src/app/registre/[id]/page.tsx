@@ -108,6 +108,29 @@ type Relation = {
   object_type: string;
   valid_from: string | null;
 };
+type TimelineEntry = {
+  kind: "intervention" | "work_order" | "alarm" | "finding" | "lifecycle";
+  at: string;
+  reference_id: string;
+  title: string | null;
+  field: string | null;
+  status: string | null;
+  changed_by: string | null;
+  note: string | null;
+};
+
+// Catalogue à utiliser pour traduire `status` selon le `field` d'une entrée
+// de chronologie (app/timeline.py) : les mêmes catalogues déjà affichés
+// ailleurs sur cette fiche (statut de fonctionnement, cycle de vie…), jamais
+// une nouvelle traduction inventée pour la chronologie.
+const TIMELINE_STATUS_CATALOG: Record<string, string> = {
+  lifecycle_state: "lifecycle",
+  handling_status: "handling_status",
+  condition_state: "condition_state",
+  ack_state: "ack_state",
+  certainty: "certainty",
+  intervention_type: "intervention_type",
+};
 
 // Référence énergétique (app/energy/baseline.py) : une configuration
 // versionnée de plus, figée une fois activée.
@@ -171,10 +194,20 @@ export default async function EquipmentPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string; diff?: string; against?: string }>;
+  searchParams: Promise<{
+    error?: string;
+    diff?: string;
+    against?: string;
+    timeline_before?: string;
+  }>;
 }) {
   const { id } = await params;
-  const { error: errorCode, diff: diffVersionId, against } = await searchParams;
+  const {
+    error: errorCode,
+    diff: diffVersionId,
+    against,
+    timeline_before: timelineBefore,
+  } = await searchParams;
   const accessToken = await requireAccessToken();
   const translator = await getTranslator();
   const locale = await getLocale();
@@ -192,17 +225,23 @@ export default async function EquipmentPage({
     configDiff = diffResponse.ok ? await diffResponse.json() : null;
   }
 
-  const [response, meResponse, providersResponse, relationsResponse] = await Promise.all([
-    apiFetch(`/graph/nodes/${id}/passport`, accessToken),
-    apiFetch("/me", accessToken),
-    apiFetch("/providers", accessToken),
-    apiFetch(`/graph/nodes/${id}/relations`, accessToken),
-  ]);
+  const timelineQuery = timelineBefore
+    ? `?before=${encodeURIComponent(timelineBefore)}&limit=20`
+    : "?limit=20";
+  const [response, meResponse, providersResponse, relationsResponse, timelineResponse] =
+    await Promise.all([
+      apiFetch(`/graph/nodes/${id}/passport`, accessToken),
+      apiFetch("/me", accessToken),
+      apiFetch("/providers", accessToken),
+      apiFetch(`/graph/nodes/${id}/relations`, accessToken),
+      apiFetch(`/graph/nodes/${id}/timeline${timelineQuery}`, accessToken),
+    ]);
   const providers: Provider[] = providersResponse.ok ? await providersResponse.json() : [];
   const relations: Relation[] = relationsResponse.ok ? await relationsResponse.json() : [];
   const maintenanceProviders = relations.filter((relation) => relation.predicate === "maintainedBy");
   const providerName = (providerId: string) =>
     providers.find((provider) => provider.id === providerId)?.name ?? providerId;
+  const timeline: TimelineEntry[] = timelineResponse.ok ? await timelineResponse.json() : [];
   const me: Me = meResponse.ok ? await meResponse.json() : { roles: [] };
   const canManage = computeCanManage(me);
   const canSendCommand = computeCanSendCommand(me);
@@ -386,6 +425,50 @@ export default async function EquipmentPage({
               </form>
             )}
           </details>
+        )}
+      </section>
+
+      <section style={sectionStyle}>
+        <h2 style={sectionTitleStyle}>
+          {t("timeline.title")}
+          {timelineBefore && (
+            <>
+              {" — "}
+              <Link href={`/registre/${id}`} style={{ fontSize: 14 }}>
+                {t("common.back")}
+              </Link>
+            </>
+          )}
+        </h2>
+        {timeline.length === 0 ? (
+          <p style={mutedStyle}>{t("timeline.empty")}</p>
+        ) : (
+          <>
+            {timeline.map((entry) => {
+              const status = timelineStatusLabel(entry, t);
+              return (
+                <p key={`${entry.kind}-${entry.reference_id}-${entry.at}`} style={{ margin: "0 0 8px" }}>
+                  <span style={mutedStyle}>{formatDateTime(locale, entry.at, timeZone)}</span>
+                  {" — "}
+                  <span style={strongStyle}>{t(`timeline.kind_${entry.kind}`)}</span>
+                  {entry.title && ` — ${entry.title}`}
+                  {!entry.title && status && ` — ${status}`}
+                  {entry.title && status && ` (${status})`}
+                  {entry.changed_by && ` — ${t("timeline.by", { actor: entry.changed_by })}`}
+                  {entry.note && <><br />{entry.note}</>}
+                </p>
+              );
+            })}
+            {timeline.length === 20 && (
+              <Link
+                href={`/registre/${id}?timeline_before=${encodeURIComponent(
+                  timeline[timeline.length - 1].at,
+                )}`}
+              >
+                {t("timeline.load_older")}
+              </Link>
+            )}
+          </>
         )}
       </section>
 
@@ -618,6 +701,18 @@ export default async function EquipmentPage({
       </p>
     </main>
   );
+}
+
+function timelineStatusLabel(
+  entry: TimelineEntry,
+  t: (key: string, params?: Record<string, string>) => string,
+): string | null {
+  if (!entry.status) return null;
+  if (entry.kind === "work_order" && entry.field === "status") {
+    return t(`work_order.status.${entry.status}`);
+  }
+  const catalog = entry.field ? TIMELINE_STATUS_CATALOG[entry.field] : undefined;
+  return catalog ? t(`${catalog}.${entry.status}`) : entry.status;
 }
 
 function StatusLine({

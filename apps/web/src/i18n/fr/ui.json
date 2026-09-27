@@ -456,6 +456,17 @@
     "unsupported_content_type": "Cet éditeur ne prend en charge que les plans PNG ou JPEG.",
     "marker_open_finding": "Constat ouvert"
   },
+  "timeline": {
+    "title": "Chronologie",
+    "empty": "Aucun événement pour le moment.",
+    "load_older": "Voir plus ancien",
+    "by": "par {actor}",
+    "kind_intervention": "Intervention",
+    "kind_work_order": "Ordre de travail",
+    "kind_alarm": "Alarme",
+    "kind_finding": "Constat",
+    "kind_lifecycle": "Cycle de vie"
+  },
   "space_type": {
     "building": "Bâtiment",
     "floor": "Étage",

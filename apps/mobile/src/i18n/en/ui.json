@@ -456,6 +456,17 @@
     "unsupported_content_type": "This editor only supports PNG or JPEG floor plans.",
     "marker_open_finding": "Open finding"
   },
+  "timeline": {
+    "title": "Timeline",
+    "empty": "No event yet.",
+    "load_older": "Show older",
+    "by": "by {actor}",
+    "kind_intervention": "Intervention",
+    "kind_work_order": "Work order",
+    "kind_alarm": "Alarm",
+    "kind_finding": "Finding",
+    "kind_lifecycle": "Lifecycle"
+  },
   "space_type": {
     "building": "Building",
     "floor": "Floor",
