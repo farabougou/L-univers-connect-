@@ -1,6 +1,7 @@
 {
   "common": {
-    "app_name": "Physical Asset Intelligence OS",
+    "app_name": "Enoryx",
+    "tagline": "Physical Asset Intelligence OS",
     "sign_in": "Se connecter",
     "sign_out": "Se déconnecter",
     "back": "Retour"

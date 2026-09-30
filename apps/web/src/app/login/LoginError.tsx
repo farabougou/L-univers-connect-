@@ -6,5 +6,5 @@ import { useSearchParams } from "next/navigation";
 export function LoginError({ message }: { message: string }) {
   const searchParams = useSearchParams();
   if (!searchParams.get("error")) return null;
-  return <p style={{ color: "#c0392b" }}>{message}</p>;
+  return <p style={{ color: "#f87171" }}>{message}</p>;
 }

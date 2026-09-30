@@ -28,7 +28,7 @@ from app.routers.telemetry import router as telemetry_router
 
 configure_logging(settings.log_level)
 
-app = FastAPI(title="Physical Asset Intelligence OS API")
+app = FastAPI(title="Enoryx API")
 app.add_middleware(RequestLoggingMiddleware)
 install_error_handlers(app)
 app.include_router(asset_registry_router)

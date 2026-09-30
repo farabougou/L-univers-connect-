@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { EnoryxMark } from "@/components/EnoryxMark";
 import { apiFetch, requireAccessToken } from "@/lib/api";
 import {
   badgeStyle,
@@ -140,11 +141,16 @@ export default async function PortfolioPage({
   return (
     <main style={pageContainerStyle}>
       <header style={pageHeaderStyle}>
-        <div>
-          <h1 style={{ fontSize: 24, margin: 0 }}>{t("common.app_name")}</h1>
-          <p style={{ color: colors.textMuted, fontSize: 14, marginTop: 4 }}>
-            {t("web.dashboard.signed_in_as", { user: me.sub, roles: me.roles.join(", ") })}
-          </p>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ color: colors.accent }}>
+            <EnoryxMark variant="mono" size={32} />
+          </span>
+          <div>
+            <h1 style={{ fontSize: 24, margin: 0 }}>{t("common.app_name")}</h1>
+            <p style={{ color: colors.textMuted, fontSize: 14, marginTop: 4 }}>
+              {t("web.dashboard.signed_in_as", { user: me.sub, roles: me.roles.join(", ") })}
+            </p>
+          </div>
         </div>
         <a href="/api/auth/logout" style={{ color: colors.textMuted, fontSize: 14 }}>
           {t("common.sign_out")}

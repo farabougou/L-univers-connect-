@@ -1,4 +1,4 @@
-# Physical Asset Intelligence OS
+# Enoryx — Physical Asset Intelligence OS
 
 Plateforme de gestion et d'intelligence des actifs physiques (multi-clients, edge-first).
 
