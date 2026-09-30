@@ -138,6 +138,20 @@ Points de conception :
   l'interface et le journal, comme toute autre configuration de connectivité déjà
   affichée (Modbus, OPC UA). Aucune donnée d'identification n'est demandée par ce
   protocole en V1.
+- **Diagnostics et observabilité (ajouté le 30/09/2026).** Trois niveaux, jamais
+  confondus : (1) l'historique de chaque scan (statut, code d'erreur, compteurs)
+  reste dans `bacnet_discovery_batches`, consultable depuis la fiche équipement,
+  jamais résumé ni perdu ; (2) l'activité de l'agent Edge de découverte (liste des
+  scans en attente, rapport de résultat ou d'échec) met à jour `edge_devices.last_seen_at`
+  à chaque appel (`app.devices.touch_last_seen`), pas seulement à l'authentification —
+  alimente directement le diagnostic de connectivité déjà affiché au niveau du
+  portefeuille (`communication_status`, `apps/web/src/app/page.tsx`) ; (3) chaque
+  requête HTTP de découverte est déjà comptée sans travail supplémentaire par les
+  métriques génériques existantes (`app.metrics`, `GET /metrics`, format Prometheus :
+  `paios_http_requests_total{route="/bacnet-discovery/..."}`), et chaque erreur non
+  gérée reste journalisée en structuré (`app.observability`) comme partout ailleurs.
+  Aucun tableau de bord dédié BACnet n'a été jugé nécessaire au-delà de ces trois
+  niveaux déjà en place, réutilisés tels quels plutôt que dupliqués.
 
 ## 3. Réévaluation de `bacpypes3`
 

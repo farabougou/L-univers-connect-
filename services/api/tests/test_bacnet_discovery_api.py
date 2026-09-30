@@ -475,3 +475,45 @@ def test_rapporter_un_scan_inexistant_est_introuvable(two_tenants) -> None:
 
     assert response.status_code == 404
     assert response.json()["code"] == "BACNET_DISCOVERY_BATCH_NOT_FOUND"
+
+
+def _last_seen_at(tenant, device_id: str):
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant["tenant_id"])
+        return connection.execute(
+            text("SELECT last_seen_at FROM edge_devices WHERE device_id = :device_id"),
+            {"device_id": device_id},
+        ).scalar()
+
+
+def test_activite_de_lagent_edge_alimente_le_diagnostic_de_connectivite(two_tenants) -> None:
+    """Chaque appel de l'agent Edge (liste des scans en attente, rapport de
+    résultat ou d'échec) doit se voir dans le diagnostic de connectivité
+    déjà affiché ailleurs dans le produit (tableau de bord Portfolio,
+    app/devices.py::communication_status) — pas seulement à l'authentification."""
+    tenant_a, _ = two_tenants
+    device_id = "bacnet-edge-diag"
+    token = _device_token(tenant_a, device_id=device_id)
+
+    # Recule artificiellement le dernier contact pour distinguer sans
+    # ambiguïté « touché par l'authentification » de « touché par l'appel
+    # de découverte lui-même » (l'horloge seule ne le garantirait pas dans
+    # un test rapide).
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_a["tenant_id"])
+        connection.execute(
+            text(
+                "UPDATE edge_devices SET last_seen_at = now() - interval '1 hour' "
+                "WHERE device_id = :device_id"
+            ),
+            {"device_id": device_id},
+        )
+    backdated = _last_seen_at(tenant_a, device_id)
+
+    response = client.get(
+        f"/edge/bacnet-discovery/pending?equipment_id={tenant_a['equipment_id']}",
+        headers=_edge_headers(token),
+    )
+    assert response.status_code == 200
+    seen_after_poll = _last_seen_at(tenant_a, device_id)
+    assert seen_after_poll > backdated

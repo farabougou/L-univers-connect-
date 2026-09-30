@@ -12,6 +12,7 @@ récupère les scans à exécuter et rapporte leur résultat — voir l'en-tête
 processus API."""
 
 import uuid
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request, status
@@ -39,6 +40,7 @@ from app.bacnet_discovery import (
 from app.connectors.bacnet import BacnetObjectInfo
 from app.db import engine
 from app.deps import get_tenant_connection, get_tenant_id
+from app.devices import touch_last_seen
 from app.errors import ApiError, api_error
 from app.i18n import negotiate_locale
 from app.point_vocabulary import PointVocabularyError
@@ -155,6 +157,9 @@ def list_pending_bacnet_discovery(
     with engine.begin() as connection:
         set_tenant_context(connection, tenant_id)
         rows = list_pending_batches(connection, equipment_id=equipment_id)
+        touch_last_seen(
+            connection, device_id=uuid.UUID(claims["device_id"]), at=datetime.now(UTC)
+        )
     return [
         BacnetDiscoveryPendingOut(**{**row, "timeout_seconds": float(row["timeout_seconds"])})
         for row in rows
@@ -177,6 +182,9 @@ def submit_bacnet_discovery_result(
     tenant_id = uuid.UUID(claims["tenant_id"])
     with engine.begin() as connection:
         set_tenant_context(connection, tenant_id)
+        touch_last_seen(
+            connection, device_id=uuid.UUID(claims["device_id"]), at=datetime.now(UTC)
+        )
         try:
             batch = complete_discovery(
                 connection,
@@ -222,6 +230,9 @@ def submit_bacnet_discovery_failure(
     tenant_id = uuid.UUID(claims["tenant_id"])
     with engine.begin() as connection:
         set_tenant_context(connection, tenant_id)
+        touch_last_seen(
+            connection, device_id=uuid.UUID(claims["device_id"]), at=datetime.now(UTC)
+        )
         try:
             batch = fail_discovery(connection, batch_id=batch_id, error_code=body.error_code)
         except DiscoveryBatchNotFound as exc:
