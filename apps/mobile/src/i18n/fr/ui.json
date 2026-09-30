@@ -59,6 +59,15 @@
     "fault": "En défaut",
     "unknown": "État inconnu"
   },
+  "asset_status": {
+    "normal": "Normal",
+    "attention": "Attention",
+    "critical": "Critique",
+    "offline": "Hors ligne",
+    "stale": "Donnée ancienne",
+    "unknown": "Inconnu",
+    "maintenance": "Maintenance"
+  },
   "communication_status": {
     "online": "En ligne",
     "offline": "Hors ligne",

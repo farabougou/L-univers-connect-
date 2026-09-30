@@ -59,6 +59,15 @@
     "fault": "Fault",
     "unknown": "Unknown state"
   },
+  "asset_status": {
+    "normal": "Normal",
+    "attention": "Attention",
+    "critical": "Critical",
+    "offline": "Offline",
+    "stale": "Stale data",
+    "unknown": "Unknown",
+    "maintenance": "Maintenance"
+  },
   "communication_status": {
     "online": "Online",
     "offline": "Offline",

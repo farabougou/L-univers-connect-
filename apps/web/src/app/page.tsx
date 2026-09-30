@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { BrandMark } from "@/components/BrandMark";
+import { StatusBadge, equipmentStatusToAssetStatus } from "@/components/StatusBadge";
 import { apiFetch, requireAccessToken } from "@/lib/api";
 import {
   badgeStyle,
@@ -397,7 +398,10 @@ function StatusCell({
   locale: Locale;
   t: (key: string, params?: Record<string, string>) => string;
 }) {
-  if (!status) return <span>—</span>;
+  if (!status) {
+    return <StatusBadge status="unknown" label={t("asset_status.unknown")} />;
+  }
+  const assetStatus = equipmentStatusToAssetStatus(status);
   const { key, params } = statusMessage(status);
   const rendered = Object.fromEntries(
     Object.entries(params ?? {}).map(([name, value]) => [
@@ -405,5 +409,10 @@ function StatusCell({
       name === "since" ? formatDateTime(locale, value) : t(value),
     ]),
   );
-  return <span>{t(key, rendered)}</span>;
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+      <StatusBadge status={assetStatus} label={t(`asset_status.${assetStatus}`)} />
+      <span style={{ color: colors.textMuted, fontSize: 13 }}>{t(key, rendered)}</span>
+    </span>
+  );
 }
