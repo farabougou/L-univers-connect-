@@ -389,9 +389,35 @@ d'architecture UI restants (AppShell, Navigation, AssetCard, MetricCard, AlarmCa
 DataQualityIndicator, ConnectivityIndicator, EmptyState, SkeletonState, PermissionGuard),
 fil d'Ariane, dashboards par rôle, carte géographique, graphiques avec downsampling, table
 `events` non encore lue par API, télémétrie Edge par connecteur (ci-dessus, décision
-requise) — puis la suite de l'ordre de construction (section 36) : Sites & Buildings,
-Telemetry, Documents, Users & Access, Spatial/BIM, Automation — un écran à la fois, jamais
-en un seul bloc.
+requise) — puis la suite de l'ordre de construction (section 36).
+
+**Sites & Buildings (30/09/2026, section 36 point 8)** : audit plutôt que construction.
+`/registre` couvre déjà ce périmètre — sites (nom, fuseau, archivage), hiérarchie
+bâtiments/zones (espaces), plans de site et import IFC, prestataires de maintenance,
+équipements — et le drill-down par site de la vue Portfolio (`/?site=`, ADR 014 §2) en
+donne déjà la vue opérationnelle (KPI, alarmes/constats par gravité, passerelles Edge).
+Aucun écart trouvé qui justifierait une nouvelle page : KEEP, sans ajout, pour ne jamais
+ajouter une fonctionnalité uniquement pour cocher une case de la feuille de route.
+
+**Telemetry (30/09/2026, section 36 point 9)** : nouvelle page `/telemetrie`, la dernière
+valeur de chaque point validé du portefeuille en une seule vue plutôt que d'ouvrir chaque
+fiche équipement une à une. Nouvel endpoint bulk `GET /telemetry/portfolio-latest`
+(`app/telemetry_overview.py`) plutôt qu'un appel par point depuis le navigateur (section
+29) : réutilise `latest_usable_bulk`, rendue publique dans `app/equipment_status.py` où
+elle avait été écrite pour le bloc « Santé des actifs » — troisième usage de ce même motif
+bulk (`DISTINCT ON`) après la santé des actifs et la chronologie portefeuille, jamais
+dupliqué une quatrième fois sans réutiliser l'existant. Ne recalcule jamais le score de
+confiance complet (`GET /points/{id}/trust`, plusieurs requêtes par point) : seulement la
+fraîcheur simple (périmé ou non selon l'intervalle attendu du point) — le détail complet
+d'un point reste sur la fiche équipement. Un point sans mesure encore reçue est rapporté
+comme tel (« Indisponible »/« Jamais mesuré »), jamais omis. **Grille produit (ADR 014)** :
+Backend DONE (nouveau module, réutilise l'existant), API DONE (nouvel endpoint additif),
+Web DONE, Mobile N/A, Edge N/A, Tests DONE (6 tests : valeur et fraîcheur, absence de
+mesure, péremption, exclusion des points non validés, isolation des tenants, endpoint
+API), Documentation DONE.
+
+Puis la suite de l'ordre de construction (section 36) : Documents, Users & Access,
+Spatial/BIM, Automation — un écran à la fois, jamais en un seul bloc.
 
 **Equipment Passport (30/09/2026, section 36 point 2)** : audit plutôt que reconstruction,
 comme demandé (« à consolider selon la liste de la section 21, pas à recréer »). Sur les 19

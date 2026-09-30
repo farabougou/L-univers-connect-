@@ -238,6 +238,7 @@
       "edge_link": "Edge and connectivity",
       "maintenance_link": "Maintenance",
       "energy_link": "Energy",
+      "telemetry_link": "Telemetry",
       "alarms_link": "Alarms and findings",
       "priority_alarms_title": "Priority alarms",
       "no_priority_alarms": "No active alarm at the moment.",
@@ -324,6 +325,17 @@
       "no_alarms": "No open alarm.",
       "no_findings": "No open finding.",
       "col_certainty": "Certainty"
+    },
+    "telemetry_page": {
+      "title": "Telemetry",
+      "points_title": "Points",
+      "no_points": "No validated point on this portfolio.",
+      "col_point": "Point",
+      "col_class": "Class",
+      "col_value": "Value",
+      "no_value": "Unavailable",
+      "never_measured": "Never measured",
+      "stale": "Stale data"
     },
     "energy_page": {
       "title": "Energy",

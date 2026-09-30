@@ -1,4 +1,5 @@
 import uuid
+from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, status
@@ -18,7 +19,14 @@ from app.points import (
     identify_point,
     list_points,
 )
-from app.schemas import PointCreate, PointDecision, PointOut, PointUpdate
+from app.schemas import (
+    PointCreate,
+    PointDecision,
+    PointOut,
+    PointUpdate,
+    PortfolioTelemetryEntryOut,
+)
+from app.telemetry_overview import portfolio_telemetry
 
 router = APIRouter()
 
@@ -81,6 +89,19 @@ def list_points_route(
         mapping_status=mapping_status,
     )
     return [PointOut(**point) for point in points]
+
+
+@router.get("/telemetry/portfolio-latest", response_model=list[PortfolioTelemetryEntryOut])
+def read_portfolio_telemetry_route(
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> list[PortfolioTelemetryEntryOut]:
+    """Page Telemetry (directive UI/dashboard, section 36 point 9) : la
+    dernière valeur de chaque point validé du tenant, en une poignée de
+    requêtes plutôt qu'une par point (section 29). Lecture pure, comme le
+    passeport."""
+    entries = portfolio_telemetry(connection, at=datetime.now(UTC))
+    return [PortfolioTelemetryEntryOut(**entry) for entry in entries]
 
 
 @router.get("/points/{point_id}", response_model=PointOut)

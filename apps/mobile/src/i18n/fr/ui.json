@@ -238,6 +238,7 @@
       "edge_link": "Edge et connectivité",
       "maintenance_link": "Maintenance",
       "energy_link": "Énergie",
+      "telemetry_link": "Télémétrie",
       "alarms_link": "Alarmes et constats",
       "priority_alarms_title": "Alarmes prioritaires",
       "no_priority_alarms": "Aucune alarme active pour le moment.",
@@ -324,6 +325,17 @@
       "no_alarms": "Aucune alarme ouverte.",
       "no_findings": "Aucun constat ouvert.",
       "col_certainty": "Certitude"
+    },
+    "telemetry_page": {
+      "title": "Télémétrie",
+      "points_title": "Points",
+      "no_points": "Aucun point validé sur ce portefeuille.",
+      "col_point": "Point",
+      "col_class": "Classe",
+      "col_value": "Valeur",
+      "no_value": "Indisponible",
+      "never_measured": "Jamais mesuré",
+      "stale": "Donnée ancienne"
     },
     "energy_page": {
       "title": "Énergie",

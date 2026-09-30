@@ -33,14 +33,15 @@ COMMUNICATION_STATUSES = ("online", "offline", "unreachable", "unknown")
 _DOUBTFUL = (FLAG_OUT_OF_RANGE, FLAG_CLOCK_SUSPECT)
 
 
-def _latest_usable_bulk(
+def latest_usable_bulk(
     connection: Connection, point_ids: list[uuid.UUID], at: datetime
 ) -> dict[uuid.UUID, dict[str, Any]]:
     """Dernier relevé exploitable pour chaque point de `point_ids`, en une
     seule requête (`DISTINCT ON`) plutôt qu'une par point — condition posée
-    par la directive UI/dashboard (section 29) avant que le bloc « Santé des
-    actifs » du Global Command Center puisse interroger tout le portefeuille
-    d'un tenant sans faire un aller-retour par équipement."""
+    par la directive UI/dashboard (section 29) avant qu'un calcul portefeuille
+    (bloc « Santé des actifs », page Telemetry) puisse interroger tout le
+    tenant sans faire un aller-retour par point. Publique : réutilisée par
+    app/telemetry_overview.py, jamais dupliquée une deuxième fois."""
     if not point_ids:
         return {}
     rows = (
@@ -140,7 +141,7 @@ def compute_equipment_status(
         .all()
     )
     points = [dict(point) for point in points]
-    latest_by_point = _latest_usable_bulk(connection, [point["id"] for point in points], at)
+    latest_by_point = latest_usable_bulk(connection, [point["id"] for point in points], at)
     return _status_from_points(points, latest_by_point, at)
 
 
@@ -178,7 +179,7 @@ def compute_portfolio_equipment_status(
     for point in points:
         by_location.setdefault(point["functional_location_id"], []).append(point)
 
-    latest_by_point = _latest_usable_bulk(connection, [point["id"] for point in points], at)
+    latest_by_point = latest_usable_bulk(connection, [point["id"] for point in points], at)
 
     return {
         location_id: _status_from_points(by_location.get(location_id, []), latest_by_point, at)

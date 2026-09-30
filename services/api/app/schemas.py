@@ -700,6 +700,24 @@ class PointOut(BaseModel):
     created_at: datetime
 
 
+class PortfolioTelemetryEntryOut(BaseModel):
+    """Un point du portefeuille avec sa dernière valeur, pour la page
+    Telemetry (directive UI/dashboard, section 36 point 9). `value` et
+    `measured_at` sont `None` sans relevé exploitable ; `stale` reste `None`
+    sans intervalle attendu déclaré sur le point (actualité invérifiable,
+    jamais devinée)."""
+
+    point_id: uuid.UUID
+    functional_location_id: uuid.UUID | None
+    code: str
+    name: str
+    point_class: str | None
+    unit: str | None
+    value: float | None
+    measured_at: datetime | None
+    stale: bool | None
+
+
 class MeasurementCreate(BaseModel):
     point_id: uuid.UUID
     # Ni infini ni « NaN » : une valeur non finie n'est jamais une mesure.
