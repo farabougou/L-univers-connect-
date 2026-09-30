@@ -14,3 +14,4 @@ Un fichier par décision.
 - [012 — Fondations de l'architecture V2 : impact et plan de migration](./012-fondations-architecture-v2.md)
 - [013 — Langage produit, terminologie, codes et internationalisation](./013-langage-produit-terminologie-i18n.md)
 - [015 — Découverte BACnet V1 (lecture seule) et correspondance sémantique](./015-decouverte-bacnet-v1.md)
+- [016 — BACnet, future capacité d'écriture/commande : spécification, pas d'activation](./016-bacnet-ecriture-commande-specification.md)
