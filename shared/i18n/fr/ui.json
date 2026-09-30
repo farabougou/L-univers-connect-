@@ -240,6 +240,8 @@
       "energy_link": "Énergie",
       "telemetry_link": "Télémétrie",
       "documents_link": "Documents",
+      "spatial_link": "Plans et BIM",
+      "automation_link": "Automatisation",
       "alarms_link": "Alarmes et constats",
       "priority_alarms_title": "Alarmes prioritaires",
       "no_priority_alarms": "Aucune alarme active pour le moment.",
@@ -360,6 +362,26 @@
         "contract": "Contrat",
         "other": "Autre"
       }
+    },
+    "spatial_page": {
+      "title": "Plans et BIM",
+      "plans_title": "Plans",
+      "no_plans": "Aucun plan envoyé sur ce portefeuille.",
+      "go_to_registry": "Envoyer un plan depuis le registre",
+      "col_site": "Site",
+      "col_space": "Espace",
+      "col_version": "Version",
+      "col_placements": "Placements validés",
+      "open_link": "Ouvrir"
+    },
+    "automation_page": {
+      "title": "Automatisation",
+      "intro": "Attentes déclarées par un humain, comparées à l’état réel pour détecter une dérive — jamais une commande. Seul un appareil explicitement simulé peut recevoir un ordre (voir la fiche équipement).",
+      "no_states": "Aucune attente déclarée active sur ce portefeuille.",
+      "states_title": "Attentes actives",
+      "col_expected": "Valeur attendue",
+      "col_window": "Plage horaire",
+      "col_reason": "Motif"
     },
     "energy_page": {
       "title": "Énergie",

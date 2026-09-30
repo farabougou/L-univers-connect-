@@ -211,6 +211,30 @@ def test_plan_inconnu_renvoie_404(tenant) -> None:
     assert response.json()["code"] == "FLOOR_PLAN_NOT_FOUND"
 
 
+def test_bibliotheque_portefeuille_montre_la_derniere_version_avec_site_et_espace(
+    tenant,
+) -> None:
+    """Page Spatial/BIM (section 36, point 12) : GET /floor-plans/portfolio
+    ne montre que la dernière version de chaque espace, avec le site et
+    l'espace visés — jamais toutes les versions."""
+    headers = _auth_headers(tenant["tenant_id"], ["admin_tenant"])
+    _upload_and_create(tenant, headers, filename="etage1-v1.pdf")
+    second = _upload_and_create(tenant, headers, filename="etage1-v2.pdf")
+
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        response = client.get("/floor-plans/portfolio", headers=headers)
+
+    assert response.status_code == 200
+    entries = response.json()
+    assert len(entries) == 1
+    assert entries[0]["id"] == second["id"]
+    assert entries[0]["version"] == 2
+    assert entries[0]["space_id"] == str(tenant["space_id"])
+    assert entries[0]["space_code"] == "ET1"
+    assert entries[0]["site_id"] == str(tenant["site_id"])
+    assert entries[0]["validated_placement_count"] == 0
+
+
 def test_isolation_un_tenant_ne_voit_jamais_le_plan_d_un_autre() -> None:
     tenant_a = _create_tenant("ClientPlansIsoA")
     tenant_b = _create_tenant("ClientPlansIsoB")

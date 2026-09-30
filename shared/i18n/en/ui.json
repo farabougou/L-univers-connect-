@@ -240,6 +240,8 @@
       "energy_link": "Energy",
       "telemetry_link": "Telemetry",
       "documents_link": "Documents",
+      "spatial_link": "Plans and BIM",
+      "automation_link": "Automation",
       "alarms_link": "Alarms and findings",
       "priority_alarms_title": "Priority alarms",
       "no_priority_alarms": "No active alarm at the moment.",
@@ -360,6 +362,26 @@
         "contract": "Contract",
         "other": "Other"
       }
+    },
+    "spatial_page": {
+      "title": "Plans and BIM",
+      "plans_title": "Plans",
+      "no_plans": "No plan uploaded for this portfolio.",
+      "go_to_registry": "Upload a plan from the registry",
+      "col_site": "Site",
+      "col_space": "Space",
+      "col_version": "Version",
+      "col_placements": "Validated placements",
+      "open_link": "Open"
+    },
+    "automation_page": {
+      "title": "Automation",
+      "intro": "Expectations declared by a person, compared against the real state to detect drift — never a command. Only an explicitly simulated device can receive an order (see the equipment record).",
+      "no_states": "No active declared expectation on this portfolio.",
+      "states_title": "Active expectations",
+      "col_expected": "Expected value",
+      "col_window": "Daily window",
+      "col_reason": "Reason"
     },
     "energy_page": {
       "title": "Energy",

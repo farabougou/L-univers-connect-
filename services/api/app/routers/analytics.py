@@ -15,6 +15,7 @@ from app.desired_states import (
     end_desired_state,
     get_desired_state,
     list_desired_states,
+    list_portfolio_active_desired_states,
 )
 from app.errors import ApiError, api_error
 from app.findings import confirm_finding, displayed, get_finding, list_findings
@@ -27,6 +28,7 @@ from app.schemas import (
     DesiredStateOut,
     FindingConfirmation,
     FindingOut,
+    PortfolioDesiredStateOut,
     SignalHandlingUpdate,
     SignalHistoryOut,
     SignalNote,
@@ -101,6 +103,17 @@ def list_desired_states_route(
         raise ApiError(404, "POINT_NOT_FOUND")
     rows = list_desired_states(connection, point_id, include_ended=include_ended)
     return [DesiredStateOut(**row) for row in rows]
+
+
+@router.get("/desired-states/portfolio-active", response_model=list[PortfolioDesiredStateOut])
+def list_portfolio_active_desired_states_route(
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> list[PortfolioDesiredStateOut]:
+    """Toutes les attentes actives du portefeuille (page Automation, section
+    36 point 13), avec le point et l'équipement visés."""
+    rows = list_portfolio_active_desired_states(connection)
+    return [PortfolioDesiredStateOut(**row) for row in rows]
 
 
 @router.post("/desired-states/{desired_state_id}/end", response_model=DesiredStateOut)

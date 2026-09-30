@@ -434,6 +434,22 @@ class PortfolioDocumentOut(BaseModel):
     uploaded_at: datetime
 
 
+class PortfolioFloorPlanOut(BaseModel):
+    id: uuid.UUID
+    space_id: uuid.UUID
+    space_code: str
+    space_name: str
+    site_id: uuid.UUID
+    site_name: str
+    version: int
+    filename: str
+    content_type: str
+    download_url: str
+    uploaded_by: str
+    uploaded_at: datetime
+    validated_placement_count: int
+
+
 class IfcImportUploadUrlRequest(BaseModel):
     filename: str = Field(min_length=1, max_length=255)
 
@@ -887,6 +903,24 @@ class DesiredStateOut(BaseModel):
     source: str
     valid_from: datetime
     valid_to: datetime | None
+    reason: str
+    created_by: str
+    recorded_at: datetime
+
+
+class PortfolioDesiredStateOut(BaseModel):
+    id: uuid.UUID
+    point_id: uuid.UUID
+    point_code: str
+    point_name: str
+    point_unit: str | None
+    functional_location_id: uuid.UUID | None
+    value: float
+    daily_start: time | None
+    daily_end: time | None
+    timezone: str | None
+    source: str
+    valid_from: datetime
     reason: str
     created_by: str
     recorded_at: datetime

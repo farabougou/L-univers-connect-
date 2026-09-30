@@ -283,6 +283,50 @@ def test_desired_state_api(two_tenants) -> None:
     assert len(history.json()) == 1
 
 
+def test_portfolio_active_desired_states_montre_le_point_et_exclut_les_terminees(
+    two_tenants,
+) -> None:
+    """Page Automation (section 36, point 13) : GET /desired-states/portfolio-active
+    liste les attentes actives de tout le portefeuille, jamais celles déjà
+    terminées, avec le point visé."""
+    tenant_a, tenant_b = two_tenants
+    manager = _headers(tenant_a, ["responsable_exploitation"])
+    url = f"/points/{tenant_a['run_status']}/desired-states"
+    active = _call(
+        "POST",
+        url,
+        manager,
+        json={
+            "value": 0,
+            "daily_start": "20:00",
+            "daily_end": "07:00",
+            "timezone": "Europe/Paris",
+            "reason": "CTA arrêtée la nuit",
+        },
+    )
+    ended = _call(
+        "POST",
+        url,
+        manager,
+        json={"value": 1, "reason": "Test terminé aussitôt"},
+    )
+    assert active.status_code == 201, active.text
+    assert ended.status_code == 201, ended.text
+    _call("POST", f"/desired-states/{ended.json()['id']}/end", manager, json={})
+
+    portfolio = _call("GET", "/desired-states/portfolio-active", manager)
+    assert portfolio.status_code == 200
+    entries = portfolio.json()
+    assert [e["id"] for e in entries] == [active.json()["id"]]
+    assert entries[0]["point_code"] == "CTA01-MARCHE"
+    assert entries[0]["functional_location_id"] is not None
+
+    other_tenant_view = _call(
+        "GET", "/desired-states/portfolio-active", _headers(tenant_b, ["responsable_exploitation"])
+    )
+    assert other_tenant_view.json() == []
+
+
 def test_trust_endpoint(two_tenants) -> None:
     tenant_a, _ = two_tenants
     response = _call(

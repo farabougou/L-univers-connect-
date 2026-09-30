@@ -443,8 +443,65 @@ rôle technicien lecture seule, catégorie inconnue refusée, type de fichier no
 charge refusé, clé de stockage étrangère refusée, équipement/document inconnu → 404,
 isolation tenant), Documentation DONE.
 
-Puis la suite de l'ordre de construction (section 36) : Users & Access, Spatial/BIM,
-Automation — un écran à la fois, jamais en un seul bloc.
+**Users & Access (30/09/2026, section 36 point 11) : signalement, pas de construction.**
+Les rôles viennent uniquement de Keycloak (`realm_access.roles` du jeton, voir
+`app/auth.py::require_role`/`require_any_role`) — il n'existe aucune table locale
+d'utilisateurs ni de rôles à afficher ou éditer. La matrice documente déjà ce choix
+(ligne « Autorisations fines » : rôles Keycloak globaux par tenant, ReBAC en DEFER tant
+qu'aucun cas réel de délégation n'existe). Un écran « qui a accès, avec quel rôle »,
+même en lecture seule, exigerait d'appeler l'API d'administration Keycloak depuis le
+backend — un compte de service avec droits d'administration sur le realm, donc un
+nouveau secret et une nouvelle intégration externe structurante. C'est exactement ce que
+la section 38 (mode d'exécution) demande d'arrêter et de signaler plutôt que de décider
+seul : « nouveau compte externe », « secrets », potentiellement « dépendance propriétaire
+structurante ». Décision proposée pour discussion avec Mohamed, pas encore prise : soit
+renvoyer simplement vers la console d'administration Keycloak (lien externe, aucune
+donnée dupliquée), soit construire l'intégration si la gestion des accès doit rester dans
+le produit. **Grille produit (ADR 014)** : Backend BLOCKED (décision requise avant tout
+code), API BLOCKED, Web BLOCKED, Mobile N/A, Edge N/A, Tests N/A, Documentation DONE (cet
+écart et sa raison, signalés explicitement plutôt que construits sans accord ou omis en
+silence).
+
+**Spatial/BIM (30/09/2026, section 36 point 12)** : nouvelle page `/plans`, la dernière
+version de chaque plan 2D du portefeuille (site, espace, nombre de placements validés)
+en une seule vue plutôt que d'ouvrir chaque espace une à une depuis `/registre`. Nouvel
+endpoint bulk `GET /floor-plans/portfolio` (`app/floor_plans.py::list_portfolio_floor_plans`),
+même motif `DISTINCT ON` que la santé des actifs, la chronologie, la télémétrie et les
+documents — cinquième réutilisation de ce motif, jamais dupliqué sans y penser d'abord.
+L'envoi d'un plan et l'import IFC restent sur `/registre` (ADR 011) : cette page
+complète la vue portefeuille, elle ne duplique pas le formulaire d'envoi ni ne déplace
+l'éditeur de placements existant (`/registre/plans/[floorPlanId]`), seulement lié depuis
+la nouvelle page. **Grille produit (ADR 014)** : Backend DONE (nouvelle fonction, réutilise
+l'existant), API DONE (nouvel endpoint additif, enregistré avant la route paramétrée pour
+éviter toute collision), Web DONE, Mobile N/A, Edge N/A, Tests DONE (1 nouveau test :
+seule la dernière version par espace est montrée, avec site et espace corrects — les 8
+tests existants du module plans 2D restent verts), Documentation DONE.
+
+**Automation (30/09/2026, section 36 point 13)** : pas entièrement bloqué, contrairement
+à l'attente initiale — audit d'abord, comme pour chaque écran de cette liste. La règle
+non négociable 1 interdit toute commande vers un équipement réel, mais l'état souhaité
+(`app/desired_states.py`) est par conception une attente déclarée par un humain, comparée
+à l'état réel pour détecter une dérive, **jamais une commande** — documenté comme tel dans
+le module depuis son origine (ADR 012, section 2.4) et déjà utilisable sur n'importe quel
+point, pas seulement le relais simulé. Seule la capacité d'écriture (`app/commands.py`,
+`app/connectors/simulated_actuator.py`) reste strictement réservée au `device_type`
+"simulated_relay" ; l'état souhaité, lui, ne commande jamais rien et n'a donc pas besoin
+de cette restriction. Nouvelle page `/automation` : toutes les attentes actives du
+portefeuille (point, équipement, valeur attendue, plage horaire, motif, depuis quand),
+avec un rappel explicite dans l'introduction de la page que ceci n'agit jamais sur un
+équipement. Nouvel endpoint bulk `GET /desired-states/portfolio-active`
+(`app/desired_states.py::list_portfolio_active_desired_states`), sixième réutilisation du
+motif de jointure bulk introduit pour la santé des actifs. Ne construit ni ne modifie la
+capacité de commande elle-même. **Grille produit (ADR 014)** : Backend DONE (nouvelle
+fonction, réutilise l'existant), API DONE (nouvel endpoint additif), Web DONE, Mobile N/A,
+Edge N/A, Tests DONE (2 tests : les attentes actives sont listées avec le point visé et
+excluent celles déjà terminées ; isolation tenant), Documentation DONE.
+
+Section 36 (« pages à finaliser dans cet ordre ») : 12 des 13 écrans construits ou audités
+avec KEEP confirmé. Un seul reste en attente d'une décision de Mohamed avant tout code :
+Users & Access (point 11, ci-dessus), qui exigerait une nouvelle intégration à l'API
+d'administration Keycloak (compte de service, secret) — un arrêt explicite demandé par la
+section 38, pas un oubli.
 
 **Equipment Passport (30/09/2026, section 36 point 2)** : audit plutôt que reconstruction,
 comme demandé (« à consolider selon la liste de la section 21, pas à recréer »). Sur les 19

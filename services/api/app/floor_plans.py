@@ -105,3 +105,31 @@ def list_floor_plans(connection: Connection, space_id: uuid.UUID) -> list[dict[s
         {"space_id": space_id},
     ).mappings()
     return [dict(row) for row in rows]
+
+
+def list_portfolio_floor_plans(connection: Connection) -> list[dict[str, Any]]:
+    """Dernière version de chaque plan du portefeuille (page Spatial/BIM,
+    section 36 point 12), avec l'espace et le site visés, et le nombre de
+    placements validés — sans ouvrir chaque espace un à un. Même motif bulk
+    (`DISTINCT ON`) que pour la santé des actifs, la chronologie portefeuille
+    et la télémétrie (voir app/equipment_status.py::latest_usable_bulk)."""
+    rows = connection.execute(
+        text(
+            """
+            SELECT DISTINCT ON (fp.space_id)
+                fp.id, fp.space_id, fp.version, fp.storage_key, fp.content_type,
+                fp.filename, fp.sha256, fp.uploaded_by, fp.uploaded_at,
+                s.site_id, s.code AS space_code, s.name AS space_name,
+                st.name AS site_name,
+                (
+                    SELECT count(*) FROM plan_placements pp
+                    WHERE pp.floor_plan_id = fp.id AND pp.status = 'validated'
+                ) AS validated_placement_count
+            FROM floor_plans fp
+            JOIN spaces s ON s.id = fp.space_id
+            JOIN sites st ON st.id = s.site_id
+            ORDER BY fp.space_id, fp.version DESC
+            """
+        )
+    ).mappings()
+    return [dict(row) for row in rows]

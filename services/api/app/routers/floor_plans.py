@@ -19,6 +19,7 @@ from app.floor_plans import (
     FloorPlanInvalid,
     get_floor_plan,
     list_floor_plans,
+    list_portfolio_floor_plans,
     record_floor_plan,
 )
 from app.monitoring import evaluate_data_freshness
@@ -41,6 +42,7 @@ from app.schemas import (
     PlanPlacementCreate,
     PlanPlacementLiveOut,
     PlanPlacementOut,
+    PortfolioFloorPlanOut,
 )
 from app.spatial import get_space
 from app.storage import (
@@ -201,6 +203,34 @@ def list_floor_plans_route(
 ) -> list[FloorPlanOut]:
     _check_space_exists(connection, space_id)
     return [_to_out(row) for row in list_floor_plans(connection, space_id)]
+
+
+def _portfolio_out(row: dict) -> PortfolioFloorPlanOut:
+    return PortfolioFloorPlanOut(
+        id=row["id"],
+        space_id=row["space_id"],
+        space_code=row["space_code"],
+        space_name=row["space_name"],
+        site_id=row["site_id"],
+        site_name=row["site_name"],
+        version=row["version"],
+        filename=row["filename"],
+        content_type=row["content_type"],
+        download_url=create_presigned_download_url(row["storage_key"]),
+        uploaded_by=row["uploaded_by"],
+        uploaded_at=row["uploaded_at"],
+        validated_placement_count=row["validated_placement_count"],
+    )
+
+
+@router.get("/floor-plans/portfolio", response_model=list[PortfolioFloorPlanOut])
+def list_portfolio_floor_plans_route(
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> list[PortfolioFloorPlanOut]:
+    """Dernière version de chaque plan de tout le portefeuille (page
+    Spatial/BIM, section 36, point 12), avec le site et l'espace visés."""
+    return [_portfolio_out(row) for row in list_portfolio_floor_plans(connection)]
 
 
 @router.get("/floor-plans/{floor_plan_id}", response_model=FloorPlanOut)

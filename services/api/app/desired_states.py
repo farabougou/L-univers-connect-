@@ -153,6 +153,28 @@ def list_desired_states(
     return [dict(row) for row in connection.execute(text(query), {"point_id": point_id}).mappings()]
 
 
+def list_portfolio_active_desired_states(connection: Connection) -> list[dict[str, Any]]:
+    """Toutes les attentes déclarées actuellement actives sur le portefeuille
+    (page Automation, section 36 point 13), avec le point et l'équipement
+    visés — sans ouvrir chaque fiche équipement une à une. Reste en lecture
+    seule (règle non négociable 1) : une liste de ce qui est attendu, jamais
+    une commande."""
+    rows = connection.execute(
+        text(
+            f"""
+            SELECT {", ".join(f"ds.{col}" for col in _COLUMNS.split(", "))},
+                   p.code AS point_code, p.name AS point_name, p.unit AS point_unit,
+                   p.functional_location_id
+            FROM desired_states ds
+            JOIN points p ON p.id = ds.point_id
+            WHERE ds.valid_to IS NULL
+            ORDER BY ds.valid_from DESC
+            """
+        )
+    ).mappings()
+    return [dict(row) for row in rows]
+
+
 def desired_state_at(
     connection: Connection, point_id: uuid.UUID, at: datetime
 ) -> dict[str, Any] | None:
