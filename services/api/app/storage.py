@@ -97,6 +97,28 @@ def ifc_import_key_belongs_to(object_key: str, *, tenant_id: uuid.UUID, site_id:
     return bool(name) and "/" not in name and name not in (".", "..")
 
 
+def build_document_object_key(
+    *, tenant_id: uuid.UUID, functional_location_id: uuid.UUID, filename: str
+) -> str:
+    """Même principe que build_floor_plan_object_key, pour les documents
+    (manuels, certificats...) d'un équipement : un dossier par position
+    fonctionnelle, isolé par tenant."""
+    safe_filename = filename.replace("/", "_")
+    return f"{tenant_id}/documents/{functional_location_id}/{uuid.uuid4()}-{safe_filename}"
+
+
+def document_key_belongs_to(
+    object_key: str, *, tenant_id: uuid.UUID, functional_location_id: uuid.UUID
+) -> bool:
+    """Vrai seulement pour une clé du dossier de cet équipement, chez ce
+    tenant, sans sous-dossier (même contrôle que key_belongs_to)."""
+    prefix = f"{tenant_id}/documents/{functional_location_id}/"
+    if not object_key.startswith(prefix):
+        return False
+    name = object_key[len(prefix) :]
+    return bool(name) and "/" not in name and name not in (".", "..")
+
+
 def create_presigned_upload_url(object_key: str, *, content_type: str) -> str:
     """URL temporaire à usage unique : le client mobile envoie la photo
     directement au stockage, sans jamais recevoir les identifiants d'accès.

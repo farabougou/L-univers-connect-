@@ -15,6 +15,7 @@ from app.routers.bacnet_discovery import router as bacnet_discovery_router
 from app.routers.commands import router as commands_router
 from app.routers.configs import router as configs_router
 from app.routers.devices import router as devices_router
+from app.routers.documents import router as documents_router
 from app.routers.energy import router as energy_router
 from app.routers.floor_plans import router as floor_plans_router
 from app.routers.graph import router as graph_router
@@ -46,6 +47,7 @@ app.include_router(telemetry_router)
 app.include_router(energy_router)
 app.include_router(floor_plans_router)
 app.include_router(ifc_import_router)
+app.include_router(documents_router)
 app.include_router(providers_router)
 
 

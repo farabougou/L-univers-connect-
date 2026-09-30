@@ -280,6 +280,9 @@ export default async function PortfolioPage({
         <Link href="/telemetrie" style={{ color: colors.accent, fontWeight: 600 }}>
           {t("web.dashboard.telemetry_link")} →
         </Link>
+        <Link href="/documents" style={{ color: colors.accent, fontWeight: 600 }}>
+          {t("web.dashboard.documents_link")} →
+        </Link>
         <Link href="/edge" style={{ color: colors.accent, fontWeight: 600 }}>
           {t("web.dashboard.edge_link")} →
         </Link>

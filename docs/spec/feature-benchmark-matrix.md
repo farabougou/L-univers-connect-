@@ -416,8 +416,35 @@ Web DONE, Mobile N/A, Edge N/A, Tests DONE (6 tests : valeur et fraîcheur, abse
 mesure, péremption, exclusion des points non validés, isolation des tenants, endpoint
 API), Documentation DONE.
 
-Puis la suite de l'ordre de construction (section 36) : Documents, Users & Access,
-Spatial/BIM, Automation — un écran à la fois, jamais en un seul bloc.
+**Documents (30/09/2026, section 36 point 10)** : nouvelle table `documents`
+(migration `b1d4f2a9c7e3`) — manuel, certificat, garantie, fiche technique, contrat,
+rapport de conformité, rattachés à une position fonctionnelle (équipement). Comblait
+l'écart identifié lors de l'audit Equipment Passport (« documents » était le seul des 19
+éléments de la section 21 réellement absent). Distinct des plans 2D (`floor_plans`, ADR
+011 — un plan d'étage) et des photos d'intervention (ADR 006) : un document ici est une
+pièce administrative ou technique de l'équipement, pas un plan spatial ni une preuve
+d'intervention. Même mécanique d'envoi que les plans (URL présignée puis confirmation,
+RLS, `forbid_update`/`forbid_delete`), mais sans numéro de version partagé : un
+certificat renouvelé est un nouveau document, jamais une nouvelle version du précédent
+(rien n'est jamais écrasé, mais deux documents restent deux faits distincts, contrairement
+à un plan qui remplace fonctionnellement le précédent). Nouveaux endpoints
+`POST/GET /functional-locations/{id}/documents(/upload-url)`, `GET /documents/{id}`,
+`GET /documents/portfolio` (bibliothèque de tout le portefeuille, avec l'équipement visé
+— évite de devoir connaître l'équipement à l'avance). Nouvelle page `/documents` :
+tableau portefeuille (équipement, catégorie, fichier, date d'envoi, téléchargement) plus
+un formulaire d'envoi (équipement, catégorie, fichier) réutilisant le patron déjà établi
+pour les plans 2D (`uploadFloorPlan` → `uploadDocument`, même dance en deux temps, aucune
+donnée binaire ne transite par le serveur applicatif au-delà du calcul de l'empreinte
+SHA-256). **Grille produit (ADR 014)** : Backend DONE, API DONE, Web DONE, Mobile N/A
+(pas demandé par la section 36 ; l'envoi depuis le terrain resterait à concevoir
+séparément si le besoin apparaît), Edge N/A, Tests DONE (10 tests : envoi puis lecture,
+deux envois indépendants sans écrasement, bibliothèque portefeuille avec équipement visé,
+rôle technicien lecture seule, catégorie inconnue refusée, type de fichier non pris en
+charge refusé, clé de stockage étrangère refusée, équipement/document inconnu → 404,
+isolation tenant), Documentation DONE.
+
+Puis la suite de l'ordre de construction (section 36) : Users & Access, Spatial/BIM,
+Automation — un écran à la fois, jamais en un seul bloc.
 
 **Equipment Passport (30/09/2026, section 36 point 2)** : audit plutôt que reconstruction,
 comme demandé (« à consolider selon la liste de la section 21, pas à recréer »). Sur les 19

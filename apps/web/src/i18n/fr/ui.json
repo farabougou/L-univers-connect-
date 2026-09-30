@@ -239,6 +239,7 @@
       "maintenance_link": "Maintenance",
       "energy_link": "Énergie",
       "telemetry_link": "Télémétrie",
+      "documents_link": "Documents",
       "alarms_link": "Alarmes et constats",
       "priority_alarms_title": "Alarmes prioritaires",
       "no_priority_alarms": "Aucune alarme active pour le moment.",
@@ -336,6 +337,29 @@
       "no_value": "Indisponible",
       "never_measured": "Jamais mesuré",
       "stale": "Donnée ancienne"
+    },
+    "documents_page": {
+      "title": "Documents",
+      "library_title": "Bibliothèque",
+      "no_documents": "Aucun document envoyé sur ce portefeuille.",
+      "col_category": "Catégorie",
+      "col_filename": "Fichier",
+      "col_uploaded": "Envoyé",
+      "upload_title": "Envoyer un document",
+      "no_equipment": "Aucun équipement enregistré pour l’instant.",
+      "select_equipment": "Équipement",
+      "select_category": "Catégorie",
+      "file_label": "Fichier (PDF, PNG ou JPEG)",
+      "submit": "Envoyer",
+      "category": {
+        "manual": "Manuel",
+        "certificate": "Certificat",
+        "warranty": "Garantie",
+        "datasheet": "Fiche technique",
+        "compliance_report": "Rapport de conformité",
+        "contract": "Contrat",
+        "other": "Autre"
+      }
     },
     "energy_page": {
       "title": "Énergie",

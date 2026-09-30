@@ -392,6 +392,48 @@ class FloorPlanOut(BaseModel):
     uploaded_at: datetime
 
 
+class DocumentUploadUrlRequest(BaseModel):
+    filename: str = Field(min_length=1, max_length=255)
+    content_type: str = Field(min_length=1, max_length=100)
+
+
+class DocumentUploadUrlOut(BaseModel):
+    upload_url: str
+    object_key: str
+
+
+class DocumentCreate(BaseModel):
+    category: str = Field(min_length=1, max_length=30)
+    object_key: str = Field(min_length=1, max_length=500)
+    filename: str = Field(min_length=1, max_length=255)
+    content_type: str = Field(min_length=1, max_length=100)
+    sha256: str = Field(min_length=64, max_length=64, pattern=r"^[0-9a-f]{64}$")
+
+
+class DocumentOut(BaseModel):
+    id: uuid.UUID
+    functional_location_id: uuid.UUID
+    category: str
+    filename: str
+    content_type: str
+    download_url: str
+    uploaded_by: str
+    uploaded_at: datetime
+
+
+class PortfolioDocumentOut(BaseModel):
+    id: uuid.UUID
+    functional_location_id: uuid.UUID
+    functional_location_code: str
+    functional_location_name: str
+    category: str
+    filename: str
+    content_type: str
+    download_url: str
+    uploaded_by: str
+    uploaded_at: datetime
+
+
 class IfcImportUploadUrlRequest(BaseModel):
     filename: str = Field(min_length=1, max_length=255)
 
