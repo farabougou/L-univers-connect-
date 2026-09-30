@@ -13,9 +13,17 @@ from app.graph import get_node
 from app.i18n import negotiate_locale
 from app.passport import build_passport
 from app.properties import PropertyError, PropertyNotFound, list_properties, set_property
-from app.schemas import PropertyOut, PropertySet, TagCreate, TagOut, TagRevoke, TimelineEntryOut
+from app.schemas import (
+    PortfolioTimelineEntryOut,
+    PropertyOut,
+    PropertySet,
+    TagCreate,
+    TagOut,
+    TagRevoke,
+    TimelineEntryOut,
+)
 from app.tags import TagNotFound, TagRevoked, create_tag, list_tags, resolve_tag, revoke_tag
-from app.timeline import SUPPORTED_NODE_TYPES, node_timeline
+from app.timeline import SUPPORTED_NODE_TYPES, node_timeline, portfolio_timeline
 
 router = APIRouter()
 
@@ -109,6 +117,25 @@ def read_timeline(
         limit=limit,
     )
     return [TimelineEntryOut(**entry) for entry in entries]
+
+
+@router.get("/activity/recent", response_model=list[PortfolioTimelineEntryOut])
+def read_recent_activity(
+    request: Request,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+    limit: int = 20,
+) -> list[PortfolioTimelineEntryOut]:
+    """Bloc « Activité récente » du Global Command Center (directive UI/
+    dashboard, section 16) : mêmes sources que la chronologie d'un
+    équipement (`GET /graph/nodes/{id}/timeline`), fusionnées pour tout le
+    portefeuille du tenant plutôt qu'un seul équipement. Vue pure, comme le
+    passeport : rien n'est recalculé ni stocké ici."""
+    if limit < 1 or limit > 100:
+        raise ApiError(400, "QUERY_LIMIT_OUT_OF_RANGE", minimum=1, maximum=100)
+    locale = negotiate_locale(request.headers.get("accept-language"))
+    entries = portfolio_timeline(connection, locale=locale, limit=limit)
+    return [PortfolioTimelineEntryOut(**entry) for entry in entries]
 
 
 # --- Étiquettes ------------------------------------------------

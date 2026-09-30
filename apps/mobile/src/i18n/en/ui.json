@@ -264,6 +264,14 @@
       },
       "health_title": "Asset health",
       "health_category_empty": "No equipment in this category.",
+      "activity_title": "Recent activity",
+      "activity_empty": "No recent activity.",
+      "activity_kind": {
+        "alarm": "Alarm",
+        "finding": "Finding",
+        "work_order": "Work order",
+        "intervention": "Intervention"
+      },
       "col_severity": "Severity",
       "col_message": "Description",
       "col_ack": "Acknowledgement",

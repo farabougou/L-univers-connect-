@@ -264,6 +264,14 @@
       },
       "health_title": "Santé des actifs",
       "health_category_empty": "Aucun équipement dans cette catégorie.",
+      "activity_title": "Activité récente",
+      "activity_empty": "Aucune activité récente.",
+      "activity_kind": {
+        "alarm": "Alarme",
+        "finding": "Constat",
+        "work_order": "Ordre de travail",
+        "intervention": "Intervention"
+      },
       "col_severity": "Gravité",
       "col_message": "Description",
       "col_ack": "Acquittement",

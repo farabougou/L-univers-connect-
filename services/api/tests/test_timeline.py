@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import text
 
 from app.db import engine
+from app.findings import raise_or_repeat_finding
 from app.main import app
 from app.tenancy import set_tenant_context
 from tests.jwt_helpers import JWKS, make_token
@@ -195,3 +196,108 @@ def test_timeline_pagination_with_before_and_limit(two_tenants) -> None:
         params={"limit": 1, "before": first_page[0]["at"]},
     ).json()
     assert [e["title"] for e in second_page] == ["Intervention J-1"]
+
+
+# --- Chronologie portefeuille : bloc « Activité récente » du Global Command Center --------
+
+
+def test_recent_activity_merges_sources_across_the_whole_portfolio(two_tenants) -> None:
+    tenant_a, _ = two_tenants
+    manager = _manager(tenant_a)
+
+    other_loc = uuid.uuid4()
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_a["tenant_id"])
+        connection.execute(
+            text(
+                "INSERT INTO functional_locations (id, tenant_id, site_id, code, name) "
+                "VALUES (:id, :tenant_id, :site, 'cta-01', 'CTA 01')"
+            ),
+            {"id": other_loc, "tenant_id": tenant_a["tenant_id"], "site": tenant_a["site"]},
+        )
+        raise_or_repeat_finding(
+            connection,
+            tenant_id=tenant_a["tenant_id"],
+            dedup_key=f"test:{other_loc}",
+            subject_node_id=other_loc,
+            kind="anomaly",
+            method="deterministic_rule",
+            severity="warning",
+            reason_code="TEST_REASON",
+            reason_params={},
+            evidence={},
+            seen_at=T0,
+            changed_by="technicien",
+            title="Écart de température",
+        )
+
+    intervention = _call(
+        "POST",
+        "/interventions",
+        manager,
+        json={
+            "functional_location_id": str(tenant_a["loc"]),
+            "started_at": (T0 + timedelta(hours=1)).isoformat(),
+            "summary": "Contrôle annuel",
+        },
+    )
+    assert intervention.status_code == 201, intervention.text
+
+    response = _call("GET", "/activity/recent", _tech(tenant_a))
+    assert response.status_code == 200, response.text
+    entries = response.json()
+
+    kinds = {entry["kind"] for entry in entries}
+    assert kinds == {"intervention", "finding"}
+    locations = {entry["functional_location_id"] for entry in entries}
+    assert locations == {str(tenant_a["loc"]), str(other_loc)}
+    ats = [entry["at"] for entry in entries]
+    assert ats == sorted(ats, reverse=True)
+    assert "lifecycle" not in kinds
+
+
+def test_recent_activity_respects_the_limit(two_tenants) -> None:
+    tenant_a, _ = two_tenants
+    manager = _manager(tenant_a)
+    for days_ago in (2, 1, 0):
+        created = _call(
+            "POST",
+            "/interventions",
+            manager,
+            json={
+                "functional_location_id": str(tenant_a["loc"]),
+                "started_at": (T0 - timedelta(days=days_ago)).isoformat(),
+                "summary": f"Intervention J-{days_ago}",
+            },
+        )
+        assert created.status_code == 201, created.text
+
+    response = _call("GET", "/activity/recent", _tech(tenant_a), params={"limit": 2})
+    entries = response.json()
+    assert [e["title"] for e in entries] == ["Intervention J-0", "Intervention J-1"]
+
+
+def test_recent_activity_never_leaks_across_tenants(two_tenants) -> None:
+    tenant_a, tenant_b = two_tenants
+    manager = _manager(tenant_a)
+    created = _call(
+        "POST",
+        "/interventions",
+        manager,
+        json={
+            "functional_location_id": str(tenant_a["loc"]),
+            "started_at": T0.isoformat(),
+            "summary": "Contrôle annuel",
+        },
+    )
+    assert created.status_code == 201, created.text
+
+    response = _call("GET", "/activity/recent", _tech(tenant_b))
+    assert response.json() == []
+
+
+def test_recent_activity_rejects_a_limit_out_of_range(two_tenants) -> None:
+    tenant_a, _ = two_tenants
+    response = _call("GET", "/activity/recent", _tech(tenant_a), params={"limit": 0})
+    assert response.status_code == 400
+    assert response.json()["code"] == "QUERY_LIMIT_OUT_OF_RANGE"

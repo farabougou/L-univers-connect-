@@ -225,6 +225,23 @@ class TimelineEntryOut(BaseModel):
     note: str | None
 
 
+class PortfolioTimelineEntryOut(BaseModel):
+    """Comme `TimelineEntryOut`, pour le bloc « Activité récente » du Global
+    Command Center (un portefeuille entier, pas un seul équipement) : sans
+    `lifecycle` (propre à un exemplaire physique, pas au portefeuille), avec
+    `functional_location_id` en plus pour le lien de chaque ligne."""
+
+    kind: Literal["intervention", "work_order", "alarm", "finding"]
+    at: datetime
+    functional_location_id: uuid.UUID | None
+    reference_id: uuid.UUID
+    title: str | None
+    field: str | None
+    status: str | None
+    changed_by: str | None
+    note: str | None
+
+
 # Référence fournie par le client pour rejouer un envoi sans doublon :
 # identifiant local de la file hors ligne, sans espace ni accent.
 CLIENT_REF_PATTERN = r"^[A-Za-z0-9._:-]{8,100}$"

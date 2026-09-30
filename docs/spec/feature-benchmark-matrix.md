@@ -242,12 +242,46 @@ périodique, `app/supervision_sweep.py`), pour ne jamais transformer un simple
 chargement de tableau de bord en générateur d'alertes. Classement des équipements par
 catégorie réutilise exactement `equipmentStatusToAssetStatus` déjà écrit pour la cellule
 de statut du portefeuille — aucune seconde logique de classement à maintenir en double.
-Reste de la feuille de route active (sections 5 à 37, DEFER explicite) : bloc « Activité
-récente » du Global Command Center, composants d'architecture UI restants (AppShell,
-Navigation, AssetCard, MetricCard, AlarmCard, Timeline unifiée, DataQualityIndicator,
-ConnectivityIndicator, EmptyState, SkeletonState, PermissionGuard), fil d'Ariane,
-dashboards par rôle, carte géographique, graphiques avec downsampling — construits un
-écran à la fois dans l'ordre de sa section 36, jamais en un seul bloc.
+Bloc « Activité récente » fait (section 16) — dernier bloc du Global Command Center.
+Réutilise et généralise `app/timeline.py::node_timeline` (déjà construit pour la fiche
+équipement, `GET /graph/nodes/{id}/timeline`) : quatre sources déjà unifiées
+(interventions, historique des ordres de travail, historique des alarmes, historique des
+constats), fusionnées et triées pour tout le portefeuille plutôt qu'un seul équipement,
+via un nouvel endpoint `GET /activity/recent` et quatre fonctions portefeuille dédiées
+(`_portfolio_interventions/_work_orders/_alarms/_findings`, dupliquées depuis les
+fonctions par équipement plutôt que de risquer un changement de signature sur un module
+déjà testé) — chacune bornée par `limit` (directive, section 29), jamais l'historique
+complet du tenant chargé pour n'en garder que les derniers. Seule interaction du bloc :
+un filtre par catégorie, composant client `RecentActivityFeed.tsx` (troisième composant
+client de la console après `LoginError` et `PlacementEditor`), qui ne fait que montrer/
+cacher des entrées déjà triées et déjà traduites côté serveur — satisfait « lisible et
+filtrable » (section 16) sans bibliothèque de graphique ni logique de tri côté client.
+Sur les onze catégories listées par la section 16, quatre sont couvertes honnêtement
+aujourd'hui (alarmes, constats, ordres de travail, interventions) ; trois n'ont aucune
+trace exploitable dans le système actuel et restent DEFER (changements d'état
+d'équipement — calculés à la lecture, jamais journalisés ; événements énergétiques ;
+incidents, délibérément distincts des alarmes, section 24, sans entité propre encore) ;
+les quatre dernières (événements Edge, changements de connectivité, commandes
+autorisées, résultats de commandes) existent déjà comme faits horodatés dans la table
+`events` (`app/events.py`, vocabulaire fermé DEVICE_WENT_OFFLINE/CAME_ONLINE,
+DATA_BECAME_STALE/RESTORED, COMMAND_REQUESTED/DISPATCHED/VERIFIED/FAILED/TIMED_OUT) mais
+n'ont pas encore de fonction de lecture en masse ni de place dans `node_timeline` ou
+`portfolio_timeline` — signalé ici plutôt qu'ajouté à la hâte, pour que la future page
+dédiée « Unified Timeline » (section 36, point 3) les intègre proprement en même temps
+qu'elle consolidera `node_timeline`/`portfolio_timeline` plutôt que de les dupliquer une
+troisième fois.
+
+Le Global Command Center (section 36, point 1) est maintenant complet dans son
+périmètre honnête : carte/portefeuille (déjà là), alarmes prioritaires, maintenance,
+énergie, santé des actifs, activité récente. Reste de la feuille de route active
+(sections 5 à 37, DEFER explicite) : composants d'architecture UI restants (AppShell,
+Navigation, AssetCard, MetricCard, AlarmCard, DataQualityIndicator, ConnectivityIndicator,
+EmptyState, SkeletonState, PermissionGuard), fil d'Ariane, dashboards par rôle, carte
+géographique, graphiques avec downsampling, table `events` non encore lue par API — puis
+la suite de l'ordre de construction (section 36) : Equipment Passport, Unified Timeline,
+Alarms & Incidents, Maintenance (page dédiée), Energy, Edge & Connectivity (enrichir
+l'écran existant), Sites & Buildings, Telemetry, Documents, Users & Access, Spatial/BIM,
+Automation — un écran à la fois, jamais en un seul bloc.
 
 | Feature | Notre statut | Concurrent(s) | Standard | Priorité | Architecture concernée | Décision | Justification |
 |---|---|---|---|---|---|---|---|

@@ -2,8 +2,15 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { BrandMark } from "@/components/BrandMark";
+import { RecentActivityFeed } from "@/components/RecentActivityFeed";
 import { ASSET_STATUS_COLOR, StatusBadge, equipmentStatusToAssetStatus } from "@/components/StatusBadge";
 import { apiFetch, requireAccessToken } from "@/lib/api";
+import {
+  ACTIVITY_KINDS,
+  toActivityFeedEntries,
+  type ActivityKind,
+  type PortfolioTimelineEntry,
+} from "@/lib/activity";
 import {
   badgeStyle,
   cardStyle,
@@ -120,6 +127,7 @@ export default async function PortfolioPage({
     interventionsResponse,
     energyResponse,
     equipmentStatusesResponse,
+    recentActivityResponse,
   ] = await Promise.all([
     apiFetch("/me", accessToken),
     apiFetch("/sites", accessToken),
@@ -129,6 +137,7 @@ export default async function PortfolioPage({
     apiFetch("/interventions", accessToken),
     apiFetch("/energy/portfolio-summary", accessToken),
     apiFetch("/functional-locations/status-summary", accessToken),
+    apiFetch("/activity/recent", accessToken),
   ]);
 
   if (!meResponse.ok) {
@@ -154,6 +163,9 @@ export default async function PortfolioPage({
     energyResponse.ok ? await energyResponse.json() : null;
   const equipmentStatuses: PortfolioEquipmentStatus[] = equipmentStatusesResponse.ok
     ? await equipmentStatusesResponse.json()
+    : [];
+  const recentActivity: PortfolioTimelineEntry[] = recentActivityResponse.ok
+    ? await recentActivityResponse.json()
     : [];
 
   const [alarms, findings] = await Promise.all([
@@ -203,6 +215,16 @@ export default async function PortfolioPage({
   // section 29). Ne déclenche aucune alerte : lecture pure, comme le
   // passeport équipement.
   const healthDistribution = distributeByAssetStatus(equipmentStatuses);
+
+  // Bloc « Activité récente » (directive UI/dashboard, section 16).
+  // Chronologie fusionnée pour tout le portefeuille (interventions, ordres
+  // de travail, alarmes, constats — voir apps/web/src/lib/activity.ts et
+  // app/timeline.py::portfolio_timeline), la plus récente d'abord, filtrable
+  // par catégorie côté client (seule interaction du bloc).
+  const activityFeedEntries = toActivityFeedEntries(recentActivity, locale, locationById);
+  const activityKindLabels = Object.fromEntries(
+    ACTIVITY_KINDS.map((kind) => [kind, t(`web.dashboard.activity_kind.${kind}`)]),
+  ) as Record<ActivityKind, string>;
 
   const { bySite: portfolio, totals } = aggregatePortfolio(
     sites,
@@ -573,6 +595,15 @@ export default async function PortfolioPage({
             })}
           </div>
         )}
+      </section>
+
+      <section style={{ ...cardStyle, marginBottom: 24 }}>
+        <h2 style={sectionTitleStyle}>{t("web.dashboard.activity_title")}</h2>
+        <RecentActivityFeed
+          entries={activityFeedEntries}
+          kindLabels={activityKindLabels}
+          emptyLabel={t("web.dashboard.activity_empty")}
+        />
       </section>
 
       {sites.length === 0 ? (
