@@ -239,6 +239,18 @@
       "work_orders_link": "Work orders",
       "priority_alarms_title": "Priority alarms",
       "no_priority_alarms": "No active alarm at the moment.",
+      "maintenance_title": "Maintenance",
+      "maintenance_in_progress": "Interventions in progress",
+      "maintenance_critical": "Open urgent work orders",
+      "maintenance_overdue_unavailable": "Overdue interventions: not available (no due date recorded today).",
+      "maintenance_repeating_title": "Repeat failures",
+      "maintenance_repeating_none": "No equipment with repeat failures.",
+      "maintenance_repeating_count": {
+        "one": "{count} corrective work order",
+        "other": "{count} corrective work orders"
+      },
+      "maintenance_closures_title": "Recent closures",
+      "maintenance_closures_none": "No intervention closed recently.",
       "col_severity": "Severity",
       "col_message": "Description",
       "col_ack": "Acknowledgement",

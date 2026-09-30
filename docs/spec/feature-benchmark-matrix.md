@@ -190,11 +190,20 @@ commencé : langage d'état universel fait (`StatusBadge` partagé, branché sur
 cellule de statut de la vue Portfolio) ; bloc « Alarmes prioritaires » fait (section
 11) — alarmes triées par gravité puis ancienneté (`prioritizeAlarms`, testé), jamais
 une liste chronologique brute, limitées à 8 pour éviter la surcharge visuelle
-(section 18), chaque ligne cliquable vers la fiche équipement. Reste de la feuille de
-route active (sections 5 à 37, DEFER explicite) : blocs maintenance/énergie/santé
-des actifs/activité récente du Global Command Center, composants d'architecture UI
-restants (AppShell, Navigation, AssetCard, MetricCard, AlarmCard, Timeline unifiée,
-DataQualityIndicator, ConnectivityIndicator, EmptyState, SkeletonState,
+(section 18), chaque ligne cliquable vers la fiche équipement ; bloc « Maintenance »
+fait (section 12) — interventions en cours, ordres de travail urgents ouverts,
+équipements à pannes répétitives (≥ 2 correctifs, `repeatingFailures`, testé),
+dernières clôtures réelles (`GET /interventions`, une intervention dont `ended_at`
+est renseigné — jamais déduites du statut de l'ordre de travail). « Interventions en
+retard » explicitement non calculé et annoncé comme tel (`maintenance_overdue_
+unavailable`) : aucune date d'échéance n'existe aujourd'hui sur un ordre de travail,
+jamais une donnée inventée pour remplir une case (section 37). Reste de la feuille de
+route active (sections 5 à 37, DEFER explicite) : blocs énergie/santé des actifs/
+activité récente du Global Command Center (la « santé des actifs », section 15,
+demande un endpoint de statut groupé — aucun aujourd'hui, un appel par équipement ne
+passerait pas à l'échelle, section 29 — à concevoir avant de coder), composants
+d'architecture UI restants (AppShell, Navigation, AssetCard, MetricCard, AlarmCard,
+Timeline unifiée, DataQualityIndicator, ConnectivityIndicator, EmptyState, SkeletonState,
 PermissionGuard), fil d'Ariane, dashboards par rôle, carte géographique, graphiques
 avec downsampling — construits un écran à la fois dans l'ordre de sa section 36,
 jamais en un seul bloc.

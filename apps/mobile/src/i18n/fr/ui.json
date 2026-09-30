@@ -239,6 +239,18 @@
       "work_orders_link": "Ordres de travail",
       "priority_alarms_title": "Alarmes prioritaires",
       "no_priority_alarms": "Aucune alarme active pour le moment.",
+      "maintenance_title": "Maintenance",
+      "maintenance_in_progress": "Interventions en cours",
+      "maintenance_critical": "Ordres de travail urgents ouverts",
+      "maintenance_overdue_unavailable": "Interventions en retard : non disponible (aucune date d’échéance enregistrée aujourd’hui).",
+      "maintenance_repeating_title": "Pannes répétitives",
+      "maintenance_repeating_none": "Aucun équipement avec des pannes répétitives.",
+      "maintenance_repeating_count": {
+        "one": "{count} correctif",
+        "other": "{count} correctifs"
+      },
+      "maintenance_closures_title": "Dernières clôtures",
+      "maintenance_closures_none": "Aucune intervention close récemment.",
       "col_severity": "Gravité",
       "col_message": "Description",
       "col_ack": "Acquittement",

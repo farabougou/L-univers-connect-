@@ -15,6 +15,13 @@ import {
   sectionTitleStyle,
 } from "@/lib/formStyles";
 import { getLocale, getTranslator } from "@/lib/i18n";
+import {
+  type MaintenanceIntervention,
+  countCriticalOpen,
+  countInProgress,
+  recentClosures,
+  repeatingFailures,
+} from "@/lib/maintenance";
 import { type EquipmentStatus, statusMessage } from "@/lib/passport";
 import { roleLabels } from "@/lib/roles";
 import {
@@ -58,12 +65,21 @@ const COMMUNICATION_COLOR: Record<string, string> = {
 // surcharge visuelle (directive, section 18) — le lien de site donne accès
 // au reste.
 const MAX_PRIORITY_ALARMS = 8;
+const MAX_REPEATING_FAILURES = 5;
+const MAX_RECENT_CLOSURES = 5;
 
 type AlarmDetail = Alarm & {
   id: string;
   message: string;
   ack_state: string;
   raised_at: string;
+};
+
+type WorkOrderDetail = WorkOrder & {
+  id: string;
+  title: string;
+  work_order_type: string;
+  priority: string;
 };
 
 async function _openSignals<T extends { severity: string }>(
@@ -89,14 +105,21 @@ export default async function PortfolioPage({
   const locale = await getLocale();
   const { site: selectedSiteId } = await searchParams;
 
-  const [meResponse, sitesResponse, locationsResponse, workOrdersResponse, devicesResponse] =
-    await Promise.all([
-      apiFetch("/me", accessToken),
-      apiFetch("/sites", accessToken),
-      apiFetch("/functional-locations", accessToken),
-      apiFetch("/work-orders", accessToken),
-      apiFetch("/devices", accessToken),
-    ]);
+  const [
+    meResponse,
+    sitesResponse,
+    locationsResponse,
+    workOrdersResponse,
+    devicesResponse,
+    interventionsResponse,
+  ] = await Promise.all([
+    apiFetch("/me", accessToken),
+    apiFetch("/sites", accessToken),
+    apiFetch("/functional-locations", accessToken),
+    apiFetch("/work-orders", accessToken),
+    apiFetch("/devices", accessToken),
+    apiFetch("/interventions", accessToken),
+  ]);
 
   if (!meResponse.ok) {
     redirect("/login");
@@ -107,11 +130,16 @@ export default async function PortfolioPage({
   const locations: FunctionalLocation[] = locationsResponse.ok
     ? await locationsResponse.json()
     : [];
-  const workOrders: WorkOrder[] = workOrdersResponse.ok ? await workOrdersResponse.json() : [];
+  const workOrders: WorkOrderDetail[] = workOrdersResponse.ok
+    ? await workOrdersResponse.json()
+    : [];
   // Réservé aux rôles de gestion côté API (GET /devices) : un rôle terrain
   // voit le reste de la vue d'ensemble sans cette colonne, jamais une
   // colonne à zéro fabriquée pour combler l'absence de droit.
   const devices: Device[] | null = devicesResponse.ok ? await devicesResponse.json() : null;
+  const interventions: MaintenanceIntervention[] = interventionsResponse.ok
+    ? await interventionsResponse.json()
+    : [];
 
   const [alarms, findings] = await Promise.all([
     _openSignals<AlarmDetail>(accessToken, "/alarms"),
@@ -133,6 +161,14 @@ export default async function PortfolioPage({
   // _openSignals), triées par gravité puis par ancienneté — jamais une
   // simple liste chronologique brute.
   const priorityAlarms = prioritizeAlarms(alarms, MAX_PRIORITY_ALARMS);
+
+  // Bloc « Maintenance » (directive UI/dashboard, section 12). « En retard »
+  // n'est pas calculé : aucune date d'échéance n'existe sur un ordre de
+  // travail aujourd'hui (voir apps/web/src/lib/maintenance.ts).
+  const maintenanceInProgress = countInProgress(workOrders);
+  const maintenanceCritical = countCriticalOpen(workOrders);
+  const maintenanceRepeating = repeatingFailures(workOrders).slice(0, MAX_REPEATING_FAILURES);
+  const maintenanceClosures = recentClosures(interventions, MAX_RECENT_CLOSURES);
 
   const { bySite: portfolio, totals } = aggregatePortfolio(
     sites,
@@ -279,6 +315,106 @@ export default async function PortfolioPage({
             </tbody>
           </table>
         )}
+      </section>
+
+      <section style={{ ...cardStyle, marginBottom: 24 }}>
+        <h2 style={sectionTitleStyle}>{t("web.dashboard.maintenance_title")}</h2>
+        <div style={{ display: "flex", gap: 32, flexWrap: "wrap", marginBottom: 12 }}>
+          <Kpi
+            label={t("web.dashboard.maintenance_in_progress")}
+            value={String(maintenanceInProgress)}
+          />
+          <Kpi
+            label={t("web.dashboard.maintenance_critical")}
+            value={String(maintenanceCritical)}
+          />
+        </div>
+        <p style={{ color: colors.textMuted, fontSize: 12, marginBottom: 20 }}>
+          {t("web.dashboard.maintenance_overdue_unavailable")}
+        </p>
+        <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
+          <div style={{ flex: "1 1 280px" }}>
+            <h3 style={sectionTitleStyle}>{t("web.dashboard.maintenance_repeating_title")}</h3>
+            {maintenanceRepeating.length === 0 ? (
+              <p style={{ color: colors.textMuted, fontSize: 13 }}>
+                {t("web.dashboard.maintenance_repeating_none")}
+              </p>
+            ) : (
+              <ul
+                style={{
+                  listStyle: "none",
+                  padding: 0,
+                  margin: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                }}
+              >
+                {maintenanceRepeating.map((entry) => {
+                  const location = locationById.get(entry.functional_location_id);
+                  return (
+                    <li
+                      key={entry.functional_location_id}
+                      style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}
+                    >
+                      {location ? (
+                        <Link href={`/registre/${location.id}`} style={{ color: colors.accent }}>
+                          {location.code} — {location.name}
+                        </Link>
+                      ) : (
+                        "—"
+                      )}
+                      <span style={{ color: colors.textMuted }}>
+                        {t("web.dashboard.maintenance_repeating_count", {
+                          count: entry.count,
+                        })}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+          <div style={{ flex: "1 1 280px" }}>
+            <h3 style={sectionTitleStyle}>{t("web.dashboard.maintenance_closures_title")}</h3>
+            {maintenanceClosures.length === 0 ? (
+              <p style={{ color: colors.textMuted, fontSize: 13 }}>
+                {t("web.dashboard.maintenance_closures_none")}
+              </p>
+            ) : (
+              <ul
+                style={{
+                  listStyle: "none",
+                  padding: 0,
+                  margin: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 10,
+                }}
+              >
+                {maintenanceClosures.map((intervention) => {
+                  const location = intervention.functional_location_id
+                    ? locationById.get(intervention.functional_location_id)
+                    : undefined;
+                  return (
+                    <li key={intervention.id} style={{ fontSize: 13 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span>{location ? `${location.code} — ${location.name}` : "—"}</span>
+                        <span style={{ color: colors.textMuted }}>
+                          {formatDateTime(locale, intervention.ended_at as string)}
+                        </span>
+                      </div>
+                      <div style={{ color: colors.textMuted }}>
+                        {intervention.technician}
+                        {intervention.summary ? ` — ${intervention.summary}` : ""}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </div>
       </section>
 
       {sites.length === 0 ? (
