@@ -271,11 +271,14 @@ export default async function PortfolioPage({
         <Link href="/alarmes" style={{ color: colors.accent, fontWeight: 600 }}>
           {t("web.dashboard.alarms_link")} →
         </Link>
-        <Link href="/edge" style={{ color: colors.accent, fontWeight: 600 }}>
-          {t("web.dashboard.edge_link")} →
-        </Link>
         <Link href="/ordres-de-travail" style={{ color: colors.accent, fontWeight: 600 }}>
           {t("web.dashboard.maintenance_link")} →
+        </Link>
+        <Link href="/energie" style={{ color: colors.accent, fontWeight: 600 }}>
+          {t("web.dashboard.energy_link")} →
+        </Link>
+        <Link href="/edge" style={{ color: colors.accent, fontWeight: 600 }}>
+          {t("web.dashboard.edge_link")} →
         </Link>
         <Link href="/registre" style={{ color: colors.accent, fontWeight: 600 }}>
           {t("web.dashboard.registry_link")} →

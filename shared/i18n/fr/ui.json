@@ -237,6 +237,7 @@
       "signed_in_as": "Session de {user} — rôles : {roles}",
       "edge_link": "Edge et connectivité",
       "maintenance_link": "Maintenance",
+      "energy_link": "Énergie",
       "alarms_link": "Alarmes et constats",
       "priority_alarms_title": "Alarmes prioritaires",
       "no_priority_alarms": "Aucune alarme active pour le moment.",
@@ -320,6 +321,15 @@
       "no_alarms": "Aucune alarme ouverte.",
       "no_findings": "Aucun constat ouvert.",
       "col_certainty": "Certitude"
+    },
+    "energy_page": {
+      "title": "Énergie",
+      "summary_title": "Résumé",
+      "meters_title": "Compteurs",
+      "no_meters": "Aucun compteur d’énergie connecté sur ce portefeuille.",
+      "col_unit": "Unité",
+      "col_consumption": "Consommation (hier)",
+      "col_previous": "Consommation (avant-hier)"
     },
     "work_orders": {
       "page_title": "Maintenance",

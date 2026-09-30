@@ -341,14 +341,27 @@ N/A, Edge N/A, Tests N/A pour la page (lecture pure, même précédent que `/ala
 `/ordres-de-travail` d'origine — les fonctions qu'elle appelle sont déjà testées dans
 `maintenance.test.ts`), Documentation DONE.
 
+**Energy, page dédiée (30/09/2026, section 36 point 6)** : nouvelle page `/energie`,
+détail par compteur que le bloc « Énergie » du Global Command Center résume sans jamais
+lister (total par unité, tendance) — ici chaque compteur individuellement, avec un lien
+direct vers la fiche équipement où vivent déjà la comparaison à une baseline et
+l'historique complet (`app/energy/normalization.py`). Aucun nouvel endpoint : réutilise
+`GET /energy/portfolio-summary`, déjà construit pour le tableau de bord
+(`app/energy/aggregation.py`) — même honnêteté que le bloc résumé (jamais d'économies, de
+CO2, de ROI ni de KPI réglementaire ; compteur sans donnée affiché « Indisponible », jamais
+zéro). **Grille produit (ADR 014)** : Backend inchangé, API inchangée, Web DONE, Mobile
+N/A, Edge N/A, Tests N/A pour la page (lecture pure ; les fonctions qu'elle appelle —
+`summarizeEnergyByUnit`, `countMetersWithoutData` — sont déjà testées dans
+`energy.test.ts`), Documentation DONE.
+
 Reste de la feuille de route active (sections 5 à 37, DEFER explicite) : composants
 d'architecture UI restants (AppShell, Navigation, AssetCard, MetricCard, AlarmCard,
 DataQualityIndicator, ConnectivityIndicator, EmptyState, SkeletonState, PermissionGuard),
 fil d'Ariane, dashboards par rôle, carte géographique, graphiques avec downsampling, table
 `events` non encore lue par API — puis la suite de l'ordre de construction (section 36) :
-Energy, Edge & Connectivity (enrichir l'écran existant), Sites & Buildings, Telemetry,
-Documents, Users & Access, Spatial/BIM, Automation — un écran à la fois, jamais en un seul
-bloc.
+Edge & Connectivity (enrichir l'écran existant selon la section 25), Sites & Buildings,
+Telemetry, Documents, Users & Access, Spatial/BIM, Automation — un écran à la fois, jamais
+en un seul bloc.
 
 **Equipment Passport (30/09/2026, section 36 point 2)** : audit plutôt que reconstruction,
 comme demandé (« à consolider selon la liste de la section 21, pas à recréer »). Sur les 19
