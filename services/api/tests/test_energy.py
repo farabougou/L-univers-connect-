@@ -10,7 +10,11 @@ import pytest
 from sqlalchemy import text
 
 from app.config_versions import ConfigInvalid, activate_version, create_version
-from app.energy.aggregation import EnergyDataInsufficient, aggregate_energy_consumption
+from app.energy.aggregation import (
+    EnergyDataInsufficient,
+    aggregate_energy_consumption,
+    aggregate_portfolio_daily_energy,
+)
 from app.energy.baseline import ENERGY_BASELINE
 from app.energy.comparison import compare_results
 from app.energy.normalization import (
@@ -145,6 +149,85 @@ def test_a_doubtful_reading_is_never_used_as_a_boundary(two_tenants) -> None:
             connection, point=point, period_start=date(2026, 1, 1), period_end=date(2026, 1, 31)
         )
     assert result["raw_consumption"] == 400.0
+
+
+# --- Agrégation portfolio : bloc Énergie du Global Command Center -------------------------
+
+
+def test_portfolio_daily_energy_reports_current_and_previous_day(two_tenants) -> None:
+    tenant_a, _ = two_tenants
+    with in_tenant(tenant_a) as connection:
+        _reading(connection, tenant_a, 1000.0, datetime(2025, 12, 31, 23, 0, tzinfo=UTC))
+        _reading(connection, tenant_a, 1100.0, datetime(2026, 1, 1, 23, 0, tzinfo=UTC))
+        _reading(connection, tenant_a, 1300.0, datetime(2026, 1, 2, 23, 0, tzinfo=UTC))
+        entries = aggregate_portfolio_daily_energy(connection, reference_date=date(2026, 1, 2))
+    assert entries == [
+        {
+            "point_id": tenant_a["meter"],
+            "functional_location_id": tenant_a["location"],
+            "unit": "kW.h",
+            "consumption": 200.0,
+            "previous_consumption": 100.0,
+        }
+    ]
+
+
+def test_portfolio_daily_energy_reports_none_rather_than_failing_on_missing_data(
+    two_tenants,
+) -> None:
+    tenant_a, _ = two_tenants
+    with in_tenant(tenant_a) as connection:
+        entries = aggregate_portfolio_daily_energy(connection, reference_date=date(2026, 1, 2))
+    assert entries == [
+        {
+            "point_id": tenant_a["meter"],
+            "functional_location_id": tenant_a["location"],
+            "unit": "kW.h",
+            "consumption": None,
+            "previous_consumption": None,
+        }
+    ]
+
+
+def test_portfolio_daily_energy_excludes_unvalidated_and_non_energy_points(two_tenants) -> None:
+    tenant_a, _ = two_tenants
+    with in_tenant(tenant_a) as connection:
+        create_point(
+            connection,
+            tenant_id=tenant_a["tenant_id"],
+            code="PAC01-ENERGIE-2",
+            name="Énergie active totale (2)",
+            value_type="number",
+            point_class="energy_meter_reading",
+            unit="kW.h",
+            functional_location_id=tenant_a["location"],
+            created_by="test",
+        )
+        other = create_point(
+            connection,
+            tenant_id=tenant_a["tenant_id"],
+            code="PAC01-TDEP",
+            name="Température départ",
+            value_type="number",
+            point_class="supply_water_temperature_sensor",
+            unit="Cel",
+            functional_location_id=tenant_a["location"],
+            created_by="test",
+        )
+        decide_point(connection, point_id=other, decision="validated")
+        entries = aggregate_portfolio_daily_energy(connection, reference_date=date(2026, 1, 2))
+    assert [entry["point_id"] for entry in entries] == [tenant_a["meter"]]
+
+
+def test_portfolio_daily_energy_tenant_isolation(two_tenants) -> None:
+    tenant_a, tenant_b = two_tenants
+    with in_tenant(tenant_a) as connection:
+        _reading(connection, tenant_a, 1000.0, datetime(2025, 12, 31, 23, 0, tzinfo=UTC))
+        _reading(connection, tenant_a, 1100.0, datetime(2026, 1, 2, 23, 0, tzinfo=UTC))
+    with in_tenant(tenant_b) as connection:
+        entries = aggregate_portfolio_daily_energy(connection, reference_date=date(2026, 1, 2))
+    assert [entry["point_id"] for entry in entries] == [tenant_b["meter"]]
+    assert entries[0]["consumption"] is None
 
 
 # --- Contexte météo et degrés-jours ------------------------------------------------------

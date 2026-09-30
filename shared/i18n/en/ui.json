@@ -251,6 +251,17 @@
       },
       "maintenance_closures_title": "Recent closures",
       "maintenance_closures_none": "No intervention closed recently.",
+      "energy_title": "Energy",
+      "energy_no_meters": "No energy meter connected for this portfolio.",
+      "energy_reference_date": "Reference day: {date}",
+      "energy_consumption_label": "Consumption ({unit})",
+      "energy_unavailable": "Unavailable",
+      "energy_trend_label": "Trend vs previous day",
+      "energy_trend_unavailable": "Not enough data yet",
+      "energy_meters_without_data": {
+        "one": "{count} meter without data for this day",
+        "other": "{count} meters without data for this day"
+      },
       "col_severity": "Severity",
       "col_message": "Description",
       "col_ack": "Acknowledgement",

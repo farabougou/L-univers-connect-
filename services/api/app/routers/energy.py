@@ -5,7 +5,7 @@ ici.
 """
 
 import uuid
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from typing import Annotated, Self
 
 from fastapi import APIRouter, Depends, status
@@ -15,7 +15,7 @@ from sqlalchemy.engine import Connection
 
 from app.auth import require_any_role
 from app.deps import get_tenant_connection, get_tenant_id
-from app.energy.aggregation import EnergyDataInsufficient
+from app.energy.aggregation import EnergyDataInsufficient, aggregate_portfolio_daily_energy
 from app.energy.comparison import compare_results
 from app.energy.normalization import (
     EnergyBaselineNotFound,
@@ -98,6 +98,19 @@ class NormalizedResultOut(BaseModel):
     computed_at: datetime
     computed_by: str
     created_at: datetime
+
+
+class PortfolioEnergyMeterOut(BaseModel):
+    point_id: uuid.UUID
+    functional_location_id: uuid.UUID
+    unit: str
+    consumption: float | None
+    previous_consumption: float | None
+
+
+class PortfolioEnergySummaryOut(BaseModel):
+    reference_date: date
+    meters: list[PortfolioEnergyMeterOut]
 
 
 class ComparisonOut(BaseModel):
@@ -227,3 +240,23 @@ def compare_normalized_results_route(
     reference = _require_result(connection, reference_result_id)
     analyzed = _require_result(connection, analyzed_result_id)
     return ComparisonOut(**compare_results(reference, analyzed))
+
+
+@router.get("/portfolio-summary", response_model=PortfolioEnergySummaryOut)
+def get_portfolio_energy_summary_route(
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+    reference_date: date | None = None,
+) -> PortfolioEnergySummaryOut:
+    """Bloc Énergie du Global Command Center (directive UI/dashboard,
+    section 13) : consommation brute par compteur d'énergie validé, pour
+    le jour de référence (par défaut hier, jour calendaire UTC complet le
+    plus récent) et la veille de ce jour pour la tendance. Ne calcule ni
+    n'affiche : économies, CO2, ROI, conformité, KPI réglementaires —
+    strictement exclus par la directive."""
+    resolved_date = reference_date or (datetime.now(UTC).date() - timedelta(days=1))
+    meters = aggregate_portfolio_daily_energy(connection, reference_date=resolved_date)
+    return PortfolioEnergySummaryOut(
+        reference_date=resolved_date,
+        meters=[PortfolioEnergyMeterOut(**meter) for meter in meters],
+    )

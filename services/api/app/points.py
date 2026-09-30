@@ -221,6 +221,7 @@ def list_points(
     functional_location_id: uuid.UUID | None = None,
     space_id: uuid.UUID | None = None,
     mapping_status: str | None = None,
+    point_class: str | None = None,
 ) -> list[dict[str, Any]]:
     query = f"SELECT {POINT_COLUMNS} FROM points WHERE true"
     params: dict[str, Any] = {}
@@ -228,6 +229,7 @@ def list_points(
         ("functional_location_id", functional_location_id),
         ("space_id", space_id),
         ("mapping_status", mapping_status),
+        ("point_class", point_class),
     ):
         if value is not None:
             query += f" AND {column} = :{column}"

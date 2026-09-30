@@ -9,13 +9,14 @@ Une valeur marquée douteuse à la réception n'est jamais utilisée comme borne
 """
 
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
 from app.errors import DomainError
+from app.points import list_points
 from app.quality_flags import FLAG_CLOCK_SUSPECT, FLAG_OUT_OF_RANGE
 
 _DOUBTFUL = (FLAG_OUT_OF_RANGE, FLAG_CLOCK_SUSPECT)
@@ -104,3 +105,50 @@ def aggregate_energy_consumption(
             "origin_counts": origin_counts,
         },
     }
+
+
+def list_energy_meter_points(connection: Connection) -> list[dict[str, Any]]:
+    """Compteurs d'énergie validés du tenant courant (RLS). Seule source
+    utilisée pour le bloc Énergie du tableau de bord : jamais un point
+    encore proposé ou rejeté (mapping_status != "validated")."""
+    return list_points(connection, mapping_status="validated", point_class="energy_meter_reading")
+
+
+def aggregate_portfolio_daily_energy(
+    connection: Connection,
+    *,
+    reference_date: date,
+) -> list[dict[str, Any]]:
+    """Pour chaque compteur d'énergie validé, consommation du jour de
+    référence (jour calendaire complet, borne UTC — même convention que
+    `aggregate_energy_consumption`) et de la veille de ce jour, pour
+    calculer une tendance. Un compteur sans donnée suffisante
+    (`EnergyDataInsufficient`) n'empêche jamais les autres : chaque
+    compteur est rapporté individuellement, avec `None` pour la valeur
+    manquante plutôt qu'une erreur globale."""
+    entries: list[dict[str, Any]] = []
+    for point in list_energy_meter_points(connection):
+        entry: dict[str, Any] = {
+            "point_id": point["id"],
+            "functional_location_id": point["functional_location_id"],
+            "unit": point["unit"],
+            "consumption": None,
+            "previous_consumption": None,
+        }
+        try:
+            current = aggregate_energy_consumption(
+                connection, point=point, period_start=reference_date, period_end=reference_date
+            )
+            entry["consumption"] = current["raw_consumption"]
+        except EnergyDataInsufficient:
+            pass
+        previous_date = reference_date - timedelta(days=1)
+        try:
+            previous = aggregate_energy_consumption(
+                connection, point=point, period_start=previous_date, period_end=previous_date
+            )
+            entry["previous_consumption"] = previous["raw_consumption"]
+        except EnergyDataInsufficient:
+            pass
+        entries.append(entry)
+    return entries

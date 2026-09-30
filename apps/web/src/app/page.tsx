@@ -14,6 +14,11 @@ import {
   pageHeaderStyle,
   sectionTitleStyle,
 } from "@/lib/formStyles";
+import {
+  type PortfolioEnergyMeter,
+  countMetersWithoutData,
+  summarizeEnergyByUnit,
+} from "@/lib/energy";
 import { getLocale, getTranslator } from "@/lib/i18n";
 import {
   type MaintenanceIntervention,
@@ -37,7 +42,7 @@ import {
   aggregatePortfolio,
   prioritizeAlarms,
 } from "@/lib/portfolio";
-import { type Locale, formatDateTime } from "@/i18n/translator";
+import { type Locale, formatDate, formatDateTime, formatNumber } from "@/i18n/translator";
 
 type Me = {
   sub: string;
@@ -112,6 +117,7 @@ export default async function PortfolioPage({
     workOrdersResponse,
     devicesResponse,
     interventionsResponse,
+    energyResponse,
   ] = await Promise.all([
     apiFetch("/me", accessToken),
     apiFetch("/sites", accessToken),
@@ -119,6 +125,7 @@ export default async function PortfolioPage({
     apiFetch("/work-orders", accessToken),
     apiFetch("/devices", accessToken),
     apiFetch("/interventions", accessToken),
+    apiFetch("/energy/portfolio-summary", accessToken),
   ]);
 
   if (!meResponse.ok) {
@@ -140,6 +147,8 @@ export default async function PortfolioPage({
   const interventions: MaintenanceIntervention[] = interventionsResponse.ok
     ? await interventionsResponse.json()
     : [];
+  const energySummary: { reference_date: string; meters: PortfolioEnergyMeter[] } | null =
+    energyResponse.ok ? await energyResponse.json() : null;
 
   const [alarms, findings] = await Promise.all([
     _openSignals<AlarmDetail>(accessToken, "/alarms"),
@@ -169,6 +178,16 @@ export default async function PortfolioPage({
   const maintenanceCritical = countCriticalOpen(workOrders);
   const maintenanceRepeating = repeatingFailures(workOrders).slice(0, MAX_REPEATING_FAILURES);
   const maintenanceClosures = recentClosures(interventions, MAX_RECENT_CLOSURES);
+
+  // Bloc « Énergie » (directive UI/dashboard, section 13). Consommation
+  // brute par compteur d'énergie validé, groupée par unité — jamais
+  // d'économies, de CO2 évité, de ROI ni de KPI réglementaire (voir
+  // apps/web/src/lib/energy.ts). Production, batterie et groupe
+  // électrogène ne sont pas modélisés aujourd'hui : ils n'apparaissent pas
+  // ici plutôt qu'une case « indisponible » permanente.
+  const energyMeters = energySummary?.meters ?? [];
+  const energyByUnit = summarizeEnergyByUnit(energyMeters);
+  const energyMetersWithoutData = countMetersWithoutData(energyMeters);
 
   const { bySite: portfolio, totals } = aggregatePortfolio(
     sites,
@@ -415,6 +434,48 @@ export default async function PortfolioPage({
             )}
           </div>
         </div>
+      </section>
+
+      <section style={{ ...cardStyle, marginBottom: 24 }}>
+        <h2 style={sectionTitleStyle}>{t("web.dashboard.energy_title")}</h2>
+        {energyMeters.length === 0 ? (
+          <p style={{ color: colors.textMuted }}>{t("web.dashboard.energy_no_meters")}</p>
+        ) : (
+          <>
+            <p style={{ color: colors.textMuted, fontSize: 13, marginBottom: 16 }}>
+              {t("web.dashboard.energy_reference_date", {
+                date: energySummary ? formatDate(locale, energySummary.reference_date) : "",
+              })}
+            </p>
+            <div style={{ display: "flex", gap: 32, flexWrap: "wrap", marginBottom: 12 }}>
+              {energyByUnit.map((summary) => (
+                <div key={summary.unit} style={{ display: "flex", gap: 32 }}>
+                  <Kpi
+                    label={t("web.dashboard.energy_consumption_label", { unit: summary.unit })}
+                    value={
+                      summary.totalConsumption === null
+                        ? t("web.dashboard.energy_unavailable")
+                        : formatNumber(locale, summary.totalConsumption)
+                    }
+                  />
+                  <Kpi
+                    label={t("web.dashboard.energy_trend_label")}
+                    value={
+                      summary.trendPercent === null
+                        ? t("web.dashboard.energy_trend_unavailable")
+                        : `${summary.trendPercent > 0 ? "+" : ""}${formatNumber(locale, summary.trendPercent, 1)} %`
+                    }
+                  />
+                </div>
+              ))}
+            </div>
+            {energyMetersWithoutData > 0 && (
+              <p style={{ color: colors.textMuted, fontSize: 12 }}>
+                {t("web.dashboard.energy_meters_without_data", { count: energyMetersWithoutData })}
+              </p>
+            )}
+          </>
+        )}
       </section>
 
       {sites.length === 0 ? (

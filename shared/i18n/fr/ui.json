@@ -251,6 +251,17 @@
       },
       "maintenance_closures_title": "Dernières clôtures",
       "maintenance_closures_none": "Aucune intervention close récemment.",
+      "energy_title": "Énergie",
+      "energy_no_meters": "Aucun compteur d’énergie connecté sur ce portefeuille.",
+      "energy_reference_date": "Jour de référence : {date}",
+      "energy_consumption_label": "Consommation ({unit})",
+      "energy_unavailable": "Indisponible",
+      "energy_trend_label": "Tendance vs veille",
+      "energy_trend_unavailable": "Pas encore suffisamment de données",
+      "energy_meters_without_data": {
+        "one": "{count} compteur sans donnée pour ce jour",
+        "other": "{count} compteurs sans donnée pour ce jour"
+      },
       "col_severity": "Gravité",
       "col_message": "Description",
       "col_ack": "Acquittement",

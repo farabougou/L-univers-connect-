@@ -197,16 +197,36 @@ dernières clôtures réelles (`GET /interventions`, une intervention dont `ende
 est renseigné — jamais déduites du statut de l'ordre de travail). « Interventions en
 retard » explicitement non calculé et annoncé comme tel (`maintenance_overdue_
 unavailable`) : aucune date d'échéance n'existe aujourd'hui sur un ordre de travail,
-jamais une donnée inventée pour remplir une case (section 37). Reste de la feuille de
-route active (sections 5 à 37, DEFER explicite) : blocs énergie/santé des actifs/
-activité récente du Global Command Center (la « santé des actifs », section 15,
-demande un endpoint de statut groupé — aucun aujourd'hui, un appel par équipement ne
-passerait pas à l'échelle, section 29 — à concevoir avant de coder), composants
-d'architecture UI restants (AppShell, Navigation, AssetCard, MetricCard, AlarmCard,
-Timeline unifiée, DataQualityIndicator, ConnectivityIndicator, EmptyState, SkeletonState,
-PermissionGuard), fil d'Ariane, dashboards par rôle, carte géographique, graphiques
-avec downsampling — construits un écran à la fois dans l'ordre de sa section 36,
-jamais en un seul bloc.
+jamais une donnée inventée pour remplir une case (section 37). Bloc « Énergie » fait
+(section 13) — consommation brute du jour de référence (hier, jour calendaire UTC
+complet le plus récent) et tendance vs la veille de ce jour, pour chaque compteur
+d'énergie validé (`point_class = energy_meter_reading`, jamais un point encore
+proposé), groupée par unité (`summarizeEnergyByUnit`, testé) pour ne jamais additionner
+deux unités différentes. Contrairement au bloc « Santé des actifs » (voir ci-dessous),
+ceci ne demandait pas de nouvel endpoint bloquant au sens de la section 29 : le nombre
+de compteurs d'énergie par tenant reste faible (un par point de comptage physique), et
+`aggregate_portfolio_daily_energy` (nouveau, `app/energy/aggregation.py`) fait ses
+requêtes en interne sur une connexion déjà ouverte, jamais un appel HTTP par compteur
+depuis le navigateur — nouvel endpoint `GET /energy/portfolio-summary` ajouté en
+conséquence (additif, non cassant, aucune dépendance nouvelle). N'affiche et ne calcule
+jamais : économies, CO2 évité, ROI, conformité, KPI réglementaires (interdit par la
+section 13) ; production, batterie et groupe électrogène n'apparaissent pas du tout,
+faute de classe de point correspondante aujourd'hui — DEFER, jamais une case
+« indisponible » permanente pour une fonctionnalité qui n'existe pas encore dans le
+système. La « comparaison à une baseline réelle » listée par la section 13 est aussi
+DEFER pour ce bloc : elle existe déjà à la fiche équipement (`app/energy/normalization.py`,
+GET /energy/normalized-results`), mais dépend d'une référence énergétique configurée
+à la main par équipement — l'intégrer au résumé portefeuille demanderait de déclencher
+un calcul de normalisation depuis un simple widget de synthèse, une responsabilité
+que ce bloc ne doit pas porter. Reste de la feuille de route active (sections 5 à 37,
+DEFER explicite) : blocs santé des actifs/activité récente du Global Command Center
+(la « santé des actifs », section 15, demande un endpoint de statut groupé — aucun
+aujourd'hui, un appel par équipement ne passerait pas à l'échelle, section 29 — à
+concevoir avant de coder), composants d'architecture UI restants (AppShell, Navigation,
+AssetCard, MetricCard, AlarmCard, Timeline unifiée, DataQualityIndicator,
+ConnectivityIndicator, EmptyState, SkeletonState, PermissionGuard), fil d'Ariane,
+dashboards par rôle, carte géographique, graphiques avec downsampling — construits un
+écran à la fois dans l'ordre de sa section 36, jamais en un seul bloc.
 
 | Feature | Notre statut | Concurrent(s) | Standard | Priorité | Architecture concernée | Décision | Justification |
 |---|---|---|---|---|---|---|---|
