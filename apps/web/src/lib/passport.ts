@@ -87,6 +87,9 @@ export type Passport = {
   site?: { id: string; name: string; timezone: string | null } | null;
   node_type: "functional_location" | "physical_unit" | "space" | "point";
   functional_location?: { code: string; name: string };
+  // Du bâtiment à la pièce (app/passport.py::_space_path) : jamais deviné,
+  // vide quand l'équipement n'est rattaché à aucun espace.
+  space_path?: { id: string; space_type: string; code: string; name: string }[];
   current_unit?: PassportUnit | null;
   physical_unit?: PassportUnit | null;
   points?: PassportPoint[];

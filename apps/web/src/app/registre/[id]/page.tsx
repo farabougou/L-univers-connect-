@@ -1,7 +1,8 @@
 import Link from "next/link";
 
+import { StatusBadge, equipmentStatusToAssetStatus } from "@/components/StatusBadge";
 import { apiFetch, requireAccessToken } from "@/lib/api";
-import { fieldStyle, labelStyle, submitStyle } from "@/lib/formStyles";
+import { cardStyle, colors, fieldStyle, labelStyle, pageContainerStyle, submitStyle } from "@/lib/formStyles";
 import { errorMessage, getLocale, getTranslator } from "@/lib/i18n";
 import {
   type DesiredState,
@@ -422,11 +423,13 @@ export default async function EquipmentPage({
   const activeEnergyBaseline = energyBaselineVersions.find((version) => version.status === "active");
 
   return (
-    <main style={{ maxWidth: 720, margin: "40px auto", padding: "0 16px" }}>
-      <Link href="/registre">← {t("common.back")}</Link>
+    <main style={pageContainerStyle}>
+      <Link href="/registre" style={{ color: colors.accent }}>
+        ← {t("common.back")}
+      </Link>
 
       {passport.functional_location && (
-        <h1>
+        <h1 style={{ fontSize: 24, margin: "12px 0 20px" }}>
           {passport.functional_location.code} — {passport.functional_location.name}
         </h1>
       )}
@@ -464,12 +467,13 @@ export default async function EquipmentPage({
         </section>
       )}
 
-      {passport.status && (
-        <section style={sectionStyle}>
-          <h2 style={sectionTitleStyle}>{t("mobile.passport.status")}</h2>
-          <StatusLine status={passport.status} timeZone={timeZone} locale={locale} t={t} />
-        </section>
-      )}
+      <IdentityHeader
+        passport={passport}
+        unit={unit}
+        timeZone={timeZone}
+        locale={locale}
+        t={t}
+      />
 
       <section style={sectionStyle}>
         <h2 style={sectionTitleStyle}>{t("mobile.passport.unit")}</h2>
@@ -841,6 +845,57 @@ function timelineStatusLabel(
   }
   const catalog = entry.field ? TIMELINE_STATUS_CATALOG[entry.field] : undefined;
   return catalog ? t(`${catalog}.${entry.status}`) : entry.status;
+}
+
+/**
+ * En-tête consolidé de la fiche équipement (directive UI/dashboard, section
+ * 21) : « comprendre l'état d'un équipement en quelques secondes » — statut
+ * universel, identité et localisation réunis en un seul bloc, avant les
+ * sections techniques détaillées plus bas (inchangées). Remplace l'ancienne
+ * section « statut » isolée, sans dupliquer `StatusLine` ni `UnitView`.
+ */
+function IdentityHeader({
+  passport,
+  unit,
+  timeZone,
+  locale,
+  t,
+}: {
+  passport: Passport;
+  unit: PassportUnit | null;
+  timeZone: string | null;
+  locale: Locale;
+  t: (key: string, params?: Record<string, string>) => string;
+}) {
+  const assetStatus = passport.status ? equipmentStatusToAssetStatus(passport.status) : "unknown";
+  const spacePath = passport.space_path ?? [];
+  const breadcrumb = [passport.site?.name, ...spacePath.map((space) => space.name)].filter(
+    (value): value is string => Boolean(value),
+  );
+  return (
+    <section style={{ ...cardStyle, marginBottom: 24 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+        <StatusBadge status={assetStatus} label={t(`asset_status.${assetStatus}`)} />
+        {passport.status && (
+          <StatusLine status={passport.status} timeZone={timeZone} locale={locale} t={t} />
+        )}
+      </div>
+      {unit && (
+        <p style={{ color: colors.textMuted, marginTop: 8 }}>
+          {unit.manufacturer} {unit.reference}
+          {" — "}
+          {t(`equipment_type.${unit.equipment_type}`)}
+          {" · "}
+          {t("mobile.passport.serial", { serial: unit.serial_number })}
+        </p>
+      )}
+      {breadcrumb.length > 0 && (
+        <p style={{ color: colors.textMuted, marginTop: 4, fontSize: 13 }}>
+          {breadcrumb.join(" › ")}
+        </p>
+      )}
+    </section>
+  );
 }
 
 function StatusLine({

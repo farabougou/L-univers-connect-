@@ -188,8 +188,12 @@ function PassportView({
           </Text>
         </Section>
       )}
-      {passport.space_path && passport.space_path.length > 0 && (
-        <Text style={styles.muted}>{passport.space_path.map((s) => s.name).join(" › ")}</Text>
+      {(passport.site?.name || (passport.space_path && passport.space_path.length > 0)) && (
+        <Text style={styles.muted}>
+          {[passport.site?.name, ...(passport.space_path ?? []).map((s) => s.name)]
+            .filter(Boolean)
+            .join(" › ")}
+        </Text>
       )}
 
       {passport.status && (
