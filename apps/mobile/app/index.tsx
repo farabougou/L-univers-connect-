@@ -7,6 +7,7 @@ import { config } from "../src/lib/config";
 import { t } from "../src/lib/i18n";
 import { useAuth } from "../src/lib/auth";
 import { countPendingInterventions } from "../src/lib/db";
+import { roleLabels } from "../src/lib/roles";
 import { synchronize } from "../src/lib/sync";
 
 type MeResponse = {
@@ -97,7 +98,7 @@ export default function HomeScreen() {
         <>
           <Text>{t("mobile.home.user", { user: me.sub })}</Text>
           <Text>{t("mobile.home.tenant", { tenant: me.tenant_id })}</Text>
-          <Text>{t("mobile.home.roles", { roles: me.roles.join(", ") })}</Text>
+          <Text>{t("mobile.home.roles", { roles: roleLabels(me.roles, t) })}</Text>
         </>
       )}
       {apiError && <Text style={styles.error}>{t("mobile.home.server_unreachable")}</Text>}

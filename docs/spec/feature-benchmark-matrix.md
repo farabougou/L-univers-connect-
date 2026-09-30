@@ -179,6 +179,20 @@ déjà traitées dans une ligne existante ci-dessus (vue Portfolio : ligne « Co
 responsable d'exploitation » ; chronologie : ligne « Mémoire opérationnelle » ;
 corrélation : ligne « Modèle État → Événement → Politique → Alerte »).
 
+**Directive complémentaire du 30/09/2026** (architecture UI, Global Command Center,
+dashboard) : voir `docs/spec/dashboard-ui-directive.md` pour le texte intégral (40
+sections) et son propre audit KEEP/REFACTOR/REPLACE/ADD/DEFER. Corrections
+immédiates déjà faites (30/09/2026) : composant de logo découplé du nom de marque
+(`BrandMark.tsx`, remplace `EnoryxMark.tsx`), rôles techniques jamais affichés bruts
+(catalogue `role.*`, web et mobile), sous-titre de la page de connexion neutre (plus
+de rôle nommé avant authentification). Feuille de route active (sections 5 à 37,
+DEFER explicite) : langage d'état universel (`StatusBadge` partagé), composants
+d'architecture UI (AppShell, Navigation, AssetCard, MetricCard, AlarmCard, Timeline
+unifiée, DataQualityIndicator, ConnectivityIndicator, EmptyState, SkeletonState,
+PermissionGuard), fil d'Ariane, dashboards par rôle, carte géographique, graphiques
+avec downsampling — construits un écran à la fois dans l'ordre de sa section 36,
+jamais en un seul bloc.
+
 | Feature | Notre statut | Concurrent(s) | Standard | Priorité | Architecture concernée | Décision | Justification |
 |---|---|---|---|---|---|---|---|
 | Navigation universelle (Organisation → Portfolio → Site → Facility → Building/Plant → Zone → System → Equipment → Component → Sensor/Actuator), fil d'Ariane, changement rapide de site | ❌ Absent en tant que composant transverse — chaque page a ses propres liens de retour (`← {t("common.back")}`), aucun fil d'Ariane ni sélecteur de site partagé | Standard chez les grands éditeurs (arborescence de site persistante) | — | Haute | Nouveau composant partagé `apps/web/src/components/` (à créer) | DEFER (ADD progressif, un écran à la fois) | **Grille produit (ADR 014)** : Backend N/A, API N/A (aucune donnée nouvelle, uniquement de la navigation), Web PARTIAL (navigation locale par page, jamais de fil d'Ariane commun), Mobile N/A, Edge N/A, Tests N/A, Documentation PARTIAL (ce document). La hiérarchie doit rester exploitable même quand un niveau n'existe pas dans un domaine (ex. pas de Portfolio pour un client à un seul site) — déjà vrai aujourd'hui par construction (aucun niveau n'est obligatoire dans le modèle spatial, ADR 011). |

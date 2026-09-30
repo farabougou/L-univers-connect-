@@ -73,6 +73,11 @@
     "shared_secret": "Secret partagé",
     "public_key_assertion": "Clé publique signée"
   },
+  "role": {
+    "admin_tenant": "Administrateur",
+    "responsable_exploitation": "Responsable d’exploitation",
+    "technicien": "Technicien"
+  },
   "equipment_type": {
     "heat_pump": "Pompe à chaleur",
     "chiller": "Groupe froid",
@@ -216,7 +221,7 @@
   "web": {
     "console": "Console d’exploitation",
     "login": {
-      "subtitle": "Console du responsable d’exploitation",
+      "subtitle": "Supervisez. Comprenez. Optimisez vos actifs physiques.",
       "failed": "La connexion n’a pas pu aboutir. Réessayez ; si le problème persiste, contactez votre administrateur."
     },
     "dashboard": {

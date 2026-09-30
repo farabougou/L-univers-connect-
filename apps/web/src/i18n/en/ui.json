@@ -73,6 +73,11 @@
     "shared_secret": "Shared secret",
     "public_key_assertion": "Signed public key"
   },
+  "role": {
+    "admin_tenant": "Administrator",
+    "responsable_exploitation": "Operations manager",
+    "technicien": "Technician"
+  },
   "equipment_type": {
     "heat_pump": "Heat pump",
     "chiller": "Chiller",
@@ -216,7 +221,7 @@
   "web": {
     "console": "Operations console",
     "login": {
-      "subtitle": "Operations manager console",
+      "subtitle": "Monitor. Understand. Optimize your physical assets.",
       "failed": "Sign-in could not be completed. Please try again; if the problem persists, contact your administrator."
     },
     "dashboard": {

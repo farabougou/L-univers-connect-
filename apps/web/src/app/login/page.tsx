@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 
-import { EnoryxMark } from "@/components/EnoryxMark";
+import { BrandMark } from "@/components/BrandMark";
 import { getTranslator } from "@/lib/i18n";
 
 import { LoginError } from "./LoginError";
@@ -19,7 +19,7 @@ export default async function LoginPage() {
       }}
     >
       <div style={{ maxWidth: 380, width: "100%", textAlign: "center" }}>
-        <EnoryxMark size={96} />
+        <BrandMark size={96} label={t("common.app_name")} />
         <h1
           style={{
             marginTop: 20,

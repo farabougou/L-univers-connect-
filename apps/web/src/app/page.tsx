@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { EnoryxMark } from "@/components/EnoryxMark";
+import { BrandMark } from "@/components/BrandMark";
 import { apiFetch, requireAccessToken } from "@/lib/api";
 import {
   badgeStyle,
@@ -15,6 +15,7 @@ import {
 } from "@/lib/formStyles";
 import { getLocale, getTranslator } from "@/lib/i18n";
 import { type EquipmentStatus, statusMessage } from "@/lib/passport";
+import { roleLabels } from "@/lib/roles";
 import {
   type Alarm,
   type Finding,
@@ -143,12 +144,12 @@ export default async function PortfolioPage({
       <header style={pageHeaderStyle}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <span style={{ color: colors.accent }}>
-            <EnoryxMark variant="mono" size={32} />
+            <BrandMark variant="mono" size={32} label={t("common.app_name")} />
           </span>
           <div>
             <h1 style={{ fontSize: 24, margin: 0 }}>{t("common.app_name")}</h1>
             <p style={{ color: colors.textMuted, fontSize: 14, marginTop: 4 }}>
-              {t("web.dashboard.signed_in_as", { user: me.sub, roles: me.roles.join(", ") })}
+              {t("web.dashboard.signed_in_as", { user: me.sub, roles: roleLabels(me.roles, t) })}
             </p>
           </div>
         </div>

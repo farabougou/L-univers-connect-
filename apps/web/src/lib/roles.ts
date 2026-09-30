@@ -25,3 +25,14 @@ export function canManage(me: Me): boolean {
 export function canSendCommand(me: Me): boolean {
   return me.roles.some((role) => COMMAND_ROLES.includes(role));
 }
+
+/**
+ * Un identifiant technique de rôle (`admin_tenant`) n'est jamais montré tel
+ * quel à une personne (directive de Mohamed du 30/09/2026, section 3) : le
+ * libellé humain vient du catalogue `role.*`, jamais écrit en dur ici. Les
+ * autorisations réelles restent imposées côté serveur — ceci n'est qu'un
+ * affichage.
+ */
+export function roleLabels(roles: string[], t: (key: string) => string): string {
+  return roles.map((role) => t(`role.${role}`)).join(", ");
+}
