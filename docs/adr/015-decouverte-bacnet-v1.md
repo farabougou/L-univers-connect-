@@ -205,7 +205,20 @@ autorisation de marche en valeur binaire, mode en valeur multi-état à trois po
 Démarré/arrêté par test (`BacnetLab.start()`/`stop()`), jamais un processus persistant en
 arrière-plan de la suite de tests.
 
-## 6. Méthodologie de comparaison terrain (plan écrit, exécution BLOCKED_EXTERNAL_VALIDATION)
+## 6. Méthodologie de comparaison terrain (outil prêt, exécution BLOCKED_EXTERNAL_VALIDATION)
+
+Mise à jour du 30/09/2026 : l'outil qui exécute cette méthodologie existe désormais
+(`app.bacnet_field_comparison`, UNIT_TESTED ; `scripts/bacnet_field_comparison.py`, le
+CLI de terrain). Il rapproche un relevé GTB fait à la main (fichier CSV : nom, unité,
+remarques) avec les propositions d'un scan de découverte déjà exécuté, sur une
+correspondance stricte de nom normalisé — jamais une correspondance approximative
+inventée, pour ne jamais masquer un vrai écart terrain. Le rapport Markdown produit
+distingue quatre catégories : correspondances trouvées, points vus par la GTB mais non
+découverts (écart à investiguer : adressage, pare-feu, ou protocole différent de BACnet
+pour cet équipement), points découverts absents de la liste GTB, et points sans
+correspondance sémantique fiable encore à classer. Testé bout en bout contre un vrai
+scan BACnet Lab (`tests/test_bacnet_field_comparison_e2e.py`), jamais contre un
+appareil réel : la méthodologie elle-même reste **BLOCKED_EXTERNAL_VALIDATION**.
 
 Ne jamais supposer qu'un équipement donné parle BACnet directement : un automate GTB
 peut exposer ses points par BACnet, par Modbus, par une passerelle propriétaire, ou ne
