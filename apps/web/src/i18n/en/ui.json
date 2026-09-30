@@ -311,6 +311,9 @@
       "col_account": "Account",
       "col_communication": "Communication",
       "col_credential": "Authentication",
+      "col_fingerprint": "Key fingerprint",
+      "no_fingerprint": "—",
+      "col_provisioned": "Provisioned on",
       "col_last_seen": "Last activity",
       "last_seen_never": "Never seen"
     },

@@ -20,8 +20,10 @@ type Device = {
   device_id: string;
   site_id: string | null;
   credential_type: string;
+  key_fingerprint: string | null;
   status: string;
   communication_status: string;
+  created_at: string;
   last_seen_at: string | null;
 };
 
@@ -104,6 +106,8 @@ export default async function EdgeConnectivityPage() {
                     <th style={headerCellStyle}>{t("web.edge.col_account")}</th>
                     <th style={headerCellStyle}>{t("web.edge.col_communication")}</th>
                     <th style={headerCellStyle}>{t("web.edge.col_credential")}</th>
+                    <th style={headerCellStyle}>{t("web.edge.col_fingerprint")}</th>
+                    <th style={headerCellStyle}>{t("web.edge.col_provisioned")}</th>
                     <th style={headerCellStyle}>{t("web.edge.col_last_seen")}</th>
                   </tr>
                 </thead>
@@ -126,6 +130,16 @@ export default async function EdgeConnectivityPage() {
                         </span>
                       </td>
                       <td style={cellStyle}>{t(`credential_type.${device.credential_type}`)}</td>
+                      <td style={{ ...cellStyle, fontFamily: "monospace", fontSize: 12 }}>
+                        {device.key_fingerprint ? (
+                          <span title={device.key_fingerprint}>
+                            {device.key_fingerprint.slice(0, 12)}…
+                          </span>
+                        ) : (
+                          t("web.edge.no_fingerprint")
+                        )}
+                      </td>
+                      <td style={cellStyle}>{formatDateTime(locale, device.created_at)}</td>
                       <td style={cellStyle}>
                         {device.last_seen_at
                           ? formatDateTime(locale, device.last_seen_at)

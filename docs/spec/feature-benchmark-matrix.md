@@ -354,12 +354,42 @@ N/A, Edge N/A, Tests N/A pour la page (lecture pure ; les fonctions qu'elle appe
 `summarizeEnergyByUnit`, `countMetersWithoutData` — sont déjà testées dans
 `energy.test.ts`), Documentation DONE.
 
+**Edge & Connectivity (30/09/2026, section 36 point 7, arrêt partiel — voir plus bas)** :
+audit de `/edge` contre les 15 éléments listés par la section 25. Trois étaient déjà
+couverts (identité Edge, statut, dernière communication). Deux ajoutés dans ce lot, déjà
+renvoyés par `GET /devices` (`DeviceOut`) mais jamais affichés : empreinte de clé
+(provenance de l'authentification) et date de provisionnement. **Dix des quinze éléments
+restent honnêtement hors d'atteinte aujourd'hui, faute de toute donnée exploitable, pas
+faute de temps** : version de l'agent Edge, dernière synchronisation (distincte de la
+dernière communication — aucun champ ne la distingue), connecteurs actifs et protocoles
+par passerelle (les configurations Modbus/BACnet/OPC UA sont indexées par équipement, pas
+par passerelle Edge — aucune table ne relie une ligne `edge_devices` à ses connecteurs),
+équipements découverts (la découverte BACnet est indexée par équipement, même limite),
+qualité et erreurs (aucun compteur par passerelle), reconnexions (les événements
+`DEVICE_WENT_OFFLINE`/`DEVICE_CAME_ONLINE` existants concernent la communication d'un
+équipement au sens GTB, pas la passerelle Edge elle-même — `communication_status` d'une
+passerelle est un calcul à la lecture, sans historique, voir
+`app/devices.py::communication_status`), offline queue, backlog, diagnostics.
+
+Construire ces dix éléments demanderait un vrai modèle de télémétrie Edge (une passerelle
+sait quels connecteurs elle exécute, avec quels compteurs d'erreur et de file d'attente) —
+un changement architectural, pas un ajustement d'écran, et donc un arrêt explicite au sens
+de la section 38 (« changement architectural majeur »), pas une case à cocher improvisée
+avec une donnée inventée. Signalé ici pour décision plutôt que construit à la hâte : la
+disposition la plus solide demanderait probablement que le client Edge lui-même rapporte
+ces compteurs (`app/routers/devices.py`, à côté de `last_seen_at`), plutôt qu'un calcul
+reconstruit après coup côté cloud. **Grille produit (ADR 014)** : Backend PARTIAL
+(identité/statut/communication déjà là ; aucune télémétrie de connecteur), API PARTIAL,
+Web DONE pour les deux champs ajoutés, PARTIAL pour le reste de la section 25, Mobile N/A,
+Edge N/A (rien n'est encore demandé à l'agent lui-même), Tests N/A pour la page (lecture
+pure), Documentation DONE (cet écart, précis, plutôt qu'un silence).
+
 Reste de la feuille de route active (sections 5 à 37, DEFER explicite) : composants
 d'architecture UI restants (AppShell, Navigation, AssetCard, MetricCard, AlarmCard,
 DataQualityIndicator, ConnectivityIndicator, EmptyState, SkeletonState, PermissionGuard),
 fil d'Ariane, dashboards par rôle, carte géographique, graphiques avec downsampling, table
-`events` non encore lue par API — puis la suite de l'ordre de construction (section 36) :
-Edge & Connectivity (enrichir l'écran existant selon la section 25), Sites & Buildings,
+`events` non encore lue par API, télémétrie Edge par connecteur (ci-dessus, décision
+requise) — puis la suite de l'ordre de construction (section 36) : Sites & Buildings,
 Telemetry, Documents, Users & Access, Spatial/BIM, Automation — un écran à la fois, jamais
 en un seul bloc.
 
