@@ -271,6 +271,30 @@ dédiée « Unified Timeline » (section 36, point 3) les intègre proprement en
 qu'elle consolidera `node_timeline`/`portfolio_timeline` plutôt que de les dupliquer une
 troisième fois.
 
+**Unified Timeline (30/09/2026, section 36 point 3)** : la directive ne demande pas une
+nouvelle page pour ce point, mais « en faire un composant web partagé plutôt qu'une
+section isolée de la fiche équipement » (section 22 : « la timeline doit être un
+composant central partagé »). Fait : extraction de la chronologie de `/registre/{id}`
+(qui vivait comme du JSX inline dans cette seule page) vers `apps/web/src/components/
+Timeline.tsx` — même donnée (`GET /graph/nodes/{id}/timeline`), même comportement, même
+pagination par curseur de date, zéro changement fonctionnel, uniquement une frontière de
+composant clarifiée pour que toute future page ayant besoin d'un historique fusionné pour
+un actif (Alarms & Incidents, Maintenance dédiée...) puisse le réutiliser sans dupliquer
+le rendu ni la traduction des statuts par catégorie (`timelineStatusLabel`, maintenant
+testée : 5 tests unitaires). Distinct et volontairement non fusionné avec
+`RecentActivityFeed.tsx` (bloc « Activité récente » du Global Command Center) : les deux
+partagent une même famille de données (interventions/ordres de travail/alarmes/constats
+fusionnés) mais servent des usages différents — chronologie d'un seul actif avec
+pagination par curseur, contre portefeuille entier avec filtre par catégorie — les forcer
+ensemble aurait compliqué les deux pour un bénéfice incertain ; à reconsidérer seulement
+si une vraie douleur de maintenance apparaît. **Grille produit (ADR 014)** : Backend
+inchangé (DONE de longue date), API inchangée, Web DONE (composant partagé, extrait sans
+changement de comportement), Mobile N/A (l'écran passeport mobile a son propre rendu de
+chronologie, plus simple, jamais un composant partagé entre les deux plateformes —
+React Native et Next.js ne partagent pas leurs composants JSX), Edge N/A, Tests DONE (5
+nouveaux tests sur `timelineStatusLabel`, suite complète sans régression : 148 tests web),
+Documentation DONE.
+
 Le Global Command Center (section 36, point 1) est maintenant complet dans son
 périmètre honnête : carte/portefeuille (déjà là), alarmes prioritaires, maintenance,
 énergie, santé des actifs, activité récente. Reste de la feuille de route active
@@ -278,10 +302,10 @@ périmètre honnête : carte/portefeuille (déjà là), alarmes prioritaires, ma
 Navigation, AssetCard, MetricCard, AlarmCard, DataQualityIndicator, ConnectivityIndicator,
 EmptyState, SkeletonState, PermissionGuard), fil d'Ariane, dashboards par rôle, carte
 géographique, graphiques avec downsampling, table `events` non encore lue par API — puis
-la suite de l'ordre de construction (section 36) : Equipment Passport, Unified Timeline,
-Alarms & Incidents, Maintenance (page dédiée), Energy, Edge & Connectivity (enrichir
-l'écran existant), Sites & Buildings, Telemetry, Documents, Users & Access, Spatial/BIM,
-Automation — un écran à la fois, jamais en un seul bloc.
+la suite de l'ordre de construction (section 36) : Alarms & Incidents, Maintenance (page
+dédiée), Energy, Edge & Connectivity (enrichir l'écran existant), Sites & Buildings,
+Telemetry, Documents, Users & Access, Spatial/BIM, Automation — un écran à la fois,
+jamais en un seul bloc.
 
 **Equipment Passport (30/09/2026, section 36 point 2)** : audit plutôt que reconstruction,
 comme demandé (« à consolider selon la liste de la section 21, pas à recréer »). Sur les 19

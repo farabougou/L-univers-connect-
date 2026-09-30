@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { StatusBadge, equipmentStatusToAssetStatus } from "@/components/StatusBadge";
+import { Timeline, type TimelineEntry } from "@/components/Timeline";
 import { apiFetch, requireAccessToken } from "@/lib/api";
 import { cardStyle, colors, fieldStyle, labelStyle, pageContainerStyle, submitStyle } from "@/lib/formStyles";
 import { errorMessage, getLocale, getTranslator } from "@/lib/i18n";
@@ -126,30 +127,6 @@ type Relation = {
   object_type: string;
   valid_from: string | null;
 };
-type TimelineEntry = {
-  kind: "intervention" | "work_order" | "alarm" | "finding" | "lifecycle";
-  at: string;
-  reference_id: string;
-  title: string | null;
-  field: string | null;
-  status: string | null;
-  changed_by: string | null;
-  note: string | null;
-};
-
-// Catalogue à utiliser pour traduire `status` selon le `field` d'une entrée
-// de chronologie (app/timeline.py) : les mêmes catalogues déjà affichés
-// ailleurs sur cette fiche (statut de fonctionnement, cycle de vie…), jamais
-// une nouvelle traduction inventée pour la chronologie.
-const TIMELINE_STATUS_CATALOG: Record<string, string> = {
-  lifecycle_state: "lifecycle",
-  handling_status: "handling_status",
-  condition_state: "condition_state",
-  ack_state: "ack_state",
-  certainty: "certainty",
-  intervention_type: "intervention_type",
-};
-
 // Référence énergétique (app/energy/baseline.py) : une configuration
 // versionnée de plus, figée une fois activée.
 type EnergyBaselineContent = {
@@ -547,36 +524,19 @@ export default async function EquipmentPage({
             </>
           )}
         </h2>
-        {timeline.length === 0 ? (
-          <p style={mutedStyle}>{t("timeline.empty")}</p>
-        ) : (
-          <>
-            {timeline.map((entry) => {
-              const status = timelineStatusLabel(entry, t);
-              return (
-                <p key={`${entry.kind}-${entry.reference_id}-${entry.at}`} style={{ margin: "0 0 8px" }}>
-                  <span style={mutedStyle}>{formatDateTime(locale, entry.at, timeZone)}</span>
-                  {" — "}
-                  <span style={strongStyle}>{t(`timeline.kind_${entry.kind}`)}</span>
-                  {entry.title && ` — ${entry.title}`}
-                  {!entry.title && status && ` — ${status}`}
-                  {entry.title && status && ` (${status})`}
-                  {entry.changed_by && ` — ${t("timeline.by", { actor: entry.changed_by })}`}
-                  {entry.note && <><br />{entry.note}</>}
-                </p>
-              );
-            })}
-            {timeline.length === 20 && (
-              <Link
-                href={`/registre/${id}?timeline_before=${encodeURIComponent(
+        <Timeline
+          entries={timeline}
+          timeZone={timeZone}
+          locale={locale}
+          loadOlderHref={
+            timeline.length === 20
+              ? `/registre/${id}?timeline_before=${encodeURIComponent(
                   timeline[timeline.length - 1].at,
-                )}`}
-              >
-                {t("timeline.load_older")}
-              </Link>
-            )}
-          </>
-        )}
+                )}`
+              : null
+          }
+          t={t}
+        />
       </section>
 
       <section style={sectionStyle}>
@@ -833,18 +793,6 @@ export default async function EquipmentPage({
       </p>
     </main>
   );
-}
-
-function timelineStatusLabel(
-  entry: TimelineEntry,
-  t: (key: string, params?: Record<string, string>) => string,
-): string | null {
-  if (!entry.status) return null;
-  if (entry.kind === "work_order" && entry.field === "status") {
-    return t(`work_order.status.${entry.status}`);
-  }
-  const catalog = entry.field ? TIMELINE_STATUS_CATALOG[entry.field] : undefined;
-  return catalog ? t(`${catalog}.${entry.status}`) : entry.status;
 }
 
 /**
