@@ -64,6 +64,14 @@
     "unreachable": "Injoignable",
     "unknown": "Communication non vérifiable"
   },
+  "device_status": {
+    "active": "Actif",
+    "revoked": "Révoqué"
+  },
+  "credential_type": {
+    "shared_secret": "Secret partagé",
+    "public_key_assertion": "Clé publique signée"
+  },
   "equipment_type": {
     "heat_pump": "Pompe à chaleur",
     "chiller": "Groupe froid",
@@ -212,6 +220,7 @@
     },
     "dashboard": {
       "signed_in_as": "Session de {user} — rôles : {roles}",
+      "edge_link": "Edge et connectivité",
       "work_orders_link": "Ordres de travail",
       "equipment": "Équipements",
       "no_equipment": "Aucun équipement enregistré pour le moment.",
@@ -235,6 +244,19 @@
       "site_equipment_title": "Équipements — {name}",
       "back_to_portfolio": "Retour à la vue d’ensemble",
       "no_sites": "Aucun site enregistré pour le moment."
+    },
+    "edge": {
+      "title": "Edge et connectivité",
+      "intro": "Passerelles Edge provisionnées, groupées par site.",
+      "access_denied": "Cette vue nécessite un rôle de gestion (responsable d’exploitation ou administrateur).",
+      "no_devices": "Aucune passerelle Edge provisionnée pour le moment.",
+      "unassigned_site": "Sans site",
+      "col_device": "Identifiant appareil",
+      "col_account": "Compte",
+      "col_communication": "Communication",
+      "col_credential": "Authentification",
+      "col_last_seen": "Dernière activité",
+      "last_seen_never": "Jamais vue"
     },
     "work_orders": {
       "title": "Ordres de travail",

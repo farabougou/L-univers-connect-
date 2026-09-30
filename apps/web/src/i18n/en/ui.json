@@ -64,6 +64,14 @@
     "unreachable": "Unreachable",
     "unknown": "Communication cannot be verified"
   },
+  "device_status": {
+    "active": "Active",
+    "revoked": "Revoked"
+  },
+  "credential_type": {
+    "shared_secret": "Shared secret",
+    "public_key_assertion": "Signed public key"
+  },
   "equipment_type": {
     "heat_pump": "Heat pump",
     "chiller": "Chiller",
@@ -212,6 +220,7 @@
     },
     "dashboard": {
       "signed_in_as": "Signed in as {user} — roles: {roles}",
+      "edge_link": "Edge and connectivity",
       "work_orders_link": "Work orders",
       "equipment": "Equipment",
       "no_equipment": "No equipment registered yet.",
@@ -235,6 +244,19 @@
       "site_equipment_title": "Equipment — {name}",
       "back_to_portfolio": "Back to overview",
       "no_sites": "No site registered yet."
+    },
+    "edge": {
+      "title": "Edge and connectivity",
+      "intro": "Provisioned Edge gateways, grouped by site.",
+      "access_denied": "This view requires a management role (operations manager or administrator).",
+      "no_devices": "No Edge gateway provisioned yet.",
+      "unassigned_site": "No site",
+      "col_device": "Device identifier",
+      "col_account": "Account",
+      "col_communication": "Communication",
+      "col_credential": "Authentication",
+      "col_last_seen": "Last activity",
+      "last_seen_never": "Never seen"
     },
     "work_orders": {
       "title": "Work orders",

@@ -2,7 +2,16 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { apiFetch, requireAccessToken } from "@/lib/api";
-import { cellStyle, headerCellStyle } from "@/lib/formStyles";
+import {
+  badgeStyle,
+  cardStyle,
+  cellStyle,
+  colors,
+  headerCellStyle,
+  pageContainerStyle,
+  pageHeaderStyle,
+  sectionTitleStyle,
+} from "@/lib/formStyles";
 import { getLocale, getTranslator } from "@/lib/i18n";
 import { type EquipmentStatus, statusMessage } from "@/lib/passport";
 import {
@@ -129,92 +138,119 @@ export default async function PortfolioPage({
   const statusByLocation = new Map(statuses);
 
   return (
-    <main style={{ maxWidth: 1000, margin: "40px auto", padding: "0 16px" }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1>{t("common.app_name")}</h1>
-        <a href="/api/auth/logout">{t("common.sign_out")}</a>
+    <main style={pageContainerStyle}>
+      <header style={pageHeaderStyle}>
+        <div>
+          <h1 style={{ fontSize: 24, margin: 0 }}>{t("common.app_name")}</h1>
+          <p style={{ color: colors.textMuted, fontSize: 14, marginTop: 4 }}>
+            {t("web.dashboard.signed_in_as", { user: me.sub, roles: me.roles.join(", ") })}
+          </p>
+        </div>
+        <a href="/api/auth/logout" style={{ color: colors.textMuted, fontSize: 14 }}>
+          {t("common.sign_out")}
+        </a>
       </header>
-      <p>{t("web.dashboard.signed_in_as", { user: me.sub, roles: me.roles.join(", ") })}</p>
 
-      <nav style={{ margin: "16px 0", display: "flex", flexDirection: "column", gap: 8 }}>
-        <Link href="/ordres-de-travail">{t("web.dashboard.work_orders_link")} →</Link>
-        <Link href="/registre">{t("web.dashboard.registry_link")} →</Link>
+      <nav style={{ display: "flex", gap: 20, marginBottom: 24, flexWrap: "wrap" }}>
+        <Link href="/edge" style={{ color: colors.accent, fontWeight: 600 }}>
+          {t("web.dashboard.edge_link")} →
+        </Link>
+        <Link href="/ordres-de-travail" style={{ color: colors.accent, fontWeight: 600 }}>
+          {t("web.dashboard.work_orders_link")} →
+        </Link>
+        <Link href="/registre" style={{ color: colors.accent, fontWeight: 600 }}>
+          {t("web.dashboard.registry_link")} →
+        </Link>
       </nav>
 
-      <h2>{t("web.dashboard.portfolio_title")}</h2>
-      <div style={{ display: "flex", gap: 24, flexWrap: "wrap", margin: "8px 0 24px" }}>
-        <Kpi label={t("web.dashboard.kpi_sites")} value={String(sites.length)} />
-        <Kpi label={t("web.dashboard.kpi_equipment")} value={String(totals.equipmentCount)} />
-        <SeverityKpi
-          label={t("web.dashboard.kpi_alarms")}
-          counts={totals.alarmSeverity}
-          t={t}
-        />
-        <SeverityKpi
-          label={t("web.dashboard.kpi_findings")}
-          counts={totals.findingSeverity}
-          t={t}
-        />
-        <Kpi
-          label={t("web.dashboard.kpi_work_orders")}
-          value={String(totals.openWorkOrders)}
-        />
-      </div>
+      <section style={{ ...cardStyle, marginBottom: 24 }}>
+        <h2 style={sectionTitleStyle}>{t("web.dashboard.portfolio_title")}</h2>
+        <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
+          <Kpi label={t("web.dashboard.kpi_sites")} value={String(sites.length)} />
+          <Kpi label={t("web.dashboard.kpi_equipment")} value={String(totals.equipmentCount)} />
+          <SeverityKpi
+            label={t("web.dashboard.kpi_alarms")}
+            counts={totals.alarmSeverity}
+            t={t}
+          />
+          <SeverityKpi
+            label={t("web.dashboard.kpi_findings")}
+            counts={totals.findingSeverity}
+            t={t}
+          />
+          <Kpi
+            label={t("web.dashboard.kpi_work_orders")}
+            value={String(totals.openWorkOrders)}
+          />
+        </div>
+      </section>
 
       {sites.length === 0 ? (
-        <p>{t("web.dashboard.no_sites")}</p>
+        <section style={cardStyle}>
+          <p style={{ color: colors.textMuted }}>{t("web.dashboard.no_sites")}</p>
+        </section>
       ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 24 }}>
-          <thead>
-            <tr>
-              <th style={headerCellStyle}>{t("web.dashboard.site_column")}</th>
-              <th style={headerCellStyle}>{t("web.dashboard.equipment")}</th>
-              <th style={headerCellStyle}>{t("web.dashboard.kpi_alarms")}</th>
-              <th style={headerCellStyle}>{t("web.dashboard.kpi_findings")}</th>
-              <th style={headerCellStyle}>{t("web.dashboard.kpi_work_orders")}</th>
-              {devices && <th style={headerCellStyle}>{t("web.dashboard.edge_column")}</th>}
-              <th style={headerCellStyle} />
-            </tr>
-          </thead>
-          <tbody>
-            {portfolio.map((entry) => (
-              <tr key={entry.site.id}>
-                <td style={cellStyle}>{entry.site.name}</td>
-                <td style={cellStyle}>{entry.equipmentCount}</td>
-                <td style={cellStyle}>
-                  <SeverityBadges counts={entry.alarmSeverity} t={t} />
-                </td>
-                <td style={cellStyle}>
-                  <SeverityBadges counts={entry.findingSeverity} t={t} />
-                </td>
-                <td style={cellStyle}>{entry.openWorkOrders}</td>
-                {devices && (
-                  <td style={cellStyle}>
-                    {entry.devices && (entry.devices.online || entry.devices.offline || entry.devices.unknown) ? (
-                      <DeviceBadges counts={entry.devices} t={t} />
-                    ) : (
-                      <span style={{ color: "#9ca3af" }}>{t("web.dashboard.edge_none")}</span>
-                    )}
-                  </td>
-                )}
-                <td style={cellStyle}>
-                  <Link href={`/?site=${entry.site.id}`}>{t("web.dashboard.drill_down")} →</Link>
-                </td>
+        <section style={{ ...cardStyle, marginBottom: 24, padding: 0, overflow: "hidden" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr>
+                <th style={headerCellStyle}>{t("web.dashboard.site_column")}</th>
+                <th style={headerCellStyle}>{t("web.dashboard.equipment")}</th>
+                <th style={headerCellStyle}>{t("web.dashboard.kpi_alarms")}</th>
+                <th style={headerCellStyle}>{t("web.dashboard.kpi_findings")}</th>
+                <th style={headerCellStyle}>{t("web.dashboard.kpi_work_orders")}</th>
+                {devices && <th style={headerCellStyle}>{t("web.dashboard.edge_column")}</th>}
+                <th style={headerCellStyle} />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {portfolio.map((entry) => (
+                <tr key={entry.site.id}>
+                  <td style={{ ...cellStyle, fontWeight: 600 }}>{entry.site.name}</td>
+                  <td style={cellStyle}>{entry.equipmentCount}</td>
+                  <td style={cellStyle}>
+                    <SeverityBadges counts={entry.alarmSeverity} t={t} />
+                  </td>
+                  <td style={cellStyle}>
+                    <SeverityBadges counts={entry.findingSeverity} t={t} />
+                  </td>
+                  <td style={cellStyle}>{entry.openWorkOrders}</td>
+                  {devices && (
+                    <td style={cellStyle}>
+                      {entry.devices && (entry.devices.online || entry.devices.offline || entry.devices.unknown) ? (
+                        <DeviceBadges counts={entry.devices} t={t} />
+                      ) : (
+                        <span style={{ color: colors.textMuted }}>{t("web.dashboard.edge_none")}</span>
+                      )}
+                    </td>
+                  )}
+                  <td style={cellStyle}>
+                    <Link href={`/?site=${entry.site.id}`} style={{ color: colors.accent }}>
+                      {t("web.dashboard.drill_down")} →
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
       )}
 
       {selectedSite && (
-        <section>
-          <h2>
-            {t("web.dashboard.site_equipment_title", { name: selectedSite.name })}
-            {" — "}
-            <Link href="/">{t("web.dashboard.back_to_portfolio")}</Link>
-          </h2>
+        <section style={{ ...cardStyle, padding: 0, overflow: "hidden" }}>
+          <div style={{ padding: "20px 24px 0" }}>
+            <h2 style={sectionTitleStyle}>
+              {t("web.dashboard.site_equipment_title", { name: selectedSite.name })}
+              {" — "}
+              <Link href="/" style={{ color: colors.accent, textTransform: "none", fontWeight: 600 }}>
+                {t("web.dashboard.back_to_portfolio")}
+              </Link>
+            </h2>
+          </div>
           {selectedLocations.length === 0 ? (
-            <p>{t("web.dashboard.no_equipment")}</p>
+            <p style={{ color: colors.textMuted, padding: "0 24px 20px" }}>
+              {t("web.dashboard.no_equipment")}
+            </p>
           ) : (
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
@@ -234,7 +270,9 @@ export default async function PortfolioPage({
                   return (
                     <tr key={location.id}>
                       <td style={cellStyle}>
-                        <Link href={`/registre/${location.id}`}>{location.code}</Link>
+                        <Link href={`/registre/${location.id}`} style={{ color: colors.accent }}>
+                          {location.code}
+                        </Link>
                       </td>
                       <td style={cellStyle}>{location.name}</td>
                       <td style={cellStyle}>
@@ -269,8 +307,8 @@ function _countByLocation(ids: (string | null)[]): Map<string, number> {
 function Kpi({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ minWidth: 120 }}>
-      <div style={{ fontSize: 28, fontWeight: 600 }}>{value}</div>
-      <div style={{ color: "#6b7280", fontSize: 13 }}>{label}</div>
+      <div style={{ fontSize: 28, fontWeight: 600, color: colors.textPrimary }}>{value}</div>
+      <div style={{ color: colors.textMuted, fontSize: 13 }}>{label}</div>
     </div>
   );
 }
@@ -287,8 +325,8 @@ function SeverityKpi({
   const total = SEVERITIES.reduce((sum, severity) => sum + counts[severity], 0);
   return (
     <div style={{ minWidth: 160 }}>
-      <div style={{ fontSize: 28, fontWeight: 600 }}>{total}</div>
-      <div style={{ color: "#6b7280", fontSize: 13, marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 28, fontWeight: 600, color: colors.textPrimary }}>{total}</div>
+      <div style={{ color: colors.textMuted, fontSize: 13, marginBottom: 4 }}>{label}</div>
       <SeverityBadges counts={counts} t={t} />
     </div>
   );
@@ -303,22 +341,12 @@ function SeverityBadges({
 }) {
   const present = SEVERITIES.filter((severity) => counts[severity] > 0);
   if (present.length === 0) {
-    return <span style={{ color: "#9ca3af" }}>{t("web.dashboard.alerts_none")}</span>;
+    return <span style={{ color: colors.textMuted }}>{t("web.dashboard.alerts_none")}</span>;
   }
   return (
     <span style={{ display: "inline-flex", gap: 6, flexWrap: "wrap" }}>
       {present.map((severity) => (
-        <span
-          key={severity}
-          title={t(`severity.${severity}`)}
-          style={{
-            color: "white",
-            background: SEVERITY_COLOR[severity],
-            borderRadius: 4,
-            padding: "1px 6px",
-            fontSize: 12,
-          }}
-        >
+        <span key={severity} title={t(`severity.${severity}`)} style={badgeStyle(SEVERITY_COLOR[severity])}>
           {counts[severity]} {t(`severity.${severity}`)}
         </span>
       ))}
@@ -344,13 +372,7 @@ function DeviceBadges({
         <span
           key={entry.key}
           title={t(`communication_status.${entry.key}`)}
-          style={{
-            color: "white",
-            background: COMMUNICATION_COLOR[entry.key],
-            borderRadius: 4,
-            padding: "1px 6px",
-            fontSize: 12,
-          }}
+          style={badgeStyle(COMMUNICATION_COLOR[entry.key])}
         >
           {entry.value} {t(`communication_status.${entry.key}`)}
         </span>
