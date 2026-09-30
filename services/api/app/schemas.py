@@ -974,3 +974,18 @@ class EquipmentStatusOut(BaseModel):
     reason: str | None
     evaluated_at: datetime
     sources: list[EquipmentStatusSource]
+
+
+class PortfolioEquipmentStatusOut(BaseModel):
+    """Version allégée de `EquipmentStatusOut` pour le bloc « Santé des
+    actifs » du Global Command Center (un par équipement du portefeuille) :
+    sans `sources`, jamais utile à un résumé, uniquement à l'analyse d'un
+    équipement précis (fiche équipement, `GET
+    /functional-locations/{id}/status`)."""
+
+    functional_location_id: uuid.UUID
+    operational_status: str
+    communication_status: str
+    current: bool
+    as_of: datetime | None
+    reason: str | None

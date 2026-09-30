@@ -22,7 +22,7 @@ from app.assets import (
 from app.audit import append_audit_entry
 from app.auth import require_any_role
 from app.deps import get_tenant_connection, get_tenant_id
-from app.equipment_status import compute_equipment_status
+from app.equipment_status import compute_equipment_status, compute_portfolio_equipment_status
 from app.equipment_vocabulary import (
     EQUIPMENT_TYPES,
     EQUIPMENT_VOCABULARY_VERSION,
@@ -51,6 +51,7 @@ from app.schemas import (
     LifecycleEventOut,
     PhysicalUnitCreate,
     PhysicalUnitOut,
+    PortfolioEquipmentStatusOut,
     ProductModelCreate,
     ProductModelOut,
     SiteCreate,
@@ -686,6 +687,30 @@ def read_lifecycle(
     except LifecycleNotFound as exc:
         raise api_error(exc, 404) from exc
     return [LifecycleEventOut(**row) for row in lifecycle_history(connection, physical_unit_id)]
+
+
+@router.get(
+    "/functional-locations/status-summary", response_model=list[PortfolioEquipmentStatusOut]
+)
+def read_portfolio_equipment_status(
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> list[PortfolioEquipmentStatusOut]:
+    """État de tous les équipements non archivés du tenant, pour le bloc
+    « Santé des actifs » du Global Command Center (directive UI/dashboard,
+    section 15). Une poignée de requêtes pour tout le portefeuille — jamais
+    un appel par équipement (section 29) — voir
+    `app/equipment_status.py::compute_portfolio_equipment_status`.
+
+    Lecture pure comme le passeport : contrairement à `GET
+    /functional-locations/{id}/status`, ne déclenche jamais
+    `evaluate_communication_status` ; le balayage périodique
+    (`app/supervision_sweep.py`) reste le seul déclencheur d'alerte."""
+    statuses = compute_portfolio_equipment_status(connection, datetime.now(UTC))
+    return [
+        PortfolioEquipmentStatusOut(functional_location_id=location_id, **status)
+        for location_id, status in statuses.items()
+    ]
 
 
 @router.get(

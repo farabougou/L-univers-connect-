@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { BrandMark } from "@/components/BrandMark";
-import { StatusBadge, equipmentStatusToAssetStatus } from "@/components/StatusBadge";
+import { ASSET_STATUS_COLOR, StatusBadge, equipmentStatusToAssetStatus } from "@/components/StatusBadge";
 import { apiFetch, requireAccessToken } from "@/lib/api";
 import {
   badgeStyle,
@@ -19,6 +19,7 @@ import {
   countMetersWithoutData,
   summarizeEnergyByUnit,
 } from "@/lib/energy";
+import { ASSET_STATUS_ORDER, distributeByAssetStatus, type PortfolioEquipmentStatus } from "@/lib/health";
 import { getLocale, getTranslator } from "@/lib/i18n";
 import {
   type MaintenanceIntervention,
@@ -118,6 +119,7 @@ export default async function PortfolioPage({
     devicesResponse,
     interventionsResponse,
     energyResponse,
+    equipmentStatusesResponse,
   ] = await Promise.all([
     apiFetch("/me", accessToken),
     apiFetch("/sites", accessToken),
@@ -126,6 +128,7 @@ export default async function PortfolioPage({
     apiFetch("/devices", accessToken),
     apiFetch("/interventions", accessToken),
     apiFetch("/energy/portfolio-summary", accessToken),
+    apiFetch("/functional-locations/status-summary", accessToken),
   ]);
 
   if (!meResponse.ok) {
@@ -149,6 +152,9 @@ export default async function PortfolioPage({
     : [];
   const energySummary: { reference_date: string; meters: PortfolioEnergyMeter[] } | null =
     energyResponse.ok ? await energyResponse.json() : null;
+  const equipmentStatuses: PortfolioEquipmentStatus[] = equipmentStatusesResponse.ok
+    ? await equipmentStatusesResponse.json()
+    : [];
 
   const [alarms, findings] = await Promise.all([
     _openSignals<AlarmDetail>(accessToken, "/alarms"),
@@ -188,6 +194,15 @@ export default async function PortfolioPage({
   const energyMeters = energySummary?.meters ?? [];
   const energyByUnit = summarizeEnergyByUnit(energyMeters);
   const energyMetersWithoutData = countMetersWithoutData(energyMeters);
+
+  // Bloc « Santé des actifs » (directive UI/dashboard, section 15).
+  // Répartition Normal/Attention/Critique/Hors ligne/Donnée ancienne/
+  // Inconnu/Maintenance, calculée pour tout le portefeuille en une
+  // poignée de requêtes côté API (voir apps/web/src/lib/health.ts) —
+  // jamais un appel par équipement depuis le navigateur (directive,
+  // section 29). Ne déclenche aucune alerte : lecture pure, comme le
+  // passeport équipement.
+  const healthDistribution = distributeByAssetStatus(equipmentStatuses);
 
   const { bySite: portfolio, totals } = aggregatePortfolio(
     sites,
@@ -475,6 +490,88 @@ export default async function PortfolioPage({
               </p>
             )}
           </>
+        )}
+      </section>
+
+      <section style={{ ...cardStyle, marginBottom: 24 }}>
+        <h2 style={sectionTitleStyle}>{t("web.dashboard.health_title")}</h2>
+        {locations.length === 0 ? (
+          <p style={{ color: colors.textMuted }}>{t("web.dashboard.no_equipment")}</p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {ASSET_STATUS_ORDER.map((assetStatus) => {
+              const ids = healthDistribution[assetStatus];
+              const percent = locations.length ? (ids.length / locations.length) * 100 : 0;
+              return (
+                <details key={assetStatus}>
+                  <summary
+                    style={{
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      padding: "6px 0",
+                    }}
+                  >
+                    <StatusBadge status={assetStatus} label={t(`asset_status.${assetStatus}`)} />
+                    <div
+                      style={{
+                        flex: 1,
+                        background: "#f3f4f6",
+                        borderRadius: 4,
+                        height: 8,
+                        overflow: "hidden",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: `${percent}%`,
+                          background: ASSET_STATUS_COLOR[assetStatus],
+                          height: "100%",
+                        }}
+                      />
+                    </div>
+                    <span
+                      style={{ color: colors.textMuted, fontSize: 13, minWidth: 24, textAlign: "right" }}
+                    >
+                      {ids.length}
+                    </span>
+                  </summary>
+                  {ids.length === 0 ? (
+                    <p style={{ color: colors.textMuted, fontSize: 13, padding: "4px 0 8px 28px" }}>
+                      {t("web.dashboard.health_category_empty")}
+                    </p>
+                  ) : (
+                    <ul
+                      style={{
+                        listStyle: "none",
+                        padding: "4px 0 8px 28px",
+                        margin: 0,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 4,
+                      }}
+                    >
+                      {ids.map((id) => {
+                        const location = locationById.get(id);
+                        return (
+                          <li key={id} style={{ fontSize: 13 }}>
+                            {location ? (
+                              <Link href={`/registre/${id}`} style={{ color: colors.accent }}>
+                                {location.code} — {location.name}
+                              </Link>
+                            ) : (
+                              "—"
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </details>
+              );
+            })}
+          </div>
         )}
       </section>
 

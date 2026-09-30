@@ -10,8 +10,9 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 
+from app.assets import archive_functional_location
 from app.db import engine
-from app.equipment_status import compute_equipment_status
+from app.equipment_status import compute_equipment_status, compute_portfolio_equipment_status
 from app.main import app
 from app.points import create_point, decide_point, get_point
 from app.telemetry import record_measurement
@@ -229,3 +230,81 @@ def test_hors_ligne_leve_une_alerte_puis_se_retablit_via_l_api(tenants) -> None:
             {"id": tenant_a["ahu"]},
         ).scalar()
     assert condition == "cleared"
+
+
+# --- Calcul portefeuille : bloc « Santé des actifs » du Global Command Center -------------
+
+
+def _portfolio_status(tenant, at):
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant["tenant_id"])
+        return compute_portfolio_equipment_status(connection, at)
+
+
+def test_portfolio_status_covers_every_non_archived_location(tenants) -> None:
+    tenant_a, _ = tenants
+    _measure(tenant_a, "run", 1, T0)
+    statuses = _portfolio_status(tenant_a, T0 + timedelta(minutes=2))
+    assert set(statuses.keys()) == {tenant_a["ahu"], tenant_a["bare"]}
+    assert _axes(statuses[tenant_a["ahu"]]) == ("running", "online", True)
+    assert statuses[tenant_a["bare"]]["reason"] == "no_status_point"
+
+
+def test_portfolio_status_excludes_archived_locations(tenants) -> None:
+    tenant_a, _ = tenants
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_a["tenant_id"])
+        archive_functional_location(
+            connection, functional_location_id=tenant_a["bare"], archived_by="technicien"
+        )
+    statuses = _portfolio_status(tenant_a, T0)
+    assert tenant_a["bare"] not in statuses
+    assert tenant_a["ahu"] in statuses
+
+
+def test_portfolio_status_matches_the_single_equipment_computation(tenants) -> None:
+    tenant_a, _ = tenants
+    _measure(tenant_a, "run", 1, T0)
+    _measure(tenant_a, "fault", 1, T0)
+    at = T0 + timedelta(minutes=2)
+    portfolio = _portfolio_status(tenant_a, at)
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_a["tenant_id"])
+        single = compute_equipment_status(connection, tenant_a["ahu"], at)
+    assert portfolio[tenant_a["ahu"]] == single
+
+
+def test_portfolio_status_never_raises_a_finding(tenants) -> None:
+    """Calcul pur comme `compute_equipment_status` : seul le point de
+    lecture dédié (GET /functional-locations/{id}/status) ou le balayage
+    périodique déclenchent une alerte, jamais ce résumé portefeuille."""
+    tenant_a, _ = tenants
+    _measure(tenant_a, "run", 1, T0)
+    statuses = _portfolio_status(tenant_a, T0 + timedelta(hours=1))
+    assert statuses[tenant_a["ahu"]]["communication_status"] == "offline"
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_a["tenant_id"])
+        count = connection.execute(text("SELECT count(*) FROM findings")).scalar()
+    assert count == 0
+
+
+def test_portfolio_status_tenant_isolation(tenants) -> None:
+    tenant_a, tenant_b = tenants
+    _measure(tenant_a, "run", 1, T0)
+    statuses = _portfolio_status(tenant_b, T0 + timedelta(minutes=2))
+    assert tenant_a["ahu"] not in statuses
+    assert set(statuses.keys()) == {tenant_b["ahu"], tenant_b["bare"]}
+
+
+def test_portfolio_status_route_through_the_api(tenants) -> None:
+    tenant_a, tenant_b = tenants
+    _measure(tenant_a, "run", 1, datetime.now(UTC))
+    headers = {"Authorization": f"Bearer {make_token(tenant_id=str(tenant_a['tenant_id']))}"}
+    other = {"Authorization": f"Bearer {make_token(tenant_id=str(tenant_b['tenant_id']))}"}
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        response = client.get("/functional-locations/status-summary", headers=headers)
+        other_response = client.get("/functional-locations/status-summary", headers=other)
+    body = {row["functional_location_id"]: row for row in response.json()}
+    assert body[str(tenant_a["ahu"])]["operational_status"] == "running"
+    assert "sources" not in body[str(tenant_a["ahu"])]
+    assert str(tenant_a["ahu"]) not in {row["functional_location_id"] for row in other_response.json()}

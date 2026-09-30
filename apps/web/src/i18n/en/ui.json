@@ -262,6 +262,8 @@
         "one": "{count} meter without data for this day",
         "other": "{count} meters without data for this day"
       },
+      "health_title": "Asset health",
+      "health_category_empty": "No equipment in this category.",
       "col_severity": "Severity",
       "col_message": "Description",
       "col_ack": "Acknowledgement",

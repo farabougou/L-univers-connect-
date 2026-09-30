@@ -218,12 +218,33 @@ DEFER pour ce bloc : elle existe déjà à la fiche équipement (`app/energy/nor
 GET /energy/normalized-results`), mais dépend d'une référence énergétique configurée
 à la main par équipement — l'intégrer au résumé portefeuille demanderait de déclencher
 un calcul de normalisation depuis un simple widget de synthèse, une responsabilité
-que ce bloc ne doit pas porter. Reste de la feuille de route active (sections 5 à 37,
-DEFER explicite) : blocs santé des actifs/activité récente du Global Command Center
-(la « santé des actifs », section 15, demande un endpoint de statut groupé — aucun
-aujourd'hui, un appel par équipement ne passerait pas à l'échelle, section 29 — à
-concevoir avant de coder), composants d'architecture UI restants (AppShell, Navigation,
-AssetCard, MetricCard, AlarmCard, Timeline unifiée, DataQualityIndicator,
+que ce bloc ne doit pas porter. Bloc « Santé des actifs » fait (section 15) —
+répartition Normal/Attention/Critique/Hors ligne/Donnée ancienne/Inconnu/Maintenance
+sur tout le portefeuille (équipements non archivés), chaque catégorie cliquable
+(`<details>/<summary>`, même motif zéro-JS déjà utilisé pour les sections archivées de
+`/registre`) et ouvrant la liste filtrée des équipements concernés, chacun lien direct
+vers sa fiche. Ce bloc était bloqué au tour précédent faute d'endpoint de statut groupé
+(l'endpoint existant, `GET /functional-locations/{id}/status`, est par équipement — un
+appel par équipement depuis le portefeuille n'aurait pas passé à l'échelle, section 29).
+Résolu par un vrai calcul en masse, pas un contournement : nouvel endpoint `GET
+/functional-locations/status-summary` et `compute_portfolio_equipment_status`
+(`app/equipment_status.py`) qui récupère tous les points d'état validés du tenant et
+leur dernier relevé exploitable en une poignée de requêtes (`DISTINCT ON`), jamais une
+requête par équipement — y compris pour les équipements sans aucun point d'état, comptés
+comme « Inconnu » plutôt qu'omis (l'absence d'instrumentation fait partie de la vérité du
+portefeuille). `compute_equipment_status` (l'endpoint par équipement existant) a été
+refactoré pour partager cette même logique (`_status_from_points`) : comportement
+inchangé (12 tests existants toujours verts), mais lui aussi passé d'une requête par
+point à une seule requête groupée. Point de sécurité explicite : ce nouveau calcul
+portefeuille reste une lecture pure — il n'appelle jamais `evaluate_communication_status`
+(qui reste strictement réservé au point de lecture par équipement et au balayage
+périodique, `app/supervision_sweep.py`), pour ne jamais transformer un simple
+chargement de tableau de bord en générateur d'alertes. Classement des équipements par
+catégorie réutilise exactement `equipmentStatusToAssetStatus` déjà écrit pour la cellule
+de statut du portefeuille — aucune seconde logique de classement à maintenir en double.
+Reste de la feuille de route active (sections 5 à 37, DEFER explicite) : bloc « Activité
+récente » du Global Command Center, composants d'architecture UI restants (AppShell,
+Navigation, AssetCard, MetricCard, AlarmCard, Timeline unifiée, DataQualityIndicator,
 ConnectivityIndicator, EmptyState, SkeletonState, PermissionGuard), fil d'Ariane,
 dashboards par rôle, carte géographique, graphiques avec downsampling — construits un
 écran à la fois dans l'ordre de sa section 36, jamais en un seul bloc.

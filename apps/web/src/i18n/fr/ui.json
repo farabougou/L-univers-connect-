@@ -262,6 +262,8 @@
         "one": "{count} compteur sans donnée pour ce jour",
         "other": "{count} compteurs sans donnée pour ce jour"
       },
+      "health_title": "Santé des actifs",
+      "health_category_empty": "Aucun équipement dans cette catégorie.",
       "col_severity": "Gravité",
       "col_message": "Description",
       "col_ack": "Acquittement",
