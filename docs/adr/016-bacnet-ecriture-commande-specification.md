@@ -104,10 +104,108 @@ Cette liste est la condition d'activation, pas un travail à faire maintenant :
 - Elle ne préjuge pas du calendrier : l'activation dépend de la validation terrain de
   la lecture seule (ADR 015) et d'une décision explicite distincte de Mohamed.
 
+## 5. Détail complémentaire (30 septembre 2026, à la suite de la visite terrain BIVWAK)
+
+Mohamed a demandé d'approfondir la spécification pendant l'attente de l'adaptateur
+réseau nécessaire à la validation terrain de la V1 — toujours **sans écrire une seule
+ligne de code d'écriture**, pour les mêmes raisons qu'à la section 4. Ce qui suit
+précise la section 3 point par point, pour que l'implémentation réelle (le jour venu)
+n'ait plus de décision de conception à prendre, seulement du code à écrire.
+
+### 5.1 Niveau de priorité BACnet à utiliser
+
+BACnet définit un tableau de 16 niveaux de priorité par propriété commandable
+(`priority-array`), 1 étant le plus fort. Convention déjà répandue chez les grands
+éditeurs (Tridium Niagara, Schneider EcoStruxure) et retenue ici :
+
+| Niveau | Usage | Notre future commande |
+|---|---|---|
+| 1-2 | Sécurité vie humaine (manuelle/automatique) | **Jamais écrit** — hors périmètre produit |
+| 3-4 | Disponible | Non utilisé |
+| 5 | Contrôle d'équipement critique | Non utilisé |
+| 6 | Minimum marche/arrêt | Non utilisé |
+| 7 | Disponible | Non utilisé |
+| **8** | **Opérateur manuel** | **Niveau retenu** pour toute commande émise par une personne via `/commands` |
+| 9-15 | Disponible (automatismes) | Non utilisé |
+| 16 | Valeur de repli (« relinquish default ») | Jamais écrit directement — c'est l'état de l'objet en l'absence de toute commande |
+
+Annuler une commande (relâcher la main) signifie un `WriteProperty` avec une valeur
+nulle (« relinquish ») au niveau 8, jamais une écriture au niveau 16.
+
+### 5.2 Vérification par relecture (BACnet ne notifie pas nativement un changement)
+
+Sans abonnement COV (hors périmètre), la vérification suit un ré-essai à intervalles
+croissants plutôt qu'une seule lecture : **+1 s, +3 s, +7 s** après l'écriture
+(fenêtre totale 15 s), en réutilisant le cycle de l'agent Edge déjà en place plutôt
+qu'un nouveau processus. Au-delà de cette fenêtre sans correspondance, la commande
+suit le chemin déjà existant (`failed` si une valeur différente est lue, `unconfirmed`
+puis `timed_out` via `UNCONFIRMED_AFTER` si rien n'est lu — `app/commands.py`,
+inchangé).
+
+### 5.3 Détection de conflit de priorité avant écriture
+
+Avant tout `WriteProperty`, un `ReadPropertyMultiple` de `priority-array` vérifie
+qu'aucun niveau 1 à 7 n'est déjà actif : si c'en est le cas, la commande échoue
+immédiatement (`failed`, motif dédié — proposé : `BACNET_HIGHER_PRIORITY_ACTIVE`)
+plutôt que d'être acceptée puis silencieusement sans effet. Un nouvel événement
+persistant suivrait le même modèle que les autres (`app/events.py`) — proposé :
+`COMMAND_BACNET_PRIORITY_CONFLICT`, nom à confirmer au moment de l'implémentation.
+
+### 5.4 Schéma de données envisagé — aucune nouvelle table
+
+La table `commands` existante (migration 1cb0a1548c63) reste protocole-agnostique :
+`point_id`, `requested_value`, `actual_value`, `status`, `edge_device_id`, etc. Le
+point BACnet ciblé n'a besoin d'aucun nouveau mécanisme d'adressage : une fois issu
+d'une proposition de découverte acceptée (ADR 015), un point porte déjà tout ce qu'il
+faut (équipement, mapping actif, type/instance d'objet BACnet) pour que l'Edge sache
+où écrire.
+
+Le seul ajout de schéma anticipé — **non créé par cette ADR, à faire au moment de
+l'implémentation réelle** — serait une colonne `protocol_metadata` (JSONB, nullable)
+sur `commands`, plutôt qu'une colonne par protocole (`bacnet_priority`, etc.) : elle
+resterait vide pour Modbus, et porterait `{"bacnet_priority": 8}` pour BACnet. Ce
+choix évite d'ajouter une colonne à chaque nouveau protocole doté un jour d'une
+capacité de commande (OPC UA, par exemple).
+
+### 5.5 Audit renforcé — champs exacts
+
+En plus des champs déjà consignés par `append_audit_entry` sur chaque transition de
+`app/commands.py`, une commande BACnet ajouterait dans son `payload` :
+`bacnet_priority` (l'entier utilisé, section 5.1), `object_type` et
+`object_instance` (adressage BACnet du point, déjà connus du mapping), et
+`edge_device_id` (déjà une colonne de `commands`, dupliqué dans le payload d'audit
+comme le reste des colonnes le sont déjà pour les autres protocoles).
+
+### 5.6 Signature de fonction proposée (illustration, jamais ajoutée au dépôt)
+
+Pour mémoire uniquement — ce bloc n'est pas du code de ce dépôt, seulement la forme
+que prendrait la fonction le jour de l'implémentation réelle, une fois les deux
+conditions de la section 3 réunies :
+
+```
+# app/connectors/bacnet.py — À ÉCRIRE UNIQUEMENT APRÈS :
+#   1. validation terrain de la lecture seule (ADR 015 §6)
+#   2. décision explicite séparée de Mohamed dans CLAUDE.md
+#
+# def write_bacnet_point(
+#     address: str, object_type: str, object_instance: int,
+#     value: float, priority: int = 8, timeout: float = 3.0,
+# ) -> None: ...
+```
+
+### 5.7 Nom de `device_type` simulé — proposition, pas une déclaration
+
+Sur le modèle de `simulated_relay` (Modbus), le nom proposé pour la future décision
+de Mohamed serait `bacnet_simulated_relay`, dans `SIMULATED_DEVICE_TYPES`
+(`app/connectors/device_mapping.py`). Cette ADR ne l'y ajoute pas : le nom est cité
+ici uniquement pour que la décision, le jour venu, n'ait plus qu'à être écrite dans
+CLAUDE.md sans nouvelle réflexion de nommage.
+
 ## Conséquences
 
 - `docs/spec/feature-benchmark-matrix.md` : la ligne « Arbitrage des commandes »
   (déjà DEFER) et une éventuelle future ligne « Commande BACnet » citeront cette ADR.
 - Prochaine étape réelle (non déclenchée par cette ADR) : une fois la lecture seule
   validée sur le terrain, revenir sur ce document, obtenir la décision explicite
-  séparée exigée par CLAUDE.md, puis seulement écrire le code.
+  séparée exigée par CLAUDE.md, puis seulement écrire le code — la section 5
+  ci-dessus élimine déjà les décisions de conception restantes.
