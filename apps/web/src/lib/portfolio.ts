@@ -39,6 +39,28 @@ export type Device = { site_id: string | null; communication_status: string };
 
 export type DeviceCounts = { online: number; offline: number; unknown: number };
 
+// Une alarme critique passe toujours avant une majeure, même plus ancienne
+// (directive UI/dashboard du 30/09/2026, section 20 — ordre de priorité).
+const SEVERITY_RANK: Record<Severity, number> = { critical: 0, major: 1, warning: 2, info: 3 };
+
+/**
+ * Trie les alarmes par gravité puis par ancienneté (la plus ancienne
+ * d'abord, à gravité égale) et ne garde que les `limit` premières — jamais
+ * une simple liste chronologique brute (directive, section 11), jamais une
+ * surcharge visuelle (section 18).
+ */
+export function prioritizeAlarms<T extends { severity: string; raised_at: string }>(
+  alarms: T[],
+  limit: number,
+): T[] {
+  return [...alarms]
+    .sort((a, b) => {
+      const bySeverity = SEVERITY_RANK[a.severity as Severity] - SEVERITY_RANK[b.severity as Severity];
+      return bySeverity !== 0 ? bySeverity : a.raised_at.localeCompare(b.raised_at);
+    })
+    .slice(0, limit);
+}
+
 export type SitePortfolio = {
   site: Site;
   equipmentCount: number;

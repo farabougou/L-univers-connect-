@@ -185,10 +185,16 @@ sections) et son propre audit KEEP/REFACTOR/REPLACE/ADD/DEFER. Corrections
 immédiates déjà faites (30/09/2026) : composant de logo découplé du nom de marque
 (`BrandMark.tsx`, remplace `EnoryxMark.tsx`), rôles techniques jamais affichés bruts
 (catalogue `role.*`, web et mobile), sous-titre de la page de connexion neutre (plus
-de rôle nommé avant authentification). Feuille de route active (sections 5 à 37,
-DEFER explicite) : langage d'état universel (`StatusBadge` partagé), composants
-d'architecture UI (AppShell, Navigation, AssetCard, MetricCard, AlarmCard, Timeline
-unifiée, DataQualityIndicator, ConnectivityIndicator, EmptyState, SkeletonState,
+de rôle nommé avant authentification). Global Command Center (section 36, point 1)
+commencé : langage d'état universel fait (`StatusBadge` partagé, branché sur la
+cellule de statut de la vue Portfolio) ; bloc « Alarmes prioritaires » fait (section
+11) — alarmes triées par gravité puis ancienneté (`prioritizeAlarms`, testé), jamais
+une liste chronologique brute, limitées à 8 pour éviter la surcharge visuelle
+(section 18), chaque ligne cliquable vers la fiche équipement. Reste de la feuille de
+route active (sections 5 à 37, DEFER explicite) : blocs maintenance/énergie/santé
+des actifs/activité récente du Global Command Center, composants d'architecture UI
+restants (AppShell, Navigation, AssetCard, MetricCard, AlarmCard, Timeline unifiée,
+DataQualityIndicator, ConnectivityIndicator, EmptyState, SkeletonState,
 PermissionGuard), fil d'Ariane, dashboards par rôle, carte géographique, graphiques
 avec downsampling — construits un écran à la fois dans l'ordre de sa section 36,
 jamais en un seul bloc.

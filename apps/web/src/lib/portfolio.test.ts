@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { aggregatePortfolio, emptySeverityCounts, mergeSeverityCounts } from "./portfolio";
+import { aggregatePortfolio, emptySeverityCounts, mergeSeverityCounts, prioritizeAlarms } from "./portfolio";
 
 const siteA = { id: "site-a", name: "Site A" };
 const siteB = { id: "site-b", name: "Site B" };
@@ -150,5 +150,41 @@ describe("mergeSeverityCounts", () => {
     );
 
     expect(merged).toEqual({ critical: 1, major: 3, warning: 3, info: 0 });
+  });
+});
+
+describe("prioritizeAlarms", () => {
+  it("place les alarmes critiques avant les majeures, peu importe l'ancienneté", () => {
+    const result = prioritizeAlarms(
+      [
+        { id: "old-major", severity: "major", raised_at: "2026-09-01T00:00:00Z" },
+        { id: "new-critical", severity: "critical", raised_at: "2026-09-30T00:00:00Z" },
+      ],
+      10,
+    );
+
+    expect(result.map((a) => a.id)).toEqual(["new-critical", "old-major"]);
+  });
+
+  it("trie par ancienneté à gravité égale, la plus ancienne d'abord", () => {
+    const result = prioritizeAlarms(
+      [
+        { id: "recent", severity: "critical", raised_at: "2026-09-30T00:00:00Z" },
+        { id: "oldest", severity: "critical", raised_at: "2026-09-10T00:00:00Z" },
+      ],
+      10,
+    );
+
+    expect(result.map((a) => a.id)).toEqual(["oldest", "recent"]);
+  });
+
+  it("ne garde que les `limit` premières, jamais une liste brute complète", () => {
+    const alarms = Array.from({ length: 5 }, (_, i) => ({
+      id: `a${i}`,
+      severity: "info" as const,
+      raised_at: `2026-09-0${i + 1}T00:00:00Z`,
+    }));
+
+    expect(prioritizeAlarms(alarms, 2)).toHaveLength(2);
   });
 });

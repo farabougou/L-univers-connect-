@@ -28,6 +28,7 @@ import {
   type Device,
   SEVERITIES,
   aggregatePortfolio,
+  prioritizeAlarms,
 } from "@/lib/portfolio";
 import { type Locale, formatDateTime } from "@/i18n/translator";
 
@@ -51,6 +52,18 @@ const COMMUNICATION_COLOR: Record<string, string> = {
   offline: "#dc2626",
   unreachable: "#dc2626",
   unknown: "#9ca3af",
+};
+
+// Nombre maximal affiché dans le bloc « Alarmes prioritaires » : éviter la
+// surcharge visuelle (directive, section 18) — le lien de site donne accès
+// au reste.
+const MAX_PRIORITY_ALARMS = 8;
+
+type AlarmDetail = Alarm & {
+  id: string;
+  message: string;
+  ack_state: string;
+  raised_at: string;
 };
 
 async function _openSignals<T extends { severity: string }>(
@@ -101,16 +114,25 @@ export default async function PortfolioPage({
   const devices: Device[] | null = devicesResponse.ok ? await devicesResponse.json() : null;
 
   const [alarms, findings] = await Promise.all([
-    _openSignals<Alarm>(accessToken, "/alarms"),
+    _openSignals<AlarmDetail>(accessToken, "/alarms"),
     _openSignals<Finding>(accessToken, "/findings"),
   ]);
 
+  const siteById = new Map(sites.map((site) => [site.id, site]));
   const locationsBySite = new Map<string, FunctionalLocation[]>();
+  const locationById = new Map<string, FunctionalLocation>();
   for (const location of locations) {
     const list = locationsBySite.get(location.site_id) ?? [];
     list.push(location);
     locationsBySite.set(location.site_id, list);
+    locationById.set(location.id, location);
   }
+
+  // Bloc « Alarmes prioritaires » (directive UI/dashboard, section 11) :
+  // uniquement les alarmes réellement actives (déjà filtré par
+  // _openSignals), triées par gravité puis par ancienneté — jamais une
+  // simple liste chronologique brute.
+  const priorityAlarms = prioritizeAlarms(alarms, MAX_PRIORITY_ALARMS);
 
   const { bySite: portfolio, totals } = aggregatePortfolio(
     sites,
@@ -191,6 +213,72 @@ export default async function PortfolioPage({
             value={String(totals.openWorkOrders)}
           />
         </div>
+      </section>
+
+      <section style={{ ...cardStyle, marginBottom: 24, padding: 0, overflow: "hidden" }}>
+        <div style={{ padding: "20px 24px 0" }}>
+          <h2 style={sectionTitleStyle}>{t("web.dashboard.priority_alarms_title")}</h2>
+        </div>
+        {priorityAlarms.length === 0 ? (
+          <p style={{ color: colors.textMuted, padding: "0 24px 20px" }}>
+            {t("web.dashboard.no_priority_alarms")}
+          </p>
+        ) : (
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr>
+                <th style={headerCellStyle}>{t("web.dashboard.col_severity")}</th>
+                <th style={headerCellStyle}>{t("web.dashboard.equipment")}</th>
+                <th style={headerCellStyle}>{t("web.dashboard.site_column")}</th>
+                <th style={headerCellStyle}>{t("web.dashboard.col_message")}</th>
+                <th style={headerCellStyle}>{t("web.dashboard.col_ack")}</th>
+                <th style={headerCellStyle}>{t("web.dashboard.col_since")}</th>
+                <th style={headerCellStyle} />
+              </tr>
+            </thead>
+            <tbody>
+              {priorityAlarms.map((alarm) => {
+                const location = alarm.functional_location_id
+                  ? locationById.get(alarm.functional_location_id)
+                  : undefined;
+                return (
+                  <tr key={alarm.id}>
+                    <td style={cellStyle}>
+                      <span
+                        title={t(`severity.${alarm.severity}`)}
+                        style={badgeStyle(SEVERITY_COLOR[alarm.severity as Severity])}
+                      >
+                        {t(`severity.${alarm.severity}`)}
+                      </span>
+                    </td>
+                    <td style={cellStyle}>
+                      {location ? (
+                        <Link href={`/registre/${location.id}`} style={{ color: colors.accent }}>
+                          {location.code} — {location.name}
+                        </Link>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td style={cellStyle}>
+                      {location ? (siteById.get(location.site_id)?.name ?? "—") : "—"}
+                    </td>
+                    <td style={cellStyle}>{alarm.message}</td>
+                    <td style={cellStyle}>{t(`ack_state.${alarm.ack_state}`)}</td>
+                    <td style={cellStyle}>{formatDateTime(locale, alarm.raised_at)}</td>
+                    <td style={cellStyle}>
+                      {location && (
+                        <Link href={`/registre/${location.id}`} style={{ color: colors.accent }}>
+                          {t("web.dashboard.drill_down")} →
+                        </Link>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </section>
 
       {sites.length === 0 ? (
