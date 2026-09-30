@@ -324,14 +324,31 @@ constat (nécessaire pour ne jamais permettre de confirmer une prédiction, voir
 laissé confirmer une prédiction depuis `/alarmes`, alors que la fiche équipement l'interdit
 déjà correctement.
 
+**Maintenance, page dédiée (30/09/2026, section 36 point 5)** : `/ordres-de-travail`
+(gardé, jamais réécrit) devient la page Maintenance à part entière — même table d'ordres
+de travail et même formulaire de création qu'avant, enrichis des deux listes que le bloc
+« Maintenance » du Global Command Center ne montre qu'en aperçu plafonné (pannes
+répétitives, dernières clôtures) : ici sans plafond, complément « tout voir » du bloc
+résumé, exactement comme `/alarmes` l'est pour « Alarmes prioritaires ». Mêmes fonctions
+pures que le tableau de bord (`repeatingFailures`, `recentClosures` de
+`apps/web/src/lib/maintenance.ts`), aucune deuxième logique de calcul ni nouvel endpoint
+(réutilise `GET /work-orders`, `GET /interventions`, déjà appelés ailleurs). Migré vers le
+socle de style partagé (`pageContainerStyle`/`cardStyle`) comme `/alarmes` et `/edge`.
+Lien de navigation du tableau de bord renommé « Ordres de travail » → « Maintenance »
+(même URL, `work_orders_link` → `maintenance_link`), reflet honnête du nouveau contenu de
+la page. **Grille produit (ADR 014)** : Backend inchangé, API inchangée, Web DONE, Mobile
+N/A, Edge N/A, Tests N/A pour la page (lecture pure, même précédent que `/alarmes` et
+`/ordres-de-travail` d'origine — les fonctions qu'elle appelle sont déjà testées dans
+`maintenance.test.ts`), Documentation DONE.
+
 Reste de la feuille de route active (sections 5 à 37, DEFER explicite) : composants
 d'architecture UI restants (AppShell, Navigation, AssetCard, MetricCard, AlarmCard,
 DataQualityIndicator, ConnectivityIndicator, EmptyState, SkeletonState, PermissionGuard),
 fil d'Ariane, dashboards par rôle, carte géographique, graphiques avec downsampling, table
 `events` non encore lue par API — puis la suite de l'ordre de construction (section 36) :
-Maintenance (page dédiée), Energy, Edge & Connectivity (enrichir l'écran existant), Sites &
-Buildings, Telemetry, Documents, Users & Access, Spatial/BIM, Automation — un écran à la
-fois, jamais en un seul bloc.
+Energy, Edge & Connectivity (enrichir l'écran existant), Sites & Buildings, Telemetry,
+Documents, Users & Access, Spatial/BIM, Automation — un écran à la fois, jamais en un seul
+bloc.
 
 **Equipment Passport (30/09/2026, section 36 point 2)** : audit plutôt que reconstruction,
 comme demandé (« à consolider selon la liste de la section 21, pas à recréer »). Sur les 19

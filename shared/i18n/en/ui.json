@@ -236,7 +236,7 @@
     "dashboard": {
       "signed_in_as": "Signed in as {user} — roles: {roles}",
       "edge_link": "Edge and connectivity",
-      "work_orders_link": "Work orders",
+      "maintenance_link": "Maintenance",
       "alarms_link": "Alarms and findings",
       "priority_alarms_title": "Priority alarms",
       "no_priority_alarms": "No active alarm at the moment.",
@@ -322,6 +322,7 @@
       "col_certainty": "Certainty"
     },
     "work_orders": {
+      "page_title": "Maintenance",
       "title": "Work orders",
       "empty": "No work order yet.",
       "col_title": "Title",

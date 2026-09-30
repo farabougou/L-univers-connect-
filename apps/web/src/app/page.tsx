@@ -275,7 +275,7 @@ export default async function PortfolioPage({
           {t("web.dashboard.edge_link")} →
         </Link>
         <Link href="/ordres-de-travail" style={{ color: colors.accent, fontWeight: 600 }}>
-          {t("web.dashboard.work_orders_link")} →
+          {t("web.dashboard.maintenance_link")} →
         </Link>
         <Link href="/registre" style={{ color: colors.accent, fontWeight: 600 }}>
           {t("web.dashboard.registry_link")} →

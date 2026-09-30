@@ -236,7 +236,7 @@
     "dashboard": {
       "signed_in_as": "Session de {user} — rôles : {roles}",
       "edge_link": "Edge et connectivité",
-      "work_orders_link": "Ordres de travail",
+      "maintenance_link": "Maintenance",
       "alarms_link": "Alarmes et constats",
       "priority_alarms_title": "Alarmes prioritaires",
       "no_priority_alarms": "Aucune alarme active pour le moment.",
@@ -322,6 +322,7 @@
       "col_certainty": "Certitude"
     },
     "work_orders": {
+      "page_title": "Maintenance",
       "title": "Ordres de travail",
       "empty": "Aucun ordre de travail pour le moment.",
       "col_title": "Intitulé",
