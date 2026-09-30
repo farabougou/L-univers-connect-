@@ -145,7 +145,12 @@ def test_provisionner_puis_authentifier_un_appareil(tenant):
     assert auth.status_code == 200
     body = auth.json()
     assert body["token_type"] == "bearer"
-    assert set(body["scopes"]) == {"telemetry:write", "config:read", "command:execute"}
+    assert set(body["scopes"]) == {
+        "telemetry:write",
+        "config:read",
+        "command:execute",
+        "discovery:execute",
+    }
     assert body["expires_in"] > 0
 
 
@@ -480,7 +485,12 @@ def test_provisionner_par_cle_publique_puis_authentifier_par_assertion(tenant):
         },
     )
     assert auth.status_code == 200
-    assert set(auth.json()["scopes"]) == {"telemetry:write", "config:read", "command:execute"}
+    assert set(auth.json()["scopes"]) == {
+        "telemetry:write",
+        "config:read",
+        "command:execute",
+        "discovery:execute",
+    }
 
 
 def test_creer_un_appareil_avec_une_cle_publique_invalide_est_refuse(tenant):

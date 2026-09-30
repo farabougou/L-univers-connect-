@@ -27,6 +27,7 @@ import {
   clearAlarm,
   computeEnergyResult,
   confirmFinding,
+  createBacnetDeviceMapping,
   createDeviceMapping,
   createDivergenceRule,
   createEnergyBaseline,
@@ -83,6 +84,19 @@ type DeviceMappingVersion = {
   version: number;
   status: string;
   content: DeviceMappingContent;
+  parent_version_id: string | null;
+};
+// Connexion BACnet (ADR 015) : pas de catalogue de registres, le protocole
+// normalise déjà l'adressage d'un point (type d'objet, instance, propriété).
+type BacnetMappingContent = {
+  address: string;
+  points: { point_id: string; object_type: string; object_instance: number }[];
+};
+type BacnetMappingVersion = {
+  id: string;
+  version: number;
+  status: string;
+  content: BacnetMappingContent;
   parent_version_id: string | null;
 };
 // Un résultat de performance normalisée (app/energy/normalization.py) : voir
@@ -157,6 +171,7 @@ type BacnetDiscoveryBatch = {
   id: string;
   equipment_id: string;
   address: string;
+  timeout_seconds: number;
   device_instance: number | null;
   status: "processing" | "ready" | "failed";
   error_code: string | null;
@@ -193,6 +208,22 @@ type BacnetDiscoveryProposal = {
 // Même catalogue que app/connectors/sdm120.py (SDM120_POINTS) : un seul
 // modèle d'appareil pour l'instant, pas de saisie libre du registre.
 const SDM120_REGISTERS = ["voltage", "current", "active_power", "frequency", "total_active_energy"];
+
+// Mêmes types d'objet que app/connectors/bacnet.py (_DISCOVERABLE_OBJECT_TYPES) :
+// vocabulaire du protocole BACnet lui-même, jamais traduit (comme le nom
+// d'un objet ou son unité BACnet, déjà montrés tels quels dans la
+// découverte) — ce n'est pas un terme du glossaire produit.
+const BACNET_DISCOVERABLE_OBJECT_TYPES = [
+  "analog-input",
+  "analog-output",
+  "analog-value",
+  "binary-input",
+  "binary-output",
+  "binary-value",
+  "multi-state-input",
+  "multi-state-output",
+  "multi-state-value",
+];
 
 const PROPERTY_SOURCES = ["nameplate", "document", "measurement", "manual"];
 // Même vocabulaire fermé que app/properties.py (PROPERTIES) : une propriété
@@ -328,6 +359,14 @@ export default async function EquipmentPage({
   );
   const deviceMappingVersions: DeviceMappingVersion[] = deviceMappingResponse.ok
     ? await deviceMappingResponse.json()
+    : [];
+
+  const bacnetMappingResponse = await apiFetch(
+    `/configs?config_type=bacnet_device_mapping&subject_key=${id}`,
+    accessToken,
+  );
+  const bacnetMappingVersions: BacnetMappingVersion[] = bacnetMappingResponse.ok
+    ? await bacnetMappingResponse.json()
     : [];
 
   // Le relais simulé (test de commande) est une version active dont le
@@ -630,6 +669,17 @@ export default async function EquipmentPage({
           canManage={canManage}
           locale={locale}
           timeZone={timeZone}
+          t={t}
+        />
+      </section>
+
+      <section style={sectionStyle}>
+        <h2 style={sectionTitleStyle}>{t("web.registre.bacnet_mapping_section_title")}</h2>
+        <BacnetMappingBlock
+          nodeId={id}
+          points={points}
+          versions={bacnetMappingVersions}
+          canManage={canManage}
           t={t}
         />
       </section>
@@ -1246,6 +1296,122 @@ function DeviceMappingBlock({
           </form>
         </details>
       )}
+    </>
+  );
+}
+
+function BacnetMappingBlock({
+  nodeId,
+  points,
+  versions,
+  canManage,
+  t,
+}: {
+  nodeId: string;
+  points: { id: string; name: string }[];
+  versions: BacnetMappingVersion[];
+  canManage: boolean;
+  t: (key: string, params?: Record<string, string>) => string;
+}) {
+  const pointName = (pointId: string) => points.find((p) => p.id === pointId)?.name ?? pointId;
+  return (
+    <>
+      {versions.length === 0 && <p style={mutedStyle}>{t("web.registre.bacnet_mapping_none")}</p>}
+      {versions.map((version) => (
+        <div key={version.id} style={{ marginBottom: 12 }}>
+          <p style={{ margin: 0 }}>
+            {t("web.registre.rule_version", { version: String(version.version) })} —{" "}
+            {t(`config_status.${version.status}`)} —{" "}
+            {t("web.registre.bacnet_mapping_summary", { address: version.content.address })}
+            {canManage && version.status === "draft" && (
+              <form action={activateRule} style={{ display: "inline", marginLeft: 8 }}>
+                <input type="hidden" name="version_id" value={version.id} />
+                <input type="hidden" name="node_id" value={nodeId} />
+                <button type="submit">{t("web.registre.activate_rule")}</button>
+              </form>
+            )}
+            {canManage && version.status !== "retired" && (
+              <form action={retireRule} style={{ display: "inline-flex", gap: 4, marginLeft: 8 }}>
+                <input type="hidden" name="version_id" value={version.id} />
+                <input type="hidden" name="node_id" value={nodeId} />
+                <input name="reason" required placeholder={t("web.registre.retire_reason")} />
+                <button type="submit">{t("web.registre.retire_rule")}</button>
+              </form>
+            )}
+            {canManage && version.status === "retired" && (
+              <form action={restoreRule} style={{ display: "inline-flex", gap: 4, marginLeft: 8 }}>
+                <input type="hidden" name="version_id" value={version.id} />
+                <input type="hidden" name="node_id" value={nodeId} />
+                <input name="reason" required placeholder={t("web.registre.restore_reason")} />
+                <button type="submit">{t("web.registre.restore_rule")}</button>
+              </form>
+            )}
+          </p>
+          <p style={{ ...mutedStyle, margin: 0, marginLeft: 16 }}>
+            {t("web.registre.modbus_points_title")} :{" "}
+            {version.content.points
+              .map((entry) => `${pointName(entry.point_id)} (${entry.object_type} #${entry.object_instance})`)
+              .join(", ")}
+          </p>
+        </div>
+      ))}
+      {canManage &&
+        (points.length === 0 ? (
+          <p style={mutedStyle}>{t("web.registre.modbus_no_points_for_mapping")}</p>
+        ) : (
+          <details>
+            <summary>{t("web.registre.bacnet_mapping_create_title")}</summary>
+            <form action={createBacnetDeviceMapping} style={{ maxWidth: 420 }}>
+              <input type="hidden" name="node_id" value={nodeId} />
+              <input type="hidden" name="point_ids" value={points.map((point) => point.id).join(",")} />
+              <label>
+                {t("web.registre.bacnet_address_label")}
+                <input name="address" required placeholder="192.168.1.50:47808" style={fieldStyle} />
+              </label>
+              {points.map((point) => (
+                <div key={point.id} style={{ marginTop: 8 }}>
+                  <p style={{ ...mutedStyle, margin: 0, fontWeight: 600 }}>{point.name}</p>
+                  <label style={labelStyle}>
+                    {t("web.registre.bacnet_mapping_object_type_label")}
+                    <select name={`object_type_${point.id}`} defaultValue="" style={fieldStyle}>
+                      <option value="">{t("web.registre.modbus_register_none")}</option>
+                      {BACNET_DISCOVERABLE_OBJECT_TYPES.map((objectType) => (
+                        <option key={objectType} value={objectType}>
+                          {objectType}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label style={labelStyle}>
+                    {t("web.registre.bacnet_mapping_object_instance_label")}
+                    <input
+                      name={`object_instance_${point.id}`}
+                      type="number"
+                      min={0}
+                      defaultValue={0}
+                      style={fieldStyle}
+                    />
+                  </label>
+                  <label style={labelStyle}>
+                    {t("web.registre.bacnet_mapping_property_label")}
+                    <input
+                      name={`property_${point.id}`}
+                      defaultValue="present-value"
+                      style={fieldStyle}
+                    />
+                  </label>
+                </div>
+              ))}
+              <label style={labelStyle}>
+                {t("web.registre.rule_reason")}
+                <input name="reason" required style={fieldStyle} />
+              </label>
+              <button type="submit" style={submitStyle}>
+                {t("web.registre.submit")}
+              </button>
+            </form>
+          </details>
+        ))}
     </>
   );
 }

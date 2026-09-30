@@ -19,6 +19,7 @@ import {
   changeLifecycleState,
   clearAlarm,
   confirmFinding,
+  createBacnetDeviceMapping,
   createDeviceMapping,
   createDivergenceRule,
   createSimulatedRelayMapping,
@@ -254,6 +255,85 @@ describe("createDeviceMapping", () => {
       ),
     );
     expect(url).toBe("/registre/node-1?error=MODBUS_REGISTER_UNKNOWN");
+  });
+});
+
+describe("createBacnetDeviceMapping", () => {
+  it("ne garde que les points auxquels un type d'objet a été affecté", async () => {
+    apiFetch.mockResolvedValueOnce(ok());
+    await createBacnetDeviceMapping(
+      fd({
+        node_id: "node-1",
+        point_ids: "point-1,point-2",
+        address: "192.168.1.60:47808",
+        reason: "CTA relevée",
+        "object_type_point-1": "analog-input",
+        "object_instance_point-1": "1",
+        "property_point-1": "present-value",
+        "object_type_point-2": "",
+      }),
+    );
+
+    expect(apiFetch).toHaveBeenCalledWith(
+      "/configs",
+      "token-123",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          config_type: "bacnet_device_mapping",
+          subject_key: "node-1",
+          reason: "CTA relevée",
+          content: {
+            address: "192.168.1.60:47808",
+            points: [
+              {
+                point_id: "point-1",
+                object_type: "analog-input",
+                object_instance: 1,
+                property_identifier: "present-value",
+              },
+            ],
+          },
+        }),
+      }),
+    );
+  });
+
+  it("omet la propriété quand le champ est laissé vide (défaut serveur)", async () => {
+    apiFetch.mockResolvedValueOnce(ok());
+    await createBacnetDeviceMapping(
+      fd({
+        node_id: "node-1",
+        point_ids: "point-1",
+        address: "192.168.1.60:47808",
+        reason: "CTA relevée",
+        "object_type_point-1": "analog-input",
+        "object_instance_point-1": "1",
+        "property_point-1": "",
+      }),
+    );
+
+    const body = JSON.parse(apiFetch.mock.calls[0][2].body);
+    expect(body.content.points).toEqual([
+      { point_id: "point-1", object_type: "analog-input", object_instance: 1 },
+    ]);
+  });
+
+  it("redirige avec le code d'erreur en cas d'échec", async () => {
+    apiFetch.mockResolvedValueOnce(fail("BACNET_POINT_NOT_VALIDATED"));
+    const url = await redirected(
+      createBacnetDeviceMapping(
+        fd({
+          node_id: "node-1",
+          point_ids: "point-1",
+          address: "192.168.1.60:47808",
+          reason: "CTA relevée",
+          "object_type_point-1": "analog-input",
+          "object_instance_point-1": "1",
+        }),
+      ),
+    );
+    expect(url).toBe("/registre/node-1?error=BACNET_POINT_NOT_VALIDATED");
   });
 });
 

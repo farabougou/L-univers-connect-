@@ -1,8 +1,10 @@
 """Domaine de découverte BACnet (`app.bacnet_discovery`) contre un vrai
 appareil simulé (BACnet Lab) et une vraie base — palier SIMULATOR_TESTED.
-Couvre la persistance des lots/propositions, la correspondance sémantique
-réelle bout en bout, le cycle accepter/rejeter, les doublons sur reprise de
-scan et l'isolation des tenants (règle non négociable 2)."""
+Couvre la demande de scan (sans réseau, côté API), l'exécution côté Edge
+(directive de Mohamed, 30/09/2026), la persistance des lots/propositions, la
+correspondance sémantique réelle bout en bout, le cycle accepter/rejeter,
+les doublons sur reprise de scan et l'isolation des tenants (règle non
+négociable 2)."""
 
 import uuid
 
@@ -10,15 +12,21 @@ import pytest
 from sqlalchemy import text
 
 from app.bacnet_discovery import (
+    DiscoveryBatchConflict,
+    DiscoveryBatchNotFound,
     DiscoveryProposalConflict,
     DiscoveryProposalNotFound,
     accept_proposal,
+    complete_discovery,
+    fail_discovery,
     get_batch,
+    list_pending_batches,
     list_proposals,
     reason_message,
     reject_proposal,
-    run_discovery,
+    request_discovery,
 )
+from app.connectors.bacnet import BacnetReadError, discover_device, read_device_objects
 from app.db import engine
 from app.tenancy import set_tenant_context
 from tests.bacnet_lab import BacnetLab
@@ -77,10 +85,10 @@ def two_tenants():
     purge_tenant(tenant_b["tenant_id"])
 
 
-def _scan(tenant: dict, *, address: str = ADDRESS, timeout: float = 3.0) -> uuid.UUID:
+def _request(tenant: dict, *, address: str = ADDRESS, timeout: float = 3.0) -> uuid.UUID:
     with engine.begin() as connection:
         set_tenant_context(connection, tenant["tenant_id"])
-        return run_discovery(
+        return request_discovery(
             connection,
             tenant_id=tenant["tenant_id"],
             equipment_id=tenant["equipment_id"],
@@ -90,7 +98,78 @@ def _scan(tenant: dict, *, address: str = ADDRESS, timeout: float = 3.0) -> uuid
         )
 
 
-def test_run_discovery_produit_un_lot_pret_avec_une_proposition_par_point(tenant):
+def _scan(tenant: dict, *, address: str = ADDRESS, timeout: float = 3.0) -> uuid.UUID:
+    """Simule le cycle complet demande (API) -> exécution (agent Edge) tel
+    qu'il se produit réellement en deux temps depuis la directive du
+    30/09/2026 : jamais un seul appel synchrone côté API (voir l'en-tête de
+    app.bacnet_discovery)."""
+    batch_id = _request(tenant, address=address, timeout=timeout)
+    device_info = discover_device(address, timeout=timeout)
+    objects = read_device_objects(address, device_info.device_instance, timeout=timeout)
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant["tenant_id"])
+        complete_discovery(
+            connection,
+            tenant_id=tenant["tenant_id"],
+            batch_id=batch_id,
+            device_instance=device_info.device_instance,
+            objects=objects,
+        )
+    return batch_id
+
+
+def _scan_unreachable(
+    tenant: dict, *, address: str = UNREACHABLE, timeout: float = 0.5
+) -> uuid.UUID:
+    batch_id = _request(tenant, address=address, timeout=timeout)
+    with pytest.raises(BacnetReadError):
+        discover_device(address, timeout=timeout)
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant["tenant_id"])
+        fail_discovery(connection, batch_id=batch_id, error_code="BACNET_DEVICE_UNREACHABLE")
+    return batch_id
+
+
+def test_request_discovery_cree_un_lot_en_cours_sans_reseau(tenant):
+    batch_id = _request(tenant)
+
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant["tenant_id"])
+        batch = get_batch(connection, batch_id)
+
+    assert batch["status"] == "processing"
+    assert batch["device_instance"] is None
+    assert batch["object_count"] is None
+    assert batch["proposal_count"] is None
+    assert float(batch["timeout_seconds"]) == pytest.approx(3.0)
+
+
+def test_list_pending_batches_renvoie_les_lots_en_cours_pour_lequipement(tenant):
+    batch_id = _request(tenant)
+
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant["tenant_id"])
+        pending = list_pending_batches(connection, equipment_id=tenant["equipment_id"])
+
+    assert [row["id"] for row in pending] == [batch_id]
+
+    # Une fois complété, le lot ne réapparaît plus dans la file d'attente.
+    device_info = discover_device(ADDRESS, timeout=3.0)
+    objects = read_device_objects(ADDRESS, device_info.device_instance, timeout=3.0)
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant["tenant_id"])
+        complete_discovery(
+            connection,
+            tenant_id=tenant["tenant_id"],
+            batch_id=batch_id,
+            device_instance=device_info.device_instance,
+            objects=objects,
+        )
+        pending_after = list_pending_batches(connection, equipment_id=tenant["equipment_id"])
+    assert pending_after == []
+
+
+def test_scan_complet_produit_un_lot_pret_avec_une_proposition_par_point(tenant):
     batch_id = _scan(tenant)
 
     with engine.begin() as connection:
@@ -108,7 +187,7 @@ def test_run_discovery_produit_un_lot_pret_avec_une_proposition_par_point(tenant
     assert {p["status"] for p in proposals} == {"proposed"}
 
 
-def test_run_discovery_propose_des_correspondances_sensees_jamais_inventees(tenant):
+def test_scan_propose_des_correspondances_sensees_jamais_inventees(tenant):
     batch_id = _scan(tenant)
 
     with engine.begin() as connection:
@@ -159,8 +238,8 @@ def test_reason_message_est_traduit_dans_les_deux_langues():
     assert reason_message("CODE_INEXISTANT") == reason_message("NO_RELIABLE_SIGNAL")
 
 
-def test_run_discovery_appareil_injoignable_referme_le_lot_en_echec(tenant):
-    batch_id = _scan(tenant, address=UNREACHABLE, timeout=0.5)
+def test_agent_edge_rapporte_un_appareil_injoignable_et_referme_le_lot_en_echec(tenant):
+    batch_id = _scan_unreachable(tenant)
 
     with engine.begin() as connection:
         set_tenant_context(connection, tenant["tenant_id"])
@@ -170,6 +249,49 @@ def test_run_discovery_appareil_injoignable_referme_le_lot_en_echec(tenant):
     assert batch["error_code"] == "BACNET_DEVICE_UNREACHABLE"
     assert batch["object_count"] is None
     assert batch["proposal_count"] is None
+
+
+def test_completer_un_lot_deja_termine_est_un_conflit(tenant):
+    batch_id = _request(tenant)
+    device_info = discover_device(ADDRESS, timeout=3.0)
+    objects = read_device_objects(ADDRESS, device_info.device_instance, timeout=3.0)
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant["tenant_id"])
+        complete_discovery(
+            connection,
+            tenant_id=tenant["tenant_id"],
+            batch_id=batch_id,
+            device_instance=device_info.device_instance,
+            objects=objects,
+        )
+
+        with pytest.raises(DiscoveryBatchConflict):
+            complete_discovery(
+                connection,
+                tenant_id=tenant["tenant_id"],
+                batch_id=batch_id,
+                device_instance=device_info.device_instance,
+                objects=objects,
+            )
+        with pytest.raises(DiscoveryBatchConflict):
+            fail_discovery(connection, batch_id=batch_id, error_code="BACNET_DEVICE_UNREACHABLE")
+
+
+def test_completer_ou_echouer_un_lot_inexistant_leve_une_erreur_explicite(tenant):
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant["tenant_id"])
+        with pytest.raises(DiscoveryBatchNotFound):
+            complete_discovery(
+                connection,
+                tenant_id=tenant["tenant_id"],
+                batch_id=uuid.uuid4(),
+                device_instance=DEVICE_INSTANCE,
+                objects=[],
+            )
+        with pytest.raises(DiscoveryBatchNotFound):
+            fail_discovery(
+                connection, batch_id=uuid.uuid4(), error_code="BACNET_DEVICE_UNREACHABLE"
+            )
 
 
 def test_rescan_marque_les_objets_deja_acceptes_comme_doublons(tenant):
@@ -327,6 +449,8 @@ def test_isolation_des_tenants_un_autre_tenant_ne_voit_aucun_lot_ni_proposition(
         set_tenant_context(connection, tenant_b["tenant_id"])
         batch_seen_by_b = get_batch(connection, batch_id)
         proposals_seen_by_b = list_proposals(connection, batch_id=batch_id)
+        pending_seen_by_b = list_pending_batches(connection, equipment_id=tenant_a["equipment_id"])
 
     assert batch_seen_by_b is None
     assert proposals_seen_by_b == []
+    assert pending_seen_by_b == []

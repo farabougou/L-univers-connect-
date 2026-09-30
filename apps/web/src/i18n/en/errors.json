@@ -17,6 +17,7 @@
     "ASSET_CODE_ALREADY_USED": "The asset code “{asset_code}” is already assigned to another unit.",
     "AUTH_PROVIDER_UNAVAILABLE": "The authentication service is temporarily unavailable. Please try again in a few moments.",
     "BACNET_DEVICE_UNREACHABLE": "No BACnet device responded at this address.",
+    "BACNET_DISCOVERY_BATCH_ALREADY_COMPLETED": "This BACnet scan has already been reported by the Edge agent.",
     "BACNET_DISCOVERY_BATCH_NOT_FOUND": "The requested BACnet scan could not be found.",
     "BACNET_DISCOVERY_PROPOSAL_ALREADY_DECIDED": "This proposal has already been accepted or rejected.",
     "BACNET_DISCOVERY_PROPOSAL_NOT_FOUND": "The requested discovery proposal could not be found.",

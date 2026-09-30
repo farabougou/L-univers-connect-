@@ -435,6 +435,7 @@ class BacnetDiscoveryBatchOut(BaseModel):
     id: uuid.UUID
     equipment_id: uuid.UUID
     address: str
+    timeout_seconds: float
     device_instance: int | None
     status: Literal["processing", "ready", "failed"]
     error_code: str | None
@@ -478,6 +479,41 @@ class BacnetDiscoveryProposalAccept(BaseModel):
 
 class BacnetDiscoveryProposalReject(BaseModel):
     reason: str = Field(min_length=1, max_length=500)
+
+
+class BacnetDiscoveryPendingOut(BaseModel):
+    """Ce que l'agent Edge a besoin de savoir pour exécuter un scan demandé
+    par une personne : jamais plus (pas le statut, l'agent ne fait qu'un
+    scan par lot reçu)."""
+
+    id: uuid.UUID
+    equipment_id: uuid.UUID
+    address: str
+    timeout_seconds: float
+
+
+class BacnetDiscoveryObjectIn(BaseModel):
+    """Un objet BACnet tel que découvert par l'agent Edge (mêmes champs que
+    `app.connectors.bacnet.BacnetObjectInfo`, pour reconstruire directement
+    la structure côté domaine sans renommage)."""
+
+    object_type: str = Field(min_length=1, max_length=50)
+    object_instance: int = Field(ge=0)
+    value_type: Literal["number", "boolean", "multistate"]
+    object_name: str | None = Field(default=None, max_length=200)
+    description: str | None = Field(default=None, max_length=500)
+    units: str | None = Field(default=None, max_length=100)
+    present_value_preview: str | None = Field(default=None, max_length=200)
+    states: dict[str, str] | None = None
+
+
+class BacnetDiscoveryResultSubmit(BaseModel):
+    device_instance: int = Field(ge=0)
+    objects: list[BacnetDiscoveryObjectIn] = Field(default_factory=list)
+
+
+class BacnetDiscoveryFailureSubmit(BaseModel):
+    error_code: Literal["BACNET_DEVICE_UNREACHABLE", "BACNET_INVENTORY_FAILED"]
 
 
 class PlanPlacementCreate(BaseModel):

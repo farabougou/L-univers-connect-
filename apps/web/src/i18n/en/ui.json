@@ -465,7 +465,14 @@
       "bacnet_unit_override_label": "Corrected unit (UCUM code, optional)",
       "bacnet_name_override_label": "Point name (optional)",
       "bacnet_reject_button": "Reject",
-      "bacnet_reject_reason_label": "Rejection reason"
+      "bacnet_reject_reason_label": "Rejection reason",
+      "bacnet_mapping_section_title": "BACnet connection (polling)",
+      "bacnet_mapping_none": "No BACnet connection configured for this equipment.",
+      "bacnet_mapping_summary": "Address {address}",
+      "bacnet_mapping_create_title": "Configure the BACnet connection",
+      "bacnet_mapping_object_type_label": "BACnet object type",
+      "bacnet_mapping_object_instance_label": "Instance",
+      "bacnet_mapping_property_label": "Polled property (optional)"
     }
   },
   "plan_editor": {

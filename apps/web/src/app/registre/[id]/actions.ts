@@ -383,6 +383,54 @@ export async function createDeviceMapping(formData: FormData) {
 }
 
 /**
+ * Connexion BACnet d'un équipement (ADR 015) : ferme la boucle entre la
+ * découverte (qui crée le point, en attente de mise en service) et la
+ * relève régulière (scripts/bacnet_daemon.py, qui lit cette configuration).
+ * Contrairement à Modbus, aucun catalogue de registres : le type d'objet,
+ * son instance et la propriété lue sont directement ceux du protocole
+ * BACnet (voir app/connectors/device_mapping.py, BacnetDeviceMappingContent).
+ * L'API refuse elle-même un point qui ne serait pas encore validé lors de
+ * la mise en service (`BACNET_POINT_NOT_VALIDATED`) — ce formulaire ne fait
+ * qu'appeler /configs, comme la connexion Modbus ci-dessus.
+ */
+export async function createBacnetDeviceMapping(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+  const pointIds = String(formData.get("point_ids"))
+    .split(",")
+    .filter(Boolean);
+  const points = pointIds
+    .map((pointId) => {
+      const propertyIdentifier = String(formData.get(`property_${pointId}`) ?? "").trim();
+      return {
+        point_id: pointId,
+        object_type: formData.get(`object_type_${pointId}`),
+        object_instance: Number(formData.get(`object_instance_${pointId}`)),
+        ...(propertyIdentifier ? { property_identifier: propertyIdentifier } : {}),
+      };
+    })
+    .filter((entry) => entry.object_type);
+
+  const response = await apiFetch("/configs", accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      config_type: "bacnet_device_mapping",
+      subject_key: nodeId,
+      reason: formData.get("reason"),
+      content: {
+        address: formData.get("address"),
+        points,
+      },
+    }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  revalidatePath(`/registre/${nodeId}`);
+}
+
+/**
  * Relais simulé (exception scopée à la règle non négociable 1, voir
  * CLAUDE.md) : une connexion Modbus dédiée, jamais celle d'un appareil réel,
  * uniquement pour valider le pilotage logiciel de bout en bout.

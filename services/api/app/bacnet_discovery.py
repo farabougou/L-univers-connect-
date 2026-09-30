@@ -1,4 +1,5 @@
-"""Découverte BACnet (BACnet V1, directive de Mohamed du 27/09/2026).
+"""Découverte BACnet (BACnet V1, directive de Mohamed du 27/09/2026 puis
+30/09/2026 — exécution par l'Edge).
 
 Un scan produit des propositions, jamais des points directement créés —
 même principe que l'import IFC (`app.ifc_import`) et pour la même raison :
@@ -13,13 +14,25 @@ Ce module ne connaît jamais `bacpypes3` directement : seulement les
 structures simples renvoyées par `app.connectors.bacnet` et
 `app.connectors.bacnet_semantics`. Un changement de bibliothèque BACnet, y
 compris une version majeure incompatible, ne touche jamais ce module
-(règle non négociable 8).
+(règle non négociable 8). Il ne fait d'ailleurs plus aucun appel réseau du
+tout (voir plus bas) : le connecteur BACnet ne s'exécute que côté Edge.
 
 Un objet déjà accepté lors d'un scan précédent (même équipement, même
 adresse, même adressage BACnet natif) redevient « duplicate » plutôt qu'une
 nouvelle proposition : un scan répété (reconnexion, appareil redémarré) ne
 doit jamais produire un second point pour le même objet physique.
-"""
+
+Exécution par l'Edge, jamais par le cloud (directive de Mohamed, 30/09/2026) :
+un appareil BACnet/IP vit sur le réseau local d'un site, injoignable depuis
+l'API hébergée. `request_discovery` se contente donc de créer le lot en
+'processing', sans réseau ; l'agent Edge sur site
+(`scripts/bacnet_discovery_agent.py`) récupère les scans en attente
+(`list_pending_batches`, via `GET /edge/bacnet-discovery/pending`), exécute
+lui-même `app.connectors.bacnet.discover_device`/`read_device_objects`, puis
+rapporte le résultat (`complete_discovery`) ou l'échec (`fail_discovery`).
+Le contrat vu par une personne ne change pas : un lot naît déjà en
+'processing' et passe à 'ready'/'failed' plus tard, ce que l'API et
+l'interface web savent déjà afficher."""
 
 import json
 import re
@@ -30,12 +43,7 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
-from app.connectors.bacnet import (
-    BacnetObjectInfo,
-    BacnetReadError,
-    discover_device,
-    read_device_objects,
-)
+from app.connectors.bacnet import BacnetObjectInfo
 from app.connectors.bacnet_semantics import guess_point_class
 from app.errors import DomainError
 from app.i18n import DEFAULT_LOCALE, load_catalog
@@ -44,7 +52,7 @@ from app.points import create_point
 _UNCLASSIFIED_REASON = "NO_RELIABLE_SIGNAL"
 
 _BATCH_COLUMNS = (
-    "id, equipment_id, address, device_instance, status, error_code, "
+    "id, equipment_id, address, timeout_seconds, device_instance, status, error_code, "
     "object_count, proposal_count, duplicate_count, scanned_by, scanned_at"
 )
 _PROPOSAL_COLUMNS = (
@@ -57,6 +65,13 @@ _PROPOSAL_COLUMNS = (
 
 class DiscoveryBatchNotFound(DomainError, LookupError):
     status = 404
+
+
+class DiscoveryBatchConflict(DomainError, ValueError):
+    """Un lot déjà terminé (ready/failed) ne peut plus recevoir de résultat
+    ni d'échec — un agent Edge ne rapporte jamais deux fois le même scan."""
+
+    status = 409
 
 
 class DiscoveryProposalNotFound(DomainError, LookupError):
@@ -84,14 +99,18 @@ def get_batch(connection: Connection, batch_id: uuid.UUID) -> dict[str, Any] | N
     return dict(row) if row else None
 
 
-def list_batches(connection: Connection, *, equipment_id: uuid.UUID) -> list[dict[str, Any]]:
-    rows = connection.execute(
-        text(
-            f"SELECT {_BATCH_COLUMNS} FROM bacnet_discovery_batches "
-            "WHERE equipment_id = :equipment_id ORDER BY scanned_at DESC"
-        ),
-        {"equipment_id": equipment_id},
-    ).mappings()
+def list_batches(
+    connection: Connection, *, equipment_id: uuid.UUID, status: str | None = None
+) -> list[dict[str, Any]]:
+    query = (
+        f"SELECT {_BATCH_COLUMNS} FROM bacnet_discovery_batches WHERE equipment_id = :equipment_id"
+    )
+    params: dict[str, Any] = {"equipment_id": equipment_id}
+    if status is not None:
+        query += " AND status = :status"
+        params["status"] = status
+    query += " ORDER BY scanned_at DESC"
+    rows = connection.execute(text(query), params).mappings()
     return [dict(row) for row in rows]
 
 
@@ -200,7 +219,7 @@ def _json(value: dict[str, Any] | None) -> str | None:
     return json.dumps(value, sort_keys=True) if value is not None else None
 
 
-def run_discovery(
+def request_discovery(
     connection: Connection,
     *,
     tenant_id: uuid.UUID,
@@ -209,50 +228,74 @@ def run_discovery(
     scanned_by: str,
     timeout: float = 3.0,
 ) -> uuid.UUID:
-    """Scan synchrone (Who-Is puis inventaire des objets) : referme le lot
-    en 'failed' avec un code d'erreur si l'appareil ne répond pas ou si
-    l'inventaire échoue, jamais une exception qui remonterait sans laisser
-    de trace du scan lui-même — l'opérateur voit toujours ce qui a été
-    essayé, même en échec (journalisation du fonctionnement du connecteur,
-    directive explicite)."""
+    """Demande de scan : crée le lot en 'processing', sans aucun appel
+    réseau (voir l'en-tête du module — l'exécution revient à l'agent Edge).
+    La personne voit immédiatement son lot « en cours », comme un import IFC
+    ou un ordre de travail vient de naître avant d'être traité."""
     batch_id = uuid.uuid4()
     connection.execute(
         text(
             "INSERT INTO bacnet_discovery_batches "
-            "(id, tenant_id, equipment_id, address, scanned_by) "
-            "VALUES (:id, :tenant_id, :equipment_id, :address, :scanned_by)"
+            "(id, tenant_id, equipment_id, address, timeout_seconds, scanned_by) "
+            "VALUES (:id, :tenant_id, :equipment_id, :address, :timeout_seconds, :scanned_by)"
         ),
         {
             "id": batch_id,
             "tenant_id": tenant_id,
             "equipment_id": equipment_id,
             "address": address,
+            "timeout_seconds": timeout,
             "scanned_by": scanned_by,
         },
     )
+    return batch_id
 
-    try:
-        device_info = discover_device(address, timeout=timeout)
-    except BacnetReadError:
-        _mark_batch_failed(connection, batch_id=batch_id, error_code="BACNET_DEVICE_UNREACHABLE")
-        return batch_id
+
+def list_pending_batches(
+    connection: Connection, *, equipment_id: uuid.UUID
+) -> list[dict[str, Any]]:
+    """Les lots en attente d'exécution pour cet équipement (statut
+    'processing') : ce que l'agent Edge doit encore aller scanner. Filtré
+    par équipement, jamais par tenant explicitement ici — la connexion est
+    déjà bornée au tenant de l'appareil authentifié par la RLS (voir
+    `GET /edge/bacnet-discovery/pending`)."""
+    return list_batches(connection, equipment_id=equipment_id, status="processing")
+
+
+def _batch_or_404(connection: Connection, batch_id: uuid.UUID) -> dict[str, Any]:
+    batch = get_batch(connection, batch_id)
+    if batch is None:
+        raise DiscoveryBatchNotFound("BACNET_DISCOVERY_BATCH_NOT_FOUND")
+    return batch
+
+
+def complete_discovery(
+    connection: Connection,
+    *,
+    tenant_id: uuid.UUID,
+    batch_id: uuid.UUID,
+    device_instance: int,
+    objects: list[BacnetObjectInfo],
+) -> dict[str, Any]:
+    """Rapporte le résultat d'un scan exécuté par l'agent Edge : construit
+    les propositions (même logique qu'avant, seulement déplacée ici) et
+    referme le lot en 'ready'. Jamais appelé deux fois pour le même lot
+    (`DiscoveryBatchConflict` sinon) : un scan Edge est un événement, pas
+    un flux répété."""
+    batch = _batch_or_404(connection, batch_id)
+    if batch["status"] != "processing":
+        raise DiscoveryBatchConflict("BACNET_DISCOVERY_BATCH_ALREADY_COMPLETED")
 
     connection.execute(
         text("UPDATE bacnet_discovery_batches SET device_instance = :di WHERE id = :id"),
-        {"di": device_info.device_instance, "id": batch_id},
+        {"di": device_instance, "id": batch_id},
     )
-
-    try:
-        objects = read_device_objects(address, device_info.device_instance, timeout=timeout)
-    except BacnetReadError:
-        _mark_batch_failed(connection, batch_id=batch_id, error_code="BACNET_INVENTORY_FAILED")
-        return batch_id
 
     proposal_count = 0
     duplicate_count = 0
     for obj in objects:
         is_duplicate = _already_accepted(
-            connection, equipment_id=equipment_id, address=address, obj=obj
+            connection, equipment_id=batch["equipment_id"], address=batch["address"], obj=obj
         )
         _insert_proposal(
             connection, tenant_id=tenant_id, batch_id=batch_id, obj=obj, is_duplicate=is_duplicate
@@ -274,7 +317,21 @@ def run_discovery(
             "id": batch_id,
         },
     )
-    return batch_id
+    return _batch_or_404(connection, batch_id)
+
+
+def fail_discovery(
+    connection: Connection, *, batch_id: uuid.UUID, error_code: str
+) -> dict[str, Any]:
+    """Rapporte l'échec d'un scan exécuté par l'agent Edge (appareil
+    injoignable, inventaire en échec) : referme le lot en 'failed', jamais
+    une exception qui remonterait sans laisser de trace du scan lui-même —
+    l'opérateur voit toujours ce qui a été essayé, même en échec."""
+    batch = _batch_or_404(connection, batch_id)
+    if batch["status"] != "processing":
+        raise DiscoveryBatchConflict("BACNET_DISCOVERY_BATCH_ALREADY_COMPLETED")
+    _mark_batch_failed(connection, batch_id=batch_id, error_code=error_code)
+    return _batch_or_404(connection, batch_id)
 
 
 def _mark_batch_failed(connection: Connection, *, batch_id: uuid.UUID, error_code: str) -> None:

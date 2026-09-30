@@ -168,6 +168,37 @@ class EdgeApiClient:
         response = self._authorized_request("POST", "/edge/measurements", json={"items": items})
         return response.json()
 
+    def get_pending_bacnet_discovery(self, equipment_id: uuid.UUID) -> list[dict[str, Any]]:
+        """Scans BACnet demandés par une personne et pas encore exécutés
+        pour cet équipement (voir `GET /edge/bacnet-discovery/pending`) —
+        l'agent Edge de découverte (scripts/bacnet_discovery_agent.py) est
+        le seul à exécuter réellement le dialogue BACnet, jamais ce
+        processus API (un appareil BACnet vit sur le réseau du site)."""
+        response = self._authorized_request(
+            "GET", "/edge/bacnet-discovery/pending", params={"equipment_id": str(equipment_id)}
+        )
+        return response.json()
+
+    def submit_bacnet_discovery_result(
+        self, batch_id: uuid.UUID, *, device_instance: int, objects: list[dict[str, Any]]
+    ) -> dict[str, Any]:
+        response = self._authorized_request(
+            "POST",
+            f"/edge/bacnet-discovery/{batch_id}/result",
+            json={"device_instance": device_instance, "objects": objects},
+        )
+        return response.json()
+
+    def submit_bacnet_discovery_failure(
+        self, batch_id: uuid.UUID, *, error_code: str
+    ) -> dict[str, Any]:
+        response = self._authorized_request(
+            "POST",
+            f"/edge/bacnet-discovery/{batch_id}/failure",
+            json={"error_code": error_code},
+        )
+        return response.json()
+
     def get_pending_commands(self, equipment_id: uuid.UUID) -> list[dict[str, Any]]:
         """Récupère (et marque « sent » côté API) les commandes en attente
         pour cet équipement — jamais renvoyées une seconde fois."""

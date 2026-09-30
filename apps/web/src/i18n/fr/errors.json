@@ -17,6 +17,7 @@
     "ASSET_CODE_ALREADY_USED": "Le code d’inventaire « {asset_code} » est déjà attribué à un autre exemplaire.",
     "AUTH_PROVIDER_UNAVAILABLE": "Le service d’authentification est momentanément indisponible. Réessayez dans quelques instants.",
     "BACNET_DEVICE_UNREACHABLE": "Aucun appareil BACnet n’a répondu à cette adresse.",
+    "BACNET_DISCOVERY_BATCH_ALREADY_COMPLETED": "Ce scan BACnet a déjà été rapporté par l’agent Edge.",
     "BACNET_DISCOVERY_BATCH_NOT_FOUND": "Le scan BACnet demandé est introuvable.",
     "BACNET_DISCOVERY_PROPOSAL_ALREADY_DECIDED": "Cette proposition a déjà été acceptée ou refusée.",
     "BACNET_DISCOVERY_PROPOSAL_NOT_FOUND": "La proposition de découverte demandée est introuvable.",

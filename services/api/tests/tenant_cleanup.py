@@ -28,6 +28,8 @@ _TABLES_IN_ORDER = (
     "desired_states",
     "events",
     "commands",
+    "device_assertion_nonces",
+    "edge_devices",
     "measurements",
     "external_identifiers",
     "asset_tags",
