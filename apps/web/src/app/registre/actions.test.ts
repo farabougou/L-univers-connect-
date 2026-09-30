@@ -14,11 +14,15 @@ vi.mock("next/navigation", () => ({ redirect }));
 vi.mock("next/cache", () => ({ revalidatePath }));
 
 import {
+  archiveEquipment,
+  archiveSite,
   closeSpace,
   createEquipment,
   createSite,
   createSpace,
   showTag,
+  unarchiveEquipment,
+  unarchiveSite,
   updateSiteTimezone,
 } from "./actions";
 
@@ -130,6 +134,65 @@ describe("updateSiteTimezone", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ timezone: "Europe/Paris" }),
     });
+  });
+});
+
+describe("archiveSite", () => {
+  it("appelle /sites/{id}/archive en POST", async () => {
+    apiFetch.mockResolvedValueOnce(ok());
+    await archiveSite(fd({ site_id: "site-1" }));
+
+    expect(apiFetch).toHaveBeenCalledWith("/sites/site-1/archive", "token-123", {
+      method: "POST",
+    });
+    expect(revalidatePath).toHaveBeenCalledWith("/registre");
+  });
+
+  it("redirige avec le code d'erreur en cas d'échec", async () => {
+    apiFetch.mockResolvedValueOnce(fail("SITE_NOT_FOUND"));
+    const url = await redirected(archiveSite(fd({ site_id: "site-inconnu" })));
+
+    expect(url).toBe("/registre?error=SITE_NOT_FOUND");
+  });
+});
+
+describe("unarchiveSite", () => {
+  it("appelle /sites/{id}/unarchive en POST", async () => {
+    apiFetch.mockResolvedValueOnce(ok());
+    await unarchiveSite(fd({ site_id: "site-1" }));
+
+    expect(apiFetch).toHaveBeenCalledWith("/sites/site-1/unarchive", "token-123", {
+      method: "POST",
+    });
+    expect(revalidatePath).toHaveBeenCalledWith("/registre");
+  });
+});
+
+describe("archiveEquipment", () => {
+  it("appelle /functional-locations/{id}/archive en POST", async () => {
+    apiFetch.mockResolvedValueOnce(ok());
+    await archiveEquipment(fd({ functional_location_id: "loc-1" }));
+
+    expect(apiFetch).toHaveBeenCalledWith(
+      "/functional-locations/loc-1/archive",
+      "token-123",
+      { method: "POST" },
+    );
+    expect(revalidatePath).toHaveBeenCalledWith("/registre");
+  });
+});
+
+describe("unarchiveEquipment", () => {
+  it("appelle /functional-locations/{id}/unarchive en POST", async () => {
+    apiFetch.mockResolvedValueOnce(ok());
+    await unarchiveEquipment(fd({ functional_location_id: "loc-1" }));
+
+    expect(apiFetch).toHaveBeenCalledWith(
+      "/functional-locations/loc-1/unarchive",
+      "token-123",
+      { method: "POST" },
+    );
+    expect(revalidatePath).toHaveBeenCalledWith("/registre");
   });
 });
 

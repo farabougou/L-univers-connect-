@@ -276,6 +276,16 @@
       "access_denied": "Cet écran est réservé aux responsables d’exploitation et aux administrateurs.",
       "sites_title": "Sites",
       "no_sites": "Aucun site enregistré pour le moment.",
+      "archive": "Archiver",
+      "unarchive": "Désarchiver",
+      "archived_sites_title": {
+        "one": "{count} site archivé",
+        "other": "{count} sites archivés"
+      },
+      "archived_equipment_title": {
+        "one": "{count} équipement archivé",
+        "other": "{count} équipements archivés"
+      },
       "site_timezone_label": "Fuseau horaire",
       "create_site_title": "Ajouter un site",
       "site_name": "Nom du site",

@@ -24,6 +24,75 @@ class FunctionalLocationConflict(DomainError, ValueError):
     status = 409
 
 
+class SiteNotFound(DomainError, LookupError):
+    status = 404
+
+
+def archive_site(connection: Connection, *, site_id: uuid.UUID, archived_by: str) -> None:
+    """Masque un site des listes par défaut, sans toucher à son historique ni
+    à ses relations : jamais une suppression (CLAUDE.md, règle non
+    négociable 3 — rien n'est écrasé). Idempotent : archiver un site déjà
+    archivé ne change rien et ne lève pas d'erreur."""
+    updated = connection.execute(
+        text(
+            "UPDATE sites SET archived_at = :now, archived_by = :by "
+            "WHERE id = :id AND archived_at IS NULL"
+        ),
+        {"now": datetime.now(UTC), "by": archived_by, "id": site_id},
+    ).rowcount
+    if not updated and not _site_exists(connection, site_id):
+        raise SiteNotFound("SITE_NOT_FOUND")
+
+
+def unarchive_site(connection: Connection, *, site_id: uuid.UUID) -> None:
+    """Réversible par construction : remet le site dans les listes par défaut,
+    rien d'autre n'a jamais été modifié pendant l'archivage."""
+    updated = connection.execute(
+        text(
+            "UPDATE sites SET archived_at = NULL, archived_by = NULL "
+            "WHERE id = :id AND archived_at IS NOT NULL"
+        ),
+        {"id": site_id},
+    ).rowcount
+    if not updated and not _site_exists(connection, site_id):
+        raise SiteNotFound("SITE_NOT_FOUND")
+
+
+def _site_exists(connection: Connection, site_id: uuid.UUID) -> bool:
+    return bool(
+        connection.execute(text("SELECT 1 FROM sites WHERE id = :id"), {"id": site_id}).scalar()
+    )
+
+
+def archive_functional_location(
+    connection: Connection, *, functional_location_id: uuid.UUID, archived_by: str
+) -> None:
+    """Même principe que `archive_site`, pour un équipement/emplacement."""
+    updated = connection.execute(
+        text(
+            "UPDATE functional_locations SET archived_at = :now, archived_by = :by "
+            "WHERE id = :id AND archived_at IS NULL"
+        ),
+        {"now": datetime.now(UTC), "by": archived_by, "id": functional_location_id},
+    ).rowcount
+    if not updated and get_functional_location(connection, functional_location_id) is None:
+        raise FunctionalLocationNotFound("FUNCTIONAL_LOCATION_NOT_FOUND")
+
+
+def unarchive_functional_location(
+    connection: Connection, *, functional_location_id: uuid.UUID
+) -> None:
+    updated = connection.execute(
+        text(
+            "UPDATE functional_locations SET archived_at = NULL, archived_by = NULL "
+            "WHERE id = :id AND archived_at IS NOT NULL"
+        ),
+        {"id": functional_location_id},
+    ).rowcount
+    if not updated and get_functional_location(connection, functional_location_id) is None:
+        raise FunctionalLocationNotFound("FUNCTIONAL_LOCATION_NOT_FOUND")
+
+
 def create_functional_location(
     connection: Connection,
     *,
@@ -93,8 +162,8 @@ def get_functional_location(
     row = (
         connection.execute(
             text(
-                "SELECT id, site_id, parent_id, code, name, kind, space_id, created_at "
-                "FROM functional_locations WHERE id = :id"
+                "SELECT id, site_id, parent_id, code, name, kind, space_id, created_at, "
+                "archived_at FROM functional_locations WHERE id = :id"
             ),
             {"id": location_id},
         )

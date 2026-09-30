@@ -15,6 +15,8 @@ import { renderTagQr } from "@/lib/tagQr";
 
 import {
   acceptIfcImportProposal,
+  archiveEquipment,
+  archiveSite,
   closeSpace,
   createEquipment,
   createProvider,
@@ -22,15 +24,23 @@ import {
   createSpace,
   rejectIfcImportProposal,
   showTag,
+  unarchiveEquipment,
+  unarchiveSite,
   updateProvider,
   updateSiteTimezone,
   uploadFloorPlan,
   uploadIfcImport,
 } from "./actions";
 
-type Site = { id: string; name: string; timezone: string | null };
+type Site = { id: string; name: string; timezone: string | null; archived_at: string | null };
 type EquipmentType = { code: string; label: string };
-type FunctionalLocation = { id: string; site_id: string; code: string; name: string };
+type FunctionalLocation = {
+  id: string;
+  site_id: string;
+  code: string;
+  name: string;
+  archived_at: string | null;
+};
 type Space = {
   id: string;
   site_id: string;
@@ -121,20 +131,29 @@ export default async function RegistrePage({
 
   const [sitesResponse, locationsResponse, typesResponse, spacesResponse, providersResponse] =
     await Promise.all([
-      apiFetch("/sites", accessToken),
-      apiFetch("/functional-locations", accessToken),
+      apiFetch("/sites?include_archived=true", accessToken),
+      apiFetch("/functional-locations?include_archived=true", accessToken),
       apiFetch("/equipment-types", accessToken),
       apiFetch("/spaces", accessToken),
       apiFetch("/providers", accessToken),
     ]);
-  const sites: Site[] = sitesResponse.ok ? await sitesResponse.json() : [];
-  const locations: FunctionalLocation[] = locationsResponse.ok ? await locationsResponse.json() : [];
+  const allSites: Site[] = sitesResponse.ok ? await sitesResponse.json() : [];
+  const allLocations: FunctionalLocation[] = locationsResponse.ok
+    ? await locationsResponse.json()
+    : [];
+  // Un site ou un équipement archivé n'encombre plus les listes ni les menus
+  // de création, mais reste consultable plus bas — jamais supprimé
+  // (CLAUDE.md, règle 3).
+  const sites = allSites.filter((site) => !site.archived_at);
+  const archivedSites = allSites.filter((site) => site.archived_at);
+  const locations = allLocations.filter((location) => !location.archived_at);
+  const archivedLocations = allLocations.filter((location) => location.archived_at);
   const equipmentTypes: EquipmentType[] = typesResponse.ok
     ? (await typesResponse.json()).types
     : [];
   const spaces: Space[] = spacesResponse.ok ? await spacesResponse.json() : [];
   const providers: Provider[] = providersResponse.ok ? await providersResponse.json() : [];
-  const siteName = (siteId: string) => sites.find((site) => site.id === siteId)?.name ?? siteId;
+  const siteName = (siteId: string) => allSites.find((site) => site.id === siteId)?.name ?? siteId;
   const spaceLabel = (spaceId: string) => {
     const space = spaces.find((candidate) => candidate.id === spaceId);
     return space ? `${t(`space_type.${space.space_type}`)} — ${space.name}` : spaceId;
@@ -198,6 +217,7 @@ export default async function RegistrePage({
             <tr>
               <th style={headerCellStyle}>{t("web.registre.site_name")}</th>
               <th style={headerCellStyle}>{t("web.registre.site_timezone_label")}</th>
+              <th style={headerCellStyle} />
             </tr>
           </thead>
           <tbody>
@@ -211,10 +231,39 @@ export default async function RegistrePage({
                     <button type="submit">{t("web.registre.edit_timezone")}</button>
                   </form>
                 </td>
+                <td style={cellStyle}>
+                  <form action={archiveSite}>
+                    <input type="hidden" name="site_id" value={site.id} />
+                    <button type="submit">{t("web.registre.archive")}</button>
+                  </form>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
+      )}
+
+      {archivedSites.length > 0 && (
+        <details style={{ marginBottom: 24 }}>
+          <summary style={{ color: "#6b7280", cursor: "pointer" }}>
+            {t("web.registre.archived_sites_title", { count: archivedSites.length })}
+          </summary>
+          <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8 }}>
+            <tbody>
+              {archivedSites.map((site) => (
+                <tr key={site.id}>
+                  <td style={{ ...cellStyle, color: "#6b7280" }}>{site.name}</td>
+                  <td style={cellStyle}>
+                    <form action={unarchiveSite}>
+                      <input type="hidden" name="site_id" value={site.id} />
+                      <button type="submit">{t("web.registre.unarchive")}</button>
+                    </form>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </details>
       )}
 
       <h3>{t("web.registre.create_site_title")}</h3>
@@ -637,6 +686,7 @@ export default async function RegistrePage({
               <th style={headerCellStyle}>{t("web.dashboard.name")}</th>
               <th style={headerCellStyle}>{t("web.registre.equipment_site")}</th>
               <th style={headerCellStyle} />
+              <th style={headerCellStyle} />
             </tr>
           </thead>
           <tbody>
@@ -654,10 +704,42 @@ export default async function RegistrePage({
                     <button type="submit">{t("web.registre.tag_action")}</button>
                   </form>
                 </td>
+                <td style={cellStyle}>
+                  <form action={archiveEquipment}>
+                    <input type="hidden" name="functional_location_id" value={location.id} />
+                    <button type="submit">{t("web.registre.archive")}</button>
+                  </form>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
+      )}
+
+      {archivedLocations.length > 0 && (
+        <details style={{ marginBottom: 24 }}>
+          <summary style={{ color: "#6b7280", cursor: "pointer" }}>
+            {t("web.registre.archived_equipment_title", { count: archivedLocations.length })}
+          </summary>
+          <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8 }}>
+            <tbody>
+              {archivedLocations.map((location) => (
+                <tr key={location.id}>
+                  <td style={{ ...cellStyle, color: "#6b7280" }}>
+                    {location.code} — {location.name}
+                  </td>
+                  <td style={{ ...cellStyle, color: "#6b7280" }}>{siteName(location.site_id)}</td>
+                  <td style={cellStyle}>
+                    <form action={unarchiveEquipment}>
+                      <input type="hidden" name="functional_location_id" value={location.id} />
+                      <button type="submit">{t("web.registre.unarchive")}</button>
+                    </form>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </details>
       )}
 
       <h3>{t("web.registre.create_equipment_title")}</h3>

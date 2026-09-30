@@ -224,3 +224,151 @@ def test_time_zone_of_an_existing_site_can_be_set_and_is_audited(tenant_id) -> N
     assert updated.json()["timezone"] == "Europe/Madrid"
     assert unknown.status_code == 404
     assert payload == {"previous": "Europe/Paris", "timezone": "Europe/Madrid"}
+
+
+def test_archiving_a_site_hides_it_from_the_default_list_but_not_forever(tenant_id) -> None:
+    """Jamais une suppression (CLAUDE.md, règle 3) : l'archivage masque
+    seulement, `include_archived` et le désarchivage retrouvent le site
+    intact."""
+    headers = _auth_headers(tenant_id, ["admin_tenant"])
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        site_id = client.post(
+            "/sites", json={"name": "Site en double", "timezone": "Europe/Paris"}, headers=headers
+        ).json()["id"]
+
+        archived = client.post(f"/sites/{site_id}/archive", headers=headers)
+        assert archived.status_code == 200
+        assert archived.json()["archived_at"] is not None
+
+        default_list = client.get("/sites", headers=headers)
+        assert site_id not in [s["id"] for s in default_list.json()]
+
+        with_archived = client.get("/sites?include_archived=true", headers=headers)
+        assert site_id in [s["id"] for s in with_archived.json()]
+
+        # Idempotent : archiver un site déjà archivé ne casse rien.
+        again = client.post(f"/sites/{site_id}/archive", headers=headers)
+        assert again.status_code == 200
+
+        unarchived = client.post(f"/sites/{site_id}/unarchive", headers=headers)
+        assert unarchived.status_code == 200
+        assert unarchived.json()["archived_at"] is None
+
+        restored_list = client.get("/sites", headers=headers)
+        assert site_id in [s["id"] for s in restored_list.json()]
+
+
+def test_archiving_an_unknown_site_returns_404(tenant_id) -> None:
+    headers = _auth_headers(tenant_id, ["admin_tenant"])
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        response = client.post(f"/sites/{uuid.uuid4()}/archive", headers=headers)
+    assert response.status_code == 404
+
+
+def test_archiving_a_site_rejects_technicien_role(tenant_id) -> None:
+    admin_headers = _auth_headers(tenant_id, ["admin_tenant"])
+    technicien_headers = _auth_headers(tenant_id, ["technicien"])
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        site_id = client.post(
+            "/sites", json={"name": "Site protégé", "timezone": "Europe/Paris"},
+            headers=admin_headers,
+        ).json()["id"]
+        response = client.post(f"/sites/{site_id}/archive", headers=technicien_headers)
+    assert response.status_code == 403
+
+
+def test_archiving_a_site_is_audited(tenant_id) -> None:
+    headers = _auth_headers(tenant_id, ["admin_tenant"])
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        site_id = client.post(
+            "/sites", json={"name": "Site audité", "timezone": "Europe/Paris"}, headers=headers
+        ).json()["id"]
+        client.post(f"/sites/{site_id}/archive", headers=headers)
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_id)
+        action = connection.execute(
+            text(
+                "SELECT action FROM audit_log WHERE entity_type = 'site' "
+                "AND entity_id = :id AND action = 'site.archived'"
+            ),
+            {"id": site_id},
+        ).scalar()
+    assert action == "site.archived"
+
+
+def test_archiving_a_functional_location_hides_it_from_the_default_list(tenant_id) -> None:
+    headers = _auth_headers(tenant_id, ["admin_tenant"])
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        site_id = client.post(
+            "/sites", json={"name": "Site", "timezone": "Europe/Paris"}, headers=headers
+        ).json()["id"]
+        location_id = client.post(
+            "/functional-locations",
+            json={"site_id": site_id, "code": "CTA-DOUBLON", "name": "CTA en double"},
+            headers=headers,
+        ).json()["id"]
+
+        archived = client.post(f"/functional-locations/{location_id}/archive", headers=headers)
+        assert archived.status_code == 200
+        assert archived.json()["archived_at"] is not None
+
+        default_list = client.get("/functional-locations", headers=headers)
+        assert location_id not in [item["id"] for item in default_list.json()]
+
+        with_archived = client.get(
+            "/functional-locations?include_archived=true", headers=headers
+        )
+        assert location_id in [item["id"] for item in with_archived.json()]
+
+        unarchived = client.post(
+            f"/functional-locations/{location_id}/unarchive", headers=headers
+        )
+        assert unarchived.status_code == 200
+        assert unarchived.json()["archived_at"] is None
+
+
+def test_archiving_an_unknown_functional_location_returns_404(tenant_id) -> None:
+    headers = _auth_headers(tenant_id, ["admin_tenant"])
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        response = client.post(
+            f"/functional-locations/{uuid.uuid4()}/archive", headers=headers
+        )
+    assert response.status_code == 404
+
+
+def test_a_tenant_cannot_archive_another_tenants_site(tenant_id) -> None:
+    """Isolation par tenant (CLAUDE.md, règle 2) : le site d'un autre client
+    est invisible sous RLS, donc introuvable, jamais archivable."""
+    other_tenant_id = uuid.uuid4()
+    with engine.begin() as connection:
+        connection.execute(
+            text("INSERT INTO tenants (id, name, slug) VALUES (:id, :name, :slug)"),
+            {"id": other_tenant_id, "name": "Autre client", "slug": f"autre-{other_tenant_id}"},
+        )
+        set_tenant_context(connection, other_tenant_id)
+        other_site_id = uuid.uuid4()
+        connection.execute(
+            text("INSERT INTO sites (id, tenant_id, name) VALUES (:id, :tenant_id, :name)"),
+            {"id": other_site_id, "tenant_id": other_tenant_id, "name": "Site de l'autre client"},
+        )
+
+    headers = _auth_headers(tenant_id, ["admin_tenant"])
+    try:
+        with patch("app.auth.fetch_jwks", return_value=JWKS):
+            response = client.post(f"/sites/{other_site_id}/archive", headers=headers)
+        assert response.status_code == 404
+
+        with engine.begin() as connection:
+            set_tenant_context(connection, other_tenant_id)
+            still_active = connection.execute(
+                text("SELECT archived_at FROM sites WHERE id = :id"), {"id": other_site_id}
+            ).scalar()
+        assert still_active is None
+    finally:
+        with engine.begin() as connection:
+            set_tenant_context(connection, other_tenant_id)
+            connection.execute(
+                text("DELETE FROM sites WHERE tenant_id = :id"), {"id": other_tenant_id}
+            )
+        with engine.begin() as connection:
+            connection.execute(text("DELETE FROM tenants WHERE id = :id"), {"id": other_tenant_id})

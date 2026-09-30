@@ -276,6 +276,16 @@
       "access_denied": "This screen is restricted to operations managers and administrators.",
       "sites_title": "Sites",
       "no_sites": "No site registered yet.",
+      "archive": "Archive",
+      "unarchive": "Unarchive",
+      "archived_sites_title": {
+        "one": "{count} archived site",
+        "other": "{count} archived sites"
+      },
+      "archived_equipment_title": {
+        "one": "{count} archived equipment",
+        "other": "{count} archived equipment"
+      },
       "site_timezone_label": "Time zone",
       "create_site_title": "Add a site",
       "site_name": "Site name",

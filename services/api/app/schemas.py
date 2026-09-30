@@ -21,6 +21,7 @@ class SiteOut(BaseModel):
     name: str
     timezone: str | None
     created_at: datetime
+    archived_at: datetime | None
 
 
 class ProviderCreate(BaseModel):
@@ -106,6 +107,7 @@ class FunctionalLocationOut(BaseModel):
     kind: str | None
     space_id: uuid.UUID | None
     created_at: datetime
+    archived_at: datetime | None
 
 
 class SpaceCreate(BaseModel):

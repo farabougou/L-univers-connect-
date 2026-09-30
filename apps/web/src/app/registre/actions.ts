@@ -82,6 +82,56 @@ export async function updateSiteTimezone(formData: FormData) {
 }
 
 /**
+ * Archiver masque un site des listes par défaut sans rien supprimer :
+ * jamais de suppression réelle (CLAUDE.md, règle non négociable 3 — rien
+ * n'est écrasé). Réversible via unarchiveSite.
+ */
+export async function archiveSite(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const siteId = formData.get("site_id");
+  const response = await apiFetch(`/sites/${siteId}/archive`, accessToken, { method: "POST" });
+  if (!response.ok) {
+    await redirectOnFailure(response);
+  }
+  revalidatePath("/registre");
+}
+
+export async function unarchiveSite(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const siteId = formData.get("site_id");
+  const response = await apiFetch(`/sites/${siteId}/unarchive`, accessToken, { method: "POST" });
+  if (!response.ok) {
+    await redirectOnFailure(response);
+  }
+  revalidatePath("/registre");
+}
+
+/** Même principe que archiveSite, pour un équipement (position fonctionnelle). */
+export async function archiveEquipment(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const locationId = formData.get("functional_location_id");
+  const response = await apiFetch(`/functional-locations/${locationId}/archive`, accessToken, {
+    method: "POST",
+  });
+  if (!response.ok) {
+    await redirectOnFailure(response);
+  }
+  revalidatePath("/registre");
+}
+
+export async function unarchiveEquipment(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const locationId = formData.get("functional_location_id");
+  const response = await apiFetch(`/functional-locations/${locationId}/unarchive`, accessToken, {
+    method: "POST",
+  });
+  if (!response.ok) {
+    await redirectOnFailure(response);
+  }
+  revalidatePath("/registre");
+}
+
+/**
  * Un équipement suppose quatre ressources liées (modèle, exemplaire,
  * emplacement fonctionnel, affectation) : cette action les crée dans
  * l'ordre, puis mint l'étiquette du nouvel équipement directement, pour que

@@ -9,10 +9,15 @@ from sqlalchemy.engine import Connection
 from app.assets import (
     FunctionalLocationConflict,
     FunctionalLocationNotFound,
+    SiteNotFound,
+    archive_functional_location,
+    archive_site,
     assign_physical_unit,
     create_functional_location,
     get_current_occupant,
     get_functional_location,
+    unarchive_functional_location,
+    unarchive_site,
 )
 from app.audit import append_audit_entry
 from app.auth import require_any_role
@@ -68,7 +73,9 @@ def _actor(claims: dict[str, Any]) -> str:
 def _read_site(connection: Connection, site_id: uuid.UUID) -> SiteOut:
     row = (
         connection.execute(
-            text("SELECT id, name, timezone, created_at FROM sites WHERE id = :id"),
+            text(
+                "SELECT id, name, timezone, created_at, archived_at FROM sites WHERE id = :id"
+            ),
             {"id": site_id},
         )
         .mappings()
@@ -139,15 +146,70 @@ def set_site_timezone(
 def list_sites(
     connection: Annotated[Connection, Depends(get_tenant_connection)],
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+    include_archived: bool = Query(False),
 ) -> list[SiteOut]:
+    """Les sites archivés sont exclus par défaut (registre « propre » au
+    quotidien) ; `include_archived=true` les redonne, pour les désarchiver."""
+    clause = "" if include_archived else "WHERE archived_at IS NULL "
     rows = (
         connection.execute(
-            text("SELECT id, name, timezone, created_at FROM sites ORDER BY created_at")
+            text(
+                f"SELECT id, name, timezone, created_at, archived_at FROM sites {clause}"
+                "ORDER BY created_at"
+            )
         )
         .mappings()
         .all()
     )
     return [SiteOut(**row) for row in rows]
+
+
+@router.post("/sites/{site_id}/archive", response_model=SiteOut)
+def archive_site_route(
+    site_id: uuid.UUID,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
+    claims: Annotated[dict, Depends(require_any_role(*_MANAGE_REGISTRY_ROLES))],
+) -> SiteOut:
+    """Masque le site des listes par défaut ; réversible (voir /unarchive),
+    jamais une suppression (CLAUDE.md, règle non négociable 3)."""
+    try:
+        archive_site(connection, site_id=site_id, archived_by=_actor(claims))
+    except SiteNotFound as exc:
+        raise api_error(exc, 404) from exc
+    append_audit_entry(
+        connection,
+        tenant_id=tenant_id,
+        actor=_actor(claims),
+        action="site.archived",
+        entity_type="site",
+        entity_id=str(site_id),
+        payload={},
+    )
+    return _read_site(connection, site_id)
+
+
+@router.post("/sites/{site_id}/unarchive", response_model=SiteOut)
+def unarchive_site_route(
+    site_id: uuid.UUID,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
+    claims: Annotated[dict, Depends(require_any_role(*_MANAGE_REGISTRY_ROLES))],
+) -> SiteOut:
+    try:
+        unarchive_site(connection, site_id=site_id)
+    except SiteNotFound as exc:
+        raise api_error(exc, 404) from exc
+    append_audit_entry(
+        connection,
+        tenant_id=tenant_id,
+        actor=_actor(claims),
+        action="site.unarchived",
+        entity_type="site",
+        entity_id=str(site_id),
+        payload={},
+    )
+    return _read_site(connection, site_id)
 
 
 _MODEL_COLUMNS = (
@@ -421,18 +483,76 @@ def create_functional_location_route(
 def list_functional_locations(
     connection: Annotated[Connection, Depends(get_tenant_connection)],
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+    include_archived: bool = Query(False),
 ) -> list[FunctionalLocationOut]:
+    """Les équipements archivés sont exclus par défaut, même principe que
+    `/sites` : `include_archived=true` les redonne pour les désarchiver."""
+    clause = "" if include_archived else "WHERE archived_at IS NULL "
     rows = (
         connection.execute(
             text(
-                "SELECT id, site_id, parent_id, code, name, kind, space_id, created_at "
-                "FROM functional_locations ORDER BY created_at"
+                "SELECT id, site_id, parent_id, code, name, kind, space_id, created_at, "
+                f"archived_at FROM functional_locations {clause}ORDER BY created_at"
             )
         )
         .mappings()
         .all()
     )
     return [FunctionalLocationOut(**row) for row in rows]
+
+
+@router.post(
+    "/functional-locations/{functional_location_id}/archive",
+    response_model=FunctionalLocationOut,
+)
+def archive_functional_location_route(
+    functional_location_id: uuid.UUID,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
+    claims: Annotated[dict, Depends(require_any_role(*_MANAGE_REGISTRY_ROLES))],
+) -> FunctionalLocationOut:
+    try:
+        archive_functional_location(
+            connection, functional_location_id=functional_location_id, archived_by=_actor(claims)
+        )
+    except FunctionalLocationNotFound as exc:
+        raise api_error(exc, 404) from exc
+    append_audit_entry(
+        connection,
+        tenant_id=tenant_id,
+        actor=_actor(claims),
+        action="functional_location.archived",
+        entity_type="functional_location",
+        entity_id=str(functional_location_id),
+        payload={},
+    )
+    return FunctionalLocationOut(**get_functional_location(connection, functional_location_id))
+
+
+@router.post(
+    "/functional-locations/{functional_location_id}/unarchive",
+    response_model=FunctionalLocationOut,
+)
+def unarchive_functional_location_route(
+    functional_location_id: uuid.UUID,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
+    claims: Annotated[dict, Depends(require_any_role(*_MANAGE_REGISTRY_ROLES))],
+) -> FunctionalLocationOut:
+    try:
+        unarchive_functional_location(connection, functional_location_id=functional_location_id)
+    except FunctionalLocationNotFound as exc:
+        raise api_error(exc, 404) from exc
+    append_audit_entry(
+        connection,
+        tenant_id=tenant_id,
+        actor=_actor(claims),
+        action="functional_location.unarchived",
+        entity_type="functional_location",
+        entity_id=str(functional_location_id),
+        payload={},
+    )
+    return FunctionalLocationOut(**get_functional_location(connection, functional_location_id))
 
 
 @router.post(
