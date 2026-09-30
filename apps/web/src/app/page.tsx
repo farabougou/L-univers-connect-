@@ -47,6 +47,7 @@ import {
   type WorkOrder,
   type Device,
   SEVERITIES,
+  SEVERITY_COLOR,
   aggregatePortfolio,
   prioritizeAlarms,
 } from "@/lib/portfolio";
@@ -59,13 +60,6 @@ type Me = {
 };
 
 type FunctionalLocation = PortfolioLocation & { code: string; name: string };
-
-const SEVERITY_COLOR: Record<Severity, string> = {
-  critical: "#dc2626",
-  major: "#ea580c",
-  warning: "#d97706",
-  info: "#6b7280",
-};
 
 const COMMUNICATION_COLOR: Record<string, string> = {
   online: "#16a34a",
@@ -274,6 +268,9 @@ export default async function PortfolioPage({
       </header>
 
       <nav style={{ display: "flex", gap: 20, marginBottom: 24, flexWrap: "wrap" }}>
+        <Link href="/alarmes" style={{ color: colors.accent, fontWeight: 600 }}>
+          {t("web.dashboard.alarms_link")} →
+        </Link>
         <Link href="/edge" style={{ color: colors.accent, fontWeight: 600 }}>
           {t("web.dashboard.edge_link")} →
         </Link>

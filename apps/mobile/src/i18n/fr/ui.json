@@ -237,6 +237,7 @@
       "signed_in_as": "Session de {user} — rôles : {roles}",
       "edge_link": "Edge et connectivité",
       "work_orders_link": "Ordres de travail",
+      "alarms_link": "Alarmes et constats",
       "priority_alarms_title": "Alarmes prioritaires",
       "no_priority_alarms": "Aucune alarme active pour le moment.",
       "maintenance_title": "Maintenance",
@@ -311,6 +312,14 @@
       "col_credential": "Authentification",
       "col_last_seen": "Dernière activité",
       "last_seen_never": "Jamais vue"
+    },
+    "alarms_page": {
+      "title": "Alarmes et constats",
+      "alarms_section_title": "Alarmes",
+      "findings_section_title": "Constats",
+      "no_alarms": "Aucune alarme ouverte.",
+      "no_findings": "Aucun constat ouvert.",
+      "col_certainty": "Certitude"
     },
     "work_orders": {
       "title": "Ordres de travail",

@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { SignalActions } from "@/components/SignalActions";
 import { StatusBadge, equipmentStatusToAssetStatus } from "@/components/StatusBadge";
 import { Timeline, type TimelineEntry } from "@/components/Timeline";
 import { apiFetch, requireAccessToken } from "@/lib/api";
@@ -238,7 +239,6 @@ const sectionTitleStyle = { fontSize: 16, fontWeight: 600 as const, marginBottom
 const mutedStyle = { color: "#666" };
 const strongStyle = { fontWeight: 600 as const };
 const signalActionsStyle = { display: "flex", gap: 8, marginTop: 4 };
-const HANDLING_OPEN = ["open", "in_progress"];
 
 export default async function EquipmentPage({
   params,
@@ -705,7 +705,13 @@ export default async function EquipmentPage({
               <br />
               {alarm.message}
             </p>
-            <SignalActions kind="alarm" signal={alarm} nodeId={id} t={t} />
+            <SignalActions
+              kind="alarm"
+              signal={alarm}
+              nodeId={id}
+              actions={{ acknowledgeSignal, clearAlarm, setHandling, confirmFinding }}
+              t={t}
+            />
           </div>
         ))}
         {passport.open_findings.map((finding) => (
@@ -721,6 +727,7 @@ export default async function EquipmentPage({
               kind="finding"
               signal={{ ...finding, findingKind: finding.kind }}
               nodeId={id}
+              actions={{ acknowledgeSignal, clearAlarm, setHandling, confirmFinding }}
               t={t}
             />
           </div>
@@ -865,76 +872,6 @@ function StatusLine({
     ]),
   );
   return <p style={status.current ? strongStyle : undefined}>{t(key, rendered)}</p>;
-}
-
-function SignalActions({
-  kind,
-  signal,
-  nodeId,
-  t,
-}: {
-  kind: "alarm" | "finding";
-  signal: {
-    id: string;
-    ack_state: string;
-    handling_status: string;
-    condition_state: string;
-    findingKind?: string;
-    certainty?: string;
-  };
-  nodeId: string;
-  t: (key: string) => string;
-}) {
-  const hidden = (
-    <>
-      <input type="hidden" name="kind" value={kind} />
-      <input type="hidden" name="signal_id" value={signal.id} />
-      <input type="hidden" name="node_id" value={nodeId} />
-    </>
-  );
-  const handlingOpen = HANDLING_OPEN.includes(signal.handling_status);
-  return (
-    <div style={signalActionsStyle}>
-      {signal.ack_state === "unacknowledged" && (
-        <form action={acknowledgeSignal}>
-          {hidden}
-          <button type="submit">{t("web.registre.acknowledge")}</button>
-        </form>
-      )}
-      {/* Un signalement ne peut être clos tant que sa condition est active
-          (voir app/signals.py, set_handling) : seul le retour à la normale
-          (alarme) ou le faux positif restent alors possibles. */}
-      {kind === "alarm" && signal.condition_state === "active" && (
-        <form action={clearAlarm}>
-          {hidden}
-          <button type="submit">{t("web.registre.clear_condition")}</button>
-        </form>
-      )}
-      {handlingOpen && signal.condition_state === "cleared" && (
-        <form action={setHandling}>
-          {hidden}
-          <input type="hidden" name="handling_status" value="closed" />
-          <button type="submit">{t("web.registre.close_signal")}</button>
-        </form>
-      )}
-      {handlingOpen && (
-        <form action={setHandling}>
-          {hidden}
-          <input type="hidden" name="handling_status" value="false_positive" />
-          <button type="submit">{t("web.registre.false_positive")}</button>
-        </form>
-      )}
-      {/* Une prédiction porte sur l'avenir : elle n'est jamais confirmée
-          (voir app/findings.py, confirm_finding). */}
-      {kind === "finding" && signal.certainty !== "confirmed" && signal.findingKind !== "prediction" && (
-        <form action={confirmFinding} style={{ display: "flex", gap: 4 }}>
-          {hidden}
-          <input name="note" required placeholder={t("web.registre.confirm_note")} />
-          <button type="submit">{t("web.registre.confirm_finding")}</button>
-        </form>
-      )}
-    </div>
-  );
 }
 
 function DesiredStateBlock({

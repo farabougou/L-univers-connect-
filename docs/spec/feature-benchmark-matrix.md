@@ -297,15 +297,41 @@ Documentation DONE.
 
 Le Global Command Center (section 36, point 1) est maintenant complet dans son
 périmètre honnête : carte/portefeuille (déjà là), alarmes prioritaires, maintenance,
-énergie, santé des actifs, activité récente. Reste de la feuille de route active
-(sections 5 à 37, DEFER explicite) : composants d'architecture UI restants (AppShell,
-Navigation, AssetCard, MetricCard, AlarmCard, DataQualityIndicator, ConnectivityIndicator,
-EmptyState, SkeletonState, PermissionGuard), fil d'Ariane, dashboards par rôle, carte
-géographique, graphiques avec downsampling, table `events` non encore lue par API — puis
-la suite de l'ordre de construction (section 36) : Alarms & Incidents, Maintenance (page
-dédiée), Energy, Edge & Connectivity (enrichir l'écran existant), Sites & Buildings,
-Telemetry, Documents, Users & Access, Spatial/BIM, Automation — un écran à la fois,
-jamais en un seul bloc.
+énergie, santé des actifs, activité récente.
+
+**Alarms & Incidents (30/09/2026, section 36 point 4)** : nouvelle page `/alarmes`,
+portefeuille complet des alarmes et constats ouverts — pas seulement les 8 premières déjà
+montrées par le bloc « Alarmes prioritaires » du Global Command Center, et avec les
+constats en plus (absents de ce bloc). Deux tables séparées (Alarmes, Constats), jamais
+fondues en une seule notion générique (modèle State/Event/Policy/Alert/Incident, directive
+section 24) : chacune garde ses propres actions (acquitter, retour à la normale, faux
+positif, clore, confirmer). Deux composants extraits de la fiche équipement pour être
+réellement partagés plutôt que copiés : `SignalActions.tsx` (les mêmes boutons/formulaires
+qu'utilisait déjà `/registre/{id}`) et `SEVERITY_COLOR` (déplacé de `page.tsx` vers
+`lib/portfolio.ts`, exporté). Actions serveur propres à `/alarmes` (`app/alarmes/actions.ts`)
+plutôt que réutilisation de celles de la fiche équipement : mêmes appels API, mais
+redirection et revalidation vers `/alarmes` en cas d'échec, jamais vers la mauvaise page.
+Aucun nouvel endpoint : réutilise `GET /alarms`, `GET /findings` (déjà filtrables par
+`handling_status`) et les endpoints d'action déjà existants. **Grille produit (ADR 014)** :
+Backend inchangé (DONE de longue date), API inchangée, Web DONE (nouvelle page + deux
+composants partagés), Mobile N/A (l'écran passeport mobile gère déjà ses propres
+signalements pour l'équipement affiché — pas un usage de supervision portefeuille), Edge
+N/A, Tests N/A pour la page elle-même (lecture pure comme `/ordres-de-travail`, sans
+logique propre à tester séparément — même précédent), Documentation DONE. Un bug a été
+trouvé et corrigé en construisant cette page, avant tout commit : le champ `kind` d'un
+constat (nécessaire pour ne jamais permettre de confirmer une prédiction, voir
+`app/findings.py::confirm_finding`) avait été omis du type de la nouvelle page — aurait
+laissé confirmer une prédiction depuis `/alarmes`, alors que la fiche équipement l'interdit
+déjà correctement.
+
+Reste de la feuille de route active (sections 5 à 37, DEFER explicite) : composants
+d'architecture UI restants (AppShell, Navigation, AssetCard, MetricCard, AlarmCard,
+DataQualityIndicator, ConnectivityIndicator, EmptyState, SkeletonState, PermissionGuard),
+fil d'Ariane, dashboards par rôle, carte géographique, graphiques avec downsampling, table
+`events` non encore lue par API — puis la suite de l'ordre de construction (section 36) :
+Maintenance (page dédiée), Energy, Edge & Connectivity (enrichir l'écran existant), Sites &
+Buildings, Telemetry, Documents, Users & Access, Spatial/BIM, Automation — un écran à la
+fois, jamais en un seul bloc.
 
 **Equipment Passport (30/09/2026, section 36 point 2)** : audit plutôt que reconstruction,
 comme demandé (« à consolider selon la liste de la section 21, pas à recréer »). Sur les 19

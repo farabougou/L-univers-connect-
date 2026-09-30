@@ -11,6 +11,16 @@ export const SEVERITIES = ["critical", "major", "warning", "info"] as const;
 export type Severity = (typeof SEVERITIES)[number];
 export type SeverityCounts = Record<Severity, number>;
 
+// Jeton couleur partagé pour la gravité d'une alarme ou d'un constat — jamais
+// une couleur codée en dur par page (même principe que ASSET_STATUS_COLOR
+// pour l'état universel d'un actif, un axe distinct, directive section 24).
+export const SEVERITY_COLOR: Record<Severity, string> = {
+  critical: "#dc2626",
+  major: "#ea580c",
+  warning: "#d97706",
+  info: "#6b7280",
+};
+
 export function emptySeverityCounts(): SeverityCounts {
   return { critical: 0, major: 0, warning: 0, info: 0 };
 }
