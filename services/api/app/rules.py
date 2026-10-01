@@ -17,6 +17,15 @@ Trois types de règles, stockées comme configurations versionnées
   disponible). Premier type de règle qui porte sur deux points à la fois au
   lieu d'un seul (voir `evaluate_after_measurement` et
   `_evaluate_simultaneous_heating_cooling`).
+- `short_cycling` (01/10/2026) : trop de démarrages d'un équipement
+  (transition arrêt → marche d'un point `run_status` booléen) sur une
+  fenêtre de temps glissante → constat de nature « fault ». Deuxième AFDD
+  standard du secteur (ASHRAE Guideline 36, protection moteur/compresseur) et
+  premier type de règle qui porte sur un historique de mesures plutôt que sur
+  l'instant présent seul (voir `_evaluate_short_cycling`) : la valeur qui
+  vient d'être enregistrée n'est comptée comme un nouveau démarrage que si le
+  relevé immédiatement antérieur n'était pas déjà à « marche », jamais à
+  chaque relevé « marche » répété pendant qu'un cycle est déjà en cours.
 
 Chaîne complète, synchrone à la réception d'une mesure (squelette de bout en
 bout M2) : mesure → contrôle de qualité → règle → constat → alarme → ordre de
@@ -33,6 +42,7 @@ from datetime import datetime, timedelta
 from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field, ValidationError
+from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
 from app.audit import append_audit_entry
@@ -60,6 +70,7 @@ _RULE_REASONS = {
     "threshold": "RULE_THRESHOLD_EXCEEDED",
     "desired_state_divergence": "RULE_DESIRED_STATE_DIVERGENCE",
     "simultaneous_heating_cooling": "RULE_SIMULTANEOUS_HEATING_COOLING",
+    "short_cycling": "RULE_SHORT_CYCLING",
 }
 # Nature du constat ouvert par chaque type de règle (voir app/findings.py,
 # ck_findings_kind) : un écart à la consigne reste un sujet de mise en
@@ -68,6 +79,7 @@ _FINDING_KIND = {
     "threshold": "fault",
     "desired_state_divergence": "commissioning",
     "simultaneous_heating_cooling": "fault",
+    "short_cycling": "fault",
 }
 
 
@@ -92,6 +104,15 @@ class DivergenceRule(_RuleBase):
     tolerance: float = Field(default=0, ge=0, allow_inf_nan=False)
 
 
+class ShortCyclingRule(_RuleBase):
+    """Porte sur un point `run_status` booléen : trop de démarrages sur la
+    fenêtre glissante `window_minutes` (voir `_evaluate_short_cycling`)."""
+
+    kind: Literal["short_cycling"]
+    max_starts: int = Field(gt=0)
+    window_minutes: int = Field(gt=0)
+
+
 class CorrelationRule(BaseModel):
     """Compare deux points du même équipement au même instant (FDD) — jamais
     un seul point comme les deux règles ci-dessus, voir le docstring du
@@ -111,7 +132,10 @@ class CorrelationRule(BaseModel):
 
 
 class _RuleContent(BaseModel):
-    rule: Annotated[ThresholdRule | DivergenceRule | CorrelationRule, Field(discriminator="kind")]
+    rule: Annotated[
+        ThresholdRule | DivergenceRule | ShortCyclingRule | CorrelationRule,
+        Field(discriminator="kind"),
+    ]
 
 
 def _validate_point_for_rule(connection: Connection, point_id: uuid.UUID) -> dict[str, Any]:
@@ -144,6 +168,8 @@ def _validate_alarm_rule(connection: Connection, content: dict[str, Any]) -> dic
     point = _validate_point_for_rule(connection, rule.point_id)
     if isinstance(rule, ThresholdRule) and point["value_type"] != "number":
         raise ConfigInvalid("RULE_THRESHOLD_REQUIRES_NUMBER")
+    if isinstance(rule, ShortCyclingRule) and point["value_type"] != "boolean":
+        raise ConfigInvalid("RULE_SHORT_CYCLING_REQUIRES_BOOLEAN")
     return rule.model_dump(mode="json", exclude_none=True)
 
 
@@ -242,6 +268,49 @@ def _evaluate_simultaneous_heating_cooling(
     }
 
 
+def _evaluate_short_cycling(
+    connection: Connection, rule: dict[str, Any], point: dict[str, Any], value: float, at: datetime
+) -> dict[str, Any] | None:
+    """Compte les démarrages (transitions arrêt → marche) sur la fenêtre
+    glissante `window_minutes` qui se termine à `at`, évalué à chaque relevé
+    (à l'arrêt comme en marche) — jamais seulement au moment d'un démarrage :
+    le constat doit rester actif tant que la fenêtre contient trop de
+    démarrages, pas seulement l'instant du dernier, sans quoi il
+    apparaîtrait et disparaîtrait à chaque arrêt puis redémarrage. L'état
+    (marche/arrêt) juste avant le début de la fenêtre sert d'amorce, pour ne
+    jamais compter comme un « démarrage » un équipement déjà en marche avant
+    que la fenêtre ne commence."""
+    from app.telemetry import list_measurements  # import tardif : évite un cycle avec ce module
+
+    window_start = at - timedelta(minutes=rule["window_minutes"])
+    seed = connection.execute(
+        text(
+            "SELECT value FROM measurements WHERE point_id = :point_id "
+            "AND measured_at < :window_start ORDER BY measured_at DESC LIMIT 1"
+        ),
+        {"point_id": point["id"], "window_start": window_start},
+    ).scalar()
+    history = sorted(
+        list_measurements(connection, point_id=point["id"], since=window_start, limit=1000),
+        key=lambda row: row["measured_at"],
+    )
+    start_count = 0
+    running = seed == 1
+    for row in history:
+        is_on = row["value"] == 1
+        if is_on and not running:
+            start_count += 1
+        running = is_on
+
+    if start_count <= rule["max_starts"]:
+        return None
+    return {
+        "start_count": start_count,
+        "window_minutes": rule["window_minutes"],
+        "max_starts": rule["max_starts"],
+    }
+
+
 def _evaluate(
     connection: Connection, rule: dict[str, Any], point: dict[str, Any], value: float, at: datetime
 ) -> dict[str, Any] | None:
@@ -256,6 +325,9 @@ def _evaluate(
 
     if rule["kind"] == "simultaneous_heating_cooling":
         return _evaluate_simultaneous_heating_cooling(connection, rule, point, value, at)
+
+    if rule["kind"] == "short_cycling":
+        return _evaluate_short_cycling(connection, rule, point, value, at)
 
     desired = desired_state_at(connection, point["id"], at)
     if desired is None:

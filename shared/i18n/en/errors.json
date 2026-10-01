@@ -176,6 +176,7 @@
     "RULE_CORRELATION_SAME_POINT": "A two-point rule must name two different points.",
     "RULE_POINT_NOT_FOUND": "The rule refers to a point that could not be found.",
     "RULE_POINT_NOT_VALIDATED": "The rule must apply to a point validated during commissioning.",
+    "RULE_SHORT_CYCLING_REQUIRES_BOOLEAN": "A short-cycling rule only applies to a run/stop status point.",
     "RULE_THRESHOLD_REQUIRES_NUMBER": "A threshold applies only to a numeric point.",
     "SEVERITY_UNKNOWN": "Unknown severity: “{severity}”.",
     "SIGNAL_ALREADY_CLEARED": "This signal has already returned to normal.",
