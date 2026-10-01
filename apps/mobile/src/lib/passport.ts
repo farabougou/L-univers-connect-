@@ -248,6 +248,41 @@ export async function sendCommand(
 }
 
 /**
+ * Chronologie fusionnée d'un actif (`GET /graph/nodes/{id}/timeline`,
+ * app/timeline.py) — même donnée et même forme que côté web
+ * (apps/web/src/components/Timeline.tsx), jamais une seconde logique.
+ */
+export type TimelineEntry = {
+  kind: "intervention" | "work_order" | "alarm" | "finding" | "lifecycle";
+  at: string;
+  reference_id: string;
+  title: string | null;
+  field: string | null;
+  status: string | null;
+  changed_by: string | null;
+  note: string | null;
+};
+
+export async function fetchTimeline(
+  apiUrl: string,
+  accessToken: string,
+  nodeId: string,
+  before?: string,
+): Promise<TimelineEntry[]> {
+  const query = before ? `?before=${encodeURIComponent(before)}&limit=20` : "?limit=20";
+  let response: Response;
+  try {
+    response = await fetch(`${apiUrl}/graph/nodes/${nodeId}/timeline${query}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+  } catch {
+    return [];
+  }
+  if (!response.ok) return [];
+  return (await response.json()) as TimelineEntry[];
+}
+
+/**
  * Phrase d'état : jamais un état présenté comme actuel sans donnée récente
  * (ADR 013, 4.5). Renvoie la clé du catalogue et ses paramètres.
  */

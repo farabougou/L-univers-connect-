@@ -19,8 +19,10 @@ import {
   type Passport,
   type PassportCommand,
   type PassportUnit,
+  type TimelineEntry,
   fetchPassportByTag,
   fetchSimulatedRelayPointId,
+  fetchTimeline,
   isPlatformTag,
   parseTagCode,
   sendCommand,
@@ -40,6 +42,8 @@ export default function PasseportScreen() {
   const [message, setMessage] = useState<string | null>(null);
   const [passport, setPassport] = useState<Passport | null>(null);
   const [relayPointId, setRelayPointId] = useState<string | null>(null);
+  const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
+  const [timelineLoading, setTimelineLoading] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   // Un QR reste devant l'objectif plusieurs images de suite : une seule lecture.
@@ -51,6 +55,7 @@ export default function PasseportScreen() {
   async function lookUp(raw: string) {
     setPassport(null);
     setRelayPointId(null);
+    setTimeline([]);
     const code = parseTagCode(raw);
     if (!code) {
       setMessage(t("mobile.passport.invalid_code"));
@@ -72,10 +77,26 @@ export default function PasseportScreen() {
           await fetchSimulatedRelayPointId(config.apiUrl, token, result.passport.node_id),
         );
       }
+      setTimeline(await fetchTimeline(config.apiUrl, token, result.passport.node_id));
     } else {
       setMessage(t(result.messageKey, result.params));
     }
     setLoading(false);
+  }
+
+  async function loadOlderTimeline() {
+    if (!passport || timeline.length === 0) return;
+    const token = await auth.getAccessToken();
+    if (!token) return;
+    setTimelineLoading(true);
+    const older = await fetchTimeline(
+      config.apiUrl,
+      token,
+      passport.node_id,
+      timeline[timeline.length - 1].at,
+    );
+    setTimeline([...timeline, ...older]);
+    setTimelineLoading(false);
   }
 
   async function sendTestCommand(pointId: string, requestedValue: number) {
@@ -157,6 +178,9 @@ export default function PasseportScreen() {
           relayPointId={relayPointId}
           onSendCommand={sendTestCommand}
           sending={loading}
+          timeline={timeline}
+          onLoadOlderTimeline={loadOlderTimeline}
+          timelineLoading={timelineLoading}
         />
       )}
     </ScrollView>
@@ -168,11 +192,17 @@ function PassportView({
   relayPointId,
   onSendCommand,
   sending,
+  timeline,
+  onLoadOlderTimeline,
+  timelineLoading,
 }: {
   passport: Passport;
   relayPointId: string | null;
   onSendCommand: (pointId: string, requestedValue: number) => void;
   sending: boolean;
+  timeline: TimelineEntry[];
+  onLoadOlderTimeline: () => void;
+  timelineLoading: boolean;
 }) {
   const unit = passport.physical_unit ?? passport.current_unit ?? null;
   // Heures du site dans son fuseau quand il est renseigné, sinon celles de
@@ -282,11 +312,85 @@ function PassportView({
         </Section>
       )}
 
+      <Section title={t("timeline.title")}>
+        <TimelineView
+          entries={timeline}
+          timeZone={timeZone}
+          onLoadOlder={onLoadOlderTimeline}
+          loading={timelineLoading}
+        />
+      </Section>
+
       <Text style={styles.muted}>
         {timeZone
           ? t("mobile.passport.site_time", { timezone: timeZone })
           : t("mobile.passport.device_time")}
       </Text>
+    </View>
+  );
+}
+
+// Catalogue à utiliser pour traduire `status` selon le `field` d'une entrée —
+// même liste que apps/web/src/components/Timeline.tsx, jamais une nouvelle
+// traduction inventée pour la chronologie.
+const TIMELINE_STATUS_CATALOG: Record<string, string> = {
+  lifecycle_state: "lifecycle",
+  handling_status: "handling_status",
+  condition_state: "condition_state",
+  ack_state: "ack_state",
+  certainty: "certainty",
+  intervention_type: "intervention_type",
+};
+
+function timelineStatusLabel(entry: TimelineEntry): string | null {
+  if (!entry.status) return null;
+  if (entry.kind === "work_order" && entry.field === "status") {
+    return t(`work_order.status.${entry.status}`);
+  }
+  const catalog = entry.field ? TIMELINE_STATUS_CATALOG[entry.field] : undefined;
+  return catalog ? t(`${catalog}.${entry.status}`) : entry.status;
+}
+
+/**
+ * Chronologie fusionnée de l'équipement (même donnée et même comportement
+ * que le composant web partagé, apps/web/src/components/Timeline.tsx) :
+ * interventions, ordres de travail, alarmes, constats et changements de
+ * cycle de vie, dans un seul historique ordonné par date.
+ */
+function TimelineView({
+  entries,
+  timeZone,
+  onLoadOlder,
+  loading,
+}: {
+  entries: TimelineEntry[];
+  timeZone: string | null;
+  onLoadOlder: () => void;
+  loading: boolean;
+}) {
+  if (entries.length === 0) {
+    return <Text style={styles.muted}>{t("timeline.empty")}</Text>;
+  }
+  return (
+    <View style={{ gap: 6 }}>
+      {entries.map((entry) => {
+        const status = timelineStatusLabel(entry);
+        return (
+          <Text key={`${entry.kind}-${entry.reference_id}-${entry.at}`}>
+            <Text style={styles.muted}>{formatDateTime(locale, entry.at, timeZone)}</Text>
+            {" — "}
+            <Text style={styles.strong}>{t(`timeline.kind_${entry.kind}`)}</Text>
+            {entry.title && ` — ${entry.title}`}
+            {!entry.title && status && ` — ${status}`}
+            {entry.title && status && ` (${status})`}
+            {entry.changed_by && ` — ${t("timeline.by", { actor: entry.changed_by })}`}
+            {entry.note && `\n${entry.note}`}
+          </Text>
+        );
+      })}
+      {entries.length === 20 && (
+        <Button title={t("timeline.load_older")} onPress={onLoadOlder} disabled={loading} />
+      )}
     </View>
   );
 }
