@@ -168,10 +168,13 @@ export default async function PlanEditorPage({
     const value = liveById.get(placement.id);
     const label = targetLabel(placement);
     const status = t(`plan_editor.marker_status_${placement.status}`);
-    const valueSuffix =
-      value && value.point_value !== null
-        ? ` — ${t("plan_editor.live_value_label")}: ${value.point_value}${value.point_unit ?? ""}`
-        : "";
+    const hasLiveValue = Boolean(value && value.point_value !== null);
+    const valueText = hasLiveValue
+      ? `${value!.point_value}${value!.point_unit ?? ""}`
+      : null;
+    const valueSuffix = valueText
+      ? ` — ${t("plan_editor.live_value_label")}: ${valueText}`
+      : "";
     const warning =
       placement.point_id !== null && pointHasOpenFinding(placement.point_id);
     const warningSuffix = warning
@@ -183,6 +186,7 @@ export default async function PlanEditorPage({
       y: placement.y_ratio,
       color: placement.status === "validated" ? "#16a34a" : "#9ca3af",
       warning,
+      valueLabel: valueText,
       title: `${label} — ${status}${valueSuffix}${warningSuffix}`,
     };
   });

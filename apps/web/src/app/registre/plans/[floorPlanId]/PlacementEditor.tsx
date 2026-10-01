@@ -12,6 +12,7 @@ type Marker = {
   y: number;
   color: string;
   warning: boolean;
+  valueLabel: string | null;
   title: string;
 };
 
@@ -80,17 +81,42 @@ export function PlacementEditor({
               position: "absolute",
               left: `${marker.x * 100}%`,
               top: `${marker.y * 100}%`,
-              width: 12,
-              height: 12,
-              borderRadius: "50%",
-              background: marker.color,
-              border: "2px solid white",
-              boxShadow: marker.warning
-                ? "0 0 0 1px rgba(0,0,0,0.3), 0 0 0 4px #dc2626"
-                : "0 0 0 1px rgba(0,0,0,0.3)",
               transform: "translate(-50%, -50%)",
             }}
-          />
+          >
+            <span
+              style={{
+                display: "block",
+                width: 12,
+                height: 12,
+                borderRadius: "50%",
+                background: marker.color,
+                border: "2px solid white",
+                boxShadow: marker.warning
+                  ? "0 0 0 1px rgba(0,0,0,0.3), 0 0 0 4px #dc2626"
+                  : "0 0 0 1px rgba(0,0,0,0.3)",
+              }}
+            />
+            {marker.valueLabel && (
+              <span
+                style={{
+                  position: "absolute",
+                  left: "50%",
+                  top: "100%",
+                  transform: "translate(-50%, 2px)",
+                  whiteSpace: "nowrap",
+                  fontSize: 11,
+                  lineHeight: 1,
+                  padding: "2px 4px",
+                  borderRadius: 3,
+                  background: "rgba(17, 24, 39, 0.85)",
+                  color: "white",
+                }}
+              >
+                {marker.valueLabel}
+              </span>
+            )}
+          </span>
         ))}
         {ratio && (
           <span
