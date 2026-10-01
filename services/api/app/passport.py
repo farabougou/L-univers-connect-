@@ -101,7 +101,7 @@ def _points(
     négociable 1) — trois notions distinctes, réunies ici, jamais confondues."""
     points = _all(
         connection,
-        f"SELECT id, code, name, point_class, kind, unit, mapping_status FROM points "
+        f"SELECT id, code, name, point_class, kind, value_type, unit, mapping_status FROM points "
         f"WHERE {column} = :id ORDER BY code",
         {"id": node_id},
     )

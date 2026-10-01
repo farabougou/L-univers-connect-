@@ -43,6 +43,7 @@ export type PassportPoint = {
   code: string;
   name: string;
   unit: string;
+  value_type: string;
   mapping_status: string;
   latest: PassportMeasurement | null;
   // État souhaité déclaré (app/desired_states.py) et commandes de test

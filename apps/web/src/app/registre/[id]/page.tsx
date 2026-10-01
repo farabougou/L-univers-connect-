@@ -31,6 +31,7 @@ import {
   computeEnergyResult,
   confirmFinding,
   createBacnetDeviceMapping,
+  createCorrelationRule,
   createDeviceMapping,
   createDivergenceRule,
   createEnergyBaseline,
@@ -54,12 +55,16 @@ import {
 } from "./actions";
 
 type RuleContent = {
-  kind: "threshold" | "desired_state_divergence";
+  kind: "threshold" | "desired_state_divergence" | "simultaneous_heating_cooling";
   severity: string;
   title: string;
   operator?: string;
   threshold?: number;
   tolerance?: number;
+  heating_point_id?: string;
+  cooling_point_id?: string;
+  heating_threshold?: number;
+  cooling_threshold?: number;
 };
 type ConfigVersion = {
   id: string;
@@ -330,6 +335,18 @@ export default async function EquipmentPage({
       }),
     ),
   );
+
+  // Règle FDD à deux points (app/rules.py, CorrelationRule) : portée sur
+  // l'équipement entier, pas sur un point précis, donc récupérée à part de
+  // rulesByPoint ci-dessus.
+  const correlationRuleResponse = await apiFetch(
+    `/configs?config_type=alarm_rule&subject_key=${id}`,
+    accessToken,
+  );
+  const correlationRuleVersions: ConfigVersion[] = correlationRuleResponse.ok
+    ? await correlationRuleResponse.json()
+    : [];
+  const numericPoints = points.filter((point) => point.value_type === "number");
 
   const deviceMappingResponse = await apiFetch(
     `/configs?config_type=modbus_device_mapping&subject_key=${id}`,
@@ -609,6 +626,19 @@ export default async function EquipmentPage({
               />
             </div>
           ))}
+        </section>
+      )}
+
+      {numericPoints.length >= 2 && (
+        <section style={sectionStyle}>
+          <h2 style={sectionTitleStyle}>{t("web.registre.correlation_rule_section_title")}</h2>
+          <CorrelationRuleBlock
+            nodeId={id}
+            numericPoints={numericPoints}
+            versions={correlationRuleVersions}
+            canManage={canManage}
+            t={t}
+          />
         </section>
       )}
 
@@ -1093,6 +1123,150 @@ function RulesBlock({
             </form>
           </details>
         </>
+      )}
+    </div>
+  );
+}
+
+// Règle FDD à deux points (app/rules.py, CorrelationRule) : une seule règle
+// de ce type par équipement (subject_key = l'équipement), jamais une liste
+// par point comme RulesBlock ci-dessus.
+function CorrelationRuleBlock({
+  nodeId,
+  numericPoints,
+  versions,
+  canManage,
+  t,
+}: {
+  nodeId: string;
+  numericPoints: { id: string; code: string; name: string }[];
+  versions: ConfigVersion[];
+  canManage: boolean;
+  t: (key: string, params?: Record<string, string>) => string;
+}) {
+  const pointLabel = (pointId: string) =>
+    numericPoints.find((point) => point.id === pointId)?.code ?? pointId;
+  return (
+    <div>
+      {versions.length === 0 && <p style={mutedStyle}>{t("web.registre.no_rules")}</p>}
+      {versions.map((version) => (
+        <p key={version.id} style={{ margin: 0 }}>
+          {t("web.registre.rule_version", { version: String(version.version) })} —{" "}
+          {t(`config_status.${version.status}`)} — {t(`severity.${version.content.severity}`)} —{" "}
+          {version.content.title}
+          {version.content.heating_point_id && version.content.cooling_point_id && (
+            ` (${t("web.registre.rule_heating_point")}: ${pointLabel(version.content.heating_point_id)} — ${t("web.registre.rule_cooling_point")}: ${pointLabel(version.content.cooling_point_id)})`
+          )}
+          {version.parent_version_id && (
+            <>
+              {" — "}
+              <Link href={`/registre/${nodeId}?diff=${version.id}&against=${version.parent_version_id}`}>
+                {t("web.registre.rule_diff_link")}
+              </Link>
+            </>
+          )}
+          {canManage && version.status === "draft" && (
+            <form action={activateRule} style={{ display: "inline", marginLeft: 8 }}>
+              <input type="hidden" name="version_id" value={version.id} />
+              <input type="hidden" name="node_id" value={nodeId} />
+              <button type="submit">{t("web.registre.activate_rule")}</button>
+            </form>
+          )}
+          {canManage && version.status !== "retired" && (
+            <form action={retireRule} style={{ display: "inline-flex", gap: 4, marginLeft: 8 }}>
+              <input type="hidden" name="version_id" value={version.id} />
+              <input type="hidden" name="node_id" value={nodeId} />
+              <input name="reason" required placeholder={t("web.registre.retire_reason")} />
+              <button type="submit">{t("web.registre.retire_rule")}</button>
+            </form>
+          )}
+          {canManage && version.status === "retired" && (
+            <form action={restoreRule} style={{ display: "inline-flex", gap: 4, marginLeft: 8 }}>
+              <input type="hidden" name="version_id" value={version.id} />
+              <input type="hidden" name="node_id" value={nodeId} />
+              <input name="reason" required placeholder={t("web.registre.restore_reason")} />
+              <button type="submit">{t("web.registre.restore_rule")}</button>
+            </form>
+          )}
+        </p>
+      ))}
+      {canManage && (
+        <details>
+          <summary>{t("web.registre.create_correlation_rule")}</summary>
+          <form action={createCorrelationRule} style={{ maxWidth: 360 }}>
+            <input type="hidden" name="node_id" value={nodeId} />
+            <label style={labelStyle}>
+              {t("web.registre.rule_heating_point")}
+              <select name="heating_point_id" required style={fieldStyle}>
+                {numericPoints.map((point) => (
+                  <option key={point.id} value={point.id}>
+                    {point.code} — {point.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label style={labelStyle}>
+              {t("web.registre.rule_heating_threshold")}
+              <input
+                name="heating_threshold"
+                type="number"
+                step="any"
+                min="0"
+                defaultValue="0"
+                style={fieldStyle}
+              />
+            </label>
+            <label style={labelStyle}>
+              {t("web.registre.rule_cooling_point")}
+              <select name="cooling_point_id" required style={fieldStyle}>
+                {numericPoints.map((point) => (
+                  <option key={point.id} value={point.id}>
+                    {point.code} — {point.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label style={labelStyle}>
+              {t("web.registre.rule_cooling_threshold")}
+              <input
+                name="cooling_threshold"
+                type="number"
+                step="any"
+                min="0"
+                defaultValue="0"
+                style={fieldStyle}
+              />
+            </label>
+            <label>
+              {t("web.registre.rule_title")}
+              <input name="title" required style={fieldStyle} />
+            </label>
+            <label style={labelStyle}>
+              {t("web.registre.rule_severity")}
+              <select name="severity" defaultValue="warning" style={fieldStyle}>
+                {["info", "warning", "major", "critical"].map((severity) => (
+                  <option key={severity} value={severity}>
+                    {t(`severity.${severity}`)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label style={labelStyle}>
+              {t("web.registre.rule_recommended_action")}
+              <input name="recommended_action" style={fieldStyle} />
+            </label>
+            <label style={labelStyle}>
+              <input name="create_work_order" type="checkbox" /> {t("web.registre.rule_create_work_order")}
+            </label>
+            <label style={labelStyle}>
+              {t("web.registre.rule_reason")}
+              <input name="reason" required style={fieldStyle} />
+            </label>
+            <button type="submit" style={submitStyle}>
+              {t("web.registre.submit")}
+            </button>
+          </form>
+        </details>
       )}
     </div>
   );

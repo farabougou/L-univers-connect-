@@ -164,6 +164,42 @@ export async function createDivergenceRule(formData: FormData) {
   revalidatePath(`/registre/${nodeId}`);
 }
 
+/**
+ * Règle FDD à deux points (app/rules.py, CorrelationRule) : une seule par
+ * équipement (subject_key = l'équipement, pas un point) — chauffage et
+ * refroidissement actifs en même temps.
+ */
+export async function createCorrelationRule(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+  const recommendedAction = formData.get("recommended_action");
+
+  const response = await apiFetch("/configs", accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      config_type: "alarm_rule",
+      subject_key: nodeId,
+      reason: formData.get("reason"),
+      content: {
+        kind: "simultaneous_heating_cooling",
+        heating_point_id: formData.get("heating_point_id"),
+        cooling_point_id: formData.get("cooling_point_id"),
+        severity: formData.get("severity"),
+        title: formData.get("title"),
+        recommended_action: recommendedAction || null,
+        create_work_order: formData.get("create_work_order") === "on",
+        heating_threshold: Number(formData.get("heating_threshold")),
+        cooling_threshold: Number(formData.get("cooling_threshold")),
+      },
+    }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  revalidatePath(`/registre/${nodeId}`);
+}
+
 export async function activateRule(formData: FormData) {
   const accessToken = await requireAccessToken();
   const nodeId = String(formData.get("node_id"));
