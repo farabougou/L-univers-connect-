@@ -80,7 +80,14 @@ def test_chaque_profil_est_un_appareil_bacnet_reel_et_complet(profile):
 
 
 def test_groupe_electrogene_tension_reste_a_revoir():
-    address = _ADDRESSES["groupe_electrogene"]
+    # Port dédié, distinct de _ADDRESSES["groupe_electrogene"] : ce test
+    # tourne juste après test_chaque_profil_est_un_appareil_bacnet_reel_et_complet
+    # (même profil), qui vient de fermer un appareil simulé sur ce même port.
+    # Réutiliser le port expose exactement le risque que le commentaire de
+    # _ADDRESSES dit vouloir éviter — observé en CI (minuterie dépassée en
+    # lisant l'inventaire) alors que localement le port se libère toujours
+    # assez vite pour ne jamais le révéler.
+    address = "127.0.0.1:47846"
     lab = BacnetLab(address, device_instance=5200, profile="groupe_electrogene")
     lab.start()
     try:
