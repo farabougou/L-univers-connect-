@@ -39,10 +39,10 @@ from types import FrameType
 import httpx
 
 from app.connectors.edge_client import EdgeApiClient, PrivateKeyCredential
+from app.connectors.executors import resolve_executor
 from app.connectors.modbus import ModbusReadError, find_register_by_name, read_modbus_points
 from app.connectors.offline_buffer import BufferedReading, OfflineBuffer
 from app.connectors.sdm120 import SDM120_POINTS
-from app.connectors.simulated_actuator import write_modbus_coil
 from app.connectors.simulated_relay import SIMULATED_RELAY_POINTS
 from app.observability import configure_logging
 
@@ -90,11 +90,13 @@ def _execute_pending_commands(
     equipment_id: uuid.UUID,
     host: str,
     port: int,
+    device_type: str,
     mappings: list[tuple[uuid.UUID, object]],
 ) -> None:
     """Récupère les commandes en attente pour cet équipement et les exécute
-    une à une : écriture de la bobine, relecture, accusé de réception. Une
-    commande dont l'exécution échoue n'empêche pas les suivantes."""
+    une à une via l'exécuteur résolu pour ce device_type (ADR 017 §4.1) :
+    écriture, relecture, accusé de réception. Une commande dont l'exécution
+    échoue n'empêche pas les suivantes."""
     try:
         pending_commands = api.get_pending_commands(equipment_id)
     except httpx.HTTPError as exc:
@@ -103,6 +105,7 @@ def _execute_pending_commands(
         )
         return
 
+    executor = resolve_executor(device_type)
     register_by_point = dict(mappings)
     for command in pending_commands:
         point_id = uuid.UUID(command["point_id"])
@@ -113,13 +116,18 @@ def _execute_pending_commands(
         if register is None:
             failure_reason = "COMMAND_POINT_NOT_IN_CONFIG"
         else:
-            try:
-                write_modbus_coil(host, port, register.address, bool(command["requested_value"]))
-                actual_value = read_modbus_points(host, port, [register])[register.name]
-                success = True
-            except ModbusReadError as exc:
-                failure_reason = "MODBUS_WRITE_ERROR"
-                logger.error(f"exécution de la commande {command['id']} impossible : {exc}")
+            result = executor.execute(
+                host=host, port=port, register=register, requested_value=command["requested_value"]
+            )
+            success, actual_value, failure_reason = (
+                result.success,
+                result.actual_value,
+                result.failure_reason,
+            )
+            if not success:
+                logger.error(
+                    f"exécution de la commande {command['id']} impossible : {failure_reason}"
+                )
 
         try:
             api.acknowledge_command(
@@ -173,7 +181,12 @@ def run(
             host, port, device_type, mappings = resolved
             if device_type in COMMANDABLE_DEVICE_TYPES:
                 _execute_pending_commands(
-                    api, equipment_id=equipment_id, host=host, port=port, mappings=mappings
+                    api,
+                    equipment_id=equipment_id,
+                    host=host,
+                    port=port,
+                    device_type=device_type,
+                    mappings=mappings,
                 )
             try:
                 values = read_modbus_points(host, port, [register for _, register in mappings])

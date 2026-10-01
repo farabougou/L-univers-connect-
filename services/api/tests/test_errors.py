@@ -212,10 +212,18 @@ def test_every_code_used_in_the_code_has_a_message_and_none_is_orphaned() -> Non
     error_codes = set(load_catalog("fr")["codes"])
     finding_codes = set(load_catalog("fr", "findings")["titles"])
     bacnet_discovery_reason_codes = set(load_catalog("fr", "bacnet_discovery")["reasons"])
+    # Catalogue à part pour `commands.failure_reason` (apps/web, apps/mobile :
+    # `t(\`command_failure_reason.${failure_reason}\`)`) — un code qui
+    # n'apparaît que là (ex. MODBUS_WRITE_ERROR, produit par
+    # app.connectors.executors) est déjà traduit, pas un code orphelin au
+    # sens du catalogue générique d'erreurs ci-dessus.
+    command_failure_reason_codes = set(load_catalog("fr", "ui")["command_failure_reason"])
     # Chaînes au même format qui ne sont pas des codes de message.
     used = _codes_used_in_code() - {"I18N_DIR"} - EVENT_TYPES
 
-    known = error_codes | finding_codes | bacnet_discovery_reason_codes
+    known = (
+        error_codes | finding_codes | bacnet_discovery_reason_codes | command_failure_reason_codes
+    )
     assert used - known == set(), "codes sans message"
     assert error_codes - used == set(), "messages d'erreur jamais utilisés"
     assert finding_codes - used == set(), "messages de constat jamais utilisés"
