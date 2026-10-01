@@ -8,6 +8,7 @@ import {
   headerCellStyle,
   labelStyle,
   submitStyle,
+  tableScrollStyle,
 } from "@/lib/formStyles";
 import { errorMessage, getLocale, getTranslator } from "@/lib/i18n";
 import { type Me, canManage as computeCanManage } from "@/lib/roles";
@@ -32,7 +33,12 @@ import {
   uploadIfcImport,
 } from "./actions";
 
-type Site = { id: string; name: string; timezone: string | null; archived_at: string | null };
+type Site = {
+  id: string;
+  name: string;
+  timezone: string | null;
+  archived_at: string | null;
+};
 type EquipmentType = { code: string; label: string };
 type FunctionalLocation = {
   id: string;
@@ -91,9 +97,15 @@ type Provider = {
 // types stables, comme les priorités d'ordre de travail plus bas.
 const SPACE_TYPES = ["building", "floor", "zone", "room", "outdoor_area"];
 
-function creationError(translator: Translator, code: string | undefined): string | null {
+function creationError(
+  translator: Translator,
+  code: string | undefined,
+): string | null {
   if (!code) return null;
-  return errorMessage(translator.locale, code) ?? translator.t("web.registre.creation_failed");
+  return (
+    errorMessage(translator.locale, code) ??
+    translator.t("web.registre.creation_failed")
+  );
 }
 
 export default async function RegistrePage({
@@ -129,14 +141,19 @@ export default async function RegistrePage({
     );
   }
 
-  const [sitesResponse, locationsResponse, typesResponse, spacesResponse, providersResponse] =
-    await Promise.all([
-      apiFetch("/sites?include_archived=true", accessToken),
-      apiFetch("/functional-locations?include_archived=true", accessToken),
-      apiFetch("/equipment-types", accessToken),
-      apiFetch("/spaces", accessToken),
-      apiFetch("/providers", accessToken),
-    ]);
+  const [
+    sitesResponse,
+    locationsResponse,
+    typesResponse,
+    spacesResponse,
+    providersResponse,
+  ] = await Promise.all([
+    apiFetch("/sites?include_archived=true", accessToken),
+    apiFetch("/functional-locations?include_archived=true", accessToken),
+    apiFetch("/equipment-types", accessToken),
+    apiFetch("/spaces", accessToken),
+    apiFetch("/providers", accessToken),
+  ]);
   const allSites: Site[] = sitesResponse.ok ? await sitesResponse.json() : [];
   const allLocations: FunctionalLocation[] = locationsResponse.ok
     ? await locationsResponse.json()
@@ -147,16 +164,23 @@ export default async function RegistrePage({
   const sites = allSites.filter((site) => !site.archived_at);
   const archivedSites = allSites.filter((site) => site.archived_at);
   const locations = allLocations.filter((location) => !location.archived_at);
-  const archivedLocations = allLocations.filter((location) => location.archived_at);
+  const archivedLocations = allLocations.filter(
+    (location) => location.archived_at,
+  );
   const equipmentTypes: EquipmentType[] = typesResponse.ok
     ? (await typesResponse.json()).types
     : [];
   const spaces: Space[] = spacesResponse.ok ? await spacesResponse.json() : [];
-  const providers: Provider[] = providersResponse.ok ? await providersResponse.json() : [];
-  const siteName = (siteId: string) => allSites.find((site) => site.id === siteId)?.name ?? siteId;
+  const providers: Provider[] = providersResponse.ok
+    ? await providersResponse.json()
+    : [];
+  const siteName = (siteId: string) =>
+    allSites.find((site) => site.id === siteId)?.name ?? siteId;
   const spaceLabel = (spaceId: string) => {
     const space = spaces.find((candidate) => candidate.id === spaceId);
-    return space ? `${t(`space_type.${space.space_type}`)} — ${space.name}` : spaceId;
+    return space
+      ? `${t(`space_type.${space.space_type}`)} — ${space.name}`
+      : spaceId;
   };
 
   let tagSvg: string | null = null;
@@ -166,7 +190,10 @@ export default async function RegistrePage({
 
   let floorPlans: FloorPlan[] = [];
   if (params.space) {
-    const floorPlansResponse = await apiFetch(`/spaces/${params.space}/floor-plans`, accessToken);
+    const floorPlansResponse = await apiFetch(
+      `/spaces/${params.space}/floor-plans`,
+      accessToken,
+    );
     floorPlans = floorPlansResponse.ok ? await floorPlansResponse.json() : [];
   }
 
@@ -184,9 +211,13 @@ export default async function RegistrePage({
       `/ifc-imports/${params.import_batch}/proposals`,
       accessToken,
     );
-    ifcImportProposals = proposalsResponse.ok ? await proposalsResponse.json() : [];
+    ifcImportProposals = proposalsResponse.ok
+      ? await proposalsResponse.json()
+      : [];
   }
-  const selectedImportBatch = ifcImportBatches.find((batch) => batch.id === params.import_batch);
+  const selectedImportBatch = ifcImportBatches.find(
+    (batch) => batch.id === params.import_batch,
+  );
 
   return (
     <main style={{ maxWidth: 720, margin: "40px auto", padding: "0 16px" }}>
@@ -196,9 +227,16 @@ export default async function RegistrePage({
 
       {params.tag && tagSvg && (
         <section
-          style={{ border: "1px solid #2563eb", borderRadius: 8, padding: 16, margin: "16px 0" }}
+          style={{
+            border: "1px solid #2563eb",
+            borderRadius: 8,
+            padding: 16,
+            margin: "16px 0",
+          }}
         >
-          <h2>{t("web.registre.tag_banner_title", { name: params.label ?? "" })}</h2>
+          <h2>
+            {t("web.registre.tag_banner_title", { name: params.label ?? "" })}
+          </h2>
           <div dangerouslySetInnerHTML={{ __html: tagSvg }} />
           <p>
             {t("web.registre.tag_code_label")} : <strong>{params.tag}</strong>
@@ -212,57 +250,103 @@ export default async function RegistrePage({
       {sites.length === 0 ? (
         <p>{t("web.registre.no_sites")}</p>
       ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 24 }}>
-          <thead>
-            <tr>
-              <th style={headerCellStyle}>{t("web.registre.site_name")}</th>
-              <th style={headerCellStyle}>{t("web.registre.site_timezone_label")}</th>
-              <th style={headerCellStyle} />
-            </tr>
-          </thead>
-          <tbody>
-            {sites.map((site) => (
-              <tr key={site.id}>
-                <td style={cellStyle}>{site.name}</td>
-                <td style={cellStyle}>
-                  <form action={updateSiteTimezone} style={{ display: "flex", gap: 4 }}>
-                    <input type="hidden" name="site_id" value={site.id} />
-                    <input name="timezone" defaultValue={site.timezone ?? ""} required />
-                    <button type="submit">{t("web.registre.edit_timezone")}</button>
-                  </form>
-                </td>
-                <td style={cellStyle}>
-                  <form action={archiveSite}>
-                    <input type="hidden" name="site_id" value={site.id} />
-                    <button type="submit">{t("web.registre.archive")}</button>
-                  </form>
-                </td>
+        <div style={tableScrollStyle}>
+          <table
+            className="responsive-table"
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              marginBottom: 24,
+            }}
+          >
+            <thead>
+              <tr>
+                <th style={headerCellStyle}>{t("web.registre.site_name")}</th>
+                <th style={headerCellStyle}>
+                  {t("web.registre.site_timezone_label")}
+                </th>
+                <th style={headerCellStyle} />
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-
-      {archivedSites.length > 0 && (
-        <details style={{ marginBottom: 24 }}>
-          <summary style={{ color: "#6b7280", cursor: "pointer" }}>
-            {t("web.registre.archived_sites_title", { count: archivedSites.length })}
-          </summary>
-          <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8 }}>
+            </thead>
             <tbody>
-              {archivedSites.map((site) => (
+              {sites.map((site) => (
                 <tr key={site.id}>
-                  <td style={{ ...cellStyle, color: "#6b7280" }}>{site.name}</td>
-                  <td style={cellStyle}>
-                    <form action={unarchiveSite}>
+                  <td
+                    data-label={t("web.registre.site_name")}
+                    style={cellStyle}
+                  >
+                    {site.name}
+                  </td>
+                  <td
+                    data-label={t("web.registre.site_timezone_label")}
+                    style={cellStyle}
+                  >
+                    <form
+                      action={updateSiteTimezone}
+                      style={{ display: "flex", gap: 4 }}
+                    >
                       <input type="hidden" name="site_id" value={site.id} />
-                      <button type="submit">{t("web.registre.unarchive")}</button>
+                      <input
+                        name="timezone"
+                        defaultValue={site.timezone ?? ""}
+                        required
+                      />
+                      <button type="submit">
+                        {t("web.registre.edit_timezone")}
+                      </button>
+                    </form>
+                  </td>
+                  <td style={cellStyle}>
+                    <form action={archiveSite}>
+                      <input type="hidden" name="site_id" value={site.id} />
+                      <button type="submit">{t("web.registre.archive")}</button>
                     </form>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {archivedSites.length > 0 && (
+        <details style={{ marginBottom: 24 }}>
+          <summary style={{ color: "#6b7280", cursor: "pointer" }}>
+            {t("web.registre.archived_sites_title", {
+              count: archivedSites.length,
+            })}
+          </summary>
+          <div style={tableScrollStyle}>
+            <table
+              className="responsive-table"
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                marginTop: 8,
+              }}
+            >
+              <tbody>
+                {archivedSites.map((site) => (
+                  <tr key={site.id}>
+                    <td
+                      data-label={t("web.registre.site_name")}
+                      style={{ ...cellStyle, color: "#6b7280" }}
+                    >
+                      {site.name}
+                    </td>
+                    <td style={cellStyle}>
+                      <form action={unarchiveSite}>
+                        <input type="hidden" name="site_id" value={site.id} />
+                        <button type="submit">
+                          {t("web.registre.unarchive")}
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </details>
       )}
 
@@ -290,38 +374,78 @@ export default async function RegistrePage({
       {spaces.length === 0 ? (
         <p>{t("web.registre.no_spaces")}</p>
       ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 24 }}>
-          <thead>
-            <tr>
-              <th style={headerCellStyle}>{t("web.registre.space_type")}</th>
-              <th style={headerCellStyle}>{t("web.registre.space_name")}</th>
-              <th style={headerCellStyle}>{t("web.registre.equipment_site")}</th>
-              <th style={headerCellStyle}>{t("web.registre.space_parent")}</th>
-              <th style={headerCellStyle} />
-            </tr>
-          </thead>
-          <tbody>
-            {spaces.map((space) => (
-              <tr key={space.id}>
-                <td style={cellStyle}>{t(`space_type.${space.space_type}`)}</td>
-                <td style={cellStyle}>
-                  {space.code} — {space.name}
-                </td>
-                <td style={cellStyle}>{siteName(space.site_id)}</td>
-                <td style={cellStyle}>
-                  {space.parent_id ? spaceLabel(space.parent_id) : t("web.registre.space_parent_none")}
-                </td>
-                <td style={cellStyle}>
-                  <form action={closeSpace} style={{ display: "flex", gap: 4 }}>
-                    <input type="hidden" name="space_id" value={space.id} />
-                    <input name="reason" required placeholder={t("web.registre.close_space_reason")} />
-                    <button type="submit">{t("web.registre.close_space")}</button>
-                  </form>
-                </td>
+        <div style={tableScrollStyle}>
+          <table
+            className="responsive-table"
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              marginBottom: 24,
+            }}
+          >
+            <thead>
+              <tr>
+                <th style={headerCellStyle}>{t("web.registre.space_type")}</th>
+                <th style={headerCellStyle}>{t("web.registre.space_name")}</th>
+                <th style={headerCellStyle}>
+                  {t("web.registre.equipment_site")}
+                </th>
+                <th style={headerCellStyle}>
+                  {t("web.registre.space_parent")}
+                </th>
+                <th style={headerCellStyle} />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {spaces.map((space) => (
+                <tr key={space.id}>
+                  <td
+                    data-label={t("web.registre.space_type")}
+                    style={cellStyle}
+                  >
+                    {t(`space_type.${space.space_type}`)}
+                  </td>
+                  <td
+                    data-label={t("web.registre.space_name")}
+                    style={cellStyle}
+                  >
+                    {space.code} — {space.name}
+                  </td>
+                  <td
+                    data-label={t("web.registre.equipment_site")}
+                    style={cellStyle}
+                  >
+                    {siteName(space.site_id)}
+                  </td>
+                  <td
+                    data-label={t("web.registre.space_parent")}
+                    style={cellStyle}
+                  >
+                    {space.parent_id
+                      ? spaceLabel(space.parent_id)
+                      : t("web.registre.space_parent_none")}
+                  </td>
+                  <td style={cellStyle}>
+                    <form
+                      action={closeSpace}
+                      style={{ display: "flex", gap: 4 }}
+                    >
+                      <input type="hidden" name="space_id" value={space.id} />
+                      <input
+                        name="reason"
+                        required
+                        placeholder={t("web.registre.close_space_reason")}
+                      />
+                      <button type="submit">
+                        {t("web.registre.close_space")}
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       <h3>{t("web.registre.create_space_title")}</h3>
@@ -355,7 +479,8 @@ export default async function RegistrePage({
               <option value="">{t("web.registre.space_parent_none")}</option>
               {spaces.map((space) => (
                 <option key={space.id} value={space.id}>
-                  {siteName(space.site_id)} — {t(`space_type.${space.space_type}`)} — {space.name}
+                  {siteName(space.site_id)} —{" "}
+                  {t(`space_type.${space.space_type}`)} — {space.name}
                 </option>
               ))}
             </select>
@@ -375,16 +500,24 @@ export default async function RegistrePage({
       )}
 
       <h2 style={{ marginTop: 40 }}>{t("web.registre.floor_plans_title")}</h2>
-      <form method="get" style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+      <form
+        method="get"
+        style={{ display: "flex", gap: 8, alignItems: "flex-end" }}
+      >
         <label style={{ flex: 1 }}>
           {t("web.registre.floor_plans_select_space")}
-          <select name="space" defaultValue={params.space ?? ""} style={fieldStyle}>
+          <select
+            name="space"
+            defaultValue={params.space ?? ""}
+            style={fieldStyle}
+          >
             <option value="" disabled>
               {t("web.registre.floor_plans_select_space")}
             </option>
             {spaces.map((space) => (
               <option key={space.id} value={space.id}>
-                {siteName(space.site_id)} — {t(`space_type.${space.space_type}`)} — {space.name}
+                {siteName(space.site_id)} —{" "}
+                {t(`space_type.${space.space_type}`)} — {space.name}
               </option>
             ))}
           </select>
@@ -396,19 +529,26 @@ export default async function RegistrePage({
 
       {params.space && (
         <section style={{ marginTop: 16 }}>
-          <h3>{t("web.registre.floor_plans_for", { name: spaceLabel(params.space) })}</h3>
+          <h3>
+            {t("web.registre.floor_plans_for", {
+              name: spaceLabel(params.space),
+            })}
+          </h3>
           {floorPlans.length === 0 ? (
             <p>{t("web.registre.floor_plans_none")}</p>
           ) : (
             <ul>
               {floorPlans.map((plan) => (
                 <li key={plan.id}>
-                  {t("web.registre.floor_plans_version", { version: plan.version })} —{" "}
-                  {plan.filename} —{" "}
+                  {t("web.registre.floor_plans_version", {
+                    version: plan.version,
+                  })}{" "}
+                  — {plan.filename} —{" "}
                   <a href={plan.download_url} target="_blank" rel="noreferrer">
                     {t("web.registre.floor_plans_view_link")}
                   </a>
-                  {(plan.content_type === "image/png" || plan.content_type === "image/jpeg") && (
+                  {(plan.content_type === "image/png" ||
+                    plan.content_type === "image/jpeg") && (
                     <>
                       {" — "}
                       <Link href={`/registre/plans/${plan.id}`}>
@@ -449,10 +589,17 @@ export default async function RegistrePage({
       )}
 
       <h2 style={{ marginTop: 40 }}>{t("web.registre.ifc_import_title")}</h2>
-      <form method="get" style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+      <form
+        method="get"
+        style={{ display: "flex", gap: 8, alignItems: "flex-end" }}
+      >
         <label style={{ flex: 1 }}>
           {t("web.registre.ifc_import_select_site")}
-          <select name="import_site" defaultValue={params.import_site ?? ""} style={fieldStyle}>
+          <select
+            name="import_site"
+            defaultValue={params.import_site ?? ""}
+            style={fieldStyle}
+          >
             <option value="" disabled>
               {t("web.registre.ifc_import_select_site")}
             </option>
@@ -470,7 +617,11 @@ export default async function RegistrePage({
 
       {params.import_site && (
         <section style={{ marginTop: 16 }}>
-          <h3>{t("web.registre.ifc_import_for", { name: siteName(params.import_site) })}</h3>
+          <h3>
+            {t("web.registre.ifc_import_for", {
+              name: siteName(params.import_site),
+            })}
+          </h3>
           {ifcImportBatches.length === 0 ? (
             <p>{t("web.registre.ifc_import_none")}</p>
           ) : (
@@ -498,7 +649,9 @@ export default async function RegistrePage({
                   {batch.status === "ready" && (
                     <>
                       {" — "}
-                      <Link href={`/registre?import_site=${params.import_site}&import_batch=${batch.id}`}>
+                      <Link
+                        href={`/registre?import_site=${params.import_site}&import_batch=${batch.id}`}
+                      >
                         {t("web.registre.ifc_import_view_proposals")}
                       </Link>
                     </>
@@ -513,7 +666,13 @@ export default async function RegistrePage({
             <input type="hidden" name="site_id" value={params.import_site} />
             <label style={labelStyle}>
               {t("web.registre.ifc_import_file_label")}
-              <input type="file" name="file" accept=".ifc" required style={fieldStyle} />
+              <input
+                type="file"
+                name="file"
+                accept=".ifc"
+                required
+                style={fieldStyle}
+              />
             </label>
             <button type="submit" style={submitStyle}>
               {t("web.registre.submit")}
@@ -530,56 +689,106 @@ export default async function RegistrePage({
               {ifcImportProposals.length === 0 ? (
                 <p>{t("web.registre.ifc_import_proposals_none")}</p>
               ) : (
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                  <thead>
-                    <tr>
-                      <th style={headerCellStyle}>{t("web.dashboard.name")}</th>
-                      <th style={headerCellStyle} />
-                      <th style={headerCellStyle} />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ifcImportProposals.map((proposal) => (
-                      <tr key={proposal.id}>
-                        <td style={cellStyle}>
-                          {t(`web.registre.ifc_import_proposal_type_${proposal.proposal_type}`)} —{" "}
-                          {proposal.name} ({proposal.ifc_class})
-                        </td>
-                        <td style={cellStyle}>
-                          {proposal.status === "proposed" ? (
-                            <form action={acceptIfcImportProposal} style={{ display: "inline" }}>
-                              <input type="hidden" name="proposal_id" value={proposal.id} />
-                              <input type="hidden" name="site_id" value={params.import_site} />
-                              <input type="hidden" name="batch_id" value={selectedImportBatch.id} />
-                              <button type="submit">{t("web.registre.ifc_import_accept")}</button>
-                            </form>
-                          ) : proposal.status === "rejected" ? (
-                            t("web.registre.ifc_import_rejected_reason", {
-                              reason: proposal.rejection_reason ?? "",
-                            })
-                          ) : (
-                            t("web.registre.ifc_import_proposal_status_accepted")
-                          )}
-                        </td>
-                        <td style={cellStyle}>
-                          {proposal.status === "proposed" && (
-                            <form action={rejectIfcImportProposal} style={{ display: "flex", gap: 4 }}>
-                              <input type="hidden" name="proposal_id" value={proposal.id} />
-                              <input type="hidden" name="site_id" value={params.import_site} />
-                              <input type="hidden" name="batch_id" value={selectedImportBatch.id} />
-                              <input
-                                name="reason"
-                                required
-                                placeholder={t("web.registre.ifc_import_reject_reason_label")}
-                              />
-                              <button type="submit">{t("web.registre.ifc_import_reject")}</button>
-                            </form>
-                          )}
-                        </td>
+                <div style={tableScrollStyle}>
+                  <table
+                    className="responsive-table"
+                    style={{ width: "100%", borderCollapse: "collapse" }}
+                  >
+                    <thead>
+                      <tr>
+                        <th style={headerCellStyle}>
+                          {t("web.dashboard.name")}
+                        </th>
+                        <th style={headerCellStyle} />
+                        <th style={headerCellStyle} />
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {ifcImportProposals.map((proposal) => (
+                        <tr key={proposal.id}>
+                          <td
+                            data-label={t("web.dashboard.name")}
+                            style={cellStyle}
+                          >
+                            {t(
+                              `web.registre.ifc_import_proposal_type_${proposal.proposal_type}`,
+                            )}{" "}
+                            — {proposal.name} ({proposal.ifc_class})
+                          </td>
+                          <td style={cellStyle}>
+                            {proposal.status === "proposed" ? (
+                              <form
+                                action={acceptIfcImportProposal}
+                                style={{ display: "inline" }}
+                              >
+                                <input
+                                  type="hidden"
+                                  name="proposal_id"
+                                  value={proposal.id}
+                                />
+                                <input
+                                  type="hidden"
+                                  name="site_id"
+                                  value={params.import_site}
+                                />
+                                <input
+                                  type="hidden"
+                                  name="batch_id"
+                                  value={selectedImportBatch.id}
+                                />
+                                <button type="submit">
+                                  {t("web.registre.ifc_import_accept")}
+                                </button>
+                              </form>
+                            ) : proposal.status === "rejected" ? (
+                              t("web.registre.ifc_import_rejected_reason", {
+                                reason: proposal.rejection_reason ?? "",
+                              })
+                            ) : (
+                              t(
+                                "web.registre.ifc_import_proposal_status_accepted",
+                              )
+                            )}
+                          </td>
+                          <td style={cellStyle}>
+                            {proposal.status === "proposed" && (
+                              <form
+                                action={rejectIfcImportProposal}
+                                style={{ display: "flex", gap: 4 }}
+                              >
+                                <input
+                                  type="hidden"
+                                  name="proposal_id"
+                                  value={proposal.id}
+                                />
+                                <input
+                                  type="hidden"
+                                  name="site_id"
+                                  value={params.import_site}
+                                />
+                                <input
+                                  type="hidden"
+                                  name="batch_id"
+                                  value={selectedImportBatch.id}
+                                />
+                                <input
+                                  name="reason"
+                                  required
+                                  placeholder={t(
+                                    "web.registre.ifc_import_reject_reason_label",
+                                  )}
+                                />
+                                <button type="submit">
+                                  {t("web.registre.ifc_import_reject")}
+                                </button>
+                              </form>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </section>
           )}
@@ -590,66 +799,112 @@ export default async function RegistrePage({
       {providers.length === 0 ? (
         <p>{t("web.registre.no_providers")}</p>
       ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 24 }}>
-          <thead>
-            <tr>
-              <th style={headerCellStyle}>{t("web.registre.provider_name")}</th>
-              <th style={headerCellStyle}>{t("web.registre.provider_contact_name")}</th>
-              <th style={headerCellStyle}>{t("web.registre.provider_contact_email")}</th>
-              <th style={headerCellStyle}>{t("web.registre.provider_contact_phone")}</th>
-              <th style={headerCellStyle} />
-            </tr>
-          </thead>
-          <tbody>
-            {providers.map((provider) => (
-              <tr key={provider.id}>
-                <td style={cellStyle}>{provider.name}</td>
-                <td style={cellStyle}>{provider.contact_name ?? ""}</td>
-                <td style={cellStyle}>{provider.contact_email ?? ""}</td>
-                <td style={cellStyle}>{provider.contact_phone ?? ""}</td>
-                <td style={cellStyle}>
-                  <details>
-                    <summary>{t("web.registre.edit_provider")}</summary>
-                    <form action={updateProvider} style={{ maxWidth: 300 }}>
-                      <input type="hidden" name="provider_id" value={provider.id} />
-                      <label>
-                        {t("web.registre.provider_name")}
-                        <input name="name" defaultValue={provider.name} required style={fieldStyle} />
-                      </label>
-                      <label style={labelStyle}>
-                        {t("web.registre.provider_contact_name")}
-                        <input
-                          name="contact_name"
-                          defaultValue={provider.contact_name ?? ""}
-                          style={fieldStyle}
-                        />
-                      </label>
-                      <label style={labelStyle}>
-                        {t("web.registre.provider_contact_email")}
-                        <input
-                          name="contact_email"
-                          defaultValue={provider.contact_email ?? ""}
-                          style={fieldStyle}
-                        />
-                      </label>
-                      <label style={labelStyle}>
-                        {t("web.registre.provider_contact_phone")}
-                        <input
-                          name="contact_phone"
-                          defaultValue={provider.contact_phone ?? ""}
-                          style={fieldStyle}
-                        />
-                      </label>
-                      <button type="submit" style={submitStyle}>
-                        {t("web.registre.submit")}
-                      </button>
-                    </form>
-                  </details>
-                </td>
+        <div style={tableScrollStyle}>
+          <table
+            className="responsive-table"
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              marginBottom: 24,
+            }}
+          >
+            <thead>
+              <tr>
+                <th style={headerCellStyle}>
+                  {t("web.registre.provider_name")}
+                </th>
+                <th style={headerCellStyle}>
+                  {t("web.registre.provider_contact_name")}
+                </th>
+                <th style={headerCellStyle}>
+                  {t("web.registre.provider_contact_email")}
+                </th>
+                <th style={headerCellStyle}>
+                  {t("web.registre.provider_contact_phone")}
+                </th>
+                <th style={headerCellStyle} />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {providers.map((provider) => (
+                <tr key={provider.id}>
+                  <td
+                    data-label={t("web.registre.provider_name")}
+                    style={cellStyle}
+                  >
+                    {provider.name}
+                  </td>
+                  <td
+                    data-label={t("web.registre.provider_contact_name")}
+                    style={cellStyle}
+                  >
+                    {provider.contact_name ?? ""}
+                  </td>
+                  <td
+                    data-label={t("web.registre.provider_contact_email")}
+                    style={cellStyle}
+                  >
+                    {provider.contact_email ?? ""}
+                  </td>
+                  <td
+                    data-label={t("web.registre.provider_contact_phone")}
+                    style={cellStyle}
+                  >
+                    {provider.contact_phone ?? ""}
+                  </td>
+                  <td style={cellStyle}>
+                    <details>
+                      <summary>{t("web.registre.edit_provider")}</summary>
+                      <form action={updateProvider} style={{ maxWidth: 300 }}>
+                        <input
+                          type="hidden"
+                          name="provider_id"
+                          value={provider.id}
+                        />
+                        <label>
+                          {t("web.registre.provider_name")}
+                          <input
+                            name="name"
+                            defaultValue={provider.name}
+                            required
+                            style={fieldStyle}
+                          />
+                        </label>
+                        <label style={labelStyle}>
+                          {t("web.registre.provider_contact_name")}
+                          <input
+                            name="contact_name"
+                            defaultValue={provider.contact_name ?? ""}
+                            style={fieldStyle}
+                          />
+                        </label>
+                        <label style={labelStyle}>
+                          {t("web.registre.provider_contact_email")}
+                          <input
+                            name="contact_email"
+                            defaultValue={provider.contact_email ?? ""}
+                            style={fieldStyle}
+                          />
+                        </label>
+                        <label style={labelStyle}>
+                          {t("web.registre.provider_contact_phone")}
+                          <input
+                            name="contact_phone"
+                            defaultValue={provider.contact_phone ?? ""}
+                            style={fieldStyle}
+                          />
+                        </label>
+                        <button type="submit" style={submitStyle}>
+                          {t("web.registre.submit")}
+                        </button>
+                      </form>
+                    </details>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       <h3>{t("web.registre.create_provider_title")}</h3>
@@ -679,66 +934,121 @@ export default async function RegistrePage({
       {locations.length === 0 ? (
         <p>{t("web.registre.no_equipment")}</p>
       ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 24 }}>
-          <thead>
-            <tr>
-              <th style={headerCellStyle}>{t("web.dashboard.code")}</th>
-              <th style={headerCellStyle}>{t("web.dashboard.name")}</th>
-              <th style={headerCellStyle}>{t("web.registre.equipment_site")}</th>
-              <th style={headerCellStyle} />
-              <th style={headerCellStyle} />
-            </tr>
-          </thead>
-          <tbody>
-            {locations.map((location) => (
-              <tr key={location.id}>
-                <td style={cellStyle}>
-                  <Link href={`/registre/${location.id}`}>{location.code}</Link>
-                </td>
-                <td style={cellStyle}>{location.name}</td>
-                <td style={cellStyle}>{siteName(location.site_id)}</td>
-                <td style={cellStyle}>
-                  <form action={showTag}>
-                    <input type="hidden" name="functional_location_id" value={location.id} />
-                    <input type="hidden" name="label" value={location.name} />
-                    <button type="submit">{t("web.registre.tag_action")}</button>
-                  </form>
-                </td>
-                <td style={cellStyle}>
-                  <form action={archiveEquipment}>
-                    <input type="hidden" name="functional_location_id" value={location.id} />
-                    <button type="submit">{t("web.registre.archive")}</button>
-                  </form>
-                </td>
+        <div style={tableScrollStyle}>
+          <table
+            className="responsive-table"
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              marginBottom: 24,
+            }}
+          >
+            <thead>
+              <tr>
+                <th style={headerCellStyle}>{t("web.dashboard.code")}</th>
+                <th style={headerCellStyle}>{t("web.dashboard.name")}</th>
+                <th style={headerCellStyle}>
+                  {t("web.registre.equipment_site")}
+                </th>
+                <th style={headerCellStyle} />
+                <th style={headerCellStyle} />
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-
-      {archivedLocations.length > 0 && (
-        <details style={{ marginBottom: 24 }}>
-          <summary style={{ color: "#6b7280", cursor: "pointer" }}>
-            {t("web.registre.archived_equipment_title", { count: archivedLocations.length })}
-          </summary>
-          <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8 }}>
+            </thead>
             <tbody>
-              {archivedLocations.map((location) => (
+              {locations.map((location) => (
                 <tr key={location.id}>
-                  <td style={{ ...cellStyle, color: "#6b7280" }}>
-                    {location.code} — {location.name}
+                  <td data-label={t("web.dashboard.code")} style={cellStyle}>
+                    <Link href={`/registre/${location.id}`}>
+                      {location.code}
+                    </Link>
                   </td>
-                  <td style={{ ...cellStyle, color: "#6b7280" }}>{siteName(location.site_id)}</td>
+                  <td data-label={t("web.dashboard.name")} style={cellStyle}>
+                    {location.name}
+                  </td>
+                  <td
+                    data-label={t("web.registre.equipment_site")}
+                    style={cellStyle}
+                  >
+                    {siteName(location.site_id)}
+                  </td>
                   <td style={cellStyle}>
-                    <form action={unarchiveEquipment}>
-                      <input type="hidden" name="functional_location_id" value={location.id} />
-                      <button type="submit">{t("web.registre.unarchive")}</button>
+                    <form action={showTag}>
+                      <input
+                        type="hidden"
+                        name="functional_location_id"
+                        value={location.id}
+                      />
+                      <input type="hidden" name="label" value={location.name} />
+                      <button type="submit">
+                        {t("web.registre.tag_action")}
+                      </button>
+                    </form>
+                  </td>
+                  <td style={cellStyle}>
+                    <form action={archiveEquipment}>
+                      <input
+                        type="hidden"
+                        name="functional_location_id"
+                        value={location.id}
+                      />
+                      <button type="submit">{t("web.registre.archive")}</button>
                     </form>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {archivedLocations.length > 0 && (
+        <details style={{ marginBottom: 24 }}>
+          <summary style={{ color: "#6b7280", cursor: "pointer" }}>
+            {t("web.registre.archived_equipment_title", {
+              count: archivedLocations.length,
+            })}
+          </summary>
+          <div style={tableScrollStyle}>
+            <table
+              className="responsive-table"
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                marginTop: 8,
+              }}
+            >
+              <tbody>
+                {archivedLocations.map((location) => (
+                  <tr key={location.id}>
+                    <td
+                      data-label={t("web.dashboard.name")}
+                      style={{ ...cellStyle, color: "#6b7280" }}
+                    >
+                      {location.code} — {location.name}
+                    </td>
+                    <td
+                      data-label={t("web.registre.equipment_site")}
+                      style={{ ...cellStyle, color: "#6b7280" }}
+                    >
+                      {siteName(location.site_id)}
+                    </td>
+                    <td style={cellStyle}>
+                      <form action={unarchiveEquipment}>
+                        <input
+                          type="hidden"
+                          name="functional_location_id"
+                          value={location.id}
+                        />
+                        <button type="submit">
+                          {t("web.registre.unarchive")}
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </details>
       )}
 
@@ -763,7 +1073,8 @@ export default async function RegistrePage({
               <option value="">{t("web.registre.equipment_space_none")}</option>
               {spaces.map((space) => (
                 <option key={space.id} value={space.id}>
-                  {siteName(space.site_id)} — {t(`space_type.${space.space_type}`)} — {space.name}
+                  {siteName(space.site_id)} —{" "}
+                  {t(`space_type.${space.space_type}`)} — {space.name}
                 </option>
               ))}
             </select>
