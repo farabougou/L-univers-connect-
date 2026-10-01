@@ -1,11 +1,22 @@
 """Règles déterministes (ADR 012, étape F4) : premier maillon du FDD.
 
-Deux types de règles, stockées comme configurations versionnées
+Trois types de règles, stockées comme configurations versionnées
 (`alarm_rule`) :
 - `threshold` : une valeur dépasse un seuil → constat de nature « fault » ;
 - `desired_state_divergence` : l'état réel s'écarte de l'état souhaité
   déclaré → constat de nature « commissioning » (l'installation ne se
-  comporte plus comme attendu).
+  comporte plus comme attendu) ;
+- `simultaneous_heating_cooling` : chauffage et refroidissement actifs en
+  même temps sur le même équipement → constat de nature « fault ». Un
+  FDD (Fault Detection and Diagnostics) standard du secteur — Honeywell,
+  Siemens, Johnson Controls le proposent tous, et la Californie l'impose par
+  réglementation (Title 24) sur les économiseurs — jamais du machine
+  learning : une comparaison physique immédiate entre deux points, sans
+  historique, donc jamais concerné par le blocage de la maintenance
+  prédictive (feature-benchmark-matrix.md : aucune donnée réelle
+  disponible). Premier type de règle qui porte sur deux points à la fois au
+  lieu d'un seul (voir `evaluate_after_measurement` et
+  `_evaluate_simultaneous_heating_cooling`).
 
 Chaîne complète, synchrone à la réception d'une mesure (squelette de bout en
 bout M2) : mesure → contrôle de qualité → règle → constat → alarme → ordre de
@@ -18,7 +29,7 @@ travail. Garde-fous :
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field, ValidationError
@@ -27,12 +38,13 @@ from sqlalchemy.engine import Connection
 from app.audit import append_audit_entry
 from app.config_versions import ConfigInvalid, active_versions, register_config_type
 from app.desired_states import desired_state_at
+from app.equipment_status import latest_usable_bulk
 from app.findings import clear_finding_by_key, link_finding, raise_or_repeat_finding
 from app.maintenance import create_work_order, raise_alarm
 from app.points import get_point
 from app.quality_flags import FLAG_CLOCK_SUSPECT, FLAG_OUT_OF_RANGE
 from app.signal_vocabulary import WORK_ORDER_PRIORITY
-from app.trust import MIN_TRUST_FOR_RULES, compute_trust
+from app.trust import MIN_TRUST_FOR_RULES, STALE_AFTER_INTERVALS, compute_trust
 
 ALARM_RULE = "alarm_rule"
 ALARM_RULE_SCHEMA = "alarm_rule/1"
@@ -47,6 +59,15 @@ _BLOCKING_FLAGS = {
 _RULE_REASONS = {
     "threshold": "RULE_THRESHOLD_EXCEEDED",
     "desired_state_divergence": "RULE_DESIRED_STATE_DIVERGENCE",
+    "simultaneous_heating_cooling": "RULE_SIMULTANEOUS_HEATING_COOLING",
+}
+# Nature du constat ouvert par chaque type de règle (voir app/findings.py,
+# ck_findings_kind) : un écart à la consigne reste un sujet de mise en
+# service, tout le reste est une panne constatée.
+_FINDING_KIND = {
+    "threshold": "fault",
+    "desired_state_divergence": "commissioning",
+    "simultaneous_heating_cooling": "fault",
 }
 
 
@@ -71,8 +92,37 @@ class DivergenceRule(_RuleBase):
     tolerance: float = Field(default=0, ge=0, allow_inf_nan=False)
 
 
+class CorrelationRule(BaseModel):
+    """Compare deux points du même équipement au même instant (FDD) — jamais
+    un seul point comme les deux règles ci-dessus, voir le docstring du
+    module."""
+
+    model_config = {"extra": "forbid"}
+
+    kind: Literal["simultaneous_heating_cooling"]
+    heating_point_id: uuid.UUID
+    cooling_point_id: uuid.UUID
+    heating_threshold: float = Field(default=0, ge=0, allow_inf_nan=False)
+    cooling_threshold: float = Field(default=0, ge=0, allow_inf_nan=False)
+    severity: Literal["info", "warning", "major", "critical"]
+    title: str = Field(min_length=1, max_length=300)
+    recommended_action: str | None = Field(default=None, max_length=1000)
+    create_work_order: bool = False
+
+
 class _RuleContent(BaseModel):
-    rule: Annotated[ThresholdRule | DivergenceRule, Field(discriminator="kind")]
+    rule: Annotated[
+        ThresholdRule | DivergenceRule | CorrelationRule, Field(discriminator="kind")
+    ]
+
+
+def _validate_point_for_rule(connection: Connection, point_id: uuid.UUID) -> dict[str, Any]:
+    point = get_point(connection, point_id)
+    if point is None:
+        raise ConfigInvalid("RULE_POINT_NOT_FOUND")
+    if point["mapping_status"] != "validated":
+        raise ConfigInvalid("RULE_POINT_NOT_VALIDATED")
+    return point
 
 
 def _validate_alarm_rule(connection: Connection, content: dict[str, Any]) -> dict[str, Any]:
@@ -81,11 +131,19 @@ def _validate_alarm_rule(connection: Connection, content: dict[str, Any]) -> dic
     except ValidationError as exc:
         fields = sorted({".".join(str(p) for p in error["loc"][1:]) for error in exc.errors()})
         raise ConfigInvalid("RULE_CONTENT_INVALID", fields=fields) from exc
-    point = get_point(connection, rule.point_id)
-    if point is None:
-        raise ConfigInvalid("RULE_POINT_NOT_FOUND")
-    if point["mapping_status"] != "validated":
-        raise ConfigInvalid("RULE_POINT_NOT_VALIDATED")
+
+    if isinstance(rule, CorrelationRule):
+        if rule.heating_point_id == rule.cooling_point_id:
+            raise ConfigInvalid("RULE_CORRELATION_SAME_POINT")
+        heating_point = _validate_point_for_rule(connection, rule.heating_point_id)
+        cooling_point = _validate_point_for_rule(connection, rule.cooling_point_id)
+        if heating_point["value_type"] != "number" or cooling_point["value_type"] != "number":
+            raise ConfigInvalid("RULE_CORRELATION_REQUIRES_NUMBER")
+        if heating_point["functional_location_id"] != cooling_point["functional_location_id"]:
+            raise ConfigInvalid("RULE_CORRELATION_DIFFERENT_EQUIPMENT")
+        return rule.model_dump(mode="json", exclude_none=True)
+
+    point = _validate_point_for_rule(connection, rule.point_id)
     if isinstance(rule, ThresholdRule) and point["value_type"] != "number":
         raise ConfigInvalid("RULE_THRESHOLD_REQUIRES_NUMBER")
     return rule.model_dump(mode="json", exclude_none=True)
@@ -99,15 +157,19 @@ register_config_type(
 def simulate_rule(
     connection: Connection, *, content: dict[str, Any], sample_size: int = 200
 ) -> dict[str, Any]:
-    """Simule une règle de seuil ou d'écart à la consigne contre l'historique
-    récent de son point, sans rien créer (aucun constat, aucune alarme,
-    aucun ordre de travail) : « simulation préalable »
-    (feature-benchmark-matrix.md, ligne « Gestion des changements »), pour
-    évaluer une règle avant de l'activer. Réutilise `_evaluate()` tel quel :
-    aucune nouvelle logique de règle, seulement une lecture."""
+    """Simule une règle contre l'historique récent de son point, sans rien
+    créer (aucun constat, aucune alarme, aucun ordre de travail) :
+    « simulation préalable » (feature-benchmark-matrix.md, ligne « Gestion
+    des changements »), pour évaluer une règle avant de l'activer. Réutilise
+    `_evaluate()` tel quel : aucune nouvelle logique de règle, seulement une
+    lecture. Pour une règle à deux points (CorrelationRule), l'historique
+    rejoué est celui du point `heating_point_id` — un choix arbitraire de
+    point « principal », la valeur de l'autre point restant toujours lue à
+    l'instant de chaque mesure historique, comme en production."""
     from app.telemetry import list_measurements  # import tardif : évite un cycle avec ce module
 
-    point = get_point(connection, uuid.UUID(content["point_id"]))
+    primary_point_id = content.get("point_id") or content["heating_point_id"]
+    point = get_point(connection, uuid.UUID(primary_point_id))
     if point is None:
         raise ConfigInvalid("RULE_POINT_NOT_FOUND")
 
@@ -138,6 +200,50 @@ def _subject(point: dict[str, Any]) -> uuid.UUID:
     return point["functional_location_id"] or point["space_id"] or point["id"]
 
 
+def _counterpart_value_now(
+    connection: Connection, point_id: uuid.UUID, at: datetime
+) -> tuple[dict[str, Any], float] | None:
+    """Point et valeur actuelle d'un point, pour une règle qui en compare
+    deux : `None` si le point n'a jamais été mesuré ou si son dernier relevé
+    est trop ancien pour affirmer qu'il reflète l'instant `at` (même seuil de
+    péremption que app/telemetry_overview.py) — jamais une simultanéité
+    supposée faute de mieux (règle non négociable : aucune donnée inventée)."""
+    point = get_point(connection, point_id)
+    if point is None:
+        return None
+    latest = latest_usable_bulk(connection, [point_id], at).get(point_id)
+    if latest is None:
+        return None
+    interval = point["expected_interval_seconds"]
+    if interval and (at - latest["measured_at"]) > STALE_AFTER_INTERVALS * timedelta(
+        seconds=interval
+    ):
+        return None
+    return point, latest["value"]
+
+
+def _evaluate_simultaneous_heating_cooling(
+    connection: Connection, rule: dict[str, Any], point: dict[str, Any], value: float, at: datetime
+) -> dict[str, Any] | None:
+    is_heating = str(point["id"]) == rule["heating_point_id"]
+    other_id = uuid.UUID(rule["cooling_point_id"] if is_heating else rule["heating_point_id"])
+    other = _counterpart_value_now(connection, other_id, at)
+    if other is None:
+        return None
+    other_point, other_value = other
+
+    heating_value = value if is_heating else other_value
+    cooling_value = other_value if is_heating else value
+    if heating_value <= rule["heating_threshold"] or cooling_value <= rule["cooling_threshold"]:
+        return None
+    return {
+        "heating_point_code": point["code"] if is_heating else other_point["code"],
+        "heating_value": heating_value,
+        "cooling_point_code": other_point["code"] if is_heating else point["code"],
+        "cooling_value": cooling_value,
+    }
+
+
 def _evaluate(
     connection: Connection, rule: dict[str, Any], point: dict[str, Any], value: float, at: datetime
 ) -> dict[str, Any] | None:
@@ -149,6 +255,9 @@ def _evaluate(
         if breached:
             return {"value": value, "operator": rule["operator"], "threshold": rule["threshold"]}
         return None
+
+    if rule["kind"] == "simultaneous_heating_cooling":
+        return _evaluate_simultaneous_heating_cooling(connection, rule, point, value, at)
 
     desired = desired_state_at(connection, point["id"], at)
     if desired is None:
@@ -211,8 +320,18 @@ def evaluate_after_measurement(
     if blocking:
         return touched
 
+    # Trois appels plutôt qu'un : une règle à un point (`point_id`) ou une
+    # règle à deux points (`heating_point_id`/`cooling_point_id`, voir
+    # CorrelationRule) ne sont pas stockées sous la même clé — ce point peut
+    # apparaître dans l'une ou l'autre des trois.
     rules = active_versions(
         connection, config_type=ALARM_RULE, content_filter={"point_id": str(point["id"])}
+    )
+    rules += active_versions(
+        connection, config_type=ALARM_RULE, content_filter={"heating_point_id": str(point["id"])}
+    )
+    rules += active_versions(
+        connection, config_type=ALARM_RULE, content_filter={"cooling_point_id": str(point["id"])}
     )
     if not rules:
         return touched
@@ -250,7 +369,7 @@ def evaluate_after_measurement(
             dedup_key=dedup_key,
             subject_node_id=subject,
             point_id=point["id"],
-            kind="fault" if rule["kind"] == "threshold" else "commissioning",
+            kind=_FINDING_KIND[rule["kind"]],
             method="deterministic_rule",
             rule_config_version_id=version["id"],
             severity=rule["severity"],

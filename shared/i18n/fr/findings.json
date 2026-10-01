@@ -8,6 +8,7 @@
     "DATA_QUALITY_STALE": "Donnée périmée sur le point {point_code} : aucun relevé récent",
     "FINDING_UNCLASSIFIED": "Constat non classé",
     "RULE_DESIRED_STATE_DIVERGENCE": "Écart entre l’état réel et l’état souhaité sur le point {point_code} : valeur {actual}, valeur attendue {desired}",
+    "RULE_SIMULTANEOUS_HEATING_COOLING": "Chauffage et refroidissement actifs en même temps : point {heating_point_code} à {heating_value}, point {cooling_point_code} à {cooling_value}",
     "RULE_THRESHOLD_EXCEEDED": "Seuil franchi sur le point {point_code} : valeur {value} (condition {operator} {threshold})"
   },
   "actions": {
@@ -19,6 +20,7 @@
     "DATA_QUALITY_STALE": "Vérifiez l’alimentation, la connexion réseau et l’appareil Edge sur site.",
     "FINDING_UNCLASSIFIED": "Examinez les éléments de preuve du constat.",
     "RULE_DESIRED_STATE_DIVERGENCE": "Vérifiez la programmation horaire et le fonctionnement de l’équipement.",
+    "RULE_SIMULTANEOUS_HEATING_COOLING": "Vérifiez les vannes et la régulation de l’équipement : les deux circuits ne devraient jamais être actifs en même temps.",
     "RULE_THRESHOLD_EXCEEDED": "Vérifiez le fonctionnement de l’équipement concerné."
   }
 }

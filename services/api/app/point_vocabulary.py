@@ -91,6 +91,23 @@ POINT_CLASSES: dict[str, PointClass] = {
             "temperature",
             "brick:Temperature_Setpoint",
         ),
+        # Cas réel : règle FDD « chauffage et refroidissement actifs en même
+        # temps » (app/rules.py, CorrelationRule) — une lecture de position de
+        # vanne, jamais une commande (kind="sensor", pas "command").
+        PointClass(
+            "heating_valve_position",
+            "sensor",
+            "number",
+            "ratio",
+            "brick:Heating_Valve_Position_Sensor",
+        ),
+        PointClass(
+            "cooling_valve_position",
+            "sensor",
+            "number",
+            "ratio",
+            "brick:Cooling_Valve_Position_Sensor",
+        ),
         # Déclarable pour documenter une installation, jamais inscriptible tant
         # que la règle non négociable 1 s'applique (contrainte en base).
         PointClass("on_off_command", "command", "boolean", None, "brick:On_Off_Command"),

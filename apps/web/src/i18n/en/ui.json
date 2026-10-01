@@ -778,6 +778,8 @@
     "fault_status": "Fault status",
     "enable_status": "Enable status",
     "temperature_setpoint": "Temperature setpoint",
+    "heating_valve_position": "Heating valve position",
+    "cooling_valve_position": "Cooling valve position",
     "on_off_command": "On/off command"
   }
 }

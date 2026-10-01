@@ -778,6 +778,8 @@
     "fault_status": "État de défaut",
     "enable_status": "Autorisation de marche",
     "temperature_setpoint": "Consigne de température",
+    "heating_valve_position": "Position vanne chaude",
+    "cooling_valve_position": "Position vanne froide",
     "on_off_command": "Commande marche/arrêt"
   }
 }
