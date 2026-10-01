@@ -15,3 +15,4 @@ Un fichier par décision.
 - [013 — Langage produit, terminologie, codes et internationalisation](./013-langage-produit-terminologie-i18n.md)
 - [015 — Découverte BACnet V1 (lecture seule) et correspondance sémantique](./015-decouverte-bacnet-v1.md)
 - [016 — BACnet, future capacité d'écriture/commande : spécification, pas d'activation](./016-bacnet-ecriture-commande-specification.md)
+- [017 — Virtual Commissioning Lab et validation découplée du matériel](./017-virtual-commissioning-lab-et-validation-decouplee-du-materiel.md)
