@@ -93,6 +93,19 @@ def _build_client_application(*, local_instance: int) -> Application:
     return Application.from_args(args)
 
 
+async def _close_client_application(application: Application) -> None:
+    """`Application.close()` est synchrone : elle ne fait que programmer la
+    fermeture du transport UDP sous-jacent, dont l'exécution réelle demande
+    un tour de boucle asyncio. Sans ce tour supplémentaire, `asyncio.run()`
+    referme la boucle juste après, avant que le port ne soit vraiment
+    libéré — observé en CI (jamais en local, où le tour suivant arrive
+    toujours assez vite) sur un appareil créé juste après plusieurs autres
+    dans le même test : le port restait occupé le temps que ce nouvel appel
+    attende une réponse qui n'arrivait jamais à temps."""
+    application.close()
+    await asyncio.sleep(0)
+
+
 async def _read_bacnet_points_async(
     address: str,
     points: list[BacnetPoint],
@@ -134,7 +147,7 @@ async def _read_bacnet_points_async(
 
             values[point.name] = float(response)
     finally:
-        application.close()
+        await _close_client_application(application)
 
     return values
 
@@ -197,7 +210,7 @@ async def _discover_device_async(
             ),
         )
     finally:
-        application.close()
+        await _close_client_application(application)
 
 
 def discover_device(
@@ -311,7 +324,7 @@ async def _read_device_objects_async(
                 )
             )
     finally:
-        application.close()
+        await _close_client_application(application)
 
     return objects
 
