@@ -3,7 +3,12 @@
  * ordres de travail) : un seul endroit à changer plutôt que trois copies
  * qui finissent par diverger.
  */
-export const fieldStyle = { display: "block", width: "100%", padding: 8, marginTop: 4 };
+export const fieldStyle = {
+  display: "block",
+  width: "100%",
+  padding: 8,
+  marginTop: 4,
+};
 export const labelStyle = { display: "block", marginTop: 12 };
 export const submitStyle = {
   marginTop: 16,
@@ -13,12 +18,28 @@ export const submitStyle = {
   border: "none",
   borderRadius: 8,
 };
-export const cellStyle = { borderBottom: "1px solid #eee", padding: "6px 8px", textAlign: "left" as const };
+export const cellStyle = {
+  borderBottom: "1px solid #eee",
+  padding: "6px 8px",
+  textAlign: "left" as const,
+};
 export const headerCellStyle = {
   borderBottom: "1px solid #ddd",
   padding: "6px 8px",
   textAlign: "left" as const,
+  whiteSpace: "nowrap" as const,
 };
+
+/**
+ * Un tableau avec plusieurs colonnes (ex. une ligne par site) ne tient pas
+ * toujours sur un écran de téléphone. Sans ce conteneur, le navigateur
+ * écrase chaque en-tête lettre par lettre pour faire tenir les colonnes
+ * (overflow-wrap: anywhere, global.css) plutôt que de laisser défiler le
+ * tableau horizontalement — illisible. `headerCellStyle` empêche déjà le
+ * titre de chaque colonne de se couper ; ce conteneur permet de faire
+ * défiler le tableau entier, seul, quand il est trop large.
+ */
+export const tableScrollStyle = { overflowX: "auto" as const };
 
 /**
  * Socle de design partagé (ADR 014, section « Design System commun ») :

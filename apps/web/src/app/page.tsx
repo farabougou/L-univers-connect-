@@ -3,7 +3,11 @@ import { redirect } from "next/navigation";
 
 import { BrandMark } from "@/components/BrandMark";
 import { RecentActivityFeed } from "@/components/RecentActivityFeed";
-import { ASSET_STATUS_COLOR, StatusBadge, equipmentStatusToAssetStatus } from "@/components/StatusBadge";
+import {
+  ASSET_STATUS_COLOR,
+  StatusBadge,
+  equipmentStatusToAssetStatus,
+} from "@/components/StatusBadge";
 import { apiFetch, requireAccessToken } from "@/lib/api";
 import {
   ACTIVITY_KINDS,
@@ -20,13 +24,18 @@ import {
   pageContainerStyle,
   pageHeaderStyle,
   sectionTitleStyle,
+  tableScrollStyle,
 } from "@/lib/formStyles";
 import {
   type PortfolioEnergyMeter,
   countMetersWithoutData,
   summarizeEnergyByUnit,
 } from "@/lib/energy";
-import { ASSET_STATUS_ORDER, distributeByAssetStatus, type PortfolioEquipmentStatus } from "@/lib/health";
+import {
+  ASSET_STATUS_ORDER,
+  distributeByAssetStatus,
+  type PortfolioEquipmentStatus,
+} from "@/lib/health";
 import { getLocale, getTranslator } from "@/lib/i18n";
 import {
   type MaintenanceIntervention,
@@ -51,7 +60,12 @@ import {
   aggregatePortfolio,
   prioritizeAlarms,
 } from "@/lib/portfolio";
-import { type Locale, formatDate, formatDateTime, formatNumber } from "@/i18n/translator";
+import {
+  type Locale,
+  formatDate,
+  formatDateTime,
+  formatNumber,
+} from "@/i18n/translator";
 
 type Me = {
   sub: string;
@@ -95,7 +109,10 @@ async function _openSignals<T extends { severity: string }>(
 ): Promise<T[]> {
   const results = await Promise.all(
     ["open", "in_progress"].map(async (handlingStatus) => {
-      const response = await apiFetch(`${path}?handling_status=${handlingStatus}`, accessToken);
+      const response = await apiFetch(
+        `${path}?handling_status=${handlingStatus}`,
+        accessToken,
+      );
       return response.ok ? ((await response.json()) as T[]) : [];
     }),
   );
@@ -149,15 +166,18 @@ export default async function PortfolioPage({
   // Réservé aux rôles de gestion côté API (GET /devices) : un rôle terrain
   // voit le reste de la vue d'ensemble sans cette colonne, jamais une
   // colonne à zéro fabriquée pour combler l'absence de droit.
-  const devices: Device[] | null = devicesResponse.ok ? await devicesResponse.json() : null;
+  const devices: Device[] | null = devicesResponse.ok
+    ? await devicesResponse.json()
+    : null;
   const interventions: MaintenanceIntervention[] = interventionsResponse.ok
     ? await interventionsResponse.json()
     : [];
-  const energySummary: { reference_date: string; meters: PortfolioEnergyMeter[] } | null =
-    energyResponse.ok ? await energyResponse.json() : null;
-  const equipmentStatuses: PortfolioEquipmentStatus[] = equipmentStatusesResponse.ok
-    ? await equipmentStatusesResponse.json()
-    : [];
+  const energySummary: {
+    reference_date: string;
+    meters: PortfolioEnergyMeter[];
+  } | null = energyResponse.ok ? await energyResponse.json() : null;
+  const equipmentStatuses: PortfolioEquipmentStatus[] =
+    equipmentStatusesResponse.ok ? await equipmentStatusesResponse.json() : [];
   const recentActivity: PortfolioTimelineEntry[] = recentActivityResponse.ok
     ? await recentActivityResponse.json()
     : [];
@@ -188,8 +208,14 @@ export default async function PortfolioPage({
   // travail aujourd'hui (voir apps/web/src/lib/maintenance.ts).
   const maintenanceInProgress = countInProgress(workOrders);
   const maintenanceCritical = countCriticalOpen(workOrders);
-  const maintenanceRepeating = repeatingFailures(workOrders).slice(0, MAX_REPEATING_FAILURES);
-  const maintenanceClosures = recentClosures(interventions, MAX_RECENT_CLOSURES);
+  const maintenanceRepeating = repeatingFailures(workOrders).slice(
+    0,
+    MAX_REPEATING_FAILURES,
+  );
+  const maintenanceClosures = recentClosures(
+    interventions,
+    MAX_RECENT_CLOSURES,
+  );
 
   // Bloc « Énergie » (directive UI/dashboard, section 13). Consommation
   // brute par compteur d'énergie validé, groupée par unité — jamais
@@ -215,9 +241,16 @@ export default async function PortfolioPage({
   // de travail, alarmes, constats — voir apps/web/src/lib/activity.ts et
   // app/timeline.py::portfolio_timeline), la plus récente d'abord, filtrable
   // par catégorie côté client (seule interaction du bloc).
-  const activityFeedEntries = toActivityFeedEntries(recentActivity, locale, locationById);
+  const activityFeedEntries = toActivityFeedEntries(
+    recentActivity,
+    locale,
+    locationById,
+  );
   const activityKindLabels = Object.fromEntries(
-    ACTIVITY_KINDS.map((kind) => [kind, t(`web.dashboard.activity_kind.${kind}`)]),
+    ACTIVITY_KINDS.map((kind) => [
+      kind,
+      t(`web.dashboard.activity_kind.${kind}`),
+    ]),
   ) as Record<ActivityKind, string>;
 
   const { bySite: portfolio, totals } = aggregatePortfolio(
@@ -229,29 +262,45 @@ export default async function PortfolioPage({
     devices,
   );
 
-  const selectedSite = selectedSiteId ? sites.find((site) => site.id === selectedSiteId) : null;
-  const selectedLocations = selectedSite ? locationsBySite.get(selectedSite.id) ?? [] : [];
+  const selectedSite = selectedSiteId
+    ? sites.find((site) => site.id === selectedSiteId)
+    : null;
+  const selectedLocations = selectedSite
+    ? (locationsBySite.get(selectedSite.id) ?? [])
+    : [];
 
-  const [alarmCountByLocation, findingCountByLocation, statuses] = await Promise.all([
-    Promise.resolve(_countByLocation(alarms.map((a) => a.functional_location_id))),
-    Promise.resolve(_countByLocation(findings.map((f) => f.subject_node_id))),
-    Promise.all(
-      selectedLocations.map(async (location) => {
-        const response = await apiFetch(
-          `/functional-locations/${location.id}/status`,
-          accessToken,
-        );
-        const status: EquipmentStatus | null = response.ok ? await response.json() : null;
-        return [location.id, status] as const;
-      }),
-    ),
-  ]);
+  const [alarmCountByLocation, findingCountByLocation, statuses] =
+    await Promise.all([
+      Promise.resolve(
+        _countByLocation(alarms.map((a) => a.functional_location_id)),
+      ),
+      Promise.resolve(_countByLocation(findings.map((f) => f.subject_node_id))),
+      Promise.all(
+        selectedLocations.map(async (location) => {
+          const response = await apiFetch(
+            `/functional-locations/${location.id}/status`,
+            accessToken,
+          );
+          const status: EquipmentStatus | null = response.ok
+            ? await response.json()
+            : null;
+          return [location.id, status] as const;
+        }),
+      ),
+    ]);
   const statusByLocation = new Map(statuses);
 
   return (
     <main style={pageContainerStyle}>
       <header style={pageHeaderStyle}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            minWidth: 0,
+          }}
+        >
           <span style={{ color: colors.accent, flexShrink: 0 }}>
             <BrandMark variant="mono" size={32} label={t("common.app_name")} />
           </span>
@@ -265,35 +314,55 @@ export default async function PortfolioPage({
                 overflowWrap: "anywhere",
               }}
             >
-              {t("web.dashboard.signed_in_as", { user: me.sub, roles: roleLabels(me.roles, t) })}
+              {t("web.dashboard.signed_in_as", {
+                user: me.sub,
+                roles: roleLabels(me.roles, t),
+              })}
             </p>
           </div>
         </div>
-        <a href="/api/auth/logout" style={{ color: colors.textMuted, fontSize: 14 }}>
+        <a
+          href="/api/auth/logout"
+          style={{ color: colors.textMuted, fontSize: 14 }}
+        >
           {t("common.sign_out")}
         </a>
       </header>
 
-      <nav style={{ display: "flex", gap: 20, marginBottom: 24, flexWrap: "wrap" }}>
+      <nav
+        style={{ display: "flex", gap: 20, marginBottom: 24, flexWrap: "wrap" }}
+      >
         <Link href="/alarmes" style={{ color: colors.accent, fontWeight: 600 }}>
           {t("web.dashboard.alarms_link")} →
         </Link>
-        <Link href="/ordres-de-travail" style={{ color: colors.accent, fontWeight: 600 }}>
+        <Link
+          href="/ordres-de-travail"
+          style={{ color: colors.accent, fontWeight: 600 }}
+        >
           {t("web.dashboard.maintenance_link")} →
         </Link>
         <Link href="/energie" style={{ color: colors.accent, fontWeight: 600 }}>
           {t("web.dashboard.energy_link")} →
         </Link>
-        <Link href="/telemetrie" style={{ color: colors.accent, fontWeight: 600 }}>
+        <Link
+          href="/telemetrie"
+          style={{ color: colors.accent, fontWeight: 600 }}
+        >
           {t("web.dashboard.telemetry_link")} →
         </Link>
-        <Link href="/documents" style={{ color: colors.accent, fontWeight: 600 }}>
+        <Link
+          href="/documents"
+          style={{ color: colors.accent, fontWeight: 600 }}
+        >
           {t("web.dashboard.documents_link")} →
         </Link>
         <Link href="/plans" style={{ color: colors.accent, fontWeight: 600 }}>
           {t("web.dashboard.spatial_link")} →
         </Link>
-        <Link href="/automation" style={{ color: colors.accent, fontWeight: 600 }}>
+        <Link
+          href="/automation"
+          style={{ color: colors.accent, fontWeight: 600 }}
+        >
           {t("web.dashboard.automation_link")} →
         </Link>
         <Link href="/acces" style={{ color: colors.accent, fontWeight: 600 }}>
@@ -302,7 +371,10 @@ export default async function PortfolioPage({
         <Link href="/edge" style={{ color: colors.accent, fontWeight: 600 }}>
           {t("web.dashboard.edge_link")} →
         </Link>
-        <Link href="/registre" style={{ color: colors.accent, fontWeight: 600 }}>
+        <Link
+          href="/registre"
+          style={{ color: colors.accent, fontWeight: 600 }}
+        >
           {t("web.dashboard.registry_link")} →
         </Link>
       </nav>
@@ -310,7 +382,11 @@ export default async function PortfolioPage({
       <section style={{ ...cardStyle, marginBottom: 24 }}>
         <h2 style={sectionTitleStyle}>{t("web.dashboard.portfolio_title")}</h2>
         <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
-          <Kpi label={t("web.dashboard.kpi_sites")} value={String(sites.length)} href="/registre" />
+          <Kpi
+            label={t("web.dashboard.kpi_sites")}
+            value={String(sites.length)}
+            href="/registre"
+          />
           <Kpi
             label={t("web.dashboard.kpi_equipment")}
             value={String(totals.equipmentCount)}
@@ -336,75 +412,119 @@ export default async function PortfolioPage({
         </div>
       </section>
 
-      <section style={{ ...cardStyle, marginBottom: 24, padding: 0, overflow: "hidden" }}>
+      <section
+        style={{
+          ...cardStyle,
+          marginBottom: 24,
+          padding: 0,
+          overflow: "hidden",
+        }}
+      >
         <div style={{ padding: "20px 24px 0" }}>
-          <h2 style={sectionTitleStyle}>{t("web.dashboard.priority_alarms_title")}</h2>
+          <h2 style={sectionTitleStyle}>
+            {t("web.dashboard.priority_alarms_title")}
+          </h2>
         </div>
         {priorityAlarms.length === 0 ? (
           <p style={{ color: colors.textMuted, padding: "0 24px 20px" }}>
             {t("web.dashboard.no_priority_alarms")}
           </p>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th style={headerCellStyle}>{t("web.dashboard.col_severity")}</th>
-                <th style={headerCellStyle}>{t("web.dashboard.equipment")}</th>
-                <th style={headerCellStyle}>{t("web.dashboard.site_column")}</th>
-                <th style={headerCellStyle}>{t("web.dashboard.col_message")}</th>
-                <th style={headerCellStyle}>{t("web.dashboard.col_ack")}</th>
-                <th style={headerCellStyle}>{t("web.dashboard.col_since")}</th>
-                <th style={headerCellStyle} />
-              </tr>
-            </thead>
-            <tbody>
-              {priorityAlarms.map((alarm) => {
-                const location = alarm.functional_location_id
-                  ? locationById.get(alarm.functional_location_id)
-                  : undefined;
-                return (
-                  <tr key={alarm.id}>
-                    <td style={cellStyle}>
-                      <span
-                        title={t(`severity.${alarm.severity}`)}
-                        style={badgeStyle(SEVERITY_COLOR[alarm.severity as Severity])}
-                      >
-                        {t(`severity.${alarm.severity}`)}
-                      </span>
-                    </td>
-                    <td style={cellStyle}>
-                      {location ? (
-                        <Link href={`/registre/${location.id}`} style={{ color: colors.accent }}>
-                          {location.code} — {location.name}
-                        </Link>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td style={cellStyle}>
-                      {location ? (siteById.get(location.site_id)?.name ?? "—") : "—"}
-                    </td>
-                    <td style={cellStyle}>{alarm.message}</td>
-                    <td style={cellStyle}>{t(`ack_state.${alarm.ack_state}`)}</td>
-                    <td style={cellStyle}>{formatDateTime(locale, alarm.raised_at)}</td>
-                    <td style={cellStyle}>
-                      {location && (
-                        <Link href={`/registre/${location.id}`} style={{ color: colors.accent }}>
-                          {t("web.dashboard.drill_down")} →
-                        </Link>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div style={tableScrollStyle}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.col_severity")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.equipment")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.site_column")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.col_message")}
+                  </th>
+                  <th style={headerCellStyle}>{t("web.dashboard.col_ack")}</th>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.col_since")}
+                  </th>
+                  <th style={headerCellStyle} />
+                </tr>
+              </thead>
+              <tbody>
+                {priorityAlarms.map((alarm) => {
+                  const location = alarm.functional_location_id
+                    ? locationById.get(alarm.functional_location_id)
+                    : undefined;
+                  return (
+                    <tr key={alarm.id}>
+                      <td style={cellStyle}>
+                        <span
+                          title={t(`severity.${alarm.severity}`)}
+                          style={badgeStyle(
+                            SEVERITY_COLOR[alarm.severity as Severity],
+                          )}
+                        >
+                          {t(`severity.${alarm.severity}`)}
+                        </span>
+                      </td>
+                      <td style={cellStyle}>
+                        {location ? (
+                          <Link
+                            href={`/registre/${location.id}`}
+                            style={{ color: colors.accent }}
+                          >
+                            {location.code} — {location.name}
+                          </Link>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td style={cellStyle}>
+                        {location
+                          ? (siteById.get(location.site_id)?.name ?? "—")
+                          : "—"}
+                      </td>
+                      <td style={cellStyle}>{alarm.message}</td>
+                      <td style={cellStyle}>
+                        {t(`ack_state.${alarm.ack_state}`)}
+                      </td>
+                      <td style={cellStyle}>
+                        {formatDateTime(locale, alarm.raised_at)}
+                      </td>
+                      <td style={cellStyle}>
+                        {location && (
+                          <Link
+                            href={`/registre/${location.id}`}
+                            style={{ color: colors.accent }}
+                          >
+                            {t("web.dashboard.drill_down")} →
+                          </Link>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 
       <section style={{ ...cardStyle, marginBottom: 24 }}>
-        <h2 style={sectionTitleStyle}>{t("web.dashboard.maintenance_title")}</h2>
-        <div style={{ display: "flex", gap: 32, flexWrap: "wrap", marginBottom: 12 }}>
+        <h2 style={sectionTitleStyle}>
+          {t("web.dashboard.maintenance_title")}
+        </h2>
+        <div
+          style={{
+            display: "flex",
+            gap: 32,
+            flexWrap: "wrap",
+            marginBottom: 12,
+          }}
+        >
           <Kpi
             label={t("web.dashboard.maintenance_in_progress")}
             value={String(maintenanceInProgress)}
@@ -419,7 +539,9 @@ export default async function PortfolioPage({
         </p>
         <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
           <div style={{ flex: "1 1 280px" }}>
-            <h3 style={sectionTitleStyle}>{t("web.dashboard.maintenance_repeating_title")}</h3>
+            <h3 style={sectionTitleStyle}>
+              {t("web.dashboard.maintenance_repeating_title")}
+            </h3>
             {maintenanceRepeating.length === 0 ? (
               <p style={{ color: colors.textMuted, fontSize: 13 }}>
                 {t("web.dashboard.maintenance_repeating_none")}
@@ -436,14 +558,23 @@ export default async function PortfolioPage({
                 }}
               >
                 {maintenanceRepeating.map((entry) => {
-                  const location = locationById.get(entry.functional_location_id);
+                  const location = locationById.get(
+                    entry.functional_location_id,
+                  );
                   return (
                     <li
                       key={entry.functional_location_id}
-                      style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        fontSize: 13,
+                      }}
                     >
                       {location ? (
-                        <Link href={`/registre/${location.id}`} style={{ color: colors.accent }}>
+                        <Link
+                          href={`/registre/${location.id}`}
+                          style={{ color: colors.accent }}
+                        >
                           {location.code} — {location.name}
                         </Link>
                       ) : (
@@ -461,7 +592,9 @@ export default async function PortfolioPage({
             )}
           </div>
           <div style={{ flex: "1 1 280px" }}>
-            <h3 style={sectionTitleStyle}>{t("web.dashboard.maintenance_closures_title")}</h3>
+            <h3 style={sectionTitleStyle}>
+              {t("web.dashboard.maintenance_closures_title")}
+            </h3>
             {maintenanceClosures.length === 0 ? (
               <p style={{ color: colors.textMuted, fontSize: 13 }}>
                 {t("web.dashboard.maintenance_closures_none")}
@@ -483,15 +616,29 @@ export default async function PortfolioPage({
                     : undefined;
                   return (
                     <li key={intervention.id} style={{ fontSize: 13 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span>{location ? `${location.code} — ${location.name}` : "—"}</span>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <span>
+                          {location
+                            ? `${location.code} — ${location.name}`
+                            : "—"}
+                        </span>
                         <span style={{ color: colors.textMuted }}>
-                          {formatDateTime(locale, intervention.ended_at as string)}
+                          {formatDateTime(
+                            locale,
+                            intervention.ended_at as string,
+                          )}
                         </span>
                       </div>
                       <div style={{ color: colors.textMuted }}>
                         {intervention.technician}
-                        {intervention.summary ? ` — ${intervention.summary}` : ""}
+                        {intervention.summary
+                          ? ` — ${intervention.summary}`
+                          : ""}
                       </div>
                     </li>
                   );
@@ -505,19 +652,38 @@ export default async function PortfolioPage({
       <section style={{ ...cardStyle, marginBottom: 24 }}>
         <h2 style={sectionTitleStyle}>{t("web.dashboard.energy_title")}</h2>
         {energyMeters.length === 0 ? (
-          <p style={{ color: colors.textMuted }}>{t("web.dashboard.energy_no_meters")}</p>
+          <p style={{ color: colors.textMuted }}>
+            {t("web.dashboard.energy_no_meters")}
+          </p>
         ) : (
           <>
-            <p style={{ color: colors.textMuted, fontSize: 13, marginBottom: 16 }}>
+            <p
+              style={{
+                color: colors.textMuted,
+                fontSize: 13,
+                marginBottom: 16,
+              }}
+            >
               {t("web.dashboard.energy_reference_date", {
-                date: energySummary ? formatDate(locale, energySummary.reference_date) : "",
+                date: energySummary
+                  ? formatDate(locale, energySummary.reference_date)
+                  : "",
               })}
             </p>
-            <div style={{ display: "flex", gap: 32, flexWrap: "wrap", marginBottom: 12 }}>
+            <div
+              style={{
+                display: "flex",
+                gap: 32,
+                flexWrap: "wrap",
+                marginBottom: 12,
+              }}
+            >
               {energyByUnit.map((summary) => (
                 <div key={summary.unit} style={{ display: "flex", gap: 32 }}>
                   <Kpi
-                    label={t("web.dashboard.energy_consumption_label", { unit: summary.unit })}
+                    label={t("web.dashboard.energy_consumption_label", {
+                      unit: summary.unit,
+                    })}
                     value={
                       summary.totalConsumption === null
                         ? t("web.dashboard.energy_unavailable")
@@ -537,7 +703,9 @@ export default async function PortfolioPage({
             </div>
             {energyMetersWithoutData > 0 && (
               <p style={{ color: colors.textMuted, fontSize: 12 }}>
-                {t("web.dashboard.energy_meters_without_data", { count: energyMetersWithoutData })}
+                {t("web.dashboard.energy_meters_without_data", {
+                  count: energyMetersWithoutData,
+                })}
               </p>
             )}
           </>
@@ -547,12 +715,16 @@ export default async function PortfolioPage({
       <section style={{ ...cardStyle, marginBottom: 24 }}>
         <h2 style={sectionTitleStyle}>{t("web.dashboard.health_title")}</h2>
         {locations.length === 0 ? (
-          <p style={{ color: colors.textMuted }}>{t("web.dashboard.no_equipment")}</p>
+          <p style={{ color: colors.textMuted }}>
+            {t("web.dashboard.no_equipment")}
+          </p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             {ASSET_STATUS_ORDER.map((assetStatus) => {
               const ids = healthDistribution[assetStatus];
-              const percent = locations.length ? (ids.length / locations.length) * 100 : 0;
+              const percent = locations.length
+                ? (ids.length / locations.length) * 100
+                : 0;
               return (
                 <details key={assetStatus}>
                   <summary
@@ -564,7 +736,10 @@ export default async function PortfolioPage({
                       padding: "6px 0",
                     }}
                   >
-                    <StatusBadge status={assetStatus} label={t(`asset_status.${assetStatus}`)} />
+                    <StatusBadge
+                      status={assetStatus}
+                      label={t(`asset_status.${assetStatus}`)}
+                    />
                     <div
                       style={{
                         flex: 1,
@@ -583,13 +758,24 @@ export default async function PortfolioPage({
                       />
                     </div>
                     <span
-                      style={{ color: colors.textMuted, fontSize: 13, minWidth: 24, textAlign: "right" }}
+                      style={{
+                        color: colors.textMuted,
+                        fontSize: 13,
+                        minWidth: 24,
+                        textAlign: "right",
+                      }}
                     >
                       {ids.length}
                     </span>
                   </summary>
                   {ids.length === 0 ? (
-                    <p style={{ color: colors.textMuted, fontSize: 13, padding: "4px 0 8px 28px" }}>
+                    <p
+                      style={{
+                        color: colors.textMuted,
+                        fontSize: 13,
+                        padding: "4px 0 8px 28px",
+                      }}
+                    >
                       {t("web.dashboard.health_category_empty")}
                     </p>
                   ) : (
@@ -608,7 +794,10 @@ export default async function PortfolioPage({
                         return (
                           <li key={id} style={{ fontSize: 13 }}>
                             {location ? (
-                              <Link href={`/registre/${id}`} style={{ color: colors.accent }}>
+                              <Link
+                                href={`/registre/${id}`}
+                                style={{ color: colors.accent }}
+                              >
                                 {location.code} — {location.name}
                               </Link>
                             ) : (
@@ -637,52 +826,87 @@ export default async function PortfolioPage({
 
       {sites.length === 0 ? (
         <section style={cardStyle}>
-          <p style={{ color: colors.textMuted }}>{t("web.dashboard.no_sites")}</p>
+          <p style={{ color: colors.textMuted }}>
+            {t("web.dashboard.no_sites")}
+          </p>
         </section>
       ) : (
-        <section style={{ ...cardStyle, marginBottom: 24, padding: 0, overflow: "hidden" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th style={headerCellStyle}>{t("web.dashboard.site_column")}</th>
-                <th style={headerCellStyle}>{t("web.dashboard.equipment")}</th>
-                <th style={headerCellStyle}>{t("web.dashboard.kpi_alarms")}</th>
-                <th style={headerCellStyle}>{t("web.dashboard.kpi_findings")}</th>
-                <th style={headerCellStyle}>{t("web.dashboard.kpi_work_orders")}</th>
-                {devices && <th style={headerCellStyle}>{t("web.dashboard.edge_column")}</th>}
-                <th style={headerCellStyle} />
-              </tr>
-            </thead>
-            <tbody>
-              {portfolio.map((entry) => (
-                <tr key={entry.site.id}>
-                  <td style={{ ...cellStyle, fontWeight: 600 }}>{entry.site.name}</td>
-                  <td style={cellStyle}>{entry.equipmentCount}</td>
-                  <td style={cellStyle}>
-                    <SeverityBadges counts={entry.alarmSeverity} t={t} />
-                  </td>
-                  <td style={cellStyle}>
-                    <SeverityBadges counts={entry.findingSeverity} t={t} />
-                  </td>
-                  <td style={cellStyle}>{entry.openWorkOrders}</td>
+        <section
+          style={{
+            ...cardStyle,
+            marginBottom: 24,
+            padding: 0,
+            overflow: "hidden",
+          }}
+        >
+          <div style={tableScrollStyle}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.site_column")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.equipment")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.kpi_alarms")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.kpi_findings")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.kpi_work_orders")}
+                  </th>
                   {devices && (
-                    <td style={cellStyle}>
-                      {entry.devices && (entry.devices.online || entry.devices.offline || entry.devices.unknown) ? (
-                        <DeviceBadges counts={entry.devices} t={t} />
-                      ) : (
-                        <span style={{ color: colors.textMuted }}>{t("web.dashboard.edge_none")}</span>
-                      )}
-                    </td>
+                    <th style={headerCellStyle}>
+                      {t("web.dashboard.edge_column")}
+                    </th>
                   )}
-                  <td style={cellStyle}>
-                    <Link href={`/?site=${entry.site.id}`} style={{ color: colors.accent }}>
-                      {t("web.dashboard.drill_down")} →
-                    </Link>
-                  </td>
+                  <th style={headerCellStyle} />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {portfolio.map((entry) => (
+                  <tr key={entry.site.id}>
+                    <td style={{ ...cellStyle, fontWeight: 600 }}>
+                      {entry.site.name}
+                    </td>
+                    <td style={cellStyle}>{entry.equipmentCount}</td>
+                    <td style={cellStyle}>
+                      <SeverityBadges counts={entry.alarmSeverity} t={t} />
+                    </td>
+                    <td style={cellStyle}>
+                      <SeverityBadges counts={entry.findingSeverity} t={t} />
+                    </td>
+                    <td style={cellStyle}>{entry.openWorkOrders}</td>
+                    {devices && (
+                      <td style={cellStyle}>
+                        {entry.devices &&
+                        (entry.devices.online ||
+                          entry.devices.offline ||
+                          entry.devices.unknown) ? (
+                          <DeviceBadges counts={entry.devices} t={t} />
+                        ) : (
+                          <span style={{ color: colors.textMuted }}>
+                            {t("web.dashboard.edge_none")}
+                          </span>
+                        )}
+                      </td>
+                    )}
+                    <td style={cellStyle}>
+                      <Link
+                        href={`/?site=${entry.site.id}`}
+                        style={{ color: colors.accent }}
+                      >
+                        {t("web.dashboard.drill_down")} →
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       )}
 
@@ -690,9 +914,18 @@ export default async function PortfolioPage({
         <section style={{ ...cardStyle, padding: 0, overflow: "hidden" }}>
           <div style={{ padding: "20px 24px 0" }}>
             <h2 style={sectionTitleStyle}>
-              {t("web.dashboard.site_equipment_title", { name: selectedSite.name })}
+              {t("web.dashboard.site_equipment_title", {
+                name: selectedSite.name,
+              })}
               {" — "}
-              <Link href="/" style={{ color: colors.accent, textTransform: "none", fontWeight: 600 }}>
+              <Link
+                href="/"
+                style={{
+                  color: colors.accent,
+                  textTransform: "none",
+                  fontWeight: 600,
+                }}
+              >
                 {t("web.dashboard.back_to_portfolio")}
               </Link>
             </h2>
@@ -702,42 +935,53 @@ export default async function PortfolioPage({
               {t("web.dashboard.no_equipment")}
             </p>
           ) : (
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr>
-                  <th style={headerCellStyle}>{t("web.dashboard.code")}</th>
-                  <th style={headerCellStyle}>{t("web.dashboard.name")}</th>
-                  <th style={headerCellStyle}>{t("web.dashboard.status_column")}</th>
-                  <th style={headerCellStyle}>{t("web.dashboard.alerts_column")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {selectedLocations.map((location) => {
-                  const status = statusByLocation.get(location.id) ?? null;
-                  const alertCount =
-                    (alarmCountByLocation.get(location.id) ?? 0) +
-                    (findingCountByLocation.get(location.id) ?? 0);
-                  return (
-                    <tr key={location.id}>
-                      <td style={cellStyle}>
-                        <Link href={`/registre/${location.id}`} style={{ color: colors.accent }}>
-                          {location.code}
-                        </Link>
-                      </td>
-                      <td style={cellStyle}>{location.name}</td>
-                      <td style={cellStyle}>
-                        <StatusCell status={status} locale={locale} t={t} />
-                      </td>
-                      <td style={cellStyle}>
-                        {alertCount > 0
-                          ? t("web.dashboard.alerts_open", { count: String(alertCount) })
-                          : t("web.dashboard.alerts_none")}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div style={tableScrollStyle}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr>
+                    <th style={headerCellStyle}>{t("web.dashboard.code")}</th>
+                    <th style={headerCellStyle}>{t("web.dashboard.name")}</th>
+                    <th style={headerCellStyle}>
+                      {t("web.dashboard.status_column")}
+                    </th>
+                    <th style={headerCellStyle}>
+                      {t("web.dashboard.alerts_column")}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedLocations.map((location) => {
+                    const status = statusByLocation.get(location.id) ?? null;
+                    const alertCount =
+                      (alarmCountByLocation.get(location.id) ?? 0) +
+                      (findingCountByLocation.get(location.id) ?? 0);
+                    return (
+                      <tr key={location.id}>
+                        <td style={cellStyle}>
+                          <Link
+                            href={`/registre/${location.id}`}
+                            style={{ color: colors.accent }}
+                          >
+                            {location.code}
+                          </Link>
+                        </td>
+                        <td style={cellStyle}>{location.name}</td>
+                        <td style={cellStyle}>
+                          <StatusCell status={status} locale={locale} t={t} />
+                        </td>
+                        <td style={cellStyle}>
+                          {alertCount > 0
+                            ? t("web.dashboard.alerts_open", {
+                                count: String(alertCount),
+                              })
+                            : t("web.dashboard.alerts_none")}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </section>
       )}
@@ -760,18 +1004,35 @@ function _countByLocation(ids: (string | null)[]): Map<string, number> {
  * être cliquable. Un clic doit ouvrir la vue filtrée correspondante. »).
  * `href` reste optionnel pour un KPI qui n'a pas encore de page dédiée.
  */
-function Kpi({ label, value, href }: { label: string; value: string; href?: string }) {
+function Kpi({
+  label,
+  value,
+  href,
+}: {
+  label: string;
+  value: string;
+  href?: string;
+}) {
   const content = (
     <>
-      <div style={{ fontSize: 28, fontWeight: 600, color: colors.textPrimary }}>{value}</div>
-      <div style={{ color: href ? colors.accent : colors.textMuted, fontSize: 13 }}>{label}</div>
+      <div style={{ fontSize: 28, fontWeight: 600, color: colors.textPrimary }}>
+        {value}
+      </div>
+      <div
+        style={{ color: href ? colors.accent : colors.textMuted, fontSize: 13 }}
+      >
+        {label}
+      </div>
     </>
   );
   if (!href) {
     return <div style={{ minWidth: 120 }}>{content}</div>;
   }
   return (
-    <Link href={href} style={{ minWidth: 120, display: "block", textDecoration: "none" }}>
+    <Link
+      href={href}
+      style={{ minWidth: 120, display: "block", textDecoration: "none" }}
+    >
       {content}
     </Link>
   );
@@ -791,8 +1052,16 @@ function SeverityKpi({
   const total = SEVERITIES.reduce((sum, severity) => sum + counts[severity], 0);
   const header = (
     <>
-      <div style={{ fontSize: 28, fontWeight: 600, color: colors.textPrimary }}>{total}</div>
-      <div style={{ color: href ? colors.accent : colors.textMuted, fontSize: 13, marginBottom: 4 }}>
+      <div style={{ fontSize: 28, fontWeight: 600, color: colors.textPrimary }}>
+        {total}
+      </div>
+      <div
+        style={{
+          color: href ? colors.accent : colors.textMuted,
+          fontSize: 13,
+          marginBottom: 4,
+        }}
+      >
         {label}
       </div>
     </>
@@ -820,12 +1089,20 @@ function SeverityBadges({
 }) {
   const present = SEVERITIES.filter((severity) => counts[severity] > 0);
   if (present.length === 0) {
-    return <span style={{ color: colors.textMuted }}>{t("web.dashboard.alerts_none")}</span>;
+    return (
+      <span style={{ color: colors.textMuted }}>
+        {t("web.dashboard.alerts_none")}
+      </span>
+    );
   }
   return (
     <span style={{ display: "inline-flex", gap: 6, flexWrap: "wrap" }}>
       {present.map((severity) => (
-        <span key={severity} title={t(`severity.${severity}`)} style={badgeStyle(SEVERITY_COLOR[severity])}>
+        <span
+          key={severity}
+          title={t(`severity.${severity}`)}
+          style={badgeStyle(SEVERITY_COLOR[severity])}
+        >
           {counts[severity]} {t(`severity.${severity}`)}
         </span>
       ))}
@@ -882,8 +1159,13 @@ function StatusCell({
   );
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-      <StatusBadge status={assetStatus} label={t(`asset_status.${assetStatus}`)} />
-      <span style={{ color: colors.textMuted, fontSize: 13 }}>{t(key, rendered)}</span>
+      <StatusBadge
+        status={assetStatus}
+        label={t(`asset_status.${assetStatus}`)}
+      />
+      <span style={{ color: colors.textMuted, fontSize: 13 }}>
+        {t(key, rendered)}
+      </span>
     </span>
   );
 }
