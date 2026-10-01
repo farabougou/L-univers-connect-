@@ -251,13 +251,20 @@ export default async function PortfolioPage({
   return (
     <main style={pageContainerStyle}>
       <header style={pageHeaderStyle}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ color: colors.accent }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+          <span style={{ color: colors.accent, flexShrink: 0 }}>
             <BrandMark variant="mono" size={32} label={t("common.app_name")} />
           </span>
-          <div>
+          <div style={{ minWidth: 0 }}>
             <h1 style={{ fontSize: 24, margin: 0 }}>{t("common.app_name")}</h1>
-            <p style={{ color: colors.textMuted, fontSize: 14, marginTop: 4 }}>
+            <p
+              style={{
+                color: colors.textMuted,
+                fontSize: 14,
+                marginTop: 4,
+                overflowWrap: "anywhere",
+              }}
+            >
               {t("web.dashboard.signed_in_as", { user: me.sub, roles: roleLabels(me.roles, t) })}
             </p>
           </div>
