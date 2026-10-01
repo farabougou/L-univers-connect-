@@ -1,17 +1,19 @@
 """Tests du Virtual Protocol Adapter (ADR 017 §2.2) — palier UNIT_TESTED :
 aucun réseau, aucune base, seulement la logique pure de génération de
-valeurs. Le palier SIMULATOR_TESTED (via le démon + une API réelle) et
-INTEGRATION_TESTED (bout en bout avec le reste de la plateforme) viennent
-ensuite, voir incrément 2 de l'ADR 017."""
+valeurs. Le palier FAILURE_TESTED (scénarios de panne contre la vraie règle
+FDD) vit dans tests/test_virtual_telemetry_failure_scenarios.py."""
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
 from app.connectors.virtual_telemetry import (
     PROFILES,
+    communication_loss_scenario,
+    failure_scenario,
     generate_profile_values,
     generate_value,
+    list_failure_scenarios,
     list_profiles,
     profile_points,
 )
@@ -91,3 +93,89 @@ def test_generate_profile_values_covers_every_point_of_the_profile() -> None:
     now = datetime(2026, 10, 1, 10, 0, tzinfo=UTC)
     values = generate_profile_values("cta", now=now)
     assert set(values) == {spec.code_suffix for spec in PROFILES["cta"]}
+
+
+# --- Scénarios de panne (ADR 017 §2.2, incrément 2) ---
+
+
+def test_list_failure_scenarios_includes_communication_loss_for_every_profile() -> None:
+    for profile in list_profiles():
+        assert "perte_communication" in list_failure_scenarios(profile)
+
+
+def test_unknown_failure_scenario_raises() -> None:
+    with pytest.raises(ValueError, match="scénario de panne inconnu"):
+        failure_scenario("cta", "fictif")
+
+
+def test_failure_scenario_scoped_to_another_profile_is_rejected() -> None:
+    """Un scénario nommé "vanne_bloquee" n'a de sens que pour "cta" (c'est le
+    seul profil qui a une vanne chaude) : le demander pour un autre profil
+    est une erreur, jamais un scénario silencieusement vide."""
+    with pytest.raises(ValueError, match="scénario de panne inconnu"):
+        failure_scenario("groupe_froid", "vanne_bloquee")
+
+
+def test_stuck_valve_overrides_ignore_normal_bounds_and_time() -> None:
+    scenario = failure_scenario("cta", "vanne_bloquee")
+    for hour in (0, 6, 12, 18):
+        now = datetime(2026, 10, 1, hour, 0, tzinfo=UTC)
+        values = generate_profile_values("cta", now=now, scenario=scenario)
+        assert values["vanne_chaude"] == 80.0
+
+
+def test_simultaneous_heating_cooling_scenario_opens_both_valves() -> None:
+    scenario = failure_scenario("cta", "chauffage_froid_simultane")
+    now = datetime(2026, 10, 1, 14, 0, tzinfo=UTC)
+    values = generate_profile_values("cta", now=now, scenario=scenario)
+    assert values["vanne_chaude"] > 0
+    assert values["vanne_froide"] > 0
+
+
+def test_drift_scenario_requires_start_time() -> None:
+    scenario = failure_scenario("cta", "capteur_derive")
+    with pytest.raises(ValueError, match="scenario_started_at est requis"):
+        generate_profile_values(
+            "cta", now=datetime(2026, 10, 1, 10, 0, tzinfo=UTC), scenario=scenario
+        )
+
+
+def test_drift_scenario_moves_the_value_outside_the_normal_band_over_time() -> None:
+    scenario = failure_scenario("cta", "capteur_derive")
+    started_at = datetime(2026, 10, 1, 10, 0, tzinfo=UTC)
+    spec = next(s for s in profile_points("cta") if s.code_suffix == "t_depart")
+
+    just_started = generate_profile_values(
+        "cta", now=started_at, scenario=scenario, scenario_started_at=started_at
+    )
+    assert spec.min_value <= just_started["t_depart"] <= spec.max_value
+
+    later = generate_profile_values(
+        "cta",
+        now=started_at + timedelta(hours=5),
+        scenario=scenario,
+        scenario_started_at=started_at,
+    )
+    # +4°C/heure pendant 5h (+20°C, bien au-delà du cycle jour/nuit +/-1.5°C
+    # et du bruit +/-0.2°C) : largement hors de la plage normale (10-30°C),
+    # une vraie dérive de capteur n'est jamais plafonnée artificiellement.
+    assert later["t_depart"] > spec.max_value
+
+
+def test_communication_loss_scenario_omits_every_point_of_the_profile() -> None:
+    scenario = communication_loss_scenario("groupe_froid")
+    now = datetime(2026, 10, 1, 10, 0, tzinfo=UTC)
+    values = generate_profile_values("groupe_froid", now=now, scenario=scenario)
+    assert values == {}
+
+
+def test_other_profile_points_are_unaffected_by_a_scenario() -> None:
+    """Un scénario qui ne mentionne que deux points (les vannes) laisse les
+    autres points du même profil générer leur valeur normale — jamais une
+    panne qui, par effet de bord, en supprime ou n'en fige d'autres."""
+    scenario = failure_scenario("cta", "vanne_bloquee")
+    now = datetime(2026, 10, 1, 14, 0, tzinfo=UTC)
+    with_scenario = generate_profile_values("cta", now=now, scenario=scenario)
+    without_scenario = generate_profile_values("cta", now=now)
+    for suffix in ("t_depart", "pression_refoulement", "consigne_depart", "defaut_general"):
+        assert with_scenario[suffix] == without_scenario[suffix]

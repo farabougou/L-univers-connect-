@@ -315,10 +315,133 @@ def profile_points(profile: str) -> tuple[VirtualPointSpec, ...]:
         ) from None
 
 
+@dataclass(frozen=True)
+class FailureScenario:
+    """Panne déclenchable sur un profil (ADR 017 §2.2, incrément 2) — une
+    perturbation volontaire de la télémétrie saine, jamais un deuxième moyen
+    de produire une valeur normale. Trois formes, cumulables :
+
+    - `overrides` : valeur fixe, imposée quelle que soit l'heure (ex. une
+      vanne bloquée en position) — ignore les bornes normales du point.
+    - `drift_per_hour` : dérive linéaire à partir de la valeur saine au
+      moment où le scénario démarre (`scenario_started_at`), elle aussi hors
+      bornes — une vraie dérive de capteur doit pouvoir sortir de la plage
+      normale, sinon ce n'est pas une panne.
+    - `suppressed` : plus aucune valeur générée pour ce point — simule une
+      perte de communication (totale si elle couvre tous les points du
+      profil, partielle sinon)."""
+
+    name: str
+    profile: str
+    description: str
+    overrides: dict[str, float | bool] | None = None
+    drift_per_hour: dict[str, float] | None = None
+    suppressed: frozenset[str] = frozenset()
+
+
+# Trois scénarios nommés propres au profil "cta" — choisis pour retomber sur
+# des mécanismes déjà construits et testés ailleurs dans la plateforme :
+# `vanne_bloquee` et `chauffage_froid_simultane` alimentent directement la
+# règle FDD déjà écrite (`app.rules.CorrelationRule`,
+# `simultaneous_heating_cooling`), `capteur_derive` une sortie de plage que
+# `app.quality_flags`/`app.trust` savent déjà qualifier.
+_CTA_SCENARIOS: dict[str, FailureScenario] = {
+    "capteur_derive": FailureScenario(
+        name="capteur_derive",
+        profile="cta",
+        description=(
+            "Le capteur de température de départ dérive progressivement, "
+            "hors de sa plage normale (10-30°C)."
+        ),
+        drift_per_hour={"t_depart": 4.0},
+    ),
+    "vanne_bloquee": FailureScenario(
+        name="vanne_bloquee",
+        profile="cta",
+        description="La vanne chaude reste bloquée ouverte, quelle que soit la demande.",
+        overrides={"vanne_chaude": 80.0},
+    ),
+    "chauffage_froid_simultane": FailureScenario(
+        name="chauffage_froid_simultane",
+        profile="cta",
+        description=(
+            "Vannes chaude et froide ouvertes en même temps — déclenche la "
+            "règle FDD simultaneous_heating_cooling (app/rules.py)."
+        ),
+        overrides={"vanne_chaude": 60.0, "vanne_froide": 60.0},
+    ),
+}
+
+
+def communication_loss_scenario(profile: str) -> FailureScenario:
+    """Panne générique, valable pour n'importe quel profil : plus aucune
+    mesure reçue pour l'équipement (passerelle injoignable) — à terme
+    détectée par la surveillance de fraîcheur déjà construite
+    (`app.monitoring.evaluate_data_freshness`, `DATA_BECAME_STALE`), jamais
+    par ce module qui ne fait qu'arrêter d'envoyer."""
+    return FailureScenario(
+        name="perte_communication",
+        profile=profile,
+        description="Plus aucune mesure reçue pour cet équipement (passerelle injoignable).",
+        suppressed=frozenset(spec.code_suffix for spec in profile_points(profile)),
+    )
+
+
+def list_failure_scenarios(profile: str) -> list[str]:
+    """Noms valides pour `failure_scenario(profile, ...)` — toujours au moins
+    `perte_communication`, générique à tout profil."""
+    names = {"perte_communication"}
+    names.update(name for name, scenario in _CTA_SCENARIOS.items() if scenario.profile == profile)
+    return sorted(names)
+
+
+def failure_scenario(profile: str, name: str) -> FailureScenario:
+    if name == "perte_communication":
+        return communication_loss_scenario(profile)
+    scenario = _CTA_SCENARIOS.get(name)
+    if scenario is None or scenario.profile != profile:
+        raise ValueError(
+            f"scénario de panne inconnu pour le profil {profile!r} : {name!r} "
+            f"(scénarios disponibles : {', '.join(list_failure_scenarios(profile))})"
+        )
+    return scenario
+
+
 def generate_profile_values(
-    profile: str, *, now: datetime
+    profile: str,
+    *,
+    now: datetime,
+    scenario: FailureScenario | None = None,
+    scenario_started_at: datetime | None = None,
 ) -> dict[str, NumberValue | BooleanValue]:
     """Valeur simulée de chaque point du profil à l'instant `now`, par
     `code_suffix` — la forme attendue par
-    `scripts/virtual_commissioning_daemon.py` pour construire les mesures."""
-    return {spec.code_suffix: generate_value(spec, now=now) for spec in profile_points(profile)}
+    `scripts/virtual_commissioning_daemon.py` pour construire les mesures.
+
+    Avec `scenario` : un point supprimé (`suppressed`) est absent du
+    résultat — c'est au bénéficiaire (le démon) de ne rien envoyer pour lui,
+    jamais à cette fonction d'inventer une valeur de remplacement. Un point
+    en dérive (`drift_per_hour`) prend comme point de départ sa valeur saine
+    au moment de l'appel, puis s'en écarte avec le temps écoulé depuis
+    `scenario_started_at` (requis dès qu'une dérive est utilisée)."""
+    overrides = scenario.overrides or {} if scenario else {}
+    drifts = scenario.drift_per_hour or {} if scenario else {}
+    suppressed = scenario.suppressed if scenario else frozenset()
+
+    values: dict[str, NumberValue | BooleanValue] = {}
+    for spec in profile_points(profile):
+        if spec.code_suffix in suppressed:
+            continue
+        if spec.code_suffix in overrides:
+            values[spec.code_suffix] = overrides[spec.code_suffix]
+        elif spec.code_suffix in drifts:
+            if scenario_started_at is None:
+                raise ValueError("scenario_started_at est requis pour un scénario avec dérive")
+            healthy_value = generate_value(spec, now=now)
+            elapsed_hours = (now - scenario_started_at).total_seconds() / 3600
+            values[spec.code_suffix] = round(
+                healthy_value + drifts[spec.code_suffix] * elapsed_hours, 2
+            )
+        else:
+            values[spec.code_suffix] = generate_value(spec, now=now)
+    return values
