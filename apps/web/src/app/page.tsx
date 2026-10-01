@@ -303,21 +303,28 @@ export default async function PortfolioPage({
       <section style={{ ...cardStyle, marginBottom: 24 }}>
         <h2 style={sectionTitleStyle}>{t("web.dashboard.portfolio_title")}</h2>
         <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
-          <Kpi label={t("web.dashboard.kpi_sites")} value={String(sites.length)} />
-          <Kpi label={t("web.dashboard.kpi_equipment")} value={String(totals.equipmentCount)} />
+          <Kpi label={t("web.dashboard.kpi_sites")} value={String(sites.length)} href="/registre" />
+          <Kpi
+            label={t("web.dashboard.kpi_equipment")}
+            value={String(totals.equipmentCount)}
+            href="/registre"
+          />
           <SeverityKpi
             label={t("web.dashboard.kpi_alarms")}
             counts={totals.alarmSeverity}
             t={t}
+            href="/alarmes"
           />
           <SeverityKpi
             label={t("web.dashboard.kpi_findings")}
             counts={totals.findingSeverity}
             t={t}
+            href="/alarmes"
           />
           <Kpi
             label={t("web.dashboard.kpi_work_orders")}
             value={String(totals.openWorkOrders)}
+            href="/ordres-de-travail"
           />
         </div>
       </section>
@@ -740,12 +747,26 @@ function _countByLocation(ids: (string | null)[]): Map<string, number> {
   return counts;
 }
 
-function Kpi({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={{ minWidth: 120 }}>
+/**
+ * Chaque KPI du tableau de bord doit pouvoir s'ouvrir sur la vue
+ * correspondante (directive UI/dashboard, section 8 : « Chaque KPI doit
+ * être cliquable. Un clic doit ouvrir la vue filtrée correspondante. »).
+ * `href` reste optionnel pour un KPI qui n'a pas encore de page dédiée.
+ */
+function Kpi({ label, value, href }: { label: string; value: string; href?: string }) {
+  const content = (
+    <>
       <div style={{ fontSize: 28, fontWeight: 600, color: colors.textPrimary }}>{value}</div>
-      <div style={{ color: colors.textMuted, fontSize: 13 }}>{label}</div>
-    </div>
+      <div style={{ color: href ? colors.accent : colors.textMuted, fontSize: 13 }}>{label}</div>
+    </>
+  );
+  if (!href) {
+    return <div style={{ minWidth: 120 }}>{content}</div>;
+  }
+  return (
+    <Link href={href} style={{ minWidth: 120, display: "block", textDecoration: "none" }}>
+      {content}
+    </Link>
   );
 }
 
@@ -753,16 +774,31 @@ function SeverityKpi({
   label,
   counts,
   t,
+  href,
 }: {
   label: string;
   counts: SeverityCounts;
   t: (key: string, params?: Record<string, string>) => string;
+  href?: string;
 }) {
   const total = SEVERITIES.reduce((sum, severity) => sum + counts[severity], 0);
+  const header = (
+    <>
+      <div style={{ fontSize: 28, fontWeight: 600, color: colors.textPrimary }}>{total}</div>
+      <div style={{ color: href ? colors.accent : colors.textMuted, fontSize: 13, marginBottom: 4 }}>
+        {label}
+      </div>
+    </>
+  );
   return (
     <div style={{ minWidth: 160 }}>
-      <div style={{ fontSize: 28, fontWeight: 600, color: colors.textPrimary }}>{total}</div>
-      <div style={{ color: colors.textMuted, fontSize: 13, marginBottom: 4 }}>{label}</div>
+      {href ? (
+        <Link href={href} style={{ display: "block", textDecoration: "none" }}>
+          {header}
+        </Link>
+      ) : (
+        header
+      )}
       <SeverityBadges counts={counts} t={t} />
     </div>
   );
