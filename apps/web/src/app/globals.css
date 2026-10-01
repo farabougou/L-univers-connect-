@@ -29,6 +29,11 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Un identifiant technique (UUID, jeton) ne contient pas d'espace : sans
+     ceci, un seul de ces identifiants peut forcer toute la page à dépasser
+     la largeur de l'écran, et le texte en trop devient invisible (silencieux
+     à cause de overflow-x: hidden ci-dessus, jamais un scroll visible). */
+  overflow-wrap: anywhere;
 }
 
 * {
