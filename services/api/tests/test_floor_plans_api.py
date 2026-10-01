@@ -103,9 +103,7 @@ def test_envoi_puis_lecture_d_un_plan(tenant) -> None:
 
     with patch("app.auth.fetch_jwks", return_value=JWKS):
         get_response = client.get(f"/floor-plans/{plan['id']}", headers=headers)
-        list_response = client.get(
-            f"/spaces/{tenant['space_id']}/floor-plans", headers=headers
-        )
+        list_response = client.get(f"/spaces/{tenant['space_id']}/floor-plans", headers=headers)
 
     assert get_response.status_code == 200
     assert get_response.json()["id"] == plan["id"]
@@ -122,9 +120,7 @@ def test_un_second_envoi_cree_une_nouvelle_version_sans_ecraser_la_premiere(tena
     assert first["id"] != second["id"]
 
     with patch("app.auth.fetch_jwks", return_value=JWKS):
-        list_response = client.get(
-            f"/spaces/{tenant['space_id']}/floor-plans", headers=headers
-        )
+        list_response = client.get(f"/spaces/{tenant['space_id']}/floor-plans", headers=headers)
     versions = [(p["id"], p["version"]) for p in list_response.json()]
     # La plus récente version en premier.
     assert versions == [(second["id"], 2), (first["id"], 1)]

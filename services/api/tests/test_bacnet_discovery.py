@@ -338,13 +338,17 @@ def test_accept_proposal_cree_un_vrai_point_par_le_meme_chemin_que_la_saisie_man
         assert accepted["decided_by"] == "alice"
         assert accepted["created_point_id"] is not None
 
-        point = connection.execute(
-            text(
-                "SELECT point_class, unit, functional_location_id, mapping_status, "
-                "mapping_confidence FROM points WHERE id = :id"
-            ),
-            {"id": accepted["created_point_id"]},
-        ).mappings().one()
+        point = (
+            connection.execute(
+                text(
+                    "SELECT point_class, unit, functional_location_id, mapping_status, "
+                    "mapping_confidence FROM points WHERE id = :id"
+                ),
+                {"id": accepted["created_point_id"]},
+            )
+            .mappings()
+            .one()
+        )
 
     assert point["point_class"] == "temperature_sensor"
     assert point["unit"] == "Cel"
@@ -374,10 +378,14 @@ def test_accept_proposal_permet_de_corriger_la_classe_avant_creation(tenant):
             name="Capteur corrige manuellement",
         )
 
-        point = connection.execute(
-            text("SELECT point_class, unit, code, name FROM points WHERE id = :id"),
-            {"id": accepted["created_point_id"]},
-        ).mappings().one()
+        point = (
+            connection.execute(
+                text("SELECT point_class, unit, code, name FROM points WHERE id = :id"),
+                {"id": accepted["created_point_id"]},
+            )
+            .mappings()
+            .one()
+        )
 
     assert point["point_class"] == "pressure_sensor"
     assert point["unit"] == "kPa"
@@ -436,9 +444,7 @@ def test_decider_une_proposition_inexistante_leve_une_erreur_explicite(tenant):
                 decided_by="test",
             )
         with pytest.raises(DiscoveryProposalNotFound):
-            reject_proposal(
-                connection, proposal_id=uuid.uuid4(), decided_by="test", reason="x"
-            )
+            reject_proposal(connection, proposal_id=uuid.uuid4(), decided_by="test", reason="x")
 
 
 def test_isolation_des_tenants_un_autre_tenant_ne_voit_aucun_lot_ni_proposition(two_tenants):

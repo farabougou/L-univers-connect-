@@ -61,9 +61,7 @@ def _activate_rule(connection, tenant, subject_key="cta01-tdep-haute", **overrid
     )
     # Approbation à deux (app/config_versions.py) : activée par une autre
     # personne que celle qui l'a proposée.
-    activate_version(
-        connection, version_id=version_id, activated_by="approbateur", activated_at=T0
-    )
+    activate_version(connection, version_id=version_id, activated_by="approbateur", activated_at=T0)
     return version_id
 
 

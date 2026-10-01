@@ -110,9 +110,7 @@ def compare(
         rows.append(_discovery_only_row(proposal))
 
     needs_review = sum(
-        1
-        for row in rows
-        if row.match_kind != "gtb_only" and row.proposed_point_class is None
+        1 for row in rows if row.match_kind != "gtb_only" and row.proposed_point_class is None
     )
     summary = ComparisonSummary(
         gtb_count=len(gtb_entries),
@@ -188,9 +186,7 @@ def render_markdown_report(
     }
     for row in rows:
         object_ref = (
-            f"{row.object_type} #{row.object_instance}"
-            if row.object_type is not None
-            else "—"
+            f"{row.object_type} #{row.object_instance}" if row.object_type is not None else "—"
         )
         confidence = f"{row.confidence:.2f}" if row.confidence is not None else "—"
         lines.append(

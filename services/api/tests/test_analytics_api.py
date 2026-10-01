@@ -163,9 +163,7 @@ def test_creer_un_ordre_de_travail_depuis_un_constat(two_tenants) -> None:
         },
     )
     assert measurement.status_code == 201, measurement.text
-    finding = _call(
-        "GET", "/findings", technicien, params={"handling_status": "open"}
-    ).json()[0]
+    finding = _call("GET", "/findings", technicien, params={"handling_status": "open"}).json()[0]
     assert finding["work_order_id"] is None
     url = f"/findings/{finding['id']}/work-order"
 

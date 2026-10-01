@@ -145,9 +145,7 @@ def _build_groupe_electrogene_objects(server: Application) -> None:
     server.add_object(_binary_input(2, "Marche Groupe Electrogene", False))
     server.add_object(_binary_value(1, "Autorisation Demarrage", True))
     server.add_object(
-        _multi_state_value(
-            1, "Mode Fonctionnement", 2, ["Arret", "Automatique", "Manuel", "Test"]
-        )
+        _multi_state_value(1, "Mode Fonctionnement", 2, ["Arret", "Automatique", "Manuel", "Test"])
     )
 
 
@@ -160,9 +158,7 @@ def _build_vrv_drv_objects(server: Application) -> None:
     server.add_object(_binary_input(1, "Defaut Unite Exterieure", False))
     server.add_object(_binary_input(2, "Marche Zone 1", True))
     server.add_object(
-        _multi_state_value(
-            1, "Mode Zone 1", 3, ["Arret", "Froid", "Chaud", "Ventilation", "Auto"]
-        )
+        _multi_state_value(1, "Mode Zone 1", 3, ["Arret", "Froid", "Chaud", "Ventilation", "Auto"])
     )
 
 

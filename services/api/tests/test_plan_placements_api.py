@@ -126,9 +126,7 @@ def test_propose_puis_valider_un_placement_d_espace(tenant) -> None:
     assert placement["point_id"] is None
 
     with patch("app.auth.fetch_jwks", return_value=JWKS):
-        validate_response = client.post(
-            f"/placements/{placement['id']}/validate", headers=headers
-        )
+        validate_response = client.post(f"/placements/{placement['id']}/validate", headers=headers)
     assert validate_response.status_code == 200
     assert validate_response.json()["status"] == "validated"
     assert validate_response.json()["validated_by"] is not None

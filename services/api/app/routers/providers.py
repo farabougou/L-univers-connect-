@@ -84,9 +84,7 @@ def list_providers(
     connection: Annotated[Connection, Depends(get_tenant_connection)],
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
 ) -> list[ProviderOut]:
-    rows = connection.execute(
-        text(f"SELECT {_COLUMNS} FROM providers ORDER BY name")
-    ).mappings()
+    rows = connection.execute(text(f"SELECT {_COLUMNS} FROM providers ORDER BY name")).mappings()
     return [ProviderOut(**row) for row in rows]
 
 

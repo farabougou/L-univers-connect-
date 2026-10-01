@@ -50,12 +50,8 @@ def test_un_tenant_avec_des_entrees_est_ancre(caplog):
     try:
         with engine.begin() as connection:
             set_tenant_context(connection, tenant_id)
-            append_audit_entry(
-                connection, tenant_id=tenant_id, actor="test", action="site.created"
-            )
-            append_audit_entry(
-                connection, tenant_id=tenant_id, actor="test", action="site.renamed"
-            )
+            append_audit_entry(connection, tenant_id=tenant_id, actor="test", action="site.created")
+            append_audit_entry(connection, tenant_id=tenant_id, actor="test", action="site.renamed")
         expected_seq, expected_hash = _latest_entry_hash(tenant_id)
 
         with caplog.at_level(logging.INFO, logger="paios.audit_anchor"):

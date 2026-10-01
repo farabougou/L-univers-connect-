@@ -69,9 +69,7 @@ def test_lit_tous_les_points_avec_la_bonne_valeur(opcua_simulator):
 
 def test_serveur_injoignable_leve_une_erreur_explicite(opcua_simulator):
     with pytest.raises(OpcuaReadError):
-        read_opcua_points(
-            "opc.tcp://127.0.0.1:48989/nope/", _points(opcua_simulator), timeout=1.0
-        )
+        read_opcua_points("opc.tcp://127.0.0.1:48989/nope/", _points(opcua_simulator), timeout=1.0)
 
 
 def test_node_id_inconnu_leve_une_erreur_explicite(opcua_simulator):

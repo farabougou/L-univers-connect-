@@ -123,9 +123,7 @@ def test_technician_can_read_but_not_create_or_update(two_tenants) -> None:
 def test_updating_a_provider(two_tenants) -> None:
     tenant_a, _ = two_tenants
     manager = _manager(tenant_a)
-    provider_id = _call(
-        "POST", "/providers", manager, json={"name": "Frigo Services"}
-    ).json()["id"]
+    provider_id = _call("POST", "/providers", manager, json={"name": "Frigo Services"}).json()["id"]
 
     updated = _call(
         "PUT",
@@ -164,9 +162,7 @@ def test_a_functional_location_can_declare_who_maintains_it(two_tenants) -> None
     cible possible (app/graph_vocabulary.py) avant l'ajout des prestataires."""
     tenant_a, _ = two_tenants
     manager = _manager(tenant_a)
-    provider_id = _call(
-        "POST", "/providers", manager, json={"name": "Frigo Services"}
-    ).json()["id"]
+    provider_id = _call("POST", "/providers", manager, json={"name": "Frigo Services"}).json()["id"]
 
     relation = _call(
         "POST",

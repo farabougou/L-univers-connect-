@@ -224,9 +224,7 @@ def test_type_de_fichier_non_pris_en_charge_est_refuse(tenant) -> None:
 
 def test_cle_de_stockage_d_un_autre_equipement_est_refusee(tenant) -> None:
     headers = _auth_headers(tenant["tenant_id"], ["admin_tenant"])
-    foreign_key = (
-        f"{tenant['tenant_id']}/documents/{uuid.uuid4()}/{uuid.uuid4()}-manuel.pdf"
-    )
+    foreign_key = f"{tenant['tenant_id']}/documents/{uuid.uuid4()}/{uuid.uuid4()}-manuel.pdf"
 
     with patch("app.auth.fetch_jwks", return_value=JWKS):
         create_response = client.post(

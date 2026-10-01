@@ -59,9 +59,7 @@ def key_belongs_to(object_key: str, *, tenant_id: uuid.UUID, intervention_id: uu
     return bool(name) and "/" not in name and name not in (".", "..")
 
 
-def build_floor_plan_object_key(
-    *, tenant_id: uuid.UUID, space_id: uuid.UUID, filename: str
-) -> str:
+def build_floor_plan_object_key(*, tenant_id: uuid.UUID, space_id: uuid.UUID, filename: str) -> str:
     """Même principe que build_object_key, pour les plans (ADR 011, étape
     S3) : un dossier par espace. Le numéro de version n'entre pas dans la
     clé — c'est un fait décidé par le serveur au moment d'enregistrer le

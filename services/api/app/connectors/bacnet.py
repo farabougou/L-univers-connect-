@@ -193,9 +193,7 @@ async def _discover_device_async(
             address=address,
             vendor_id=int(i_am.vendorID) if i_am.vendorID is not None else None,
             max_apdu_length=(
-                int(i_am.maxAPDULengthAccepted)
-                if i_am.maxAPDULengthAccepted is not None
-                else None
+                int(i_am.maxAPDULengthAccepted) if i_am.maxAPDULengthAccepted is not None else None
             ),
         )
     finally:

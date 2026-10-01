@@ -152,9 +152,7 @@ def _scan_and_complete(tenant, manager, *, address: str = ADDRESS, timeout: floa
     return result.json()
 
 
-def _scan_and_fail(
-    tenant, manager, *, address: str = UNREACHABLE, timeout: float = 0.5
-) -> dict:
+def _scan_and_fail(tenant, manager, *, address: str = UNREACHABLE, timeout: float = 0.5) -> dict:
     scan_response = _scan(tenant, manager, address=address, timeout=timeout)
     assert scan_response.status_code == 201, scan_response.text
     batch = scan_response.json()
@@ -203,9 +201,7 @@ def test_agent_edge_execute_le_scan_et_rapporte_les_propositions(two_tenants) ->
     assert batch["object_count"] == 8
     assert batch["duplicate_count"] == 0
 
-    proposals = _call(
-        "GET", f"/bacnet-discovery/batches/{batch['id']}/proposals", manager
-    ).json()
+    proposals = _call("GET", f"/bacnet-discovery/batches/{batch['id']}/proposals", manager).json()
     assert len(proposals) == 8
     by_name = {p["object_name"]: p for p in proposals}
     temperature = by_name["T Depart CTA"]
@@ -290,9 +286,7 @@ def test_accepter_puis_rejeter_des_propositions(two_tenants) -> None:
     tenant_a, _ = two_tenants
     manager = _manager(tenant_a)
     batch = _scan_and_complete(tenant_a, manager)
-    proposals = _call(
-        "GET", f"/bacnet-discovery/batches/{batch['id']}/proposals", manager
-    ).json()
+    proposals = _call("GET", f"/bacnet-discovery/batches/{batch['id']}/proposals", manager).json()
     by_name = {p["object_name"]: p for p in proposals}
 
     accepted = _call(
@@ -325,12 +319,8 @@ def test_accepter_deux_fois_est_un_conflit(two_tenants) -> None:
         "GET", f"/bacnet-discovery/batches/{batch['id']}/proposals", manager
     ).json()[0]["id"]
 
-    first = _call(
-        "POST", f"/bacnet-discovery-proposals/{proposal_id}/accept", manager, json={}
-    )
-    second = _call(
-        "POST", f"/bacnet-discovery-proposals/{proposal_id}/accept", manager, json={}
-    )
+    first = _call("POST", f"/bacnet-discovery-proposals/{proposal_id}/accept", manager, json={})
+    second = _call("POST", f"/bacnet-discovery-proposals/{proposal_id}/accept", manager, json={})
 
     assert first.status_code == 200
     assert second.status_code == 409
@@ -381,9 +371,7 @@ def test_lot_et_propositions_dun_autre_tenant_sont_introuvables(two_tenants) -> 
     manager_a = _manager(tenant_a)
     batch = _scan(tenant_a, manager_a).json()
 
-    other_batch = _call(
-        "GET", f"/bacnet-discovery/batches/{batch['id']}", _tech(tenant_b)
-    )
+    other_batch = _call("GET", f"/bacnet-discovery/batches/{batch['id']}", _tech(tenant_b))
     other_proposals = _call(
         "GET", f"/bacnet-discovery/batches/{batch['id']}/proposals", _tech(tenant_b)
     )

@@ -5,13 +5,29 @@ Ces protections sont volontaires (voir app/audit.py et la migration
 accès administrateur explicite, jamais par un simple DELETE applicatif.
 """
 
+from urllib.parse import urlsplit, urlunsplit
+
 from sqlalchemy import create_engine, text
+
+from app.config import settings
 
 # Compte administrateur PostgreSQL local (voir infra/init-db/01-create-app-role.sql).
 # Jamais utilisé par l'API elle-même, uniquement ici pour nettoyer les
-# entrées d'audit créées par les tests.
-ADMIN_DATABASE_URL = (
-    "postgresql+psycopg://postgres:postgres_admin_dev_password@localhost:5432/paios"
+# entrées d'audit créées par les tests. Dérivé de la base réellement testée
+# (app.config.settings.database_url) plutôt que codé en dur sur le nom
+# "paios" : un nom figé nettoyait silencieusement la mauvaise base dès que
+# les tests tournaient contre une autre base (CI avec un autre nom, pilote),
+# laissant les lignes protégées en place et faisant échouer la suppression
+# du tenant en fin de test, sans rapport avec un vrai défaut de migration.
+_app_url = urlsplit(settings.database_url)
+ADMIN_DATABASE_URL = urlunsplit(
+    (
+        _app_url.scheme,
+        f"postgres:postgres_admin_dev_password@{_app_url.hostname}:{_app_url.port or 5432}",
+        _app_url.path,
+        _app_url.query,
+        _app_url.fragment,
+    )
 )
 
 
@@ -78,9 +94,7 @@ def purge_floor_plans_for_tenant(tenant_id) -> None:
             connection.execute(
                 text("DELETE FROM floor_plans WHERE tenant_id = :id"), {"id": tenant_id}
             )
-            connection.execute(
-                text("ALTER TABLE floor_plans ENABLE TRIGGER floor_plans_no_delete")
-            )
+            connection.execute(text("ALTER TABLE floor_plans ENABLE TRIGGER floor_plans_no_delete"))
     finally:
         admin_engine.dispose()
 
@@ -90,15 +104,11 @@ def purge_documents_for_tenant(tenant_id) -> None:
     admin_engine = create_engine(ADMIN_DATABASE_URL)
     try:
         with admin_engine.begin() as connection:
-            connection.execute(
-                text("ALTER TABLE documents DISABLE TRIGGER documents_no_delete")
-            )
+            connection.execute(text("ALTER TABLE documents DISABLE TRIGGER documents_no_delete"))
             connection.execute(
                 text("DELETE FROM documents WHERE tenant_id = :id"), {"id": tenant_id}
             )
-            connection.execute(
-                text("ALTER TABLE documents ENABLE TRIGGER documents_no_delete")
-            )
+            connection.execute(text("ALTER TABLE documents ENABLE TRIGGER documents_no_delete"))
     finally:
         admin_engine.dispose()
 

@@ -258,9 +258,7 @@ def test_rule_requires_two_different_points(tenant) -> None:
     with engine.begin() as connection:
         set_tenant_context(connection, tenant["tenant_id"])
         with raises_code(ConfigInvalid, "RULE_CORRELATION_SAME_POINT"):
-            _activate_correlation_rule(
-                connection, tenant, cooling_point_id=str(tenant["heating"])
-            )
+            _activate_correlation_rule(connection, tenant, cooling_point_id=str(tenant["heating"]))
 
 
 def test_rule_requires_points_on_the_same_equipment(tenant) -> None:

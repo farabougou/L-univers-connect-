@@ -111,9 +111,7 @@ class CorrelationRule(BaseModel):
 
 
 class _RuleContent(BaseModel):
-    rule: Annotated[
-        ThresholdRule | DivergenceRule | CorrelationRule, Field(discriminator="kind")
-    ]
+    rule: Annotated[ThresholdRule | DivergenceRule | CorrelationRule, Field(discriminator="kind")]
 
 
 def _validate_point_for_rule(connection: Connection, point_id: uuid.UUID) -> dict[str, Any]:

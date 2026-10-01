@@ -22,8 +22,7 @@ from sqlalchemy.exc import IntegrityError
 from app.errors import DomainError
 
 _FLOOR_PLAN_COLUMNS = (
-    "id, space_id, version, storage_key, content_type, filename, sha256, "
-    "uploaded_by, uploaded_at"
+    "id, space_id, version, storage_key, content_type, filename, sha256, uploaded_by, uploaded_at"
 )
 
 SUPPORTED_CONTENT_TYPES = ("application/pdf", "image/png", "image/jpeg")

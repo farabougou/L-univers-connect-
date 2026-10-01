@@ -136,9 +136,7 @@ def test_confirm_parses_and_stores_proposals(two_tenants) -> None:
     assert body["space_proposal_count"] == 3
     assert body["equipment_proposal_count"] == 1
 
-    proposals = _call(
-        "GET", f"/ifc-imports/{body['id']}/proposals", _tech(tenant_a)
-    ).json()
+    proposals = _call("GET", f"/ifc-imports/{body['id']}/proposals", _tech(tenant_a)).json()
     assert len(proposals) == 4
     assert {p["status"] for p in proposals} == {"proposed"}
 
@@ -159,9 +157,7 @@ def test_accepting_proposals_in_hierarchy_order_creates_real_spaces_and_equipmen
     tenant_a, _ = two_tenants
     manager = _manager(tenant_a)
     batch = _upload_and_confirm(tenant_a, manager).json()
-    proposals = _call(
-        "GET", f"/ifc-imports/{batch['id']}/proposals", manager
-    ).json()
+    proposals = _call("GET", f"/ifc-imports/{batch['id']}/proposals", manager).json()
     by_class = {p["ifc_class"]: p for p in proposals}
 
     building = _call(
@@ -170,9 +166,7 @@ def test_accepting_proposals_in_hierarchy_order_creates_real_spaces_and_equipmen
     storey = _call(
         "POST", f"/ifc-import-proposals/{by_class['IfcBuildingStorey']['id']}/accept", manager
     )
-    space = _call(
-        "POST", f"/ifc-import-proposals/{by_class['IfcSpace']['id']}/accept", manager
-    )
+    space = _call("POST", f"/ifc-import-proposals/{by_class['IfcSpace']['id']}/accept", manager)
     equipment = _call(
         "POST", f"/ifc-import-proposals/{by_class['IfcUnitaryEquipment']['id']}/accept", manager
     )
@@ -184,18 +178,30 @@ def test_accepting_proposals_in_hierarchy_order_creates_real_spaces_and_equipmen
 
     with engine.begin() as connection:
         set_tenant_context(connection, tenant_a["tenant_id"])
-        created_space = connection.execute(
-            text("SELECT space_type, parent_id FROM spaces WHERE id = :id"),
-            {"id": space.json()["created_node_id"]},
-        ).mappings().one()
-        created_storey = connection.execute(
-            text("SELECT parent_id FROM spaces WHERE id = :id"),
-            {"id": storey.json()["created_node_id"]},
-        ).mappings().one()
-        created_location = connection.execute(
-            text("SELECT space_id, kind FROM functional_locations WHERE id = :id"),
-            {"id": equipment.json()["created_node_id"]},
-        ).mappings().one()
+        created_space = (
+            connection.execute(
+                text("SELECT space_type, parent_id FROM spaces WHERE id = :id"),
+                {"id": space.json()["created_node_id"]},
+            )
+            .mappings()
+            .one()
+        )
+        created_storey = (
+            connection.execute(
+                text("SELECT parent_id FROM spaces WHERE id = :id"),
+                {"id": storey.json()["created_node_id"]},
+            )
+            .mappings()
+            .one()
+        )
+        created_location = (
+            connection.execute(
+                text("SELECT space_id, kind FROM functional_locations WHERE id = :id"),
+                {"id": equipment.json()["created_node_id"]},
+            )
+            .mappings()
+            .one()
+        )
 
     assert created_space["space_type"] == "room"
     assert str(created_space["parent_id"]) == storey.json()["created_node_id"]
@@ -269,9 +275,7 @@ def test_batch_and_proposals_of_another_tenant_are_not_found(two_tenants) -> Non
     batch = _upload_and_confirm(tenant_a, _manager(tenant_a)).json()
 
     other_batch = _call("GET", f"/ifc-imports/{batch['id']}", _tech(tenant_b))
-    other_proposals = _call(
-        "GET", f"/ifc-imports/{batch['id']}/proposals", _tech(tenant_b)
-    )
+    other_proposals = _call("GET", f"/ifc-imports/{batch['id']}/proposals", _tech(tenant_b))
 
     assert other_batch.status_code == 404
     assert other_proposals.status_code == 404

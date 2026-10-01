@@ -43,6 +43,7 @@ _PROPOSAL_COLUMNS = (
     "decided_by, decided_at, rejection_reason, created_at"
 )
 
+
 class ImportBatchNotFound(DomainError, LookupError):
     status = 404
 
@@ -218,9 +219,7 @@ def list_proposals(
     if status is not None:
         query += " AND status = :status"
         params["status"] = status
-    query += (
-        " ORDER BY (CASE WHEN proposal_type = 'space' THEN 0 ELSE 1 END), created_at"
-    )
+    query += " ORDER BY (CASE WHEN proposal_type = 'space' THEN 0 ELSE 1 END), created_at"
     rows = connection.execute(text(query), params).mappings()
     return [dict(row) for row in rows]
 
@@ -253,9 +252,7 @@ def accept_proposal(
     if proposal["proposal_type"] == "space":
         node_id = _accept_space(connection, tenant_id=tenant_id, batch=batch, proposal=proposal)
     else:
-        node_id = _accept_equipment(
-            connection, tenant_id=tenant_id, batch=batch, proposal=proposal
-        )
+        node_id = _accept_equipment(connection, tenant_id=tenant_id, batch=batch, proposal=proposal)
 
     connection.execute(
         text(

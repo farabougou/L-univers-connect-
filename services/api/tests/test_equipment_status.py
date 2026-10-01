@@ -307,4 +307,5 @@ def test_portfolio_status_route_through_the_api(tenants) -> None:
     body = {row["functional_location_id"]: row for row in response.json()}
     assert body[str(tenant_a["ahu"])]["operational_status"] == "running"
     assert "sources" not in body[str(tenant_a["ahu"])]
-    assert str(tenant_a["ahu"]) not in {row["functional_location_id"] for row in other_response.json()}
+    other_ids = {row["functional_location_id"] for row in other_response.json()}
+    assert str(tenant_a["ahu"]) not in other_ids

@@ -46,9 +46,7 @@ def opcua_simulator():
         idx = await server.register_namespace("paios-opcua-daemon-test")
         device = await server.nodes.objects.add_object(idx, "Device1")
         energie = await device.add_variable(ua.NodeId(9001, idx), "Energie", FAKE_VALUE)
-        puissance = await device.add_variable(
-            ua.NodeId(9002, idx), "Puissance", FAKE_VALUE * 2
-        )
+        puissance = await device.add_variable(ua.NodeId(9002, idx), "Puissance", FAKE_VALUE * 2)
         await server.start()
         return server, {
             "energie": energie.nodeid.to_string(),

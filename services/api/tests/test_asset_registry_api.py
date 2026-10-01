@@ -270,7 +270,8 @@ def test_archiving_a_site_rejects_technicien_role(tenant_id) -> None:
     technicien_headers = _auth_headers(tenant_id, ["technicien"])
     with patch("app.auth.fetch_jwks", return_value=JWKS):
         site_id = client.post(
-            "/sites", json={"name": "Site protégé", "timezone": "Europe/Paris"},
+            "/sites",
+            json={"name": "Site protégé", "timezone": "Europe/Paris"},
             headers=admin_headers,
         ).json()["id"]
         response = client.post(f"/sites/{site_id}/archive", headers=technicien_headers)
@@ -315,14 +316,10 @@ def test_archiving_a_functional_location_hides_it_from_the_default_list(tenant_i
         default_list = client.get("/functional-locations", headers=headers)
         assert location_id not in [item["id"] for item in default_list.json()]
 
-        with_archived = client.get(
-            "/functional-locations?include_archived=true", headers=headers
-        )
+        with_archived = client.get("/functional-locations?include_archived=true", headers=headers)
         assert location_id in [item["id"] for item in with_archived.json()]
 
-        unarchived = client.post(
-            f"/functional-locations/{location_id}/unarchive", headers=headers
-        )
+        unarchived = client.post(f"/functional-locations/{location_id}/unarchive", headers=headers)
         assert unarchived.status_code == 200
         assert unarchived.json()["archived_at"] is None
 
@@ -330,9 +327,7 @@ def test_archiving_a_functional_location_hides_it_from_the_default_list(tenant_i
 def test_archiving_an_unknown_functional_location_returns_404(tenant_id) -> None:
     headers = _auth_headers(tenant_id, ["admin_tenant"])
     with patch("app.auth.fetch_jwks", return_value=JWKS):
-        response = client.post(
-            f"/functional-locations/{uuid.uuid4()}/archive", headers=headers
-        )
+        response = client.post(f"/functional-locations/{uuid.uuid4()}/archive", headers=headers)
     assert response.status_code == 404
 
 

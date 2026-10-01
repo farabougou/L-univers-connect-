@@ -112,9 +112,7 @@ def test_ce_qui_depend_transitivement_est_regroupe(tenant) -> None:
     _open_finding(tenant, tenant["equip_b"])
 
     with patch("app.auth.fetch_jwks", return_value=JWKS):
-        response = client.get(
-            f"/graph/nodes/{tenant['gateway']}/impact", headers=_headers(tenant)
-        )
+        response = client.get(f"/graph/nodes/{tenant['gateway']}/impact", headers=_headers(tenant))
 
     assert response.status_code == 200
     body = response.json()
@@ -128,9 +126,7 @@ def test_ce_qui_depend_transitivement_est_regroupe(tenant) -> None:
 
 def test_aucune_dependance_renvoie_une_liste_vide(tenant) -> None:
     with patch("app.auth.fetch_jwks", return_value=JWKS):
-        response = client.get(
-            f"/graph/nodes/{tenant['gateway']}/impact", headers=_headers(tenant)
-        )
+        response = client.get(f"/graph/nodes/{tenant['gateway']}/impact", headers=_headers(tenant))
 
     assert response.status_code == 200
     assert response.json()["impacted"] == []
@@ -138,9 +134,7 @@ def test_aucune_dependance_renvoie_une_liste_vide(tenant) -> None:
 
 def test_noeud_introuvable_renvoie_404(tenant) -> None:
     with patch("app.auth.fetch_jwks", return_value=JWKS):
-        response = client.get(
-            f"/graph/nodes/{uuid.uuid4()}/impact", headers=_headers(tenant)
-        )
+        response = client.get(f"/graph/nodes/{uuid.uuid4()}/impact", headers=_headers(tenant))
 
     assert response.status_code == 404
     assert response.json()["code"] == "NODE_NOT_FOUND"

@@ -22,13 +22,17 @@ DEMO_TENANT_ID = uuid.UUID("11111111-1111-1111-1111-111111111111")
 def main() -> None:
     with engine.begin() as connection:
         set_tenant_context(connection, DEMO_TENANT_ID)
-        photo = connection.execute(
-            text(
-                "SELECT id, intervention_id, storage_key, taken_at FROM intervention_photos "
-                "WHERE tenant_id = :tenant_id ORDER BY taken_at DESC LIMIT 1"
-            ),
-            {"tenant_id": DEMO_TENANT_ID},
-        ).mappings().first()
+        photo = (
+            connection.execute(
+                text(
+                    "SELECT id, intervention_id, storage_key, taken_at FROM intervention_photos "
+                    "WHERE tenant_id = :tenant_id ORDER BY taken_at DESC LIMIT 1"
+                ),
+                {"tenant_id": DEMO_TENANT_ID},
+            )
+            .mappings()
+            .first()
+        )
 
     if not photo:
         print("Aucune photo trouvée pour ce tenant.")

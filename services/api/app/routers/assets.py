@@ -74,9 +74,7 @@ def _actor(claims: dict[str, Any]) -> str:
 def _read_site(connection: Connection, site_id: uuid.UUID) -> SiteOut:
     row = (
         connection.execute(
-            text(
-                "SELECT id, name, timezone, created_at, archived_at FROM sites WHERE id = :id"
-            ),
+            text("SELECT id, name, timezone, created_at, archived_at FROM sites WHERE id = :id"),
             {"id": site_id},
         )
         .mappings()
