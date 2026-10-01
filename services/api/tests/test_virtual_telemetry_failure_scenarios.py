@@ -16,6 +16,7 @@ from sqlalchemy import text
 from app.config_versions import activate_version, create_version
 from app.connectors.virtual_telemetry import failure_scenario, generate_profile_values
 from app.db import engine
+from app.desired_states import declare_desired_state
 from app.findings import list_findings
 from app.points import create_point, decide_point, get_point
 from app.rules import ALARM_RULE
@@ -80,13 +81,28 @@ def _virtual_cta_tenant() -> dict:
             max_value=100,
             created_by="test",
         )
-        for point_id in (heating, cooling):
+        damper = create_point(
+            connection,
+            tenant_id=tenant_id,
+            code="CTA-01.volet_air_neuf",
+            name="Position volet d'air neuf",
+            value_type="number",
+            point_class="economizer_damper_position",
+            unit="%",
+            functional_location_id=equipment_id,
+            expected_interval_seconds=300,
+            min_value=0,
+            max_value=100,
+            created_by="test",
+        )
+        for point_id in (heating, cooling, damper):
             decide_point(connection, point_id=point_id, decision="validated")
     return {
         "tenant_id": tenant_id,
         "equipment_id": equipment_id,
         "heating": heating,
         "cooling": cooling,
+        "damper": damper,
     }
 
 
@@ -111,7 +127,7 @@ def _cleanup(tenant: dict) -> None:
     purge_audit_log_for_tenant(tenant_id)
     with engine.begin() as connection:
         set_tenant_context(connection, tenant_id)
-        for table in ("points", "functional_locations", "sites"):
+        for table in ("desired_states", "points", "functional_locations", "sites"):
             connection.execute(
                 text(f"DELETE FROM {table} WHERE tenant_id = :id"), {"id": tenant_id}
             )
@@ -146,6 +162,103 @@ def _activate_correlation_rule(connection, tenant) -> None:
         reason="test",
     )
     activate_version(connection, version_id=version_id, activated_by="approbateur", activated_at=T0)
+
+
+def _activate_divergence_rule(connection, tenant) -> None:
+    content = {
+        "kind": "desired_state_divergence",
+        "point_id": str(tenant["damper"]),
+        "tolerance": 15,
+        "severity": "warning",
+        "title": "Volet d'air neuf : écart à l'état souhaité (actif virtuel)",
+    }
+    version_id = create_version(
+        connection,
+        tenant_id=tenant["tenant_id"],
+        config_type=ALARM_RULE,
+        subject_key="cta-01-virtuel-volet-air-neuf",
+        content=content,
+        author="responsable",
+        reason="test",
+    )
+    activate_version(connection, version_id=version_id, activated_by="approbateur", activated_at=T0)
+
+
+def test_stuck_economizer_damper_scenario_raises_a_real_commissioning_finding(tenant) -> None:
+    """Preuve que le scénario `economiseur_bloque` déclenche la règle FDD
+    `desired_state_divergence` déjà écrite (app/rules.py), sans aucun nouveau
+    code de règle — seulement un point et un scénario de panne nouveaux
+    (voir app/connectors/virtual_telemetry.py)."""
+    scenario = failure_scenario("cta", "economiseur_bloque")
+    values = generate_profile_values("cta", now=T0, scenario=scenario)
+
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant["tenant_id"])
+        declare_desired_state(
+            connection,
+            tenant_id=tenant["tenant_id"],
+            point_id=tenant["damper"],
+            value=80.0,
+            valid_from=T0 - timedelta(days=1),
+            reason="Modulation libre-refroidissement attendue (test)",
+            created_by="responsable",
+        )
+        _activate_divergence_rule(connection, tenant)
+
+        record_measurement(
+            connection,
+            tenant_id=tenant["tenant_id"],
+            point=get_point(connection, tenant["damper"]),
+            value=values["volet_air_neuf"],
+            measured_at=T0,
+            origin="simulated",
+            source="virtual_commissioning_lab",
+            received_at=T0,
+        )
+        findings = list_findings(connection)
+
+    assert len(findings) == 1
+    finding = findings[0]
+    assert finding["kind"] == "commissioning"
+    assert finding["condition_state"] == "active"
+    assert finding["reason_code"] == "RULE_DESIRED_STATE_DIVERGENCE"
+    assert finding["reason_params"]["actual"] == values["volet_air_neuf"]
+    assert finding["reason_params"]["desired"] == 80.0
+
+
+def test_healthy_economizer_modulation_never_raises_the_finding(tenant) -> None:
+    """Contrôle négatif : sans scénario, la modulation saine du volet (autour
+    de 50 % +/- cycle jour/nuit) reste dans la tolérance de la règle — un
+    scénario de panne doit être explicitement choisi pour produire un
+    défaut."""
+    values = generate_profile_values("cta", now=T0)
+
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant["tenant_id"])
+        declare_desired_state(
+            connection,
+            tenant_id=tenant["tenant_id"],
+            point_id=tenant["damper"],
+            value=80.0,
+            valid_from=T0 - timedelta(days=1),
+            reason="Modulation libre-refroidissement attendue (test)",
+            created_by="responsable",
+        )
+        _activate_divergence_rule(connection, tenant)
+
+        record_measurement(
+            connection,
+            tenant_id=tenant["tenant_id"],
+            point=get_point(connection, tenant["damper"]),
+            value=values["volet_air_neuf"],
+            measured_at=T0,
+            origin="simulated",
+            source="virtual_commissioning_lab",
+            received_at=T0,
+        )
+        findings = list_findings(connection)
+
+    assert findings == []
 
 
 def test_simultaneous_heating_cooling_scenario_raises_a_real_finding(tenant) -> None:

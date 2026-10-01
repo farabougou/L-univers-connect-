@@ -108,6 +108,18 @@ POINT_CLASSES: dict[str, PointClass] = {
             "ratio",
             "brick:Cooling_Valve_Position_Sensor",
         ),
+        # Cas réel : règle FDD « économiseur bloqué » (feature-benchmark-matrix.md,
+        # ligne FDD) — réutilise `DivergenceRule` existante (pas de nouveau
+        # moteur) : une position de volet d'air neuf qui ne suit pas l'état
+        # souhaité déclaré (app/desired_states.py) ouvre déjà un constat de
+        # mise en service, sans aucun code de règle supplémentaire.
+        PointClass(
+            "economizer_damper_position",
+            "sensor",
+            "number",
+            "ratio",
+            "brick:Damper_Position_Sensor",
+        ),
         # Déclarable pour documenter une installation, jamais inscriptible tant
         # que la règle non négociable 1 s'applique (contrainte en base).
         PointClass("on_off_command", "command", "boolean", None, "brick:On_Off_Command"),

@@ -165,6 +165,20 @@ PROFILES: dict[str, tuple[VirtualPointSpec, ...]] = {
             min_value=0.0,
             max_value=100.0,
         ),
+        # Volet d'air neuf (économiseur) : modulation saine autour d'une
+        # position moyenne — le scénario `economiseur_bloque` l'immobilise.
+        VirtualPointSpec(
+            "volet_air_neuf",
+            "Position volet d'air neuf",
+            "economizer_damper_position",
+            "number",
+            "%",
+            base=50.0,
+            diurnal_amplitude=20.0,
+            noise=2.0,
+            min_value=0.0,
+            max_value=100.0,
+        ),
     ),
     "groupe_froid": (
         VirtualPointSpec(
@@ -346,6 +360,17 @@ class FailureScenario:
 # `simultaneous_heating_cooling`), `capteur_derive` une sortie de plage que
 # `app.quality_flags`/`app.trust` savent déjà qualifier.
 _CTA_SCENARIOS: dict[str, FailureScenario] = {
+    "economiseur_bloque": FailureScenario(
+        name="economiseur_bloque",
+        profile="cta",
+        description=(
+            "Le volet d'air neuf reste bloqué en position fermée, quelle que "
+            "soit la consigne (économiseur bloqué) — déclenche la règle FDD "
+            "desired_state_divergence (app/rules.py) quand un état souhaité "
+            "est déclaré sur ce point (app/desired_states.py)."
+        ),
+        overrides={"volet_air_neuf": 5.0},
+    ),
     "capteur_derive": FailureScenario(
         name="capteur_derive",
         profile="cta",

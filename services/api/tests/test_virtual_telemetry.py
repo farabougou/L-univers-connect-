@@ -169,6 +169,14 @@ def test_communication_loss_scenario_omits_every_point_of_the_profile() -> None:
     assert values == {}
 
 
+def test_stuck_economizer_damper_overrides_ignore_normal_modulation() -> None:
+    scenario = failure_scenario("cta", "economiseur_bloque")
+    for hour in (0, 6, 12, 18):
+        now = datetime(2026, 10, 1, hour, 0, tzinfo=UTC)
+        values = generate_profile_values("cta", now=now, scenario=scenario)
+        assert values["volet_air_neuf"] == 5.0
+
+
 def test_other_profile_points_are_unaffected_by_a_scenario() -> None:
     """Un scénario qui ne mentionne que deux points (les vannes) laisse les
     autres points du même profil générer leur valeur normale — jamais une
