@@ -443,24 +443,33 @@ rôle technicien lecture seule, catégorie inconnue refusée, type de fichier no
 charge refusé, clé de stockage étrangère refusée, équipement/document inconnu → 404,
 isolation tenant), Documentation DONE.
 
-**Users & Access (30/09/2026, section 36 point 11) : signalement, pas de construction.**
+**Users & Access (30/09/2026 signalé, 01/10/2026 résolu sans secret, section 36 point 11).**
 Les rôles viennent uniquement de Keycloak (`realm_access.roles` du jeton, voir
 `app/auth.py::require_role`/`require_any_role`) — il n'existe aucune table locale
-d'utilisateurs ni de rôles à afficher ou éditer. La matrice documente déjà ce choix
-(ligne « Autorisations fines » : rôles Keycloak globaux par tenant, ReBAC en DEFER tant
-qu'aucun cas réel de délégation n'existe). Un écran « qui a accès, avec quel rôle »,
-même en lecture seule, exigerait d'appeler l'API d'administration Keycloak depuis le
-backend — un compte de service avec droits d'administration sur le realm, donc un
-nouveau secret et une nouvelle intégration externe structurante. C'est exactement ce que
-la section 38 (mode d'exécution) demande d'arrêter et de signaler plutôt que de décider
-seul : « nouveau compte externe », « secrets », potentiellement « dépendance propriétaire
-structurante ». Décision proposée pour discussion avec Mohamed, pas encore prise : soit
-renvoyer simplement vers la console d'administration Keycloak (lien externe, aucune
-donnée dupliquée), soit construire l'intégration si la gestion des accès doit rester dans
-le produit. **Grille produit (ADR 014)** : Backend BLOCKED (décision requise avant tout
-code), API BLOCKED, Web BLOCKED, Mobile N/A, Edge N/A, Tests N/A, Documentation DONE (cet
-écart et sa raison, signalés explicitement plutôt que construits sans accord ou omis en
-silence).
+d'utilisateurs ni de rôles à afficher ou éditer (ligne « Autorisations fines » : rôles
+Keycloak globaux par tenant, ReBAC en DEFER tant qu'aucun cas réel de délégation
+n'existe). Gérer les comptes d'un tenant (créer, retirer, changer un rôle) exigerait
+d'appeler l'API d'administration Keycloak depuis le backend — un compte de service avec
+droits d'administration sur le realm, donc un nouveau secret et une nouvelle intégration
+externe structurante : signalé le 30/09/2026 comme arrêt explicite de la section 38
+(« nouveau compte externe », « secrets »), pas construit sans décision de Mohamed.
+
+Ce qui restait possible sans rien de tout cela, construit le 01/10/2026 à sa demande
+(« fais tout si possible ») : nouvelle page `/acces` montrant (1) l'identité et les rôles
+de la personne connectée, déjà disponibles sans nouvel appel via `GET /me` ; (2) le
+catalogue des trois rôles du produit et ce que chacun permet (texte explicatif, pas une
+donnée du système) ; (3) un lien direct vers la console d'administration Keycloak pour
+gérer les comptes, son adresse dérivée de `OIDC_ISSUER` (déjà configuré, forme
+`<base>/realms/<realm>`) par la fonction pure `keycloakAdminConsoleUrl`
+(`apps/web/src/lib/keycloak.ts`) — jamais un nouveau secret ni un appel à l'API
+d'administration elle-même. La gestion réelle des comptes reste entièrement dans
+Keycloak ; cette page ne duplique aucune donnée d'utilisateur. **Grille produit
+(ADR 014)** : Backend N/A (aucun nouvel endpoint, réutilise `/me`), API N/A, Web DONE,
+Mobile N/A (pas une tâche terrain), Edge N/A, Tests DONE (3 tests purs sur
+`keycloakAdminConsoleUrl` : dérivation standard, barre oblique finale, adresse non
+conforme → `null`), Documentation DONE. La gestion effective des comptes (créer,
+retirer, changer un rôle) reste BLOCKED pour les mêmes raisons qu'au 30/09/2026 — ce
+n'est pas ce point qui a été construit, seulement ce qui tenait sans nouveau secret.
 
 **Spatial/BIM (30/09/2026, section 36 point 12)** : nouvelle page `/plans`, la dernière
 version de chaque plan 2D du portefeuille (site, espace, nombre de placements validés)
@@ -497,11 +506,12 @@ fonction, réutilise l'existant), API DONE (nouvel endpoint additif), Web DONE, 
 Edge N/A, Tests DONE (2 tests : les attentes actives sont listées avec le point visé et
 excluent celles déjà terminées ; isolation tenant), Documentation DONE.
 
-Section 36 (« pages à finaliser dans cet ordre ») : 12 des 13 écrans construits ou audités
-avec KEEP confirmé. Un seul reste en attente d'une décision de Mohamed avant tout code :
-Users & Access (point 11, ci-dessus), qui exigerait une nouvelle intégration à l'API
-d'administration Keycloak (compte de service, secret) — un arrêt explicite demandé par la
-section 38, pas un oubli.
+Section 36 (« pages à finaliser dans cet ordre ») : les 13 écrans ont maintenant chacun
+une page, un audit KEEP, ou une réponse explicite. Un seul point reste partiellement en
+attente : la gestion effective des comptes dans Users & Access (créer, retirer, changer
+un rôle), qui exigerait une nouvelle intégration à l'API d'administration Keycloak
+(compte de service, secret) — un arrêt explicite demandé par la section 38, toujours pas
+une décision que ce travail peut prendre seul.
 
 **Equipment Passport (30/09/2026, section 36 point 2)** : audit plutôt que reconstruction,
 comme demandé (« à consolider selon la liste de la section 21, pas à recréer »). Sur les 19

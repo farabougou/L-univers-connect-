@@ -242,6 +242,7 @@
       "documents_link": "Documents",
       "spatial_link": "Plans et BIM",
       "automation_link": "Automatisation",
+      "access_link": "Utilisateurs et accès",
       "alarms_link": "Alarmes et constats",
       "priority_alarms_title": "Alarmes prioritaires",
       "no_priority_alarms": "Aucune alarme active pour le moment.",
@@ -373,6 +374,25 @@
       "col_version": "Version",
       "col_placements": "Placements validés",
       "open_link": "Ouvrir"
+    },
+    "access_page": {
+      "title": "Utilisateurs et accès",
+      "intro": "Les comptes et les rôles sont gérés par Keycloak, pas par ce produit : aucune liste d’utilisateurs n’est dupliquée ici. Cette page montre votre accès, ce que chaque rôle permet, et un lien vers la console d’administration pour gérer les comptes.",
+      "you_title": "Votre accès",
+      "you_identity": "Identifiant : {identity}",
+      "you_roles": "Rôles : {roles}",
+      "roles_title": "Rôles du produit",
+      "col_role": "Rôle",
+      "col_capability": "Permet de",
+      "capability": {
+        "technicien": "Consulter le registre, intervenir sur le terrain, clore des interventions, confirmer des constats, envoyer une commande à un appareil explicitement simulé.",
+        "responsable_exploitation": "Tout ce que permet le rôle Technicien, plus gérer le registre (sites, équipements, plans), les règles, les attentes déclarées et les ordres de travail.",
+        "admin_tenant": "Tout ce que permet le rôle Responsable d’exploitation, plus l’administration du tenant."
+      },
+      "manage_title": "Gérer les comptes",
+      "manage_explanation": "Ajouter, retirer ou changer le rôle d’une personne se fait dans la console d’administration Keycloak, pas dans ce produit.",
+      "manage_link": "Ouvrir la console d’administration Keycloak",
+      "manage_unavailable": "Adresse de la console d’administration indisponible dans cet environnement."
     },
     "automation_page": {
       "title": "Automatisation",

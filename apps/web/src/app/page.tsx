@@ -289,6 +289,9 @@ export default async function PortfolioPage({
         <Link href="/automation" style={{ color: colors.accent, fontWeight: 600 }}>
           {t("web.dashboard.automation_link")} →
         </Link>
+        <Link href="/acces" style={{ color: colors.accent, fontWeight: 600 }}>
+          {t("web.dashboard.access_link")} →
+        </Link>
         <Link href="/edge" style={{ color: colors.accent, fontWeight: 600 }}>
           {t("web.dashboard.edge_link")} →
         </Link>

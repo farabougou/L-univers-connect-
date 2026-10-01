@@ -242,6 +242,7 @@
       "documents_link": "Documents",
       "spatial_link": "Plans and BIM",
       "automation_link": "Automation",
+      "access_link": "Users and access",
       "alarms_link": "Alarms and findings",
       "priority_alarms_title": "Priority alarms",
       "no_priority_alarms": "No active alarm at the moment.",
@@ -373,6 +374,25 @@
       "col_version": "Version",
       "col_placements": "Validated placements",
       "open_link": "Open"
+    },
+    "access_page": {
+      "title": "Users and access",
+      "intro": "Accounts and roles are managed by Keycloak, not by this product: no user list is duplicated here. This page shows your access, what each role allows, and a link to the admin console to manage accounts.",
+      "you_title": "Your access",
+      "you_identity": "Identifier: {identity}",
+      "you_roles": "Roles: {roles}",
+      "roles_title": "Product roles",
+      "col_role": "Role",
+      "col_capability": "Allows",
+      "capability": {
+        "technicien": "View the registry, work on-site, close interventions, confirm findings, send a command to an explicitly simulated device.",
+        "responsable_exploitation": "Everything the Technician role allows, plus managing the registry (sites, equipment, plans), rules, declared expectations and work orders.",
+        "admin_tenant": "Everything the Operations manager role allows, plus tenant administration."
+      },
+      "manage_title": "Manage accounts",
+      "manage_explanation": "Adding, removing or changing a person's role is done in the Keycloak admin console, not in this product.",
+      "manage_link": "Open the Keycloak admin console",
+      "manage_unavailable": "Admin console address unavailable in this environment."
     },
     "automation_page": {
       "title": "Automation",
