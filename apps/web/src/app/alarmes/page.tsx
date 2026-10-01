@@ -10,12 +10,22 @@ import {
   headerCellStyle,
   pageContainerStyle,
   sectionTitleStyle,
+  tableScrollStyle,
 } from "@/lib/formStyles";
 import { errorMessage, getLocale, getTranslator } from "@/lib/i18n";
-import { type Severity, SEVERITY_COLOR, prioritizeAlarms } from "@/lib/portfolio";
+import {
+  type Severity,
+  SEVERITY_COLOR,
+  prioritizeAlarms,
+} from "@/lib/portfolio";
 import { formatDateTime } from "@/i18n/translator";
 
-import { acknowledgeSignal, clearAlarm, confirmFinding, setHandling } from "./actions";
+import {
+  acknowledgeSignal,
+  clearAlarm,
+  confirmFinding,
+  setHandling,
+} from "./actions";
 
 /**
  * Alarms & Incidents (directive UI/dashboard, section 36 point 4) : le
@@ -59,7 +69,10 @@ async function _openSignals<T extends { severity: string }>(
 ): Promise<T[]> {
   const results = await Promise.all(
     ["open", "in_progress"].map(async (handlingStatus) => {
-      const response = await apiFetch(`${path}?handling_status=${handlingStatus}`, accessToken);
+      const response = await apiFetch(
+        `${path}?handling_status=${handlingStatus}`,
+        accessToken,
+      );
       return response.ok ? ((await response.json()) as T[]) : [];
     }),
   );
@@ -85,7 +98,9 @@ export default async function AlarmsPage({
   const locations: FunctionalLocation[] = locationsResponse.ok
     ? await locationsResponse.json()
     : [];
-  const locationById = new Map(locations.map((location) => [location.id, location]));
+  const locationById = new Map(
+    locations.map((location) => [location.id, location]),
+  );
 
   // Même tri que le bloc « Alarmes prioritaires » du Global Command Center
   // (gravité puis ancienneté) — mais ici sans limite, cette page montre tout
@@ -93,137 +108,244 @@ export default async function AlarmsPage({
   // d'horodatage de référence pour chaque nature de signal.
   const priorityAlarms = prioritizeAlarms(alarms, alarms.length);
   const priorityFindings = prioritizeAlarms(
-    findings.map((finding) => ({ ...finding, raised_at: finding.last_seen_at })),
+    findings.map((finding) => ({
+      ...finding,
+      raised_at: finding.last_seen_at,
+    })),
     findings.length,
   );
 
-  const signalActions = { acknowledgeSignal, clearAlarm, setHandling, confirmFinding };
+  const signalActions = {
+    acknowledgeSignal,
+    clearAlarm,
+    setHandling,
+    confirmFinding,
+  };
 
   return (
     <main style={pageContainerStyle}>
       <Link href="/" style={{ color: colors.accent }}>
         ← {t("common.back")}
       </Link>
-      <h1 style={{ fontSize: 24, margin: "12px 0 20px" }}>{t("web.alarms_page.title")}</h1>
+      <h1 style={{ fontSize: 24, margin: "12px 0 20px" }}>
+        {t("web.alarms_page.title")}
+      </h1>
       {error && <p style={{ color: "#c0392b" }}>{error}</p>}
 
-      <section style={{ ...cardStyle, marginBottom: 24, padding: 0, overflow: "hidden" }}>
+      <section
+        style={{
+          ...cardStyle,
+          marginBottom: 24,
+          padding: 0,
+          overflow: "hidden",
+        }}
+      >
         <div style={{ padding: "20px 24px 0" }}>
-          <h2 style={sectionTitleStyle}>{t("web.alarms_page.alarms_section_title")}</h2>
+          <h2 style={sectionTitleStyle}>
+            {t("web.alarms_page.alarms_section_title")}
+          </h2>
         </div>
         {priorityAlarms.length === 0 ? (
           <p style={{ color: colors.textMuted, padding: "0 24px 20px" }}>
             {t("web.alarms_page.no_alarms")}
           </p>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th style={headerCellStyle}>{t("web.dashboard.col_severity")}</th>
-                <th style={headerCellStyle}>{t("web.dashboard.equipment")}</th>
-                <th style={headerCellStyle}>{t("web.dashboard.col_message")}</th>
-                <th style={headerCellStyle}>{t("web.dashboard.col_ack")}</th>
-                <th style={headerCellStyle}>{t("web.dashboard.col_since")}</th>
-                <th style={headerCellStyle} />
-              </tr>
-            </thead>
-            <tbody>
-              {priorityAlarms.map((alarm) => {
-                const location = alarm.functional_location_id
-                  ? locationById.get(alarm.functional_location_id)
-                  : undefined;
-                return (
-                  <tr key={alarm.id}>
-                    <td style={cellStyle}>
-                      <span
-                        title={t(`severity.${alarm.severity}`)}
-                        style={badgeStyle(SEVERITY_COLOR[alarm.severity as Severity])}
+          <div style={tableScrollStyle}>
+            <table
+              className="responsive-table"
+              style={{ width: "100%", borderCollapse: "collapse" }}
+            >
+              <thead>
+                <tr>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.col_severity")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.equipment")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.col_message")}
+                  </th>
+                  <th style={headerCellStyle}>{t("web.dashboard.col_ack")}</th>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.col_since")}
+                  </th>
+                  <th style={headerCellStyle} />
+                </tr>
+              </thead>
+              <tbody>
+                {priorityAlarms.map((alarm) => {
+                  const location = alarm.functional_location_id
+                    ? locationById.get(alarm.functional_location_id)
+                    : undefined;
+                  return (
+                    <tr key={alarm.id}>
+                      <td
+                        data-label={t("web.dashboard.col_severity")}
+                        style={cellStyle}
                       >
-                        {t(`severity.${alarm.severity}`)}
-                      </span>
-                    </td>
-                    <td style={cellStyle}>
-                      {location ? (
-                        <Link href={`/registre/${location.id}`} style={{ color: colors.accent }}>
-                          {location.code} — {location.name}
-                        </Link>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td style={cellStyle}>{alarm.message}</td>
-                    <td style={cellStyle}>{t(`ack_state.${alarm.ack_state}`)}</td>
-                    <td style={cellStyle}>{formatDateTime(locale, alarm.raised_at)}</td>
-                    <td style={cellStyle}>
-                      <SignalActions kind="alarm" signal={alarm} nodeId="" actions={signalActions} t={t} />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                        <span
+                          title={t(`severity.${alarm.severity}`)}
+                          style={badgeStyle(
+                            SEVERITY_COLOR[alarm.severity as Severity],
+                          )}
+                        >
+                          {t(`severity.${alarm.severity}`)}
+                        </span>
+                      </td>
+                      <td
+                        data-label={t("web.dashboard.equipment")}
+                        style={cellStyle}
+                      >
+                        {location ? (
+                          <Link
+                            href={`/registre/${location.id}`}
+                            style={{ color: colors.accent }}
+                          >
+                            {location.code} — {location.name}
+                          </Link>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td
+                        data-label={t("web.dashboard.col_message")}
+                        style={cellStyle}
+                      >
+                        {alarm.message}
+                      </td>
+                      <td
+                        data-label={t("web.dashboard.col_ack")}
+                        style={cellStyle}
+                      >
+                        {t(`ack_state.${alarm.ack_state}`)}
+                      </td>
+                      <td
+                        data-label={t("web.dashboard.col_since")}
+                        style={cellStyle}
+                      >
+                        {formatDateTime(locale, alarm.raised_at)}
+                      </td>
+                      <td style={cellStyle}>
+                        <SignalActions
+                          kind="alarm"
+                          signal={alarm}
+                          nodeId=""
+                          actions={signalActions}
+                          t={t}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 
       <section style={{ ...cardStyle, padding: 0, overflow: "hidden" }}>
         <div style={{ padding: "20px 24px 0" }}>
-          <h2 style={sectionTitleStyle}>{t("web.alarms_page.findings_section_title")}</h2>
+          <h2 style={sectionTitleStyle}>
+            {t("web.alarms_page.findings_section_title")}
+          </h2>
         </div>
         {priorityFindings.length === 0 ? (
           <p style={{ color: colors.textMuted, padding: "0 24px 20px" }}>
             {t("web.alarms_page.no_findings")}
           </p>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th style={headerCellStyle}>{t("web.dashboard.col_severity")}</th>
-                <th style={headerCellStyle}>{t("web.dashboard.equipment")}</th>
-                <th style={headerCellStyle}>{t("web.dashboard.col_message")}</th>
-                <th style={headerCellStyle}>{t("web.alarms_page.col_certainty")}</th>
-                <th style={headerCellStyle}>{t("web.dashboard.col_since")}</th>
-                <th style={headerCellStyle} />
-              </tr>
-            </thead>
-            <tbody>
-              {priorityFindings.map((finding) => {
-                const location = locationById.get(finding.subject_node_id);
-                return (
-                  <tr key={finding.id}>
-                    <td style={cellStyle}>
-                      <span
-                        title={t(`severity.${finding.severity}`)}
-                        style={badgeStyle(SEVERITY_COLOR[finding.severity as Severity])}
+          <div style={tableScrollStyle}>
+            <table
+              className="responsive-table"
+              style={{ width: "100%", borderCollapse: "collapse" }}
+            >
+              <thead>
+                <tr>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.col_severity")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.equipment")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.col_message")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.alarms_page.col_certainty")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.col_since")}
+                  </th>
+                  <th style={headerCellStyle} />
+                </tr>
+              </thead>
+              <tbody>
+                {priorityFindings.map((finding) => {
+                  const location = locationById.get(finding.subject_node_id);
+                  return (
+                    <tr key={finding.id}>
+                      <td
+                        data-label={t("web.dashboard.col_severity")}
+                        style={cellStyle}
                       >
-                        {t(`severity.${finding.severity}`)}
-                      </span>
-                    </td>
-                    <td style={cellStyle}>
-                      {location ? (
-                        <Link href={`/registre/${location.id}`} style={{ color: colors.accent }}>
-                          {location.code} — {location.name}
-                        </Link>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td style={cellStyle}>{finding.title}</td>
-                    <td style={cellStyle}>{t(`certainty.${finding.certainty}`)}</td>
-                    <td style={cellStyle}>{formatDateTime(locale, finding.last_seen_at)}</td>
-                    <td style={cellStyle}>
-                      <SignalActions
-                        kind="finding"
-                        signal={{ ...finding, findingKind: finding.kind }}
-                        nodeId=""
-                        actions={signalActions}
-                        t={t}
-                      />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                        <span
+                          title={t(`severity.${finding.severity}`)}
+                          style={badgeStyle(
+                            SEVERITY_COLOR[finding.severity as Severity],
+                          )}
+                        >
+                          {t(`severity.${finding.severity}`)}
+                        </span>
+                      </td>
+                      <td
+                        data-label={t("web.dashboard.equipment")}
+                        style={cellStyle}
+                      >
+                        {location ? (
+                          <Link
+                            href={`/registre/${location.id}`}
+                            style={{ color: colors.accent }}
+                          >
+                            {location.code} — {location.name}
+                          </Link>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td
+                        data-label={t("web.dashboard.col_message")}
+                        style={cellStyle}
+                      >
+                        {finding.title}
+                      </td>
+                      <td
+                        data-label={t("web.alarms_page.col_certainty")}
+                        style={cellStyle}
+                      >
+                        {t(`certainty.${finding.certainty}`)}
+                      </td>
+                      <td
+                        data-label={t("web.dashboard.col_since")}
+                        style={cellStyle}
+                      >
+                        {formatDateTime(locale, finding.last_seen_at)}
+                      </td>
+                      <td style={cellStyle}>
+                        <SignalActions
+                          kind="finding"
+                          signal={{ ...finding, findingKind: finding.kind }}
+                          nodeId=""
+                          actions={signalActions}
+                          t={t}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
     </main>

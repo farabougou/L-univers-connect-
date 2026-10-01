@@ -8,6 +8,7 @@ import {
   headerCellStyle,
   pageContainerStyle,
   sectionTitleStyle,
+  tableScrollStyle,
 } from "@/lib/formStyles";
 import { getLocale, getTranslator } from "@/lib/i18n";
 import { formatDateTime } from "@/i18n/translator";
@@ -77,59 +78,85 @@ export default async function SpatialPage() {
               {t("web.spatial_page.plans_title")}
             </h2>
           </div>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th style={headerCellStyle}>
-                  {t("web.spatial_page.col_site")}
-                </th>
-                <th style={headerCellStyle}>
-                  {t("web.spatial_page.col_space")}
-                </th>
-                <th style={headerCellStyle}>
-                  {t("web.spatial_page.col_version")}
-                </th>
-                <th style={headerCellStyle}>
-                  {t("web.spatial_page.col_placements")}
-                </th>
-                <th style={headerCellStyle}>
-                  {t("web.documents_page.col_uploaded")}
-                </th>
-                <th style={headerCellStyle} />
-              </tr>
-            </thead>
-            <tbody>
-              {plans.map((plan) => (
-                <tr key={plan.id}>
-                  <td style={cellStyle}>{plan.site_name}</td>
-                  <td style={cellStyle}>
-                    <Link
-                      href={`/registre?space=${plan.space_id}`}
-                      style={{ color: colors.accent }}
-                    >
-                      {plan.space_code} — {plan.space_name}
-                    </Link>
-                  </td>
-                  <td style={cellStyle}>{plan.version}</td>
-                  <td style={cellStyle}>{plan.validated_placement_count}</td>
-                  <td style={cellStyle}>
-                    {t("web.registre.floor_plans_uploaded_by", {
-                      actor: plan.uploaded_by,
-                      date: formatDateTime(locale, plan.uploaded_at),
-                    })}
-                  </td>
-                  <td style={cellStyle}>
-                    <Link
-                      href={`/registre/plans/${plan.id}`}
-                      style={{ color: colors.accent }}
-                    >
-                      {t("web.spatial_page.open_link")}
-                    </Link>
-                  </td>
+          <div style={tableScrollStyle}>
+            <table
+              className="responsive-table"
+              style={{ width: "100%", borderCollapse: "collapse" }}
+            >
+              <thead>
+                <tr>
+                  <th style={headerCellStyle}>
+                    {t("web.spatial_page.col_site")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.spatial_page.col_space")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.spatial_page.col_version")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.spatial_page.col_placements")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.documents_page.col_uploaded")}
+                  </th>
+                  <th style={headerCellStyle} />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {plans.map((plan) => (
+                  <tr key={plan.id}>
+                    <td
+                      data-label={t("web.spatial_page.col_site")}
+                      style={cellStyle}
+                    >
+                      {plan.site_name}
+                    </td>
+                    <td
+                      data-label={t("web.spatial_page.col_space")}
+                      style={cellStyle}
+                    >
+                      <Link
+                        href={`/registre?space=${plan.space_id}`}
+                        style={{ color: colors.accent }}
+                      >
+                        {plan.space_code} — {plan.space_name}
+                      </Link>
+                    </td>
+                    <td
+                      data-label={t("web.spatial_page.col_version")}
+                      style={cellStyle}
+                    >
+                      {plan.version}
+                    </td>
+                    <td
+                      data-label={t("web.spatial_page.col_placements")}
+                      style={cellStyle}
+                    >
+                      {plan.validated_placement_count}
+                    </td>
+                    <td
+                      data-label={t("web.documents_page.col_uploaded")}
+                      style={cellStyle}
+                    >
+                      {t("web.registre.floor_plans_uploaded_by", {
+                        actor: plan.uploaded_by,
+                        date: formatDateTime(locale, plan.uploaded_at),
+                      })}
+                    </td>
+                    <td style={cellStyle}>
+                      <Link
+                        href={`/registre/plans/${plan.id}`}
+                        style={{ color: colors.accent }}
+                      >
+                        {t("web.spatial_page.open_link")}
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       )}
     </main>

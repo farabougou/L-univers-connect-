@@ -9,6 +9,7 @@ import {
   headerCellStyle,
   pageContainerStyle,
   sectionTitleStyle,
+  tableScrollStyle,
 } from "@/lib/formStyles";
 import { getLocale, getTranslator } from "@/lib/i18n";
 import { formatDateTime } from "@/i18n/translator";
@@ -54,10 +55,13 @@ export default async function EdgeConnectivityPage() {
   // explicite plutôt qu'une liste vide qui laisserait croire qu'il n'y a
   // aucune passerelle.
   const accessDenied = devicesResponse.status === 403;
-  const devices: Device[] = devicesResponse.ok ? await devicesResponse.json() : [];
+  const devices: Device[] = devicesResponse.ok
+    ? await devicesResponse.json()
+    : [];
 
   const siteName = (id: string | null) =>
-    (id ? sites.find((site) => site.id === id)?.name : null) ?? t("web.edge.unassigned_site");
+    (id ? sites.find((site) => site.id === id)?.name : null) ??
+    t("web.edge.unassigned_site");
 
   const devicesBySite = new Map<string, Device[]>();
   for (const device of devices) {
@@ -77,14 +81,18 @@ export default async function EdgeConnectivityPage() {
       <Link href="/" style={{ color: colors.accent, fontWeight: 600 }}>
         ← {t("common.back")}
       </Link>
-      <h1 style={{ fontSize: 24, margin: "12px 0 4px" }}>{t("web.edge.title")}</h1>
+      <h1 style={{ fontSize: 24, margin: "12px 0 4px" }}>
+        {t("web.edge.title")}
+      </h1>
       <p style={{ color: colors.textMuted, fontSize: 14, marginBottom: 24 }}>
         {t("web.edge.intro")}
       </p>
 
       {accessDenied ? (
         <section style={cardStyle}>
-          <p style={{ color: colors.textMuted }}>{t("web.edge.access_denied")}</p>
+          <p style={{ color: colors.textMuted }}>
+            {t("web.edge.access_denied")}
+          </p>
         </section>
       ) : devices.length === 0 ? (
         <section style={cardStyle}>
@@ -93,62 +101,123 @@ export default async function EdgeConnectivityPage() {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           {groups.map(([key, group]) => (
-            <section key={key} style={{ ...cardStyle, padding: 0, overflow: "hidden" }}>
+            <section
+              key={key}
+              style={{ ...cardStyle, padding: 0, overflow: "hidden" }}
+            >
               <div style={{ padding: "20px 24px 0" }}>
                 <h2 style={sectionTitleStyle}>
                   {siteName(key === "__unassigned__" ? null : key)}
                 </h2>
               </div>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr>
-                    <th style={headerCellStyle}>{t("web.edge.col_device")}</th>
-                    <th style={headerCellStyle}>{t("web.edge.col_account")}</th>
-                    <th style={headerCellStyle}>{t("web.edge.col_communication")}</th>
-                    <th style={headerCellStyle}>{t("web.edge.col_credential")}</th>
-                    <th style={headerCellStyle}>{t("web.edge.col_fingerprint")}</th>
-                    <th style={headerCellStyle}>{t("web.edge.col_provisioned")}</th>
-                    <th style={headerCellStyle}>{t("web.edge.col_last_seen")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {group.map((device) => (
-                    <tr key={device.id}>
-                      <td style={{ ...cellStyle, fontWeight: 600 }}>{device.device_id}</td>
-                      <td style={cellStyle}>
-                        <span style={badgeStyle(ACCOUNT_COLOR[device.status] ?? "#6b7280")}>
-                          {t(`device_status.${device.status}`)}
-                        </span>
-                      </td>
-                      <td style={cellStyle}>
-                        <span
-                          style={badgeStyle(
-                            COMMUNICATION_COLOR[device.communication_status] ?? "#9ca3af",
-                          )}
-                        >
-                          {t(`communication_status.${device.communication_status}`)}
-                        </span>
-                      </td>
-                      <td style={cellStyle}>{t(`credential_type.${device.credential_type}`)}</td>
-                      <td style={{ ...cellStyle, fontFamily: "monospace", fontSize: 12 }}>
-                        {device.key_fingerprint ? (
-                          <span title={device.key_fingerprint}>
-                            {device.key_fingerprint.slice(0, 12)}…
-                          </span>
-                        ) : (
-                          t("web.edge.no_fingerprint")
-                        )}
-                      </td>
-                      <td style={cellStyle}>{formatDateTime(locale, device.created_at)}</td>
-                      <td style={cellStyle}>
-                        {device.last_seen_at
-                          ? formatDateTime(locale, device.last_seen_at)
-                          : t("web.edge.last_seen_never")}
-                      </td>
+              <div style={tableScrollStyle}>
+                <table
+                  className="responsive-table"
+                  style={{ width: "100%", borderCollapse: "collapse" }}
+                >
+                  <thead>
+                    <tr>
+                      <th style={headerCellStyle}>
+                        {t("web.edge.col_device")}
+                      </th>
+                      <th style={headerCellStyle}>
+                        {t("web.edge.col_account")}
+                      </th>
+                      <th style={headerCellStyle}>
+                        {t("web.edge.col_communication")}
+                      </th>
+                      <th style={headerCellStyle}>
+                        {t("web.edge.col_credential")}
+                      </th>
+                      <th style={headerCellStyle}>
+                        {t("web.edge.col_fingerprint")}
+                      </th>
+                      <th style={headerCellStyle}>
+                        {t("web.edge.col_provisioned")}
+                      </th>
+                      <th style={headerCellStyle}>
+                        {t("web.edge.col_last_seen")}
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {group.map((device) => (
+                      <tr key={device.id}>
+                        <td
+                          data-label={t("web.edge.col_device")}
+                          style={{ ...cellStyle, fontWeight: 600 }}
+                        >
+                          {device.device_id}
+                        </td>
+                        <td
+                          data-label={t("web.edge.col_account")}
+                          style={cellStyle}
+                        >
+                          <span
+                            style={badgeStyle(
+                              ACCOUNT_COLOR[device.status] ?? "#6b7280",
+                            )}
+                          >
+                            {t(`device_status.${device.status}`)}
+                          </span>
+                        </td>
+                        <td
+                          data-label={t("web.edge.col_communication")}
+                          style={cellStyle}
+                        >
+                          <span
+                            style={badgeStyle(
+                              COMMUNICATION_COLOR[
+                                device.communication_status
+                              ] ?? "#9ca3af",
+                            )}
+                          >
+                            {t(
+                              `communication_status.${device.communication_status}`,
+                            )}
+                          </span>
+                        </td>
+                        <td
+                          data-label={t("web.edge.col_credential")}
+                          style={cellStyle}
+                        >
+                          {t(`credential_type.${device.credential_type}`)}
+                        </td>
+                        <td
+                          data-label={t("web.edge.col_fingerprint")}
+                          style={{
+                            ...cellStyle,
+                            fontFamily: "monospace",
+                            fontSize: 12,
+                          }}
+                        >
+                          {device.key_fingerprint ? (
+                            <span title={device.key_fingerprint}>
+                              {device.key_fingerprint.slice(0, 12)}…
+                            </span>
+                          ) : (
+                            t("web.edge.no_fingerprint")
+                          )}
+                        </td>
+                        <td
+                          data-label={t("web.edge.col_provisioned")}
+                          style={cellStyle}
+                        >
+                          {formatDateTime(locale, device.created_at)}
+                        </td>
+                        <td
+                          data-label={t("web.edge.col_last_seen")}
+                          style={cellStyle}
+                        >
+                          {device.last_seen_at
+                            ? formatDateTime(locale, device.last_seen_at)
+                            : t("web.edge.last_seen_never")}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </section>
           ))}
         </div>

@@ -11,6 +11,7 @@ import {
   pageContainerStyle,
   sectionTitleStyle,
   submitStyle,
+  tableScrollStyle,
 } from "@/lib/formStyles";
 import { getLocale, getTranslator } from "@/lib/i18n";
 import { formatDateTime } from "@/i18n/translator";
@@ -77,64 +78,106 @@ export default async function DocumentsPage() {
       <Link href="/" style={{ color: colors.accent }}>
         ← {t("common.back")}
       </Link>
-      <h1 style={{ fontSize: 24, margin: "12px 0 20px" }}>{t("web.documents_page.title")}</h1>
+      <h1 style={{ fontSize: 24, margin: "12px 0 20px" }}>
+        {t("web.documents_page.title")}
+      </h1>
 
       {documents.length === 0 ? (
         <section style={cardStyle}>
-          <p style={{ color: colors.textMuted }}>{t("web.documents_page.no_documents")}</p>
+          <p style={{ color: colors.textMuted }}>
+            {t("web.documents_page.no_documents")}
+          </p>
         </section>
       ) : (
         <section style={{ ...cardStyle, padding: 0, overflow: "hidden" }}>
           <div style={{ padding: "20px 24px 0" }}>
-            <h2 style={sectionTitleStyle}>{t("web.documents_page.library_title")}</h2>
+            <h2 style={sectionTitleStyle}>
+              {t("web.documents_page.library_title")}
+            </h2>
           </div>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th style={headerCellStyle}>{t("mobile.passport.equipment")}</th>
-                <th style={headerCellStyle}>{t("web.documents_page.col_category")}</th>
-                <th style={headerCellStyle}>{t("web.documents_page.col_filename")}</th>
-                <th style={headerCellStyle}>{t("web.documents_page.col_uploaded")}</th>
-                <th style={headerCellStyle} />
-              </tr>
-            </thead>
-            <tbody>
-              {documents.map((document) => (
-                <tr key={document.id}>
-                  <td style={cellStyle}>
-                    <Link
-                      href={`/registre/${document.functional_location_id}`}
-                      style={{ color: colors.accent }}
-                    >
-                      {document.functional_location_code} — {document.functional_location_name}
-                    </Link>
-                  </td>
-                  <td style={cellStyle}>
-                    {t(`web.documents_page.category.${document.category}`)}
-                  </td>
-                  <td style={cellStyle}>{document.filename}</td>
-                  <td style={cellStyle}>
-                    {t("web.registre.floor_plans_uploaded_by", {
-                      actor: document.uploaded_by,
-                      date: formatDateTime(locale, document.uploaded_at),
-                    })}
-                  </td>
-                  <td style={cellStyle}>
-                    <a href={document.download_url} target="_blank" rel="noreferrer">
-                      {t("web.registre.floor_plans_view_link")}
-                    </a>
-                  </td>
+          <div style={tableScrollStyle}>
+            <table
+              className="responsive-table"
+              style={{ width: "100%", borderCollapse: "collapse" }}
+            >
+              <thead>
+                <tr>
+                  <th style={headerCellStyle}>
+                    {t("mobile.passport.equipment")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.documents_page.col_category")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.documents_page.col_filename")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.documents_page.col_uploaded")}
+                  </th>
+                  <th style={headerCellStyle} />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {documents.map((document) => (
+                  <tr key={document.id}>
+                    <td
+                      data-label={t("mobile.passport.equipment")}
+                      style={cellStyle}
+                    >
+                      <Link
+                        href={`/registre/${document.functional_location_id}`}
+                        style={{ color: colors.accent }}
+                      >
+                        {document.functional_location_code} —{" "}
+                        {document.functional_location_name}
+                      </Link>
+                    </td>
+                    <td
+                      data-label={t("web.documents_page.col_category")}
+                      style={cellStyle}
+                    >
+                      {t(`web.documents_page.category.${document.category}`)}
+                    </td>
+                    <td
+                      data-label={t("web.documents_page.col_filename")}
+                      style={cellStyle}
+                    >
+                      {document.filename}
+                    </td>
+                    <td
+                      data-label={t("web.documents_page.col_uploaded")}
+                      style={cellStyle}
+                    >
+                      {t("web.registre.floor_plans_uploaded_by", {
+                        actor: document.uploaded_by,
+                        date: formatDateTime(locale, document.uploaded_at),
+                      })}
+                    </td>
+                    <td style={cellStyle}>
+                      <a
+                        href={document.download_url}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {t("web.registre.floor_plans_view_link")}
+                      </a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       )}
 
       <section style={{ ...cardStyle, marginTop: 24 }}>
-        <h2 style={sectionTitleStyle}>{t("web.documents_page.upload_title")}</h2>
+        <h2 style={sectionTitleStyle}>
+          {t("web.documents_page.upload_title")}
+        </h2>
         {locations.length === 0 ? (
-          <p style={{ color: colors.textMuted }}>{t("web.documents_page.no_equipment")}</p>
+          <p style={{ color: colors.textMuted }}>
+            {t("web.documents_page.no_equipment")}
+          </p>
         ) : (
           <form action={uploadDocument} style={{ maxWidth: 400 }}>
             <label style={labelStyle}>

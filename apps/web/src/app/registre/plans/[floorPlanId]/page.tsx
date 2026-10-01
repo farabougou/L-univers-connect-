@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { apiFetch, requireAccessToken } from "@/lib/api";
-import { cellStyle, headerCellStyle } from "@/lib/formStyles";
+import { cellStyle, headerCellStyle, tableScrollStyle } from "@/lib/formStyles";
 import { errorMessage, getLocale, getTranslator } from "@/lib/i18n";
 import { canManage as computeCanManage, type Me } from "@/lib/roles";
 
@@ -16,8 +16,19 @@ type FloorPlan = {
   content_type: string;
   download_url: string;
 };
-type Space = { id: string; site_id: string; space_type: string; code: string; name: string };
-type FunctionalLocation = { id: string; site_id: string; code: string; name: string };
+type Space = {
+  id: string;
+  site_id: string;
+  space_type: string;
+  code: string;
+  name: string;
+};
+type FunctionalLocation = {
+  id: string;
+  site_id: string;
+  code: string;
+  name: string;
+};
 type Placement = {
   id: string;
   floor_plan_id: string;
@@ -33,7 +44,11 @@ type LivePlacement = {
   point_value: number | null;
   point_unit: string | null;
 };
-type Point = { id: string; functional_location_id: string | null; space_id: string | null };
+type Point = {
+  id: string;
+  functional_location_id: string | null;
+  space_id: string | null;
+};
 type Finding = { subject_node_id: string };
 
 export default async function PlanEditorPage({
@@ -85,14 +100,22 @@ export default async function PlanEditorPage({
   }
 
   const plan: FloorPlan = await planResponse.json();
-  const placements: Placement[] = placementsResponse.ok ? await placementsResponse.json() : [];
-  const live: LivePlacement[] = liveResponse.ok ? await liveResponse.json() : [];
-  const allSpaces: Space[] = spacesResponse.ok ? await spacesResponse.json() : [];
+  const placements: Placement[] = placementsResponse.ok
+    ? await placementsResponse.json()
+    : [];
+  const live: LivePlacement[] = liveResponse.ok
+    ? await liveResponse.json()
+    : [];
+  const allSpaces: Space[] = spacesResponse.ok
+    ? await spacesResponse.json()
+    : [];
   const allLocations: FunctionalLocation[] = locationsResponse.ok
     ? await locationsResponse.json()
     : [];
   const points: Point[] = pointsResponse.ok ? await pointsResponse.json() : [];
-  const openFindings: Finding[] = openFindingsResponse.ok ? await openFindingsResponse.json() : [];
+  const openFindings: Finding[] = openFindingsResponse.ok
+    ? await openFindingsResponse.json()
+    : [];
   const inProgressFindings: Finding[] = inProgressFindingsResponse.ok
     ? await inProgressFindingsResponse.json()
     : [];
@@ -100,13 +123,17 @@ export default async function PlanEditorPage({
   const currentSpace = allSpaces.find((space) => space.id === plan.space_id);
   const siteId = currentSpace?.site_id;
   const siteSpaces = allSpaces.filter((space) => space.site_id === siteId);
-  const siteLocations = allLocations.filter((location) => location.site_id === siteId);
+  const siteLocations = allLocations.filter(
+    (location) => location.site_id === siteId,
+  );
   const liveById = new Map(live.map((entry) => [entry.id, entry]));
   const pointsById = new Map(points.map((point) => [point.id, point]));
   // Même règle que app/rules.py (_subject) : le constat porte sur
   // l'équipement du point, à défaut son espace, à défaut le point lui-même.
   const subjectsWithOpenFinding = new Set(
-    [...openFindings, ...inProgressFindings].map((finding) => finding.subject_node_id),
+    [...openFindings, ...inProgressFindings].map(
+      (finding) => finding.subject_node_id,
+    ),
   );
   function pointHasOpenFinding(pointId: string): boolean {
     const point = pointsById.get(pointId);
@@ -117,7 +144,9 @@ export default async function PlanEditorPage({
 
   function targetLabel(placement: Placement): string {
     if (placement.space_id) {
-      const space = siteSpaces.find((candidate) => candidate.id === placement.space_id);
+      const space = siteSpaces.find(
+        (candidate) => candidate.id === placement.space_id,
+      );
       return space
         ? `${t(`space_type.${space.space_type}`)} — ${space.name}`
         : t("plan_editor.marker_unknown_target");
@@ -126,12 +155,15 @@ export default async function PlanEditorPage({
       const location = siteLocations.find(
         (candidate) => candidate.id === placement.functional_location_id,
       );
-      return location ? `${location.code} — ${location.name}` : t("plan_editor.marker_unknown_target");
+      return location
+        ? `${location.code} — ${location.name}`
+        : t("plan_editor.marker_unknown_target");
     }
     return t("plan_editor.marker_point_target");
   }
 
-  const isImage = plan.content_type === "image/png" || plan.content_type === "image/jpeg";
+  const isImage =
+    plan.content_type === "image/png" || plan.content_type === "image/jpeg";
   const markers = placements.map((placement) => {
     const value = liveById.get(placement.id);
     const label = targetLabel(placement);
@@ -140,8 +172,11 @@ export default async function PlanEditorPage({
       value && value.point_value !== null
         ? ` — ${t("plan_editor.live_value_label")}: ${value.point_value}${value.point_unit ?? ""}`
         : "";
-    const warning = placement.point_id !== null && pointHasOpenFinding(placement.point_id);
-    const warningSuffix = warning ? ` — ${t("plan_editor.marker_open_finding")}` : "";
+    const warning =
+      placement.point_id !== null && pointHasOpenFinding(placement.point_id);
+    const warningSuffix = warning
+      ? ` — ${t("plan_editor.marker_open_finding")}`
+      : "";
     return {
       id: placement.id,
       x: placement.x_ratio,
@@ -153,7 +188,7 @@ export default async function PlanEditorPage({
   });
 
   const error = errorCode
-    ? errorMessage(locale, errorCode) ?? t("web.registre.creation_failed")
+    ? (errorMessage(locale, errorCode) ?? t("web.registre.creation_failed"))
     : null;
 
   return (
@@ -187,7 +222,9 @@ export default async function PlanEditorPage({
             coordinatesSelected: t("plan_editor.coordinates_selected"),
             targetTypeLabel: t("plan_editor.target_type_label"),
             targetTypeSpace: t("plan_editor.target_type_space"),
-            targetTypeFunctionalLocation: t("plan_editor.target_type_functional_location"),
+            targetTypeFunctionalLocation: t(
+              "plan_editor.target_type_functional_location",
+            ),
             targetIdLabel: t("plan_editor.target_id_label"),
             addMarker: t("plan_editor.add_marker"),
           }}
@@ -198,44 +235,79 @@ export default async function PlanEditorPage({
       {placements.length === 0 ? (
         <p>{t("plan_editor.markers_none")}</p>
       ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr>
-              <th style={headerCellStyle}>{t("web.dashboard.name")}</th>
-              <th style={headerCellStyle} />
-              <th style={headerCellStyle} />
-            </tr>
-          </thead>
-          <tbody>
-            {placements.map((placement) => (
-              <tr key={placement.id}>
-                <td style={cellStyle}>
-                  {targetLabel(placement)} —{" "}
-                  {t(`plan_editor.marker_status_${placement.status}`)}
-                  {placement.point_id !== null && pointHasOpenFinding(placement.point_id) && (
-                    <span style={{ color: "#dc2626" }}> — {t("plan_editor.marker_open_finding")}</span>
-                  )}
-                </td>
-                <td style={cellStyle}>
-                  {placement.status === "proposed" && (
-                    <form action={validatePlacement} style={{ display: "inline" }}>
-                      <input type="hidden" name="floor_plan_id" value={plan.id} />
-                      <input type="hidden" name="placement_id" value={placement.id} />
-                      <button type="submit">{t("plan_editor.marker_validate")}</button>
-                    </form>
-                  )}
-                </td>
-                <td style={cellStyle}>
-                  <form action={deletePlacement} style={{ display: "inline" }}>
-                    <input type="hidden" name="floor_plan_id" value={plan.id} />
-                    <input type="hidden" name="placement_id" value={placement.id} />
-                    <button type="submit">{t("plan_editor.marker_delete")}</button>
-                  </form>
-                </td>
+        <div style={tableScrollStyle}>
+          <table
+            className="responsive-table"
+            style={{ width: "100%", borderCollapse: "collapse" }}
+          >
+            <thead>
+              <tr>
+                <th style={headerCellStyle}>{t("web.dashboard.name")}</th>
+                <th style={headerCellStyle} />
+                <th style={headerCellStyle} />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {placements.map((placement) => (
+                <tr key={placement.id}>
+                  <td data-label={t("web.dashboard.name")} style={cellStyle}>
+                    {targetLabel(placement)} —{" "}
+                    {t(`plan_editor.marker_status_${placement.status}`)}
+                    {placement.point_id !== null &&
+                      pointHasOpenFinding(placement.point_id) && (
+                        <span style={{ color: "#dc2626" }}>
+                          {" "}
+                          — {t("plan_editor.marker_open_finding")}
+                        </span>
+                      )}
+                  </td>
+                  <td style={cellStyle}>
+                    {placement.status === "proposed" && (
+                      <form
+                        action={validatePlacement}
+                        style={{ display: "inline" }}
+                      >
+                        <input
+                          type="hidden"
+                          name="floor_plan_id"
+                          value={plan.id}
+                        />
+                        <input
+                          type="hidden"
+                          name="placement_id"
+                          value={placement.id}
+                        />
+                        <button type="submit">
+                          {t("plan_editor.marker_validate")}
+                        </button>
+                      </form>
+                    )}
+                  </td>
+                  <td style={cellStyle}>
+                    <form
+                      action={deletePlacement}
+                      style={{ display: "inline" }}
+                    >
+                      <input
+                        type="hidden"
+                        name="floor_plan_id"
+                        value={plan.id}
+                      />
+                      <input
+                        type="hidden"
+                        name="placement_id"
+                        value={placement.id}
+                      />
+                      <button type="submit">
+                        {t("plan_editor.marker_delete")}
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </main>
   );

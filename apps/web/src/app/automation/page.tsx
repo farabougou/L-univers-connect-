@@ -8,6 +8,7 @@ import {
   headerCellStyle,
   pageContainerStyle,
   sectionTitleStyle,
+  tableScrollStyle,
 } from "@/lib/formStyles";
 import { getLocale, getTranslator } from "@/lib/i18n";
 import { formatDate, formatNumber } from "@/i18n/translator";
@@ -86,77 +87,104 @@ export default async function AutomationPage() {
               {t("web.automation_page.states_title")}
             </h2>
           </div>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th style={headerCellStyle}>
-                  {t("mobile.passport.equipment")}
-                </th>
-                <th style={headerCellStyle}>
-                  {t("web.telemetry_page.col_point")}
-                </th>
-                <th style={headerCellStyle}>
-                  {t("web.automation_page.col_expected")}
-                </th>
-                <th style={headerCellStyle}>
-                  {t("web.automation_page.col_window")}
-                </th>
-                <th style={headerCellStyle}>
-                  {t("web.automation_page.col_reason")}
-                </th>
-                <th style={headerCellStyle}>{t("web.dashboard.col_since")}</th>
-                <th style={headerCellStyle} />
-              </tr>
-            </thead>
-            <tbody>
-              {states.map((state) => (
-                <tr key={state.id}>
-                  <td style={cellStyle}>
-                    {state.functional_location_id ? (
-                      <Link
-                        href={`/registre/${state.functional_location_id}`}
-                        style={{ color: colors.accent }}
-                      >
-                        {t("web.spatial_page.open_link")}
-                      </Link>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                  <td style={cellStyle}>
-                    {state.point_code} — {state.point_name}
-                  </td>
-                  <td style={cellStyle}>
-                    {formatNumber(locale, state.value)}
-                    {state.point_unit ? ` ${state.point_unit}` : ""}
-                  </td>
-                  <td style={cellStyle}>
-                    {state.daily_start && state.daily_end
-                      ? `${state.daily_start}–${state.daily_end} (${state.timezone})`
-                      : "—"}
-                  </td>
-                  <td style={cellStyle}>{state.reason}</td>
-                  <td style={cellStyle}>
-                    {formatDate(locale, state.valid_from, null)}
-                  </td>
-                  <td style={cellStyle}>
-                    {canManage && (
-                      <form action={endDesiredState}>
-                        <input
-                          type="hidden"
-                          name="desired_state_id"
-                          value={state.id}
-                        />
-                        <button type="submit">
-                          {t("web.registre.end_desired_state")}
-                        </button>
-                      </form>
-                    )}
-                  </td>
+          <div style={tableScrollStyle}>
+            <table
+              className="responsive-table"
+              style={{ width: "100%", borderCollapse: "collapse" }}
+            >
+              <thead>
+                <tr>
+                  <th style={headerCellStyle}>
+                    {t("mobile.passport.equipment")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.telemetry_page.col_point")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.automation_page.col_expected")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.automation_page.col_window")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.automation_page.col_reason")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.col_since")}
+                  </th>
+                  <th style={headerCellStyle} />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {states.map((state) => (
+                  <tr key={state.id}>
+                    <td
+                      data-label={t("mobile.passport.equipment")}
+                      style={cellStyle}
+                    >
+                      {state.functional_location_id ? (
+                        <Link
+                          href={`/registre/${state.functional_location_id}`}
+                          style={{ color: colors.accent }}
+                        >
+                          {t("web.spatial_page.open_link")}
+                        </Link>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td
+                      data-label={t("web.telemetry_page.col_point")}
+                      style={cellStyle}
+                    >
+                      {state.point_code} — {state.point_name}
+                    </td>
+                    <td
+                      data-label={t("web.automation_page.col_expected")}
+                      style={cellStyle}
+                    >
+                      {formatNumber(locale, state.value)}
+                      {state.point_unit ? ` ${state.point_unit}` : ""}
+                    </td>
+                    <td
+                      data-label={t("web.automation_page.col_window")}
+                      style={cellStyle}
+                    >
+                      {state.daily_start && state.daily_end
+                        ? `${state.daily_start}–${state.daily_end} (${state.timezone})`
+                        : "—"}
+                    </td>
+                    <td
+                      data-label={t("web.automation_page.col_reason")}
+                      style={cellStyle}
+                    >
+                      {state.reason}
+                    </td>
+                    <td
+                      data-label={t("web.dashboard.col_since")}
+                      style={cellStyle}
+                    >
+                      {formatDate(locale, state.valid_from, null)}
+                    </td>
+                    <td style={cellStyle}>
+                      {canManage && (
+                        <form action={endDesiredState}>
+                          <input
+                            type="hidden"
+                            name="desired_state_id"
+                            value={state.id}
+                          />
+                          <button type="submit">
+                            {t("web.registre.end_desired_state")}
+                          </button>
+                        </form>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       )}
     </main>

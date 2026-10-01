@@ -8,6 +8,7 @@ import {
   headerCellStyle,
   pageContainerStyle,
   sectionTitleStyle,
+  tableScrollStyle,
 } from "@/lib/formStyles";
 import { getTranslator } from "@/lib/i18n";
 import { keycloakAdminConsoleUrl } from "@/lib/keycloak";
@@ -86,26 +87,39 @@ export default async function AccessPage() {
         <div style={{ padding: "20px 24px 0" }}>
           <h2 style={sectionTitleStyle}>{t("web.access_page.roles_title")}</h2>
         </div>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr>
-              <th style={headerCellStyle}>{t("web.access_page.col_role")}</th>
-              <th style={headerCellStyle}>
-                {t("web.access_page.col_capability")}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {PRODUCT_ROLES.map((role) => (
-              <tr key={role}>
-                <td style={cellStyle}>{t(`role.${role}`)}</td>
-                <td style={cellStyle}>
-                  {t(`web.access_page.capability.${role}`)}
-                </td>
+        <div style={tableScrollStyle}>
+          <table
+            className="responsive-table"
+            style={{ width: "100%", borderCollapse: "collapse" }}
+          >
+            <thead>
+              <tr>
+                <th style={headerCellStyle}>{t("web.access_page.col_role")}</th>
+                <th style={headerCellStyle}>
+                  {t("web.access_page.col_capability")}
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {PRODUCT_ROLES.map((role) => (
+                <tr key={role}>
+                  <td
+                    data-label={t("web.access_page.col_role")}
+                    style={cellStyle}
+                  >
+                    {t(`role.${role}`)}
+                  </td>
+                  <td
+                    data-label={t("web.access_page.col_capability")}
+                    style={cellStyle}
+                  >
+                    {t(`web.access_page.capability.${role}`)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section style={cardStyle}>

@@ -8,6 +8,7 @@ import {
   headerCellStyle,
   pageContainerStyle,
   sectionTitleStyle,
+  tableScrollStyle,
 } from "@/lib/formStyles";
 import {
   countMetersWithoutData,
@@ -39,12 +40,16 @@ export default async function EnergyPage() {
     apiFetch("/energy/portfolio-summary", accessToken),
     apiFetch("/functional-locations", accessToken),
   ]);
-  const energySummary: { reference_date: string; meters: PortfolioEnergyMeter[] } | null =
-    energyResponse.ok ? await energyResponse.json() : null;
+  const energySummary: {
+    reference_date: string;
+    meters: PortfolioEnergyMeter[];
+  } | null = energyResponse.ok ? await energyResponse.json() : null;
   const locations: FunctionalLocation[] = locationsResponse.ok
     ? await locationsResponse.json()
     : [];
-  const locationById = new Map(locations.map((location) => [location.id, location]));
+  const locationById = new Map(
+    locations.map((location) => [location.id, location]),
+  );
 
   const meters = energySummary?.meters ?? [];
   const byUnit = summarizeEnergyByUnit(meters);
@@ -55,96 +60,156 @@ export default async function EnergyPage() {
       <Link href="/" style={{ color: colors.accent }}>
         ← {t("common.back")}
       </Link>
-      <h1 style={{ fontSize: 24, margin: "12px 0 20px" }}>{t("web.energy_page.title")}</h1>
+      <h1 style={{ fontSize: 24, margin: "12px 0 20px" }}>
+        {t("web.energy_page.title")}
+      </h1>
 
       {meters.length === 0 ? (
         <section style={cardStyle}>
-          <p style={{ color: colors.textMuted }}>{t("web.energy_page.no_meters")}</p>
+          <p style={{ color: colors.textMuted }}>
+            {t("web.energy_page.no_meters")}
+          </p>
         </section>
       ) : (
         <>
           <section style={{ ...cardStyle, marginBottom: 24 }}>
-            <h2 style={sectionTitleStyle}>{t("web.energy_page.summary_title")}</h2>
-            <p style={{ color: colors.textMuted, fontSize: 13, marginBottom: 16 }}>
+            <h2 style={sectionTitleStyle}>
+              {t("web.energy_page.summary_title")}
+            </h2>
+            <p
+              style={{
+                color: colors.textMuted,
+                fontSize: 13,
+                marginBottom: 16,
+              }}
+            >
               {t("web.dashboard.energy_reference_date", {
-                date: energySummary ? formatDate(locale, energySummary.reference_date) : "",
+                date: energySummary
+                  ? formatDate(locale, energySummary.reference_date)
+                  : "",
               })}
             </p>
             <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
               {byUnit.map((summary) => (
                 <div key={summary.unit}>
-                  <div style={{ fontSize: 28, fontWeight: 600, color: colors.textPrimary }}>
+                  <div
+                    style={{
+                      fontSize: 28,
+                      fontWeight: 600,
+                      color: colors.textPrimary,
+                    }}
+                  >
                     {summary.totalConsumption === null
                       ? t("web.dashboard.energy_unavailable")
                       : formatNumber(locale, summary.totalConsumption)}
                   </div>
                   <div style={{ color: colors.textMuted, fontSize: 13 }}>
-                    {t("web.dashboard.energy_consumption_label", { unit: summary.unit })}
+                    {t("web.dashboard.energy_consumption_label", {
+                      unit: summary.unit,
+                    })}
                   </div>
                 </div>
               ))}
             </div>
             {metersWithoutData > 0 && (
-              <p style={{ color: colors.textMuted, fontSize: 12, marginTop: 16 }}>
-                {t("web.dashboard.energy_meters_without_data", { count: metersWithoutData })}
+              <p
+                style={{ color: colors.textMuted, fontSize: 12, marginTop: 16 }}
+              >
+                {t("web.dashboard.energy_meters_without_data", {
+                  count: metersWithoutData,
+                })}
               </p>
             )}
           </section>
 
           <section style={{ ...cardStyle, padding: 0, overflow: "hidden" }}>
             <div style={{ padding: "20px 24px 0" }}>
-              <h2 style={sectionTitleStyle}>{t("web.energy_page.meters_title")}</h2>
+              <h2 style={sectionTitleStyle}>
+                {t("web.energy_page.meters_title")}
+              </h2>
             </div>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr>
-                  <th style={headerCellStyle}>{t("mobile.passport.equipment")}</th>
-                  <th style={headerCellStyle}>{t("web.energy_page.col_unit")}</th>
-                  <th style={headerCellStyle}>{t("web.energy_page.col_consumption")}</th>
-                  <th style={headerCellStyle}>{t("web.energy_page.col_previous")}</th>
-                  <th style={headerCellStyle} />
-                </tr>
-              </thead>
-              <tbody>
-                {meters.map((meter) => {
-                  const location = locationById.get(meter.functional_location_id);
-                  return (
-                    <tr key={meter.point_id}>
-                      <td style={cellStyle}>
-                        {location ? (
-                          <Link
-                            href={`/registre/${location.id}`}
-                            style={{ color: colors.accent }}
-                          >
-                            {location.code} — {location.name}
-                          </Link>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td style={cellStyle}>{meter.unit}</td>
-                      <td style={cellStyle}>
-                        {meter.consumption === null
-                          ? t("web.dashboard.energy_unavailable")
-                          : formatNumber(locale, meter.consumption)}
-                      </td>
-                      <td style={cellStyle}>
-                        {meter.previous_consumption === null
-                          ? t("web.dashboard.energy_unavailable")
-                          : formatNumber(locale, meter.previous_consumption)}
-                      </td>
-                      <td style={cellStyle}>
-                        {location && (
-                          <Link href={`/registre/${location.id}`} style={{ color: colors.accent }}>
-                            {t("web.dashboard.drill_down")} →
-                          </Link>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div style={tableScrollStyle}>
+              <table
+                className="responsive-table"
+                style={{ width: "100%", borderCollapse: "collapse" }}
+              >
+                <thead>
+                  <tr>
+                    <th style={headerCellStyle}>
+                      {t("mobile.passport.equipment")}
+                    </th>
+                    <th style={headerCellStyle}>
+                      {t("web.energy_page.col_unit")}
+                    </th>
+                    <th style={headerCellStyle}>
+                      {t("web.energy_page.col_consumption")}
+                    </th>
+                    <th style={headerCellStyle}>
+                      {t("web.energy_page.col_previous")}
+                    </th>
+                    <th style={headerCellStyle} />
+                  </tr>
+                </thead>
+                <tbody>
+                  {meters.map((meter) => {
+                    const location = locationById.get(
+                      meter.functional_location_id,
+                    );
+                    return (
+                      <tr key={meter.point_id}>
+                        <td
+                          data-label={t("mobile.passport.equipment")}
+                          style={cellStyle}
+                        >
+                          {location ? (
+                            <Link
+                              href={`/registre/${location.id}`}
+                              style={{ color: colors.accent }}
+                            >
+                              {location.code} — {location.name}
+                            </Link>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                        <td
+                          data-label={t("web.energy_page.col_unit")}
+                          style={cellStyle}
+                        >
+                          {meter.unit}
+                        </td>
+                        <td
+                          data-label={t("web.energy_page.col_consumption")}
+                          style={cellStyle}
+                        >
+                          {meter.consumption === null
+                            ? t("web.dashboard.energy_unavailable")
+                            : formatNumber(locale, meter.consumption)}
+                        </td>
+                        <td
+                          data-label={t("web.energy_page.col_previous")}
+                          style={cellStyle}
+                        >
+                          {meter.previous_consumption === null
+                            ? t("web.dashboard.energy_unavailable")
+                            : formatNumber(locale, meter.previous_consumption)}
+                        </td>
+                        <td style={cellStyle}>
+                          {location && (
+                            <Link
+                              href={`/registre/${location.id}`}
+                              style={{ color: colors.accent }}
+                            >
+                              {t("web.dashboard.drill_down")} →
+                            </Link>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </section>
         </>
       )}
