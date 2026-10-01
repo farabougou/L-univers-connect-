@@ -52,3 +52,63 @@ a {
     color-scheme: dark;
   }
 }
+
+/*
+ * Un tableau à plusieurs colonnes (ex. une ligne par site) ne tient pas sur
+ * un écran de téléphone, quelle que soit la largeur des colonnes : le
+ * défilement horizontal existe mais reste facile à manquer. En dessous de
+ * cette largeur, chaque ligne devient une petite fiche empilée (étiquette
+ * à côté de sa valeur, via data-label sur chaque cellule) plutôt qu'un
+ * tableau à faire défiler. Opt-in (classe .responsive-table) : ne change
+ * aucun tableau existant qui n'a pas ce problème.
+ */
+@media (max-width: 680px) {
+  .responsive-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  .responsive-table,
+  .responsive-table tbody,
+  .responsive-table tr,
+  .responsive-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .responsive-table tr {
+    border-bottom: 1px solid #e5e7eb;
+    padding: 10px 0;
+  }
+
+  .responsive-table tr:last-child {
+    border-bottom: none;
+  }
+
+  .responsive-table td {
+    border: none;
+    padding: 4px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    text-align: right;
+  }
+
+  .responsive-table td[data-label]::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--foreground);
+    flex-shrink: 0;
+    text-align: left;
+  }
+
+  /* Une cellule sans étiquette (ex. le lien « Voir ») reste visible, juste
+     sans texte en gras devant — rien à nommer pour un lien déjà explicite. */
+  .responsive-table td:not([data-label]) {
+    justify-content: flex-end;
+  }
+}

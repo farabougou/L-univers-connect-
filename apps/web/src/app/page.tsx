@@ -431,7 +431,10 @@ export default async function PortfolioPage({
           </p>
         ) : (
           <div style={tableScrollStyle}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <table
+              className="responsive-table"
+              style={{ width: "100%", borderCollapse: "collapse" }}
+            >
               <thead>
                 <tr>
                   <th style={headerCellStyle}>
@@ -460,7 +463,10 @@ export default async function PortfolioPage({
                     : undefined;
                   return (
                     <tr key={alarm.id}>
-                      <td style={cellStyle}>
+                      <td
+                        data-label={t("web.dashboard.col_severity")}
+                        style={cellStyle}
+                      >
                         <span
                           title={t(`severity.${alarm.severity}`)}
                           style={badgeStyle(
@@ -470,7 +476,10 @@ export default async function PortfolioPage({
                           {t(`severity.${alarm.severity}`)}
                         </span>
                       </td>
-                      <td style={cellStyle}>
+                      <td
+                        data-label={t("web.dashboard.equipment")}
+                        style={cellStyle}
+                      >
                         {location ? (
                           <Link
                             href={`/registre/${location.id}`}
@@ -482,16 +491,30 @@ export default async function PortfolioPage({
                           "—"
                         )}
                       </td>
-                      <td style={cellStyle}>
+                      <td
+                        data-label={t("web.dashboard.site_column")}
+                        style={cellStyle}
+                      >
                         {location
                           ? (siteById.get(location.site_id)?.name ?? "—")
                           : "—"}
                       </td>
-                      <td style={cellStyle}>{alarm.message}</td>
-                      <td style={cellStyle}>
+                      <td
+                        data-label={t("web.dashboard.col_message")}
+                        style={cellStyle}
+                      >
+                        {alarm.message}
+                      </td>
+                      <td
+                        data-label={t("web.dashboard.col_ack")}
+                        style={cellStyle}
+                      >
                         {t(`ack_state.${alarm.ack_state}`)}
                       </td>
-                      <td style={cellStyle}>
+                      <td
+                        data-label={t("web.dashboard.col_since")}
+                        style={cellStyle}
+                      >
                         {formatDateTime(locale, alarm.raised_at)}
                       </td>
                       <td style={cellStyle}>
@@ -840,7 +863,10 @@ export default async function PortfolioPage({
           }}
         >
           <div style={tableScrollStyle}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <table
+              className="responsive-table"
+              style={{ width: "100%", borderCollapse: "collapse" }}
+            >
               <thead>
                 <tr>
                   <th style={headerCellStyle}>
@@ -869,19 +895,41 @@ export default async function PortfolioPage({
               <tbody>
                 {portfolio.map((entry) => (
                   <tr key={entry.site.id}>
-                    <td style={{ ...cellStyle, fontWeight: 600 }}>
+                    <td
+                      data-label={t("web.dashboard.site_column")}
+                      style={{ ...cellStyle, fontWeight: 600 }}
+                    >
                       {entry.site.name}
                     </td>
-                    <td style={cellStyle}>{entry.equipmentCount}</td>
-                    <td style={cellStyle}>
+                    <td
+                      data-label={t("web.dashboard.equipment")}
+                      style={cellStyle}
+                    >
+                      {entry.equipmentCount}
+                    </td>
+                    <td
+                      data-label={t("web.dashboard.kpi_alarms")}
+                      style={cellStyle}
+                    >
                       <SeverityBadges counts={entry.alarmSeverity} t={t} />
                     </td>
-                    <td style={cellStyle}>
+                    <td
+                      data-label={t("web.dashboard.kpi_findings")}
+                      style={cellStyle}
+                    >
                       <SeverityBadges counts={entry.findingSeverity} t={t} />
                     </td>
-                    <td style={cellStyle}>{entry.openWorkOrders}</td>
+                    <td
+                      data-label={t("web.dashboard.kpi_work_orders")}
+                      style={cellStyle}
+                    >
+                      {entry.openWorkOrders}
+                    </td>
                     {devices && (
-                      <td style={cellStyle}>
+                      <td
+                        data-label={t("web.dashboard.edge_column")}
+                        style={cellStyle}
+                      >
                         {entry.devices &&
                         (entry.devices.online ||
                           entry.devices.offline ||
@@ -936,7 +984,10 @@ export default async function PortfolioPage({
             </p>
           ) : (
             <div style={tableScrollStyle}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <table
+                className="responsive-table"
+                style={{ width: "100%", borderCollapse: "collapse" }}
+              >
                 <thead>
                   <tr>
                     <th style={headerCellStyle}>{t("web.dashboard.code")}</th>
@@ -957,7 +1008,10 @@ export default async function PortfolioPage({
                       (findingCountByLocation.get(location.id) ?? 0);
                     return (
                       <tr key={location.id}>
-                        <td style={cellStyle}>
+                        <td
+                          data-label={t("web.dashboard.code")}
+                          style={cellStyle}
+                        >
                           <Link
                             href={`/registre/${location.id}`}
                             style={{ color: colors.accent }}
@@ -965,11 +1019,22 @@ export default async function PortfolioPage({
                             {location.code}
                           </Link>
                         </td>
-                        <td style={cellStyle}>{location.name}</td>
-                        <td style={cellStyle}>
+                        <td
+                          data-label={t("web.dashboard.name")}
+                          style={cellStyle}
+                        >
+                          {location.name}
+                        </td>
+                        <td
+                          data-label={t("web.dashboard.status_column")}
+                          style={cellStyle}
+                        >
                           <StatusCell status={status} locale={locale} t={t} />
                         </td>
-                        <td style={cellStyle}>
+                        <td
+                          data-label={t("web.dashboard.alerts_column")}
+                          style={cellStyle}
+                        >
                           {alertCount > 0
                             ? t("web.dashboard.alerts_open", {
                                 count: String(alertCount),
