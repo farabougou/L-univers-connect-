@@ -80,6 +80,11 @@ type ConfigDiff = {
   removed: Record<string, unknown>;
   changed: Record<string, { from: unknown; to: unknown }>;
 };
+type RuleSimulation = {
+  sample_size: number;
+  breach_count: number;
+  breaches: { measured_at: string; value: number | boolean }[];
+};
 
 type DeviceMappingContent = {
   device_type: string;
@@ -254,6 +259,7 @@ export default async function EquipmentPage({
     error?: string;
     diff?: string;
     against?: string;
+    simulate?: string;
     timeline_before?: string;
     bacnet_batch?: string;
   }>;
@@ -263,6 +269,7 @@ export default async function EquipmentPage({
     error: errorCode,
     diff: diffVersionId,
     against,
+    simulate: simulateVersionId,
     timeline_before: timelineBefore,
     bacnet_batch: bacnetBatchId,
   } = await searchParams;
@@ -281,6 +288,15 @@ export default async function EquipmentPage({
       accessToken,
     );
     configDiff = diffResponse.ok ? await diffResponse.json() : null;
+  }
+
+  let ruleSimulation: RuleSimulation | null = null;
+  if (simulateVersionId) {
+    const simulationResponse = await apiFetch(
+      `/configs/${simulateVersionId}/simulate`,
+      accessToken,
+    );
+    ruleSimulation = simulationResponse.ok ? await simulationResponse.json() : null;
   }
 
   const timelineQuery = timelineBefore
@@ -457,6 +473,29 @@ export default async function EquipmentPage({
           {Object.keys(configDiff.changed).length === 0 &&
             Object.keys(configDiff.added).length === 0 &&
             Object.keys(configDiff.removed).length === 0 && <p>{t("web.registre.rule_diff_none")}</p>}
+          <Link href={`/registre/${id}`}>{t("web.registre.tag_close")}</Link>
+        </section>
+      )}
+
+      {ruleSimulation && (
+        <section
+          style={{ border: "1px solid #2563eb", borderRadius: 8, padding: 16, margin: "16px 0" }}
+        >
+          <h2 style={sectionTitleStyle}>{t("web.registre.rule_simulation_title")}</h2>
+          <p style={{ margin: 0 }}>
+            {t("web.registre.rule_simulation_summary", {
+              breach_count: String(ruleSimulation.breach_count),
+              sample_size: String(ruleSimulation.sample_size),
+            })}
+          </p>
+          {ruleSimulation.breaches.map((breach, index) => (
+            <p key={index} style={{ margin: 0 }}>
+              {t("web.registre.rule_simulation_breach_line", {
+                measured_at: formatDateTime(locale, breach.measured_at, null),
+                value: String(breach.value),
+              })}
+            </p>
+          ))}
           <Link href={`/registre/${id}`}>{t("web.registre.tag_close")}</Link>
         </section>
       )}
@@ -1002,6 +1041,10 @@ function RulesBlock({
             ` (${version.content.operator === ">" ? t("web.registre.rule_operator_gt") : t("web.registre.rule_operator_lt")} ${version.content.threshold})`}
           {version.content.kind === "desired_state_divergence" &&
             ` (${t("web.registre.rule_tolerance")}: ${version.content.tolerance})`}
+          {" — "}
+          <Link href={`/registre/${nodeId}?simulate=${version.id}`}>
+            {t("web.registre.rule_simulate_link")}
+          </Link>
           {version.parent_version_id && (
             <>
               {" — "}
@@ -1157,6 +1200,10 @@ function CorrelationRuleBlock({
           {version.content.heating_point_id && version.content.cooling_point_id && (
             ` (${t("web.registre.rule_heating_point")}: ${pointLabel(version.content.heating_point_id)} — ${t("web.registre.rule_cooling_point")}: ${pointLabel(version.content.cooling_point_id)})`
           )}
+          {" — "}
+          <Link href={`/registre/${nodeId}?simulate=${version.id}`}>
+            {t("web.registre.rule_simulate_link")}
+          </Link>
           {version.parent_version_id && (
             <>
               {" — "}
