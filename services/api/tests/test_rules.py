@@ -1,6 +1,8 @@
 from datetime import UTC, datetime, time, timedelta
+from unittest.mock import patch
 
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 
@@ -17,6 +19,7 @@ from app.findings import (
     list_findings,
     raise_or_repeat_finding,
 )
+from app.main import app
 from app.points import get_point
 from app.rules import ALARM_RULE
 from app.signals import SignalConflict, set_handling
@@ -24,8 +27,10 @@ from app.telemetry import record_measurement
 from app.trust import compute_trust
 from tests.analytics_fixtures import cleanup_tenant, create_tenant_with_points, in_tenant
 from tests.error_helpers import raises_code
+from tests.jwt_helpers import JWKS, make_token
 
 T0 = datetime(2026, 9, 23, 8, 0, tzinfo=UTC)
+client = TestClient(app)
 
 
 @pytest.fixture
@@ -579,3 +584,30 @@ def test_findings_and_desired_states_are_never_rewritten(two_tenants, statement,
     with pytest.raises(DBAPIError, match=message):
         with in_tenant(tenant_a) as connection:
             connection.execute(text(statement))
+
+
+def test_une_mesure_anormale_apparait_dans_la_chronologie_de_l_equipement(two_tenants) -> None:
+    """Preuve de bout en bout (audit du 02/10/2026) : jusqu'ici, le passage
+    mesure → règle → alarme (ce fichier) et alarme → chronologie
+    (test_timeline.py) n'étaient prouvés que séparément, chacun par
+    construction. Ce test part d'une vraie mesure et vérifie que l'alarme
+    qui en résulte est bien visible dans la chronologie servie à l'écran
+    passeport — sans jamais créer l'alarme directement."""
+    tenant_a, _ = two_tenants
+    with in_tenant(tenant_a) as connection:
+        _activate_rule(connection, tenant_a)
+        _measure(connection, tenant_a, 85.0, T0)
+
+    token = make_token(roles=["technicien"], tenant_id=str(tenant_a["tenant_id"]))
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        response = client.get(
+            f"/graph/nodes/{tenant_a['ahu']}/timeline",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+    assert response.status_code == 200
+    entries = response.json()
+    alarm_entries = [entry for entry in entries if entry["kind"] == "alarm"]
+    assert len(alarm_entries) == 1
+    assert alarm_entries[0]["title"] == "Départ d'eau trop chaud"
+    assert alarm_entries[0]["status"] == "open"

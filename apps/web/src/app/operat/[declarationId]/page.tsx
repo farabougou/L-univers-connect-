@@ -14,7 +14,7 @@ import {
   tableScrollStyle,
 } from "@/lib/formStyles";
 import { errorMessage, getLocale, getTranslator } from "@/lib/i18n";
-import { formatDateTime } from "@/i18n/translator";
+import { formatDateTime, formatNumber } from "@/i18n/translator";
 
 import {
   markOperatDeclarationReady,
@@ -95,7 +95,7 @@ export default async function OperatDeclarationPage({
       <h1 style={{ fontSize: 24, margin: "12px 0 20px" }}>
         {t("web.operat_page.edit_title", { year: String(declaration.reference_year) })}
       </h1>
-      {error && <p style={{ color: "#c0392b" }}>{error}</p>}
+      {error && <p style={{ color: colors.danger }}>{error}</p>}
 
       <section style={{ ...cardStyle, marginBottom: 20 }}>
         {frozen && (
@@ -223,7 +223,9 @@ export default async function OperatDeclarationPage({
                 </tr>
                 <tr>
                   <th style={headerCellStyle}>{t("web.operat_page.col_surface")}</th>
-                  <td style={cellStyle}>{summary.surface_m2 ?? "—"}</td>
+                  <td style={cellStyle}>
+                    {summary.surface_m2 != null ? formatNumber(locale, summary.surface_m2) : "—"}
+                  </td>
                 </tr>
                 <tr>
                   <th style={headerCellStyle}>{t("web.operat_page.col_activity")}</th>
@@ -231,20 +233,30 @@ export default async function OperatDeclarationPage({
                 </tr>
                 <tr>
                   <th style={headerCellStyle}>{t("web.operat_page.field_electricity")}</th>
-                  <td style={cellStyle}>{summary.electricite_kwh ?? "—"}</td>
+                  <td style={cellStyle}>
+                    {summary.electricite_kwh != null
+                      ? formatNumber(locale, summary.electricite_kwh)
+                      : "—"}
+                  </td>
                 </tr>
                 <tr>
                   <th style={headerCellStyle}>{t("web.operat_page.field_gas")}</th>
-                  <td style={cellStyle}>{summary.gaz_kwh ?? "—"}</td>
+                  <td style={cellStyle}>
+                    {summary.gaz_kwh != null ? formatNumber(locale, summary.gaz_kwh) : "—"}
+                  </td>
                 </tr>
                 <tr>
                   <th style={headerCellStyle}>{t("web.operat_page.field_heat_network")}</th>
-                  <td style={cellStyle}>{summary.reseau_chaleur_kwh ?? "—"}</td>
+                  <td style={cellStyle}>
+                    {summary.reseau_chaleur_kwh != null
+                      ? formatNumber(locale, summary.reseau_chaleur_kwh)
+                      : "—"}
+                  </td>
                 </tr>
                 <tr>
                   <th style={headerCellStyle}>{t("web.operat_page.field_other")}</th>
                   <td style={cellStyle}>
-                    {summary.autre_kwh ?? "—"}
+                    {summary.autre_kwh != null ? formatNumber(locale, summary.autre_kwh) : "—"}
                     {summary.autre_libelle ? ` (${summary.autre_libelle})` : ""}
                   </td>
                 </tr>
@@ -283,6 +295,11 @@ export default async function OperatDeclarationPage({
             >
               {t("web.operat_page.record_submission")}
             </button>
+            {declaration.status !== "ready" && (
+              <p style={{ color: colors.textMuted, marginTop: 8 }}>
+                {t("web.operat_page.submission_requires_ready")}
+              </p>
+            )}
           </form>
         )}
       </section>

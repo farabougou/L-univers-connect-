@@ -11,7 +11,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { config } from "../src/lib/config";
 import { useAuth } from "../src/lib/auth";
@@ -50,6 +50,18 @@ function localId(): string {
 export default function NouvelleInterventionScreen() {
   const router = useRouter();
   const auth = useAuth();
+  // Arrivée depuis le passeport d'un équipement (ordre de travail ou alarme
+  // en cours) : relie l'intervention à ce qui l'a déclenchée au lieu de
+  // laisser le technicien recréer le lien de mémoire (voir
+  // app/passeport.tsx — trouvé manquant par l'audit de bout en bout du
+  // 02/10/2026, le modèle serveur l'acceptait déjà sans qu'aucun écran ne
+  // le propose).
+  const params = useLocalSearchParams<{
+    workOrderId?: string;
+    workOrderTitle?: string;
+    functionalLocationId?: string;
+  }>();
+  const workOrderId = params.workOrderId ?? null;
   const [interventionType, setInterventionType] = useState<"intervention" | "ronde">(
     "intervention",
   );
@@ -58,7 +70,9 @@ export default function NouvelleInterventionScreen() {
   const [photoPath, setPhotoPath] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [locations, setLocations] = useState<CachedFunctionalLocation[]>([]);
-  const [functionalLocationId, setFunctionalLocationId] = useState<string | null>(null);
+  const [functionalLocationId, setFunctionalLocationId] = useState<string | null>(
+    params.functionalLocationId ?? null,
+  );
   const [closeNow, setCloseNow] = useState(false);
   const [closure, setClosure] = useState<ClosureDraft>(EMPTY_CLOSURE);
   const [fgasNow, setFgasNow] = useState(false);
@@ -111,6 +125,7 @@ export default function NouvelleInterventionScreen() {
         functionalLocationId,
         closure: closeNow ? toClosureBody(closure) : null,
         fgas: fgasNow ? toFgasBody(fgas) : null,
+        workOrderId,
       });
 
       // Tentative d'envoi immédiat si le réseau est disponible maintenant ;
@@ -132,6 +147,12 @@ export default function NouvelleInterventionScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>{t("mobile.intervention.title")}</Text>
+
+      {workOrderId && params.workOrderTitle && (
+        <Text style={styles.hint}>
+          {t("mobile.intervention.linked_work_order", { title: params.workOrderTitle })}
+        </Text>
+      )}
 
       <View style={styles.typeRow}>
         <Button

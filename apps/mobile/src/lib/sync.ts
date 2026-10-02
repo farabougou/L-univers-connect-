@@ -131,6 +131,7 @@ async function ensureInterventionCreated(
       checklist: JSON.parse(row.checklist),
       started_at: row.started_at,
       functional_location_id: row.functional_location_id,
+      work_order_id: row.work_order_id,
       // Si la réponse se perd après la création, le renvoi porte la même
       // référence : le serveur rend l'intervention déjà créée, sans doublon.
       client_ref: row.id,

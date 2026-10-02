@@ -185,6 +185,7 @@
     "PROVIDER_NOT_FOUND": "Le prestataire demandé est introuvable.",
     "QUERY_LIMIT_OUT_OF_RANGE": "Le paramètre « limit » doit être compris entre {minimum} et {maximum}.",
     "QUERY_SINCE_TIMEZONE_REQUIRED": "Le paramètre « since » doit préciser son fuseau horaire, par exemple 2026-09-23T08:00:00Z.",
+    "RATE_LIMITED": "Trop de tentatives en peu de temps. Réessayez dans quelques instants.",
     "RELATION_ALREADY_ENDED": "Cette relation est déjà close.",
     "RELATION_ALREADY_EXISTS": "Cette relation existe déjà.",
     "RELATION_ALREADY_EXISTS_REVERSE": "Cette relation existe déjà dans l’autre sens.",

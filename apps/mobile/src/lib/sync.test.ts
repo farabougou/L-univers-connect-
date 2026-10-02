@@ -31,6 +31,7 @@ function baseRow(overrides: Partial<PendingIntervention> = {}): PendingIntervent
     closure_sent: 0,
     fgas: null,
     fgas_sent: 0,
+    work_order_id: null,
     ...overrides,
   };
 }

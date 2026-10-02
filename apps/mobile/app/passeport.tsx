@@ -3,12 +3,14 @@ import { type BarcodeScanningResult, CameraView, useCameraPermissions } from "ex
 import {
   ActivityIndicator,
   Button,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
+import { useRouter } from "expo-router";
 
 import { config } from "../src/lib/config";
 import { useAuth } from "../src/lib/auth";
@@ -204,6 +206,7 @@ function PassportView({
   onLoadOlderTimeline: () => void;
   timelineLoading: boolean;
 }) {
+  const router = useRouter();
   const unit = passport.physical_unit ?? passport.current_unit ?? null;
   // Heures du site dans son fuseau quand il est renseigné, sinon celles de
   // l'appareil, et on le dit (ADR 013 : ne jamais laisser croire).
@@ -293,9 +296,26 @@ function PassportView({
       {passport.open_work_orders && passport.open_work_orders.length > 0 && (
         <Section title={t("mobile.passport.work_orders")}>
           {passport.open_work_orders.map((order) => (
-            <Text key={order.id}>
-              {order.title} ({t(`work_order.status.${order.status}`)})
-            </Text>
+            <Pressable
+              key={order.id}
+              onPress={() =>
+                router.push({
+                  pathname: "/nouvelle-intervention",
+                  params: {
+                    workOrderId: order.id,
+                    workOrderTitle: order.title,
+                    ...(passport.node_type === "functional_location"
+                      ? { functionalLocationId: passport.node_id }
+                      : {}),
+                  },
+                })
+              }
+            >
+              <Text style={styles.workOrderLink}>
+                {order.title} ({t(`work_order.status.${order.status}`)}) —{" "}
+                {t("mobile.passport.work_order_create_intervention")}
+              </Text>
+            </Pressable>
           ))}
         </Section>
       )}
@@ -531,6 +551,10 @@ const styles = StyleSheet.create({
   },
   error: {
     color: "#c0392b",
+  },
+  workOrderLink: {
+    color: "#1d4ed8",
+    textDecorationLine: "underline",
   },
   scanner: {
     gap: 8,

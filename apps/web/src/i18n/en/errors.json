@@ -185,6 +185,7 @@
     "PROVIDER_NOT_FOUND": "The requested provider could not be found.",
     "QUERY_LIMIT_OUT_OF_RANGE": "The “limit” parameter must be between {minimum} and {maximum}.",
     "QUERY_SINCE_TIMEZONE_REQUIRED": "The “since” parameter must include its time zone, for example 2026-09-23T08:00:00Z.",
+    "RATE_LIMITED": "Too many attempts in a short time. Try again shortly.",
     "RELATION_ALREADY_ENDED": "This relation has already ended.",
     "RELATION_ALREADY_EXISTS": "This relation already exists.",
     "RELATION_ALREADY_EXISTS_REVERSE": "This relation already exists in the opposite direction.",

@@ -13,8 +13,9 @@ import {
   submitStyle,
   tableScrollStyle,
 } from "@/lib/formStyles";
-import { getTranslator } from "@/lib/i18n";
+import { getLocale, getTranslator } from "@/lib/i18n";
 import { canManage as computeCanManage, type Me } from "@/lib/roles";
+import { formatNumber } from "@/i18n/translator";
 
 import { createOperatDeclaration } from "./actions";
 
@@ -41,6 +42,7 @@ type OperatDeclaration = {
 export default async function OperatPage() {
   const accessToken = await requireAccessToken();
   const { t } = await getTranslator();
+  const locale = await getLocale();
 
   const [sitesResponse, declarationsResponse, meResponse] = await Promise.all([
     apiFetch("/sites", accessToken),
@@ -112,13 +114,17 @@ export default async function OperatPage() {
                             {t(`web.operat_page.status.${declaration.status}`)}
                           </td>
                           <td data-label={t("web.operat_page.col_surface")} style={cellStyle}>
-                            {declaration.floor_area_m2 ?? "—"}
+                            {declaration.floor_area_m2 != null
+                              ? formatNumber(locale, declaration.floor_area_m2)
+                              : "—"}
                           </td>
                           <td data-label={t("web.operat_page.col_activity")} style={cellStyle}>
                             {declaration.activity_category ?? "—"}
                           </td>
                           <td data-label={t("web.operat_page.col_electricity")} style={cellStyle}>
-                            {declaration.electricity_kwh ?? "—"}
+                            {declaration.electricity_kwh != null
+                              ? formatNumber(locale, declaration.electricity_kwh)
+                              : "—"}
                           </td>
                           <td style={cellStyle}>
                             {canManage && (

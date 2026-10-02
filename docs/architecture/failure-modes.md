@@ -42,7 +42,7 @@
 | Contexte tenant absent sur une connexion | La requête ne voit **aucune** ligne | Politique RLS `NULLIF(current_setting(...), '')::uuid` → aucune ligne visible ni modifiable | Aucune : c'est l'effet voulu | ✅ testé pour chaque table |
 | Toutes les connexions occupées | Requêtes lentes puis 500 après 30 s | Pool SQLAlchemy par défaut (5 + 10 en débordement) | Réduire les requêtes lentes ; dimensionner le pool par variable d'environnement | ⚠️ taille du pool non configurable aujourd'hui |
 | Migration interrompue | Déploiement bloqué | Chaque migration Alembic est transactionnelle ; les retours arrière refusent de s'exécuter s'il existe des données métier | Corriger puis relancer ; jamais de migration destructive sans sauvegarde vérifiée (règle 6) | ✅ |
-| Perte de la base | Perte de données | Sauvegardes : à mettre en place avec l'hébergement (M1) | Restauration testée | ⚠️ à faire avant le premier client |
+| Perte de la base | Perte de données | `scripts/backup_database.sh` (pg_dump format personnalisé, rôle dédié `paios_backup` avec `BYPASSRLS` en lecture seule — jamais le rôle applicatif, qui serait bloqué par `FORCE ROW LEVEL SECURITY` table par table). Railway fournit en plus des sauvegardes automatiques gérées sur son offre PostgreSQL (infra/RAILWAY_STAGING.md), indépendantes de ce script | `scripts/restore_database.sh <fichier> --confirm`, cycle complet vérifié le 02/10/2026 (sauvegarde → base vierge → restauration → données et politiques RLS intactes) | ✅ testé manuellement 02/10/2026 ; ⚠️ pas encore automatisé en CI ni planifié en production |
 
 ## 2. Authentification (Keycloak / OIDC)
 

@@ -33,6 +33,13 @@ export const LOCAL_MIGRATIONS: string[] = [
   // hors ligne, envoyée après la clôture (02/10/2026).
   `ALTER TABLE pending_interventions ADD COLUMN fgas TEXT;
    ALTER TABLE pending_interventions ADD COLUMN fgas_sent INTEGER NOT NULL DEFAULT 0;`,
+  // 4 — relie l'intervention à l'ordre de travail qui l'a déclenchée, quand
+  // elle part du passeport d'un équipement (02/10/2026) : jusqu'ici, rien ne
+  // reliait un ordre de travail/une alarme vue sur le terrain à
+  // l'intervention qui la traite (le modèle serveur le permettait déjà,
+  // app/schemas.py::InterventionCreate.work_order_id, mais aucun écran ne
+  // le proposait — trouvé par l'audit de bout en bout du 02/10/2026).
+  `ALTER TABLE pending_interventions ADD COLUMN work_order_id TEXT;`,
 ];
 
 export type LocalDatabase = {

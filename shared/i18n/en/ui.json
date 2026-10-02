@@ -1,6 +1,7 @@
 {
   "common": {
     "app_name": "Enoryx",
+    "loading": "Loading…",
     "tagline": "Physical Asset Intelligence OS",
     "sign_in": "Sign in",
     "sign_out": "Sign out",
@@ -145,6 +146,7 @@
     },
     "intervention": {
       "title": "New intervention",
+      "linked_work_order": "Intervention linked to work order: {title}",
       "equipment_optional": "Equipment (optional)",
       "no_cached_equipment": "No equipment is available offline. Connect to the network once to load the list.",
       "summary": "Report",
@@ -253,6 +255,7 @@
       "alarm": "Alarm",
       "finding": "Finding",
       "work_orders": "Current work orders",
+      "work_order_create_intervention": "Create an intervention",
       "interventions": "Latest interventions",
       "no_summary": "No report",
       "status": "Equipment state",
@@ -479,6 +482,7 @@
       "summary_title": "Figures to enter on the OPERAT portal",
       "submission_reference": "Submission reference (if known)",
       "record_submission": "Record the portal submission",
+      "submission_requires_ready": "Mark the declaration \"Ready\" before you can record its transmission.",
       "already_submitted": "Submitted on {date}{reference}.",
       "reference_suffix": " (reference {reference})",
       "frozen_notice": "A submitted declaration is final: it can no longer be changed."

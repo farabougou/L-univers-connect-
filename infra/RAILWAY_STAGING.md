@@ -256,6 +256,30 @@ Non requis pour valider le staging. Devient obligatoire avant tout client
 réel : activer les sauvegardes automatiques du plugin PostgreSQL de Railway
 (disponible selon le plan) et tester une restauration au moins une fois.
 
+Procédure testée disponible pour cette vérification manuelle (et comme filet
+indépendant de Railway, le dépôt restant portable) :
+`services/api/scripts/backup_database.sh` /
+`services/api/scripts/restore_database.sh`. Un rôle PostgreSQL dédié,
+distinct du rôle applicatif, est nécessaire — le rôle applicatif est
+bloqué par `FORCE ROW LEVEL SECURITY` sur chaque table métier (voulu, ne
+pas contourner autrement que par ce rôle de sauvegarde) :
+
+```sql
+CREATE ROLE paios_backup WITH LOGIN PASSWORD '...' BYPASSRLS;
+GRANT CONNECT ON DATABASE paios TO paios_backup;
+GRANT USAGE ON SCHEMA public TO paios_backup;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO paios_backup;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO paios_backup;
+GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO paios_backup;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON SEQUENCES TO paios_backup;
+```
+
+Cycle complet (sauvegarde → base vierge → restauration → données et
+politiques RLS intactes) vérifié manuellement le 02/10/2026. Reste à faire
+avant le premier client réel : brancher ce script sur une tâche planifiée
+(Railway Cron Jobs, même mécanisme que `scripts/supervision_sweep.py`) et
+sur un stockage de sauvegarde durable hors de la base elle-même.
+
 ## Rapport à produire à la fin
 
 ```

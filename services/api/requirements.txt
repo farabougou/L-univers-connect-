@@ -15,3 +15,4 @@ asyncua==2.0.1
 paho-mqtt==2.1.0
 prometheus_client==0.26.0
 pypdf==6.19.0
+slowapi==0.1.10

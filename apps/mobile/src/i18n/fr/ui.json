@@ -1,6 +1,7 @@
 {
   "common": {
     "app_name": "Enoryx",
+    "loading": "Chargement…",
     "tagline": "Physical Asset Intelligence OS",
     "sign_in": "Se connecter",
     "sign_out": "Se déconnecter",
@@ -145,6 +146,7 @@
     },
     "intervention": {
       "title": "Nouvelle intervention",
+      "linked_work_order": "Intervention liée à l’ordre de travail : {title}",
       "equipment_optional": "Équipement (facultatif)",
       "no_cached_equipment": "Aucun équipement n’est disponible hors ligne. Connectez-vous une fois au réseau pour charger la liste.",
       "summary": "Compte rendu",
@@ -253,6 +255,7 @@
       "alarm": "Alarme",
       "finding": "Constat",
       "work_orders": "Ordres de travail en cours",
+      "work_order_create_intervention": "Créer une intervention",
       "interventions": "Dernières interventions",
       "no_summary": "Sans compte rendu",
       "status": "État de l’équipement",
@@ -479,6 +482,7 @@
       "summary_title": "Résumé à saisir sur le portail OPERAT",
       "submission_reference": "Référence de transmission (si connue)",
       "record_submission": "Enregistrer la transmission sur le portail",
+      "submission_requires_ready": "Passez la déclaration à « Prête » avant de pouvoir enregistrer sa transmission.",
       "already_submitted": "Transmise le {date}{reference}.",
       "reference_suffix": " (référence {reference})",
       "frozen_notice": "Une déclaration transmise est définitive : elle ne peut plus être modifiée."

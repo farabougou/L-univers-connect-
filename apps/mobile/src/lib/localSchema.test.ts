@@ -32,6 +32,8 @@ describe("base locale versionnée", () => {
       "PRAGMA user_version = 2",
       LOCAL_MIGRATIONS[2],
       "PRAGMA user_version = 3",
+      LOCAL_MIGRATIONS[3],
+      "PRAGMA user_version = 4",
     ]);
   });
 

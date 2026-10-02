@@ -204,7 +204,7 @@ passant : la ligne « Mise en service et recommissioning continu » affirmait en
 
 | Feature | Notre statut | Concurrent(s) | Standard | Priorité | Architecture concernée | Décision | Justification |
 |---|---|---|---|---|---|---|---|
-| Moteur interne de normalisation énergétique (agrégation, degrés-jours, référence, comparaison) | ✅ Fait (M5, 24/09/2026, directive de Mohamed) — `app/energy/` : agrégation d'un compteur cumulatif (delta, jamais une somme, détection de remise à zéro), contexte météo quotidien saisi manuellement, référence énergétique versionnée (`config_versions`, config_type `energy_baseline`), normalisation par degrés-jours (`degree_day_ratio/v1`, méthode nommée et versionnée), comparaison pure entre deux résultats. Chaque résultat persisté (`energy_normalized_results`, jamais réécrit) porte sa traçabilité complète : période de référence et analysée, consommation brute et son origine, données météo utilisées, méthode et version, paramètres, données manquantes, qualité, date et auteur. Endpoints `/energy/*`, section « Performance énergétique » sur la fiche équipement (web) | Aucun éditeur ne documente publiquement une méthode interne aussi traçable ; les grands éditeurs couplent en général leur normalisation à leur propre reporting | Aucun standard imposé — degrés-jours est une pratique reconnue, pas une norme unique | Haute | `app/energy/` (moteur, indépendant de toute réglementation), `app/routers/energy.py` | ADD (M5) | Frontière stricte et non négociable (directive de Mohamed, 24/09/2026) : ce moteur ne connaît ni OPERAT ni BACS ; les couches réglementaires liront ses résultats sans jamais le modifier. |
+| Moteur interne de normalisation énergétique (agrégation, degrés-jours, référence, comparaison) | ✅ Fait (M5, 24/09/2026, directive de Mohamed) — `app/energy/` : agrégation d'un compteur cumulatif (delta, jamais une somme, détection de remise à zéro), contexte météo quotidien saisi manuellement, référence énergétique versionnée (`config_versions`, config_type `energy_baseline`), normalisation par degrés-jours (`degree_day_ratio/v1`, méthode nommée et versionnée), comparaison pure entre deux résultats. Chaque résultat persisté (`energy_normalized_results`, jamais réécrit) porte sa traçabilité complète : période de référence et analysée, consommation brute et son origine, données météo utilisées, méthode et version, paramètres, données manquantes, qualité, date et auteur. Endpoints `/energy/*`, section « Performance énergétique » sur la fiche équipement (web) | Aucun éditeur ne documente publiquement une méthode interne aussi traçable ; les grands éditeurs couplent en général leur normalisation à leur propre reporting | Aucun standard imposé — degrés-jours est une pratique reconnue, pas une norme unique | Haute | `app/energy/` (moteur, indépendant de toute réglementation), `app/routers/energy.py` | ADD (M5) | Frontière stricte et non négociable (directive de Mohamed, 24/09/2026) : ce moteur ne connaît ni OPERAT ni BACS ; les couches réglementaires liront ses résultats sans jamais le modifier. **Précision du 02/10/2026** (audit de bout en bout) : ce moteur ne lit pas non plus les interventions — il ne consomme que des compteurs (`energy_meter_reading`) et le contexte météo, qu'ils proviennent d'un équipement réel ou virtuel. Une intervention de maintenance ne déclenche aucun recalcul automatique ici ; les deux restent des consommateurs indépendants de la télémétrie, par choix d'architecture, pas par oubli. |
 | Reporting ESG / conformité énergétique (décret tertiaire, BACS, export OPERAT) | ⚠️ **02/10/2026 : politique changée (directive de Mohamed)** — `DEFERRED_DOCUMENT` levé : une absence de compte ou d'API officielle ne bloque plus le modèle de données, le workflow ni l'interface, seul l'appel externe réel est différé (`DEFERRED_EXTERNAL_INTEGRATION`). **OPERAT** : table `operat_declarations` (migration `ada08b67a28c`, une déclaration par site et par année, workflow brouillon → prêt → transmis), `app/regulatory/operat.py` — `export_operat_summary` produit les chiffres à saisir sur le portail ADEME, `record_manual_submission` enregistre qu'une personne l'a fait (aucune transmission automatique simulée), interface `OperatApiAdapter` posée pour une future intégration programmatique (`NotConfiguredOperatApiAdapter`, échoue explicitement). **BACS** : aucun nouveau code nécessaire — audit complet dans `docs/regulatory/02-bacs-gtb.md`, chaque fonction demandée (suivi énergétique, conservation ≥ 5 ans, analyse d'efficacité, interopérabilité, exploitation/inspection) déjà couverte par une brique existante. **02/10/2026 (suite) : API et écran web** — `app/routers/regulatory.py` (créer/lister/lire/modifier une déclaration, passer « prête », enregistrer une transmission manuelle, résumé pour le portail ADEME, liste portefeuille en un seul appel) ; page `/operat` (liste par site, création d'un brouillon) et `/operat/{id}` (formulaire complet, résumé, enregistrement de la transmission, gelée une fois transmise) — tâche de bureau, réservée aux rôles de gestion comme les documents d'équipement, jamais un geste terrain | Smart & Connective et les grands éditeurs | Décret tertiaire (OPERAT, arrêté du 10 avril 2020), articles R175-1 à R175-6 (BACS) | Haute à moyen terme | `app/regulatory/operat.py`, `app/routers/regulatory.py`, migration `ada08b67a28c` ; `apps/web/src/app/operat/` ; `docs/regulatory/01-operat-eco-energie-tertiaire.md`, `docs/regulatory/02-bacs-gtb.md` | ADD modèle + workflow + interface OPERAT (02/10/2026) ; ADD API + écran web (02/10/2026) ; KEEP BACS (aucun écart) ; `DEFERRED_EXTERNAL_INTEGRATION` transmission programmatique OPERAT (aucun identifiant API) | **Grille produit (ADR 014)** : Backend DONE, API DONE (02/10/2026), Web DONE (02/10/2026), Mobile N/A (tâche de bureau annuelle, pas un geste terrain), Edge N/A, Tests DONE (12 tests de domaine : création, conflit site+année, site introuvable, complétude avant « prêt », transitions de statut refusées hors ordre, gel après transmission, quantité négative rejetée, export, adaptateur par défaut qui échoue explicitement, isolation tenant ; 7 tests d'API : workflow complet brouillon→prêt→transmis, rôle technicien refusé, liste portefeuille, isolation tenant ; TypeScript, ESLint et build web propres ; 887 tests backend et 167 tests web au vert sans régression), Documentation DONE (`docs/regulatory/`). Ne jamais déduire un contrat API ou un format CSV réglementaire à partir d'exemples approximatifs ; la plateforme conserve déjà les données utiles à une future preuve BACS (historique, énergie, paramétrages, événements, commandes). |
 | Flexibilité énergétique / DER (solaire, batterie, bornes, effacement) | ❌ Absent | Grands éditeurs (non revérifié) | OpenADR, IEEE 2030.5, OCPP (bornes), SunSpec (solaire/batteries) | Basse | Classes d'équipements + points + relations `feeds`/`poweredBy` | DEFER | Le modèle générique suffit à les représenter ; aucun standard imposé au lancement. |
 | Économie des actifs (coûts, garantie, remplacement) | ❌ Absent | EAM/GMAO matures | ISO 15686-5 (coût global) | Basse | Clôture structurée (F5) comme prérequis | DEFER | Aide à comparer des stratégies, sans jamais décider à la place du client. |
@@ -656,6 +656,92 @@ le contrat exposé par `app/connectors/opcua.py` (`OpcuaPoint`, `read_opcua_poin
 négociable 8). À vérifier avant toute mise à jour d'`asyncua` en production : rejouer
 `tests/test_opcua_connector.py` et `tests/test_opcua_daemon.py`, qui parlent à un vrai
 serveur OPC UA simulé (le serveur de la même bibliothèque, jamais un mock).
+
+## V1 Software Freeze — 02/10/2026
+
+Directive de Mohamed du 02/10/2026 : audit complet de la chaîne V1 (Asset →
+Edge/Simulation → Telemetry → Asset Model → State → FDD → Alarm → Timeline →
+Intervention → Energy → Impact Analysis → Command Center), passe sécurité,
+finition UX/UI des 13 écrans, puis gel logiciel si tout passe. Trois audits
+indépendants menés en parallèle (sécurité, UX/UI, chaîne de bout en bout),
+chacun en lecture seule, puis corrections appliquées une par une avec
+vérification réelle (tests, typecheck, lint, build) à chaque étape — jamais
+un correctif groupé non vérifié.
+
+**Sécurité** (0 CRITIQUE trouvé ; l'exception de commande règle non
+négociable 1 strictement respectée, vérifiée fichier par fichier) :
+- ADD limitation de débit (`app/rate_limit.py`, dépendance `slowapi`) :
+  défaut global 120/minute, 10/minute sur `/devices/auth` (surface la plus
+  exposée à un essai de secrets en force brute) — défense en profondeur en
+  plus de la comparaison en temps constant déjà en place.
+- ADD test d'isolation tenant pour `commands` (`tests/test_commands_api.py`),
+  seule table sensible qui n'en avait pas encore un dédié malgré la policy
+  RLS déjà correcte.
+- ADD commentaire expliquant l'absence volontaire de `CORSMiddleware`
+  (architecture BFF, `app/main.py`) pour éviter qu'un futur développeur
+  l'ajoute trop permissif sans réfléchir.
+- ADD sauvegarde/restauration réelle (`scripts/backup_database.sh`,
+  `scripts/restore_database.sh`) : cycle complet testé manuellement le
+  02/10/2026 (sauvegarde → base vierge → restauration → données et
+  politiques RLS intactes). Rôle PostgreSQL dédié obligatoire
+  (`paios_backup`, `BYPASSRLS`, lecture seule) — le rôle applicatif est
+  bloqué par `FORCE ROW LEVEL SECURITY`, volontairement.
+
+**Chaîne de bout en bout** : 10 des 12 maillons vérifiés complets avec
+preuve directe (fichier:ligne + test nommé). Deux corrections réelles :
+- ADD lien Timeline → Intervention (`work_order_id`) : le modèle serveur
+  l'acceptait déjà (`InterventionCreate.work_order_id`) mais aucun écran ne
+  le proposait — un technicien perdait le fil entre l'alarme/l'ordre de
+  travail qui l'amène sur site et l'intervention qu'il enregistre. Ajouté
+  côté mobile (`nouvelle-intervention.tsx`, `passeport.tsx` — chaque ordre
+  de travail du passeport devient un lien qui pré-remplit la nouvelle
+  intervention), stocké hors ligne (migration locale SQLite n°4) et envoyé
+  au serveur comme les autres champs.
+- ADD test d'intégration mesure→règle→alarme→chronologie
+  (`tests/test_rules.py::test_une_mesure_anormale_apparait_dans_la_chronologie_de_l_equipement`) :
+  les deux maillons existaient et étaient prouvés séparément (même fonction
+  des deux côtés), mais aucun test ne partait d'une vraie mesure jusqu'à la
+  chronologie visible à l'écran.
+- Clarification doc (`app/energy/`) : Intervention→Energy et Energy→Impact
+  Analysis ne sont pas des transitions automatiques — deux consommateurs
+  indépendants de la télémétrie, par choix d'architecture documenté, pas un
+  oubli. Impact Analysis n'apparaît pas sur le tableau de bord portefeuille
+  (seulement par équipement) — amélioration UX possible, non bloquante.
+
+**UX/UI** (audit des 13 écrans web + mobile) : aucune donnée fictive,
+aucune page qui ressemble à du développement, responsive déjà complet sur
+12/13 écrans. Corrections réelles :
+- ADD `loading.tsx` sur les 15 segments de route (convention Next.js, voir
+  `src/components/LoadingScreen.tsx`) : jusqu'ici, un chargement lent
+  n'affichait rien du tout — le point à plus fort effet de levier de
+  l'audit, un seul composant partagé pour les 13 écrans.
+- REFACTOR `registre/page.tsx` et `registre/[id]/page.tsx` sur le design
+  system existant (`cardStyle`, `sectionTitleStyle`, `badgeStyle`) : les
+  deux seuls écrans qui redéfinissaient leurs propres styles au lieu de
+  réutiliser `formStyles.ts`/`StatusBadge.tsx` — la fiche équipement
+  (`registre/[id]`) est la page la plus consultée du produit, ses alarmes
+  et constats affichaient du texte brut au lieu d'un badge coloré par
+  gravité, désormais cohérent avec `alarmes/page.tsx`.
+- ADD centralisation de `COMMUNICATION_COLOR` (dupliqué à l'identique entre
+  l'accueil et `/edge`) dans `formStyles.ts`.
+- ADD nom lisible du client sur `GET /me` (`tenant_name`) : l'accueil
+  mobile affichait l'UUID technique du tenant brut à chaque connexion.
+- ADD explication du bouton de transmission OPERAT désactivé tant que la
+  déclaration n'est pas « Prête » ; ADD `formatNumber` sur les pages OPERAT
+  (chiffres jusque-là affichés bruts, incohérent avec `energie`/`telemetrie`).
+- ADD état de chargement manquant sur `historique.tsx` (mobile) : la liste
+  vide s'affichait avant même la réponse du serveur.
+
+**Vérification finale** : 895/896 tests backend (1 échec confirmé flake —
+`test_groupe_electrogene_tension_reste_a_revoir`, délai UDP du simulateur
+BACnet sous charge, passe seul en isolation, sans lien avec les
+changements de cette session), 182 tests web, 114 tests mobile ; TS/ESLint/
+build web propres ; TS mobile propre ; migrations rejouées en aller-retour
+(`alembic downgrade -1` / `upgrade head`) ; cycle sauvegarde/restauration
+testé manuellement. Aucune suite E2E pilotée par navigateur (Playwright/
+Cypress) n'existe dans ce dépôt — seule la suite d'intégration backend
+(API réelle, base réelle, via `TestClient`) en tient lieu ; à considérer
+pour V2 si le besoin devient réel.
 
 ## Mise à jour de ce document
 

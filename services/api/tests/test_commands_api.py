@@ -329,3 +329,37 @@ def test_commande_envoyee_depuis_trop_longtemps_devient_timed_out_a_la_lecture()
         assert finding["reason_code"] == "COMMAND_UNCONFIRMED"
     finally:
         _cleanup(tenant["tenant_id"])
+
+
+def test_isolation_tenant_sur_les_commandes():
+    """Chaque nouvelle table vient avec un test qui prouve qu'un autre
+    tenant ne voit rien (CLAUDE.md, règle 2) — manquait pour `commands`,
+    la table la plus sensible du dépôt (pipeline de commande), trouvé par
+    l'audit sécurité du 02/10/2026. La politique RLS existe déjà
+    (migrations/versions/1cb0a1548c63) ; ce test la prouve côté API."""
+    tenant_a = _commandable_tenant()
+    tenant_b = _commandable_tenant()
+    try:
+        with patch("app.auth.fetch_jwks", return_value=JWKS):
+            created = client.post(
+                "/commands",
+                json={"point_id": str(tenant_a["point_id"]), "requested_value": 1.0},
+                headers=_human_headers(tenant_a["tenant_id"]),
+            )
+            assert created.status_code == 201
+            command_id = created.json()["id"]
+
+            by_id = client.get(
+                f"/commands/{command_id}", headers=_human_headers(tenant_b["tenant_id"])
+            )
+            assert by_id.status_code == 404
+
+            listed = client.get(
+                f"/commands?point_id={tenant_a['point_id']}",
+                headers=_human_headers(tenant_b["tenant_id"]),
+            )
+            assert listed.status_code == 200
+            assert listed.json() == []
+    finally:
+        _cleanup(tenant_a["tenant_id"])
+        _cleanup(tenant_b["tenant_id"])

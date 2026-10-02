@@ -13,6 +13,7 @@ import { synchronize } from "../src/lib/sync";
 type MeResponse = {
   sub: string;
   tenant_id: string;
+  tenant_name: string | null;
   roles: string[];
 };
 
@@ -97,7 +98,9 @@ export default function HomeScreen() {
       {me && (
         <>
           <Text>{t("mobile.home.user", { user: me.sub })}</Text>
-          <Text>{t("mobile.home.tenant", { tenant: me.tenant_id })}</Text>
+          {me.tenant_name && (
+            <Text>{t("mobile.home.tenant", { tenant: me.tenant_name })}</Text>
+          )}
           <Text>{t("mobile.home.roles", { roles: roleLabels(me.roles, t) })}</Text>
         </>
       )}

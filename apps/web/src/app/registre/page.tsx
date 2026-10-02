@@ -3,12 +3,14 @@ import Link from "next/link";
 import { type Translator, formatDateTime } from "@/i18n/translator";
 import { apiFetch, requireAccessToken } from "@/lib/api";
 import {
+  cardStyle,
   cellStyle,
   colors,
   fieldStyle,
   headerCellStyle,
   labelStyle,
   pageContainerStyle,
+  sectionTitleStyle,
   submitStyle,
   tableScrollStyle,
 } from "@/lib/formStyles";
@@ -258,9 +260,10 @@ export default async function RegistrePage({
         </section>
       )}
 
-      <h2>{t("web.registre.sites_title")}</h2>
+      <section style={{ ...cardStyle, marginBottom: 20 }}>
+      <h2 style={sectionTitleStyle}>{t("web.registre.sites_title")}</h2>
       {sites.length === 0 ? (
-        <p>{t("web.registre.no_sites")}</p>
+        <p style={{ color: colors.textMuted }}>{t("web.registre.no_sites")}</p>
       ) : (
         <div style={tableScrollStyle}>
           <table
@@ -323,7 +326,7 @@ export default async function RegistrePage({
 
       {archivedSites.length > 0 && (
         <details style={{ marginBottom: 24 }}>
-          <summary style={{ color: "#6b7280", cursor: "pointer" }}>
+          <summary style={{ color: colors.textMuted, cursor: "pointer" }}>
             {t("web.registre.archived_sites_title", {
               count: archivedSites.length,
             })}
@@ -342,7 +345,7 @@ export default async function RegistrePage({
                   <tr key={site.id}>
                     <td
                       data-label={t("web.registre.site_name")}
-                      style={{ ...cellStyle, color: "#6b7280" }}
+                      style={{ ...cellStyle, color: colors.textMuted }}
                     >
                       {site.name}
                     </td>
@@ -381,10 +384,12 @@ export default async function RegistrePage({
           {t("web.registre.submit")}
         </button>
       </form>
+      </section>
 
-      <h2 style={{ marginTop: 40 }}>{t("web.registre.spaces_title")}</h2>
+      <section style={{ ...cardStyle, marginBottom: 20 }}>
+      <h2 style={sectionTitleStyle}>{t("web.registre.spaces_title")}</h2>
       {spaces.length === 0 ? (
-        <p>{t("web.registre.no_spaces")}</p>
+        <p style={{ color: colors.textMuted }}>{t("web.registre.no_spaces")}</p>
       ) : (
         <div style={tableScrollStyle}>
           <table
@@ -510,8 +515,10 @@ export default async function RegistrePage({
           </button>
         </form>
       )}
+      </section>
 
-      <h2 style={{ marginTop: 40 }}>{t("web.registre.floor_plans_title")}</h2>
+      <section style={{ ...cardStyle, marginBottom: 20 }}>
+      <h2 style={sectionTitleStyle}>{t("web.registre.floor_plans_title")}</h2>
       <form
         method="get"
         style={{ display: "flex", gap: 8, alignItems: "flex-end" }}
@@ -547,7 +554,7 @@ export default async function RegistrePage({
             })}
           </h3>
           {floorPlans.length === 0 ? (
-            <p>{t("web.registre.floor_plans_none")}</p>
+            <p style={{ color: colors.textMuted }}>{t("web.registre.floor_plans_none")}</p>
           ) : (
             <ul>
               {floorPlans.map((plan) => (
@@ -599,8 +606,10 @@ export default async function RegistrePage({
           </form>
         </section>
       )}
+      </section>
 
-      <h2 style={{ marginTop: 40 }}>{t("web.registre.ifc_import_title")}</h2>
+      <section style={{ ...cardStyle, marginBottom: 20 }}>
+      <h2 style={sectionTitleStyle}>{t("web.registre.ifc_import_title")}</h2>
       <form
         method="get"
         style={{ display: "flex", gap: 8, alignItems: "flex-end" }}
@@ -635,7 +644,7 @@ export default async function RegistrePage({
             })}
           </h3>
           {ifcImportBatches.length === 0 ? (
-            <p>{t("web.registre.ifc_import_none")}</p>
+            <p style={{ color: colors.textMuted }}>{t("web.registre.ifc_import_none")}</p>
           ) : (
             <ul>
               {ifcImportBatches.map((batch) => (
@@ -699,7 +708,9 @@ export default async function RegistrePage({
                 })}
               </h4>
               {ifcImportProposals.length === 0 ? (
-                <p>{t("web.registre.ifc_import_proposals_none")}</p>
+                <p style={{ color: colors.textMuted }}>
+                  {t("web.registre.ifc_import_proposals_none")}
+                </p>
               ) : (
                 <div style={tableScrollStyle}>
                   <table
@@ -806,10 +817,12 @@ export default async function RegistrePage({
           )}
         </section>
       )}
+      </section>
 
-      <h2 style={{ marginTop: 40 }}>{t("web.registre.providers_title")}</h2>
+      <section style={{ ...cardStyle, marginBottom: 20 }}>
+      <h2 style={sectionTitleStyle}>{t("web.registre.providers_title")}</h2>
       {providers.length === 0 ? (
-        <p>{t("web.registre.no_providers")}</p>
+        <p style={{ color: colors.textMuted }}>{t("web.registre.no_providers")}</p>
       ) : (
         <div style={tableScrollStyle}>
           <table
@@ -941,10 +954,12 @@ export default async function RegistrePage({
           {t("web.registre.submit")}
         </button>
       </form>
+      </section>
 
-      <h2 style={{ marginTop: 40 }}>{t("web.registre.equipment_title")}</h2>
+      <section style={{ ...cardStyle, marginBottom: 20 }}>
+      <h2 style={sectionTitleStyle}>{t("web.registre.equipment_title")}</h2>
       {locations.length === 0 ? (
-        <p>{t("web.registre.no_equipment")}</p>
+        <p style={{ color: colors.textMuted }}>{t("web.registre.no_equipment")}</p>
       ) : (
         <div style={tableScrollStyle}>
           <table
@@ -1015,7 +1030,7 @@ export default async function RegistrePage({
 
       {archivedLocations.length > 0 && (
         <details style={{ marginBottom: 24 }}>
-          <summary style={{ color: "#6b7280", cursor: "pointer" }}>
+          <summary style={{ color: colors.textMuted, cursor: "pointer" }}>
             {t("web.registre.archived_equipment_title", {
               count: archivedLocations.length,
             })}
@@ -1034,13 +1049,13 @@ export default async function RegistrePage({
                   <tr key={location.id}>
                     <td
                       data-label={t("web.dashboard.name")}
-                      style={{ ...cellStyle, color: "#6b7280" }}
+                      style={{ ...cellStyle, color: colors.textMuted }}
                     >
                       {location.code} — {location.name}
                     </td>
                     <td
                       data-label={t("web.registre.equipment_site")}
-                      style={{ ...cellStyle, color: "#6b7280" }}
+                      style={{ ...cellStyle, color: colors.textMuted }}
                     >
                       {siteName(location.site_id)}
                     </td>
@@ -1126,6 +1141,7 @@ export default async function RegistrePage({
           </button>
         </form>
       )}
+      </section>
     </main>
   );
 }

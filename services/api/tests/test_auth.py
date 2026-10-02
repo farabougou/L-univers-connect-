@@ -25,6 +25,9 @@ def test_me_with_valid_token_returns_claims() -> None:
     assert body["sub"] == "technicien-test"
     assert body["roles"] == ["technicien"]
     assert body["tenant_id"] == DEMO_TENANT_ID
+    # Nom lisible du client, jamais seulement son identifiant technique —
+    # trouvé exposé en brut sur l'accueil mobile par l'audit du 02/10/2026.
+    assert "tenant_name" in body
 
 
 def test_me_with_expired_token_returns_401() -> None:

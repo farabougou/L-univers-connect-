@@ -673,3 +673,28 @@ def test_installer_une_cle_publique_sur_un_appareil_inconnu_est_refuse(tenant):
         )
     assert response.status_code == 404
     assert response.json()["code"] == "DEVICE_NOT_FOUND"
+
+
+def test_authentification_appareil_est_limitee_en_debit(tenant):
+    """Défense en profondeur (app/rate_limit.py, audit sécurité 02/10/2026) :
+    au-delà de 10 tentatives par minute, la route refuse même un secret
+    correct — un appareil légitime ne s'authentifie jamais à ce rythme."""
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        created = client.post(
+            "/devices",
+            json={"device_id": "cpt-rate-limit"},
+            headers=_human_headers(tenant["tenant_id"]),
+        )
+    secret = created.json()["secret"]
+    body = {
+        "tenant_id": str(tenant["tenant_id"]),
+        "device_id": "cpt-rate-limit",
+        "secret": secret,
+    }
+
+    for _ in range(10):
+        assert client.post("/devices/auth", json=body).status_code == 200
+
+    limited = client.post("/devices/auth", json=body)
+    assert limited.status_code == 429
+    assert limited.json()["code"] == "RATE_LIMITED"

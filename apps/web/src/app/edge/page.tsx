@@ -6,6 +6,7 @@ import {
   cardStyle,
   cellStyle,
   colors,
+  COMMUNICATION_COLOR,
   headerCellStyle,
   pageContainerStyle,
   sectionTitleStyle,
@@ -26,13 +27,6 @@ type Device = {
   communication_status: string;
   created_at: string;
   last_seen_at: string | null;
-};
-
-const COMMUNICATION_COLOR: Record<string, string> = {
-  online: "#16a34a",
-  offline: "#dc2626",
-  unreachable: "#dc2626",
-  unknown: "#9ca3af",
 };
 
 const ACCOUNT_COLOR: Record<string, string> = {

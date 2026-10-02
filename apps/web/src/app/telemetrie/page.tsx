@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { apiFetch, requireAccessToken } from "@/lib/api";
+import { ASSET_STATUS_COLOR } from "@/components/StatusBadge";
 import {
   badgeStyle,
   cardStyle,
@@ -161,7 +162,7 @@ export default async function TelemetryPage() {
                       </td>
                       <td style={cellStyle}>
                         {entry.stale && (
-                          <span style={badgeStyle("#d97706")}>
+                          <span style={badgeStyle(ASSET_STATUS_COLOR.stale)}>
                             {t("web.telemetry_page.stale")}
                           </span>
                         )}

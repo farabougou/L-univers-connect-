@@ -43,6 +43,7 @@ from app.devices import (
 )
 from app.errors import ApiError, api_error
 from app.i18n import negotiate_locale, render
+from app.rate_limit import limiter
 from app.schemas import EdgeMeasurementBatch, MeasurementBatchResult
 from app.telemetry import ingest_measurements
 from app.tenancy import set_tenant_context
@@ -251,8 +252,11 @@ def set_device_public_key_route(
 
 
 @router.post("/devices/auth", response_model=DeviceToken)
+@limiter.limit("10/minute")
 def authenticate_device_route(
-    body: DeviceAuthRequest, connection: Annotated[Connection, Depends(get_connection)]
+    request: Request,
+    body: DeviceAuthRequest,
+    connection: Annotated[Connection, Depends(get_connection)],
 ) -> DeviceToken:
     """Hors du flux OIDC humain : l'appareil annonce son tenant, la
     connexion est positionnée dessus puis la recherche se fait sous RLS
@@ -260,7 +264,13 @@ def authenticate_device_route(
     contournement de l'isolation, un tenant_id mensonger échoue simplement.
 
     `secret` (compatibilité) ou `assertion` (modèle cible, preuve signée
-    par la clé privée de l'appareil) — exactement l'un des deux."""
+    par la clé privée de l'appareil) — exactement l'un des deux.
+
+    Limite de débit plus stricte que la valeur par défaut (app.rate_limit) :
+    un appareil légitime s'authentifie rarement, un rythme élevé ne peut être
+    qu'un essai de secrets en force brute (trouvé par l'audit sécurité du
+    02/10/2026 — défense en profondeur en plus de la comparaison en temps
+    constant déjà en place dans app.devices)."""
     set_tenant_context(connection, body.tenant_id)
     try:
         if body.assertion is not None:

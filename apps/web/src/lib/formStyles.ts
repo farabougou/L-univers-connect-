@@ -98,3 +98,13 @@ export const badgeStyle = (background: string) => ({
   fontSize: 12,
   fontWeight: 600,
 });
+
+/** État de communication d'une passerelle/d'un appareil Edge (distinct de
+ * l'état de l'actif, ASSET_STATUS_COLOR) : dupliqué à l'identique entre
+ * l'accueil et /edge avant le 02/10/2026 (audit UX), un seul endroit depuis. */
+export const COMMUNICATION_COLOR: Record<string, string> = {
+  online: "#16a34a",
+  offline: "#dc2626",
+  unreachable: "#dc2626",
+  unknown: "#9ca3af",
+};

@@ -7,7 +7,17 @@ import { SiteSwitcher } from "@/components/SiteSwitcher";
 import { StatusBadge, equipmentStatusToAssetStatus } from "@/components/StatusBadge";
 import { Timeline, type TimelineEntry } from "@/components/Timeline";
 import { apiFetch, requireAccessToken } from "@/lib/api";
-import { cardStyle, colors, fieldStyle, labelStyle, pageContainerStyle, submitStyle } from "@/lib/formStyles";
+import {
+  badgeStyle,
+  cardStyle,
+  colors,
+  fieldStyle,
+  labelStyle,
+  pageContainerStyle,
+  sectionTitleStyle,
+  submitStyle,
+} from "@/lib/formStyles";
+import { SEVERITY_COLOR, type Severity } from "@/lib/portfolio";
 import { errorMessage, getLocale, getTranslator } from "@/lib/i18n";
 import {
   type DesiredState,
@@ -259,8 +269,6 @@ const LIFECYCLE_TRANSITIONS: Record<string, string[]> = {
 const WORK_ORDER_TYPES = ["corrective", "preventive", "predictive", "inspection"];
 const WORK_ORDER_PRIORITIES = ["low", "medium", "high", "urgent"];
 
-const sectionStyle = { borderTop: "1px solid #eee", paddingTop: 12, marginTop: 16 };
-const sectionTitleStyle = { fontSize: 16, fontWeight: 600 as const, marginBottom: 8 };
 const mutedStyle = { color: colors.textMuted };
 const strongStyle = { fontWeight: 600 as const };
 const signalActionsStyle = { display: "flex", gap: 8, marginTop: 4 };
@@ -349,9 +357,11 @@ export default async function EquipmentPage({
   const canSendCommand = computeCanSendCommand(me);
   if (!response.ok) {
     return (
-      <main style={{ maxWidth: 720, margin: "40px auto", padding: "0 16px" }}>
-        <Link href="/registre">← {t("common.back")}</Link>
-        <p>{t("web.registre.equipment_not_found")}</p>
+      <main style={pageContainerStyle}>
+        <Link href="/registre" style={{ color: colors.accent }}>
+          ← {t("common.back")}
+        </Link>
+        <p style={{ color: colors.textMuted }}>{t("web.registre.equipment_not_found")}</p>
       </main>
     );
   }
@@ -537,7 +547,7 @@ export default async function EquipmentPage({
         t={t}
       />
 
-      <section style={sectionStyle}>
+      <section style={{ ...cardStyle, marginTop: 16 }}>
         <h2 style={sectionTitleStyle}>{t("mobile.passport.unit")}</h2>
         {unit ? (
           <UnitView unit={unit} t={t} nodeId={id} canManage={canManage} locale={locale} />
@@ -546,7 +556,7 @@ export default async function EquipmentPage({
         )}
       </section>
 
-      <section style={sectionStyle}>
+      <section style={{ ...cardStyle, marginTop: 16 }}>
         <h2 style={sectionTitleStyle}>{t("web.registre.maintenance_provider_title")}</h2>
         {maintenanceProviders.length === 0 ? (
           <p style={mutedStyle}>{t("web.registre.no_maintenance_provider")}</p>
@@ -597,7 +607,7 @@ export default async function EquipmentPage({
         )}
       </section>
 
-      <section style={sectionStyle}>
+      <section style={{ ...cardStyle, marginTop: 16 }}>
         <h2 style={sectionTitleStyle}>
           {t("timeline.title")}
           {timelineBefore && (
@@ -624,12 +634,12 @@ export default async function EquipmentPage({
         />
       </section>
 
-      <section style={sectionStyle}>
+      <section style={{ ...cardStyle, marginTop: 16 }}>
         <h2 style={sectionTitleStyle}>{t("web.registre.impact_section_title")}</h2>
         <ImpactBlock report={impactReport} t={t} />
       </section>
 
-      <section style={sectionStyle}>
+      <section style={{ ...cardStyle, marginTop: 16 }}>
         <h2 style={sectionTitleStyle}>{t("web.registre.tag_section_title")}</h2>
         {activeTag && tagSvg ? (
           <>
@@ -665,7 +675,7 @@ export default async function EquipmentPage({
       </section>
 
       {points.length > 0 && (
-        <section style={sectionStyle}>
+        <section style={{ ...cardStyle, marginTop: 16 }}>
           <h2 style={sectionTitleStyle}>{t("mobile.passport.latest")}</h2>
           {points.map((point) => (
             <div key={point.id} style={{ marginBottom: 12 }}>
@@ -703,7 +713,7 @@ export default async function EquipmentPage({
       )}
 
       {numericPoints.length >= 2 && (
-        <section style={sectionStyle}>
+        <section style={{ ...cardStyle, marginTop: 16 }}>
           <h2 style={sectionTitleStyle}>{t("web.registre.correlation_rule_section_title")}</h2>
           <CorrelationRuleBlock
             nodeId={id}
@@ -715,7 +725,7 @@ export default async function EquipmentPage({
         </section>
       )}
 
-      <section style={sectionStyle}>
+      <section style={{ ...cardStyle, marginTop: 16 }}>
         <h2 style={sectionTitleStyle}>{t("web.registre.modbus_section_title")}</h2>
         <DeviceMappingBlock
           nodeId={id}
@@ -726,7 +736,7 @@ export default async function EquipmentPage({
         />
       </section>
 
-      <section style={sectionStyle}>
+      <section style={{ ...cardStyle, marginTop: 16 }}>
         <h2 style={sectionTitleStyle}>{t("web.registre.bacnet_section_title")}</h2>
         <BacnetDiscoveryBlock
           nodeId={id}
@@ -740,7 +750,7 @@ export default async function EquipmentPage({
         />
       </section>
 
-      <section style={sectionStyle}>
+      <section style={{ ...cardStyle, marginTop: 16 }}>
         <h2 style={sectionTitleStyle}>{t("web.registre.bacnet_mapping_section_title")}</h2>
         <BacnetMappingBlock
           nodeId={id}
@@ -752,7 +762,7 @@ export default async function EquipmentPage({
       </section>
 
       {(activeRelayMapping || canManage) && (
-        <section style={sectionStyle}>
+        <section style={{ ...cardStyle, marginTop: 16 }}>
           <h2 style={sectionTitleStyle}>{t("web.registre.command_section_title")}</h2>
           <CommandBlock
             nodeId={id}
@@ -768,7 +778,7 @@ export default async function EquipmentPage({
       )}
 
       {passport.node_type === "functional_location" && (
-        <section style={sectionStyle}>
+        <section style={{ ...cardStyle, marginTop: 16 }}>
           <h2 style={sectionTitleStyle}>{t("web.registre.energy_baseline_title")}</h2>
           <EnergyBaselineBlock
             nodeId={id}
@@ -782,7 +792,7 @@ export default async function EquipmentPage({
       )}
 
       {passport.node_type === "functional_location" && (
-        <section style={sectionStyle}>
+        <section style={{ ...cardStyle, marginTop: 16 }}>
           <h2 style={sectionTitleStyle}>{t("web.registre.energy_section_title")}</h2>
           <EnergyBlock
             results={energyResults}
@@ -797,13 +807,16 @@ export default async function EquipmentPage({
         </section>
       )}
 
-      <section style={sectionStyle}>
+      <section style={{ ...cardStyle, marginTop: 16 }}>
         <h2 style={sectionTitleStyle}>{t("mobile.passport.signals")}</h2>
         {alarms.map((alarm) => (
           <div key={alarm.id} style={{ marginBottom: 12 }}>
             <p style={{ margin: 0 }}>
-              {t("mobile.passport.alarm")} · {t(`severity.${alarm.severity}`)} ·{" "}
-              {t(`condition_state.${alarm.condition_state}`)} · {t(`ack_state.${alarm.ack_state}`)} ·{" "}
+              {t("mobile.passport.alarm")}{" "}
+              <span style={badgeStyle(SEVERITY_COLOR[alarm.severity as Severity])}>
+                {t(`severity.${alarm.severity}`)}
+              </span>{" "}
+              · {t(`condition_state.${alarm.condition_state}`)} · {t(`ack_state.${alarm.ack_state}`)} ·{" "}
               {t(`handling_status.${alarm.handling_status}`)}
               <br />
               {alarm.message}
@@ -820,8 +833,11 @@ export default async function EquipmentPage({
         {passport.open_findings.map((finding) => (
           <div key={finding.id} style={{ marginBottom: 12 }}>
             <p style={{ margin: 0 }}>
-              {t("mobile.passport.finding")} · {t(`severity.${finding.severity}`)} ·{" "}
-              {t(`certainty.${finding.certainty}`)} · {t(`condition_state.${finding.condition_state}`)} ·{" "}
+              {t("mobile.passport.finding")}{" "}
+              <span style={badgeStyle(SEVERITY_COLOR[finding.severity as Severity])}>
+                {t(`severity.${finding.severity}`)}
+              </span>{" "}
+              · {t(`certainty.${finding.certainty}`)} · {t(`condition_state.${finding.condition_state}`)} ·{" "}
               {t(`handling_status.${finding.handling_status}`)}
               <br />
               {finding.title}
@@ -841,7 +857,7 @@ export default async function EquipmentPage({
       </section>
 
       {((passport.open_work_orders && passport.open_work_orders.length > 0) || canManage) && (
-        <section style={sectionStyle}>
+        <section style={{ ...cardStyle, marginTop: 16 }}>
           <h2 style={sectionTitleStyle}>{t("mobile.passport.work_orders")}</h2>
           {passport.open_work_orders?.map((order) => (
             <p key={order.id}>
@@ -884,7 +900,7 @@ export default async function EquipmentPage({
       )}
 
       {passport.recent_interventions && passport.recent_interventions.length > 0 && (
-        <section style={sectionStyle}>
+        <section style={{ ...cardStyle, marginTop: 16 }}>
           <h2 style={sectionTitleStyle}>{t("mobile.passport.interventions")}</h2>
           {passport.recent_interventions.map((item) => (
             <p key={item.id}>

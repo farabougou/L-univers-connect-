@@ -20,6 +20,7 @@ import {
   cardStyle,
   cellStyle,
   colors,
+  COMMUNICATION_COLOR,
   fieldStyle,
   headerCellStyle,
   pageContainerStyle,
@@ -97,13 +98,6 @@ function searchResultHref(result: SearchResult): string | null {
       return null;
   }
 }
-
-const COMMUNICATION_COLOR: Record<string, string> = {
-  online: "#16a34a",
-  offline: "#dc2626",
-  unreachable: "#dc2626",
-  unknown: "#9ca3af",
-};
 
 // Nombre maximal affiché dans le bloc « Alarmes prioritaires » : éviter la
 // surcharge visuelle (directive, section 18) — le lien de site donne accès

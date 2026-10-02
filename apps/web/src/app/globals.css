@@ -112,3 +112,21 @@ a {
     justify-content: flex-end;
   }
 }
+
+/* État de chargement par segment (loading.tsx, audit UX du 02/10/2026) :
+   jusqu'ici rien ne s'affichait le temps d'une requête serveur lente, sur
+   les 13 écrans — ni squelette ni indicateur, un écran qui semblait figé. */
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 3px solid rgba(100, 116, 139, 0.25);
+  border-top-color: #64748b;
+  animation: loading-spin 0.8s linear infinite;
+}
+
+@keyframes loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

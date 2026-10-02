@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
 
 import { config } from "../src/lib/config";
 import { useAuth } from "../src/lib/auth";
@@ -17,6 +17,11 @@ export default function HistoriqueScreen() {
   const auth = useAuth();
   const [interventions, setInterventions] = useState<Intervention[]>([]);
   const [error, setError] = useState<string | null>(null);
+  // Sans cet état, la liste vide s'affichait avant même la réponse du
+  // serveur : un technicien avec un historique réel voyait "Aucune
+  // intervention" le temps du chargement (trouvé par l'audit UX du
+  // 02/10/2026 — ne jamais affirmer plus que ce que le système sait).
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!auth.accessToken) return;
@@ -30,9 +35,19 @@ export default function HistoriqueScreen() {
           return res.json();
         })
         .then((data: Intervention[]) => setInterventions(data.reverse()))
-        .catch(() => setError(t("mobile.history.load_failed")));
+        .catch(() => setError(t("mobile.history.load_failed")))
+        .finally(() => setLoading(false));
     });
   }, [auth.accessToken]);
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>{t("mobile.history.title")}</Text>
+        <ActivityIndicator />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

@@ -24,6 +24,9 @@ export type PendingIntervention = {
   /** Fiche F-Gas (JSON, CERFA 15497*04), ou null si non applicable. */
   fgas: string | null;
   fgas_sent: 0 | 1;
+  /** Ordre de travail à l'origine de l'intervention (passeport), ou null si
+   * elle n'en découle pas directement (voir app/schemas.py::InterventionCreate). */
+  work_order_id: string | null;
 };
 
 export type CachedFunctionalLocation = {
@@ -60,10 +63,11 @@ export async function insertPendingIntervention(input: {
   functionalLocationId: string | null;
   closure: ClosureBody | null;
   fgas: Record<string, unknown> | null;
+  workOrderId: string | null;
 }): Promise<void> {
   const db = await getDb();
   await db.runAsync(
-    "INSERT INTO pending_interventions (id, intervention_type, summary, checklist, started_at, photo_path, functional_location_id, closure, fgas) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    "INSERT INTO pending_interventions (id, intervention_type, summary, checklist, started_at, photo_path, functional_location_id, closure, fgas, work_order_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     input.id,
     input.interventionType,
     input.summary,
@@ -73,6 +77,7 @@ export async function insertPendingIntervention(input: {
     input.functionalLocationId,
     input.closure ? JSON.stringify(input.closure) : null,
     input.fgas ? JSON.stringify(input.fgas) : null,
+    input.workOrderId,
   );
 }
 
