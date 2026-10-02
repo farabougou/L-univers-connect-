@@ -11,10 +11,12 @@ from typing import Annotated, Self
 from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel, Field, model_validator
 from pydantic_core import PydanticCustomError
+from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
 from app.auth import require_any_role
 from app.deps import get_tenant_connection, get_tenant_id
+from app.economics import estimate_energy_cost, get_active_tariff
 from app.energy.aggregation import EnergyDataInsufficient, aggregate_portfolio_daily_energy
 from app.energy.comparison import compare_results
 from app.energy.normalization import (
@@ -71,6 +73,13 @@ class NormalizedResultCompute(BaseModel):
         return self
 
 
+class EstimatedCostOut(BaseModel):
+    amount: float
+    currency: str
+    price_per_kwh: float
+    basis: str
+
+
 class NormalizedResultOut(BaseModel):
     id: uuid.UUID
     tenant_id: uuid.UUID
@@ -98,6 +107,9 @@ class NormalizedResultOut(BaseModel):
     computed_at: datetime
     computed_by: str
     created_at: datetime
+    # Null tant qu'aucun tarif n'est actif pour le site — jamais un coût à
+    # zéro ou par défaut (app.economics, V2 02/10/2026).
+    estimated_cost: EstimatedCostOut | None = None
 
 
 class PortfolioEnergyMeterOut(BaseModel):
@@ -130,6 +142,26 @@ def _require_result(connection: Connection, result_id: uuid.UUID) -> dict:
     if result is None:
         raise ApiError(404, "ENERGY_NORMALIZED_RESULT_NOT_FOUND")
     return result
+
+
+def _with_estimated_cost(connection: Connection, result: dict) -> dict:
+    """Ajoute le coût estimé (app.economics) quand un tarif est actif pour
+    le site de l'équipement — sans jamais toucher au résultat persisté."""
+    site_id = connection.execute(
+        text("SELECT site_id FROM functional_locations WHERE id = :id"),
+        {"id": result["functional_location_id"]},
+    ).scalar()
+    tariff = get_active_tariff(connection, site_id) if site_id else None
+    estimated_cost = (
+        estimate_energy_cost(
+            raw_consumption=result["raw_consumption"],
+            normalized_consumption=result["normalized_consumption"],
+            tariff=tariff,
+        )
+        if tariff
+        else None
+    )
+    return {**result, "estimated_cost": estimated_cost}
 
 
 @router.post(
@@ -206,7 +238,7 @@ def compute_normalized_result_route(
         raise api_error(exc, exc.status) from exc
     except EnergyDataInsufficient as exc:
         raise api_error(exc, exc.status) from exc
-    return NormalizedResultOut(**result)
+    return NormalizedResultOut(**_with_estimated_cost(connection, result))
 
 
 @router.get("/normalized-results", response_model=list[NormalizedResultOut])
@@ -216,7 +248,7 @@ def list_normalized_results_route(
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
 ) -> list[NormalizedResultOut]:
     results = list_normalized_results(connection, functional_location_id=functional_location_id)
-    return [NormalizedResultOut(**result) for result in results]
+    return [NormalizedResultOut(**_with_estimated_cost(connection, result)) for result in results]
 
 
 @router.get("/normalized-results/{result_id}", response_model=NormalizedResultOut)
@@ -225,7 +257,8 @@ def get_normalized_result_route(
     connection: Annotated[Connection, Depends(get_tenant_connection)],
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
 ) -> NormalizedResultOut:
-    return NormalizedResultOut(**_require_result(connection, result_id))
+    result = _require_result(connection, result_id)
+    return NormalizedResultOut(**_with_estimated_cost(connection, result))
 
 
 @router.get("/comparison", response_model=ComparisonOut)

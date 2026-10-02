@@ -33,7 +33,13 @@ import {
   canSendCommand as computeCanSendCommand,
 } from "@/lib/roles";
 import { renderTagQr } from "@/lib/tagQr";
-import { type Locale, formatDate, formatDateTime, formatNumber } from "@/i18n/translator";
+import {
+  type Locale,
+  formatCurrency,
+  formatDate,
+  formatDateTime,
+  formatNumber,
+} from "@/i18n/translator";
 
 import {
   acceptBacnetProposal,
@@ -139,6 +145,12 @@ type BacnetMappingVersion = {
 };
 // Un résultat de performance normalisée (app/energy/normalization.py) : voir
 // aussi CLAUDE.md, section M5 — jamais présenté comme un calcul OPERAT.
+type EnergyEstimatedCost = {
+  amount: number;
+  currency: string;
+  price_per_kwh: number;
+  basis: "normalized" | "raw";
+};
 type EnergyNormalizedResult = {
   id: string;
   period_start: string;
@@ -148,6 +160,9 @@ type EnergyNormalizedResult = {
   normalization_status: "ok" | "no_weather_data" | "zero_degree_days";
   normalized_consumption: number | null;
   computed_at: string;
+  // Null tant qu'aucun tarif n'est actif pour le site (app.economics, V2
+  // 02/10/2026) — jamais un coût à zéro ou par défaut.
+  estimated_cost: EnergyEstimatedCost | null;
 };
 type EnergyComparison = {
   comparable: boolean;
@@ -2152,6 +2167,22 @@ function EnergyBlock({
             </p>
           ) : (
             <p style={mutedStyle}>{t(`web.registre.energy_status_${latest.normalization_status}`)}</p>
+          )}
+          {latest.estimated_cost ? (
+            <>
+              <p style={{ margin: 0 }}>
+                {t("web.registre.energy_estimated_cost", {
+                  value: formatCurrency(
+                    locale,
+                    latest.estimated_cost.amount,
+                    latest.estimated_cost.currency,
+                  ),
+                })}
+              </p>
+              <p style={mutedStyle}>{t("web.registre.energy_estimated_cost_note")}</p>
+            </>
+          ) : (
+            <p style={mutedStyle}>{t("web.registre.energy_estimated_cost_unavailable")}</p>
           )}
           {comparison &&
             (comparison.comparable && comparison.percent_deviation !== null ? (

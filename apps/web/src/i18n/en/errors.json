@@ -70,6 +70,7 @@
     "ENERGY_DATA_INSUFFICIENT": "The available energy readings do not fully cover this period: the calculation cannot be performed.",
     "ENERGY_METER_RESET_DETECTED": "The meter was replaced or reset during this period: the calculation cannot be performed.",
     "ENERGY_NORMALIZED_RESULT_NOT_FOUND": "The requested normalized performance result could not be found.",
+    "ENERGY_TARIFF_CONTENT_INVALID": "This energy tariff contains invalid fields: {fields}.",
     "EQUIPMENT_TYPE_UNKNOWN": "Unknown equipment type: “{equipment_type}”. See the list of available types.",
     "EXTERNAL_ID_ALREADY_USED": "This external identifier is already in use.",
     "EXTERNAL_ID_SCHEME_UNKNOWN": "Unknown identifier scheme: “{scheme}”.",

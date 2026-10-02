@@ -89,6 +89,20 @@ export function formatNumber(locale: Locale, value: number, maximumFractionDigit
 }
 
 /**
+ * Montant dans la devise donnée (code ISO 4217, ex. "EUR"), dans la langue
+ * choisie. Jamais utilisé pour un montant mesuré : seulement une estimation
+ * (voir app/economics.py, ADR 013 — ne jamais affirmer plus que le système
+ * ne sait).
+ */
+export function formatCurrency(locale: Locale, value: number, currency: string): string {
+  try {
+    return new Intl.NumberFormat(locale, { style: "currency", currency }).format(value);
+  } catch {
+    return `${formatNumber(locale, value)} ${currency}`;
+  }
+}
+
+/**
  * Date et heure dans la langue choisie. Avec `timeZone` (fuseau IANA du
  * site), l'heure est celle du site ; sans, celle de l'appareil.
  */

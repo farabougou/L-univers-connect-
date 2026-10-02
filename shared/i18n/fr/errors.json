@@ -70,6 +70,7 @@
     "ENERGY_DATA_INSUFFICIENT": "Les relevés d’énergie disponibles ne couvrent pas entièrement cette période : le calcul est impossible.",
     "ENERGY_METER_RESET_DETECTED": "Le compteur a été remplacé ou remis à zéro pendant cette période : le calcul est impossible.",
     "ENERGY_NORMALIZED_RESULT_NOT_FOUND": "Le résultat de performance normalisée demandé est introuvable.",
+    "ENERGY_TARIFF_CONTENT_INVALID": "Ce tarif énergétique contient des champs invalides : {fields}.",
     "EQUIPMENT_TYPE_UNKNOWN": "Type d’équipement inconnu : « {equipment_type} ». Consultez la liste des types disponibles.",
     "EXTERNAL_ID_ALREADY_USED": "Cet identifiant externe est déjà utilisé.",
     "EXTERNAL_ID_SCHEME_UNKNOWN": "Système d’identifiants inconnu : « {scheme} ».",
