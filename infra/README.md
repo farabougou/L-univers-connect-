@@ -70,6 +70,15 @@ Au démarrage, un panier `paios-photos` est créé automatiquement.
 Voir `docs/adr/006-stockage-des-photos.md` pour le choix de MinIO en local et la
 portabilité vers un vrai fournisseur compatible S3 en production.
 
+## Courtier MQTT (quatrième protocole de terrain)
+
+Accessible sur `localhost:1883`, sans authentification (développement local
+uniquement, voir `mosquitto/mosquitto.conf`). Utilisé par
+`scripts/mqtt_daemon.py` et par les tests du connecteur
+(`services/api/app/connectors/mqtt.py`), qui démarrent eux-mêmes leur propre
+courtier de test — ce service sert pour un essai manuel ou un équipement
+simulé qui publie sur ce courtier.
+
 Pour arrêter les services : `docker compose down` (les données restent dans le volume
 Docker). Pour tout effacer et repartir de zéro : `docker compose down -v`.
 

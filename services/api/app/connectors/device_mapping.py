@@ -240,6 +240,75 @@ def get_active_opcua_mapping(
     return None
 
 
+MQTT_DEVICE_MAPPING = "mqtt_device_mapping"
+MQTT_DEVICE_MAPPING_SCHEMA = "mqtt_device_mapping/1"
+
+
+class MqttPointMapping(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    point_id: uuid.UUID
+    topic: str = Field(min_length=1, max_length=500)
+
+
+class MqttDeviceMappingContent(BaseModel):
+    """Même principe que BacnetDeviceMappingContent et
+    OpcuaDeviceMappingContent : aucun catalogue de registres propre à un
+    fabricant, la carte de points est directement le sujet MQTT où chaque
+    valeur est publiée. `host`/`port` identifient le courtier (contrairement
+    à OPC UA, qui encode tout dans `endpoint_url`)."""
+
+    model_config = {"extra": "forbid"}
+
+    host: str = Field(min_length=1, max_length=255)
+    port: int = Field(default=1883, ge=1, le=65535)
+    points: list[MqttPointMapping] = Field(min_length=1)
+
+
+def _validate_mqtt_device_mapping(
+    connection: Connection, content: dict[str, Any]
+) -> dict[str, Any]:
+    try:
+        mapping = MqttDeviceMappingContent(**content)
+    except ValidationError as exc:
+        fields = sorted({".".join(str(p) for p in error["loc"]) for error in exc.errors()})
+        raise ConfigInvalid("MQTT_MAPPING_CONTENT_INVALID", fields=fields) from exc
+
+    seen_topics: set[str] = set()
+    seen_points: set[uuid.UUID] = set()
+    for entry in mapping.points:
+        if entry.topic in seen_topics:
+            raise ConfigInvalid("MQTT_TOPIC_DUPLICATED", topic=entry.topic)
+        seen_topics.add(entry.topic)
+        if entry.point_id in seen_points:
+            raise ConfigInvalid("MQTT_POINT_DUPLICATED", point_id=str(entry.point_id))
+        seen_points.add(entry.point_id)
+
+        point = get_point(connection, entry.point_id)
+        if point is None:
+            raise ConfigInvalid("MQTT_POINT_NOT_FOUND", point_id=str(entry.point_id))
+        if point["mapping_status"] != "validated":
+            raise ConfigInvalid("MQTT_POINT_NOT_VALIDATED", point_id=str(entry.point_id))
+
+    return mapping.model_dump(mode="json")
+
+
+register_config_type(MQTT_DEVICE_MAPPING, MQTT_DEVICE_MAPPING_SCHEMA, _validate_mqtt_device_mapping)
+
+
+def get_active_mqtt_mapping(
+    connection: Connection, *, equipment_id: uuid.UUID
+) -> dict[str, Any] | None:
+    """Le contenu de la version active pour cet équipement, ou None (aucune
+    connexion MQTT configurée, ou seulement un brouillon)."""
+    for version in list_versions(
+        connection, config_type=MQTT_DEVICE_MAPPING, subject_key=str(equipment_id)
+    ):
+        if version["status"] == "active":
+            return version["content"]
+    return None
+
+
 def get_active_mapping(connection: Connection, *, equipment_id: uuid.UUID) -> dict[str, Any] | None:
     """Le contenu de la version active pour cet équipement, ou None (aucune
     connexion Modbus configurée, ou seulement un brouillon)."""

@@ -40,6 +40,9 @@ jobs:
       - name: Installer les dépendances
         run: pip install -r requirements.txt -r requirements-dev.txt
 
+      - name: Installer mosquitto (courtier MQTT réel pour les tests du connecteur)
+        run: sudo apt-get update && sudo apt-get install -y mosquitto
+
       - name: Lint (ruff)
         run: |
           ruff check .

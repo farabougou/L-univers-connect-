@@ -17,9 +17,11 @@ from app.auth import DEVICE_TOKEN_TTL, issue_device_token, require_any_role, req
 from app.connectors.device_mapping import (
     BacnetDeviceMappingContent,
     ModbusDeviceMappingContent,
+    MqttDeviceMappingContent,
     OpcuaDeviceMappingContent,
     get_active_bacnet_mapping,
     get_active_mapping,
+    get_active_mqtt_mapping,
     get_active_opcua_mapping,
 )
 from app.db import engine
@@ -331,6 +333,22 @@ def get_edge_config_opcua(
     if content is None:
         raise ApiError(404, "OPCUA_MAPPING_NOT_FOUND")
     return OpcuaDeviceMappingContent(**content)
+
+
+@router.get("/edge/config/mqtt", response_model=MqttDeviceMappingContent)
+def get_edge_config_mqtt(
+    equipment_id: uuid.UUID,
+    claims: Annotated[dict, Depends(require_device_scope("config:read"))],
+) -> MqttDeviceMappingContent:
+    """Même principe que /edge/config, pour un équipement relevé par MQTT
+    plutôt que Modbus — voir app/connectors/device_mapping.py."""
+    tenant_id = uuid.UUID(claims["tenant_id"])
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_id)
+        content = get_active_mqtt_mapping(connection, equipment_id=equipment_id)
+    if content is None:
+        raise ApiError(404, "MQTT_MAPPING_NOT_FOUND")
+    return MqttDeviceMappingContent(**content)
 
 
 @router.post("/edge/measurements", response_model=MeasurementBatchResult)

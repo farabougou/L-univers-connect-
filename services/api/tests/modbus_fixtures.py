@@ -11,6 +11,7 @@ from app.config_versions import activate_version, create_version
 from app.connectors.device_mapping import (
     BACNET_DEVICE_MAPPING,
     MODBUS_DEVICE_MAPPING,
+    MQTT_DEVICE_MAPPING,
     OPCUA_DEVICE_MAPPING,
 )
 from app.db import engine
@@ -193,6 +194,36 @@ def activate_opcua_device_mapping(
             config_type=OPCUA_DEVICE_MAPPING,
             subject_key=str(equipment_id),
             content={"endpoint_url": endpoint_url, "points": points},
+            author="test",
+            reason="test",
+        )
+        activate_version(
+            connection,
+            version_id=version_id,
+            activated_by="test",
+            activated_at=datetime.now(UTC),
+        )
+    return version_id
+
+
+def activate_mqtt_device_mapping(
+    *,
+    tenant_id: uuid.UUID,
+    equipment_id: uuid.UUID,
+    host: str,
+    port: int = 1883,
+    points: list[dict],
+) -> uuid.UUID:
+    """Même principe que activate_device_mapping, pour une configuration
+    mqtt_device_mapping (voir app/connectors/device_mapping.py)."""
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_id)
+        version_id = create_version(
+            connection,
+            tenant_id=tenant_id,
+            config_type=MQTT_DEVICE_MAPPING,
+            subject_key=str(equipment_id),
+            content={"host": host, "port": port, "points": points},
             author="test",
             reason="test",
         )
