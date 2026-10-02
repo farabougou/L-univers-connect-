@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Breadcrumb, type BreadcrumbSegment } from "@/components/Breadcrumb";
+import { EnergyBarChart, type EnergyChartPeriod } from "@/components/EnergyBarChart";
 import { SignalActions } from "@/components/SignalActions";
 import { SiteSwitcher } from "@/components/SiteSwitcher";
 import { StatusBadge, equipmentStatusToAssetStatus } from "@/components/StatusBadge";
@@ -2007,8 +2008,34 @@ function EnergyBlock({
   t: (key: string, params?: Record<string, string>) => string;
 }) {
   const latest = results[0] ?? null;
+  // Plus ancienne d'abord, pour une lecture gauche → droite chronologique
+  // (`results` arrive trié du plus récent au plus ancien, voir `latest`
+  // ci-dessus) ; bornée aux 12 dernières périodes, jamais un historique
+  // complet chargé dans un graphique.
+  const chartPeriods: EnergyChartPeriod[] = results
+    .slice(0, 12)
+    .slice()
+    .reverse()
+    .map((result) => ({
+      label: formatDate(locale, result.period_start, null),
+      raw: result.raw_consumption,
+      normalized: result.normalization_status === "ok" ? result.normalized_consumption : null,
+    }));
   return (
     <div>
+      {chartPeriods.length > 1 && (
+        <div style={{ marginBottom: 12 }}>
+          <p style={{ ...mutedStyle, fontWeight: 600, marginBottom: 4 }}>
+            {t("web.registre.energy_chart_title")}
+          </p>
+          <EnergyBarChart
+            periods={chartPeriods}
+            unit={latest?.raw_consumption_unit ?? ""}
+            rawLabel={t("web.registre.energy_chart_raw_legend")}
+            normalizedLabel={t("web.registre.energy_chart_normalized_legend")}
+          />
+        </div>
+      )}
       {latest ? (
         <>
           <p style={{ margin: 0 }}>

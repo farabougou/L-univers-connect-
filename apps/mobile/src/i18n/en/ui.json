@@ -677,7 +677,10 @@
       "bacnet_mapping_create_title": "Configure the BACnet connection",
       "bacnet_mapping_object_type_label": "BACnet object type",
       "bacnet_mapping_object_instance_label": "Instance",
-      "bacnet_mapping_property_label": "Polled property (optional)"
+      "bacnet_mapping_property_label": "Polled property (optional)",
+      "energy_chart_title": "Consumption over time",
+      "energy_chart_raw_legend": "Raw",
+      "energy_chart_normalized_legend": "Normalized"
     }
   },
   "plan_editor": {
