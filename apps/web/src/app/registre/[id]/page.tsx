@@ -1,6 +1,8 @@
 import Link from "next/link";
 
+import { Breadcrumb, type BreadcrumbSegment } from "@/components/Breadcrumb";
 import { SignalActions } from "@/components/SignalActions";
+import { SiteSwitcher } from "@/components/SiteSwitcher";
 import { StatusBadge, equipmentStatusToAssetStatus } from "@/components/StatusBadge";
 import { Timeline, type TimelineEntry } from "@/components/Timeline";
 import { apiFetch, requireAccessToken } from "@/lib/api";
@@ -302,14 +304,16 @@ export default async function EquipmentPage({
   const timelineQuery = timelineBefore
     ? `?before=${encodeURIComponent(timelineBefore)}&limit=20`
     : "?limit=20";
-  const [response, meResponse, providersResponse, relationsResponse, timelineResponse] =
+  const [response, meResponse, providersResponse, relationsResponse, timelineResponse, sitesResponse] =
     await Promise.all([
       apiFetch(`/graph/nodes/${id}/passport`, accessToken),
       apiFetch("/me", accessToken),
       apiFetch("/providers", accessToken),
       apiFetch(`/graph/nodes/${id}/relations`, accessToken),
       apiFetch(`/graph/nodes/${id}/timeline${timelineQuery}`, accessToken),
+      apiFetch("/sites", accessToken),
     ]);
+  const sites: { id: string; name: string }[] = sitesResponse.ok ? await sitesResponse.json() : [];
   const providers: Provider[] = providersResponse.ok ? await providersResponse.json() : [];
   const relations: Relation[] = relationsResponse.ok ? await relationsResponse.json() : [];
   const maintenanceProviders = relations.filter((relation) => relation.predicate === "maintainedBy");
@@ -505,6 +509,7 @@ export default async function EquipmentPage({
         unit={unit}
         timeZone={timeZone}
         locale={locale}
+        sites={sites}
         t={t}
       />
 
@@ -883,22 +888,37 @@ function IdentityHeader({
   unit,
   timeZone,
   locale,
+  sites,
   t,
 }: {
   passport: Passport;
   unit: PassportUnit | null;
   timeZone: string | null;
   locale: Locale;
+  sites: { id: string; name: string }[];
   t: (key: string, params?: Record<string, string>) => string;
 }) {
   const assetStatus = passport.status ? equipmentStatusToAssetStatus(passport.status) : "unknown";
   const spacePath = passport.space_path ?? [];
-  const breadcrumb = [passport.site?.name, ...spacePath.map((space) => space.name)].filter(
-    (value): value is string => Boolean(value),
-  );
+  const segments: BreadcrumbSegment[] = [
+    { label: t("common.home"), href: "/" },
+    ...(passport.site ? [{ label: passport.site.name, href: `/registre#site-${passport.site.id}` }] : []),
+    ...spacePath.map((space) => ({ label: space.name, href: null })),
+    ...(passport.functional_location
+      ? [{ label: passport.functional_location.code, href: null }]
+      : []),
+  ];
   return (
     <section style={{ ...cardStyle, marginBottom: 24 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+        <Breadcrumb segments={segments} />
+        <SiteSwitcher
+          sites={sites}
+          currentSiteId={passport.site?.id ?? null}
+          label={t("breadcrumb.switch_site")}
+        />
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginTop: 8 }}>
         <StatusBadge status={assetStatus} label={t(`asset_status.${assetStatus}`)} />
         {passport.status && (
           <StatusLine status={passport.status} timeZone={timeZone} locale={locale} t={t} />
@@ -911,11 +931,6 @@ function IdentityHeader({
           {t(`equipment_type.${unit.equipment_type}`)}
           {" · "}
           {t("mobile.passport.serial", { serial: unit.serial_number })}
-        </p>
-      )}
-      {breadcrumb.length > 0 && (
-        <p style={{ color: colors.textMuted, marginTop: 4, fontSize: 13 }}>
-          {breadcrumb.join(" › ")}
         </p>
       )}
     </section>

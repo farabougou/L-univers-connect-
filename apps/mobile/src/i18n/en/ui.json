@@ -4,7 +4,11 @@
     "tagline": "Physical Asset Intelligence OS",
     "sign_in": "Sign in",
     "sign_out": "Sign out",
-    "back": "Back"
+    "back": "Back",
+    "home": "Home"
+  },
+  "breadcrumb": {
+    "switch_site": "Switch site"
   },
   "severity": {
     "info": "Information",

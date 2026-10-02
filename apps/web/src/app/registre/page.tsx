@@ -270,7 +270,7 @@ export default async function RegistrePage({
             </thead>
             <tbody>
               {sites.map((site) => (
-                <tr key={site.id}>
+                <tr key={site.id} id={`site-${site.id}`}>
                   <td
                     data-label={t("web.registre.site_name")}
                     style={cellStyle}
