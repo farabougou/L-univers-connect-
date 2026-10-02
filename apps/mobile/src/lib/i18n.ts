@@ -5,8 +5,10 @@
 import * as Localization from "expo-localization";
 
 import closureEn from "../i18n/en/closure.json";
+import fgasEn from "../i18n/en/fgas.json";
 import en from "../i18n/en/ui.json";
 import closureFr from "../i18n/fr/closure.json";
+import fgasFr from "../i18n/fr/fgas.json";
 import fr from "../i18n/fr/ui.json";
 import { type Catalog, type Locale, createTranslator, localeFromTag } from "../i18n/translator";
 
@@ -25,8 +27,8 @@ export const locale: Locale = deviceLocale();
 // Libellés de clôture sous « closure.* » : disponibles hors ligne.
 export const { t } = createTranslator(
   {
-    fr: { ...(fr as Catalog), closure: closureFr as Catalog },
-    en: { ...(en as Catalog), closure: closureEn as Catalog },
+    fr: { ...(fr as Catalog), closure: closureFr as Catalog, fgas: fgasFr as Catalog },
+    en: { ...(en as Catalog), closure: closureEn as Catalog, fgas: fgasEn as Catalog },
   },
   locale,
 );

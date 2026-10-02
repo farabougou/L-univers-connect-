@@ -2,6 +2,7 @@ import {
   deletePendingIntervention,
   listPendingInterventions,
   markClosureSent,
+  markFgasSent,
   markInterventionCreated,
   markPhotoUploaded,
   replaceFunctionalLocationsCache,
@@ -69,6 +70,10 @@ export async function syncPendingInterventions(
       if (row.closure && !row.closure_sent) {
         await sendClosure(apiUrl, accessToken, serverId, row.closure);
         await markClosureSent(row.id);
+      }
+      if (row.fgas && !row.fgas_sent) {
+        await sendFgas(apiUrl, accessToken, serverId, row.fgas);
+        await markFgasSent(row.id);
       }
       await deletePendingIntervention(row.id);
       synced += 1;
@@ -205,5 +210,27 @@ async function sendClosure(
   });
   if (!response.ok) {
     throw new Error(`clôture : ${response.status}`);
+  }
+}
+
+/**
+ * Fiche F-Gas (CERFA 15497*04), envoyée après la clôture. Rejouable comme
+ * la clôture : une réponse perdue renvoie la fiche déjà enregistrée (200)
+ * plutôt que de la dupliquer ; un contenu différent est refusé (409) et la
+ * ligne reste en attente, visible.
+ */
+async function sendFgas(
+  apiUrl: string,
+  accessToken: string,
+  interventionId: string,
+  fgas: string,
+): Promise<void> {
+  const response = await fetch(`${apiUrl}/interventions/${interventionId}/fgas`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+    body: fgas,
+  });
+  if (!response.ok) {
+    throw new Error(`fiche F-Gas : ${response.status}`);
   }
 }

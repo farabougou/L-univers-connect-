@@ -79,6 +79,7 @@
     "FGAS_NATURE_REQUIRED": "The nature of the intervention must have at least one box checked.",
     "FGAS_OTHER_DETAIL_REQUIRED": "The “{field}” field must be specified.",
     "FGAS_QUANTITY_NEGATIVE": "The quantity for the “{field}” field cannot be negative.",
+    "FGAS_RECORD_NOT_FOUND": "The requested F-Gas record could not be found.",
     "FINDING_ALREADY_CONFIRMED": "This finding has already been confirmed.",
     "FINDING_CONFIRMATION_REQUIRES_PERSON": "Only a person can confirm a fault.",
     "FINDING_NOT_FOUND": "The requested finding could not be found.",

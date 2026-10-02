@@ -8,6 +8,7 @@ const db = vi.hoisted(() => ({
   markInterventionCreated: vi.fn(),
   markPhotoUploaded: vi.fn(),
   markClosureSent: vi.fn(),
+  markFgasSent: vi.fn(),
   replaceFunctionalLocationsCache: vi.fn(),
 }));
 
@@ -28,6 +29,8 @@ function baseRow(overrides: Partial<PendingIntervention> = {}): PendingIntervent
     photo_uploaded: 0,
     closure: null,
     closure_sent: 0,
+    fgas: null,
+    fgas_sent: 0,
     ...overrides,
   };
 }
@@ -193,6 +196,51 @@ describe("syncPendingInterventions", () => {
   it("ne renvoie pas une clôture déjà confirmée", async () => {
     db.listPendingInterventions.mockResolvedValue([
       baseRow({ server_id: "server-1", photo_uploaded: 1, closure: "{}", closure_sent: 1 }),
+    ]);
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    await syncPendingInterventions("https://api.test", "token");
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("envoie la fiche F-Gas après la photo, puis supprime la ligne", async () => {
+    const fgas = JSON.stringify({ refrigerant_name: "R410A", total_charge_kg: 12.5 });
+    db.listPendingInterventions.mockResolvedValue([
+      baseRow({ server_id: "server-1", photo_uploaded: 1, fgas }),
+    ]);
+    const fetchMock = vi.fn().mockResolvedValueOnce(jsonResponse({ id: "fgas-1" }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await syncPendingInterventions("https://api.test", "token");
+
+    expect(result).toEqual({ synced: 1, failed: 0 });
+    expect(fetchMock).toHaveBeenCalledWith("https://api.test/interventions/server-1/fgas", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer token" },
+      body: fgas,
+    });
+    expect(db.markFgasSent).toHaveBeenCalledWith("local-1");
+    expect(db.deletePendingIntervention).toHaveBeenCalledWith("local-1");
+  });
+
+  it("garde la ligne si la fiche F-Gas est refusée, sans la perdre", async () => {
+    db.listPendingInterventions.mockResolvedValue([
+      baseRow({ server_id: "server-1", photo_uploaded: 1, fgas: "{}" }),
+    ]);
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(jsonResponse({}, false)));
+
+    const result = await syncPendingInterventions("https://api.test", "token");
+
+    expect(result).toEqual({ synced: 0, failed: 1 });
+    expect(db.markFgasSent).not.toHaveBeenCalled();
+    expect(db.deletePendingIntervention).not.toHaveBeenCalled();
+  });
+
+  it("ne renvoie pas une fiche F-Gas déjà confirmée", async () => {
+    db.listPendingInterventions.mockResolvedValue([
+      baseRow({ server_id: "server-1", photo_uploaded: 1, fgas: "{}", fgas_sent: 1 }),
     ]);
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);

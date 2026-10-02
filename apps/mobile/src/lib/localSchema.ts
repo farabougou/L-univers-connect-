@@ -29,6 +29,10 @@ export const LOCAL_MIGRATIONS: string[] = [
   // 2 — clôture structurée saisie hors ligne, envoyée après la photo.
   `ALTER TABLE pending_interventions ADD COLUMN closure TEXT;
    ALTER TABLE pending_interventions ADD COLUMN closure_sent INTEGER NOT NULL DEFAULT 0;`,
+  // 3 — fiche d'intervention fluides frigorigènes (CERFA 15497*04), saisie
+  // hors ligne, envoyée après la clôture (02/10/2026).
+  `ALTER TABLE pending_interventions ADD COLUMN fgas TEXT;
+   ALTER TABLE pending_interventions ADD COLUMN fgas_sent INTEGER NOT NULL DEFAULT 0;`,
 ];
 
 export type LocalDatabase = {

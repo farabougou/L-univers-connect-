@@ -21,6 +21,9 @@ export type PendingIntervention = {
   /** Clôture structurée (JSON), ou null si l'intervention n'est pas clôturée. */
   closure: string | null;
   closure_sent: 0 | 1;
+  /** Fiche F-Gas (JSON, CERFA 15497*04), ou null si non applicable. */
+  fgas: string | null;
+  fgas_sent: 0 | 1;
 };
 
 export type CachedFunctionalLocation = {
@@ -56,10 +59,11 @@ export async function insertPendingIntervention(input: {
   photoPath: string;
   functionalLocationId: string | null;
   closure: ClosureBody | null;
+  fgas: Record<string, unknown> | null;
 }): Promise<void> {
   const db = await getDb();
   await db.runAsync(
-    "INSERT INTO pending_interventions (id, intervention_type, summary, checklist, started_at, photo_path, functional_location_id, closure) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    "INSERT INTO pending_interventions (id, intervention_type, summary, checklist, started_at, photo_path, functional_location_id, closure, fgas) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
     input.id,
     input.interventionType,
     input.summary,
@@ -68,6 +72,7 @@ export async function insertPendingIntervention(input: {
     input.photoPath,
     input.functionalLocationId,
     input.closure ? JSON.stringify(input.closure) : null,
+    input.fgas ? JSON.stringify(input.fgas) : null,
   );
 }
 
@@ -126,4 +131,9 @@ export async function deletePendingIntervention(id: string): Promise<void> {
 export async function markClosureSent(id: string): Promise<void> {
   const db = await getDb();
   await db.runAsync("UPDATE pending_interventions SET closure_sent = 1 WHERE id = ?", id);
+}
+
+export async function markFgasSent(id: string): Promise<void> {
+  const db = await getDb();
+  await db.runAsync("UPDATE pending_interventions SET fgas_sent = 1 WHERE id = ?", id);
 }

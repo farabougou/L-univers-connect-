@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, time
+from datetime import date, datetime, time
 from typing import Any, Literal
 
 from pydantic import AwareDatetime, BaseModel, Field, model_validator
@@ -1022,6 +1022,157 @@ class ClosureOut(BaseModel):
     note: str | None
     closed_by: str
     closed_at: datetime
+
+
+class FgasLeak(BaseModel):
+    location: str = Field(min_length=1, max_length=300)
+    repaired: bool | None = None
+
+
+class FgasCreate(BaseModel):
+    """Fiche d'intervention fluides frigorigènes fluorés (CERFA 15497*04).
+    Les totaux de manipulation ([11], A+B+C et D+E) ne sont jamais saisis
+    ici : `app.fgas` les calcule à partir de leurs composants."""
+
+    fiche_number: str | None = Field(default=None, max_length=50)
+    operator_name: str = Field(min_length=1, max_length=300)
+    operator_address: str | None = Field(default=None, max_length=500)
+    operator_siret: str | None = Field(default=None, max_length=20)
+    operator_capacity_number: str | None = Field(default=None, max_length=100)
+    detenteur_name: str = Field(min_length=1, max_length=300)
+    detenteur_address: str | None = Field(default=None, max_length=500)
+    detenteur_siret: str | None = Field(default=None, max_length=20)
+    equipment_identification: str = Field(min_length=1, max_length=300)
+    refrigerant_name: str = Field(min_length=1, max_length=100)
+    total_charge_kg: float = Field(ge=0, allow_inf_nan=False)
+    co2_equivalent_tonnes: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    nature_of_intervention: list[str] = Field(min_length=1, max_length=8)
+    nature_other_detail: str | None = Field(default=None, max_length=300)
+    manual_leak_detector_identification: str | None = Field(default=None, max_length=200)
+    manual_leak_detector_checked_on: date | None = None
+    permanent_detection_system: bool | None = None
+    leaks_found: bool | None = None
+    leaks: list[FgasLeak] = Field(default_factory=list, max_length=50)
+    charged_virgin_kg: float = Field(default=0.0, ge=0, allow_inf_nan=False)
+    charged_recycled_kg: float = Field(default=0.0, ge=0, allow_inf_nan=False)
+    charged_regenerated_kg: float = Field(default=0.0, ge=0, allow_inf_nan=False)
+    charged_fluid_name_if_changed: str | None = Field(default=None, max_length=100)
+    recovered_for_treatment_kg: float = Field(default=0.0, ge=0, allow_inf_nan=False)
+    recovered_for_reuse_kg: float = Field(default=0.0, ge=0, allow_inf_nan=False)
+    bsff_number: str | None = Field(default=None, max_length=100)
+    container_identification: str | None = Field(default=None, max_length=300)
+    waste_classification: list[str] = Field(default_factory=list, max_length=4)
+    waste_classification_other_non_flammable: str | None = Field(default=None, max_length=200)
+    waste_classification_other_flammable: str | None = Field(default=None, max_length=200)
+    destination_installation: str | None = Field(default=None, max_length=500)
+    observations: str | None = Field(default=None, max_length=4000)
+    operator_signatory_name: str = Field(min_length=1, max_length=200)
+    operator_signatory_role: str | None = Field(default=None, max_length=200)
+    detenteur_signatory_name: str | None = Field(default=None, max_length=200)
+    detenteur_signatory_role: str | None = Field(default=None, max_length=200)
+    signed_at: date
+
+
+class FgasOut(BaseModel):
+    id: uuid.UUID
+    intervention_id: uuid.UUID
+    fiche_number: str | None
+    operator_name: str
+    operator_address: str | None
+    operator_siret: str | None
+    operator_capacity_number: str | None
+    detenteur_name: str
+    detenteur_address: str | None
+    detenteur_siret: str | None
+    equipment_identification: str
+    refrigerant_name: str
+    total_charge_kg: float
+    co2_equivalent_tonnes: float | None
+    nature_of_intervention: list[str]
+    nature_other_detail: str | None
+    manual_leak_detector_identification: str | None
+    manual_leak_detector_checked_on: date | None
+    permanent_detection_system: bool | None
+    leaks_found: bool | None
+    leaks: list[dict]
+    charged_total_kg: float
+    charged_virgin_kg: float
+    charged_recycled_kg: float
+    charged_regenerated_kg: float
+    charged_fluid_name_if_changed: str | None
+    recovered_total_kg: float
+    recovered_for_treatment_kg: float
+    recovered_for_reuse_kg: float
+    bsff_number: str | None
+    container_identification: str | None
+    waste_classification: list[str]
+    waste_classification_other_non_flammable: str | None
+    waste_classification_other_flammable: str | None
+    destination_installation: str | None
+    observations: str | None
+    operator_signatory_name: str
+    operator_signatory_role: str | None
+    detenteur_signatory_name: str | None
+    detenteur_signatory_role: str | None
+    signed_at: date
+    created_by: str
+    created_at: datetime
+
+
+class OperatDeclarationCreate(BaseModel):
+    reference_year: int = Field(ge=2020, le=2100)
+
+
+class OperatDeclarationUpdate(BaseModel):
+    """Remplace l'ensemble des champs modifiables (pas une fusion partielle) :
+    un champ omis est effacé, comme un formulaire qui renvoie son état
+    complet à chaque enregistrement."""
+
+    floor_area_m2: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    activity_category: str | None = Field(default=None, max_length=200)
+    electricity_kwh: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    gas_kwh: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    heat_network_kwh: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    other_kwh: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    other_label: str | None = Field(default=None, max_length=200)
+    notes: str | None = Field(default=None, max_length=2000)
+
+
+class OperatSubmissionCreate(BaseModel):
+    submission_reference: str | None = Field(default=None, max_length=200)
+
+
+class OperatDeclarationOut(BaseModel):
+    id: uuid.UUID
+    site_id: uuid.UUID
+    reference_year: int
+    status: Literal["draft", "ready", "submitted"]
+    floor_area_m2: float | None
+    activity_category: str | None
+    electricity_kwh: float | None
+    gas_kwh: float | None
+    heat_network_kwh: float | None
+    other_kwh: float | None
+    other_label: str | None
+    notes: str | None
+    created_by: str
+    created_at: datetime
+    updated_by: str | None
+    updated_at: datetime | None
+    submitted_by: str | None
+    submitted_at: datetime | None
+    submission_reference: str | None
+
+
+class OperatSummaryOut(BaseModel):
+    annee_reference: int
+    surface_m2: float | None
+    categorie_activite: str | None
+    electricite_kwh: float | None
+    gaz_kwh: float | None
+    reseau_chaleur_kwh: float | None
+    autre_kwh: float | None
+    autre_libelle: str | None
 
 
 class TagCreate(BaseModel):

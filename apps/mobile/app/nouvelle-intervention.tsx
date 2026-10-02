@@ -26,6 +26,14 @@ import {
   toClosureBody,
   validateClosure,
 } from "../src/lib/closure";
+import {
+  emptyFgas,
+  FGAS_CODES,
+  type FgasDraft,
+  type FgasSection,
+  toFgasBody,
+  validateFgas,
+} from "../src/lib/fgas";
 import { takePhoto } from "../src/lib/photos";
 import { synchronize } from "../src/lib/sync";
 
@@ -53,6 +61,8 @@ export default function NouvelleInterventionScreen() {
   const [functionalLocationId, setFunctionalLocationId] = useState<string | null>(null);
   const [closeNow, setCloseNow] = useState(false);
   const [closure, setClosure] = useState<ClosureDraft>(EMPTY_CLOSURE);
+  const [fgasNow, setFgasNow] = useState(false);
+  const [fgas, setFgas] = useState<FgasDraft>(emptyFgas());
 
   useEffect(() => {
     listCachedFunctionalLocations().then(setLocations);
@@ -81,6 +91,13 @@ export default function NouvelleInterventionScreen() {
         return;
       }
     }
+    if (fgasNow) {
+      const error = validateFgas(fgas);
+      if (error) {
+        Alert.alert(t("mobile.intervention.fgas.invalid_title"), t(error));
+        return;
+      }
+    }
     setIsSaving(true);
     try {
       const id = localId();
@@ -93,6 +110,7 @@ export default function NouvelleInterventionScreen() {
         photoPath,
         functionalLocationId,
         closure: closeNow ? toClosureBody(closure) : null,
+        fgas: fgasNow ? toFgasBody(fgas) : null,
       });
 
       // Tentative d'envoi immédiat si le réseau est disponible maintenant ;
@@ -179,6 +197,12 @@ export default function NouvelleInterventionScreen() {
         <Switch value={closeNow} onValueChange={setCloseNow} />
       </View>
       {closeNow && <ClosureForm draft={closure} onChange={setClosure} />}
+
+      <View style={styles.checklistRow}>
+        <Text style={styles.label}>{t("mobile.intervention.fgas.toggle")}</Text>
+        <Switch value={fgasNow} onValueChange={setFgasNow} />
+      </View>
+      {fgasNow && <FgasForm draft={fgas} onChange={setFgas} />}
 
       <Text style={styles.label}>{t("mobile.intervention.photo_required_label")}</Text>
       {photoPath && <Image source={{ uri: photoPath }} style={styles.photo} />}
@@ -285,6 +309,223 @@ function ClosureForm({
         multiline
         value={draft.note}
         onChangeText={(note) => update({ note })}
+      />
+    </View>
+  );
+}
+
+const MULTI_SELECT_SECTIONS: { section: FgasSection; field: keyof FgasDraft; label: string }[] = [
+  {
+    section: "nature_of_intervention",
+    field: "nature_of_intervention",
+    label: "mobile.intervention.fgas.nature",
+  },
+  {
+    section: "waste_classification",
+    field: "waste_classification",
+    label: "mobile.intervention.fgas.waste_classification",
+  },
+];
+
+/**
+ * Fiche d'intervention fluides frigorigènes fluorés (CERFA 15497*04) :
+ * mêmes champs que l'API (app/fgas.py), organisés dans l'ordre du
+ * formulaire officiel. Les totaux de manipulation ([11], A+B+C et D+E) ne
+ * sont pas saisis ici : le serveur les calcule à partir de leurs
+ * composants (jamais une incohérence possible comme sur le papier).
+ */
+function FgasForm({ draft, onChange }: { draft: FgasDraft; onChange: (draft: FgasDraft) => void }) {
+  const update = (change: Partial<FgasDraft>) => onChange({ ...draft, ...change });
+  const toggleCode = (field: "nature_of_intervention" | "waste_classification", code: string) => {
+    const current = draft[field];
+    update({
+      [field]: current.includes(code)
+        ? current.filter((c) => c !== code)
+        : [...current, code],
+    } as Partial<FgasDraft>);
+  };
+  const updateLeak = (index: number, change: Partial<FgasDraft["leaks"][number]>) =>
+    update({
+      leaks: draft.leaks.map((leak, i) => (i === index ? { ...leak, ...change } : leak)),
+    });
+
+  return (
+    <View style={styles.closure}>
+      <Text style={styles.sectionTitle}>{t("mobile.intervention.fgas.section")}</Text>
+
+      <Text style={styles.label}>{t("mobile.intervention.fgas.operator_name")}</Text>
+      <TextInput
+        style={styles.input}
+        value={draft.operator_name}
+        onChangeText={(operator_name) => update({ operator_name })}
+      />
+      <Text style={styles.label}>{t("mobile.intervention.fgas.operator_capacity_number")}</Text>
+      <TextInput
+        style={styles.input}
+        value={draft.operator_capacity_number}
+        onChangeText={(operator_capacity_number) => update({ operator_capacity_number })}
+      />
+      <Text style={styles.label}>{t("mobile.intervention.fgas.detenteur_name")}</Text>
+      <TextInput
+        style={styles.input}
+        value={draft.detenteur_name}
+        onChangeText={(detenteur_name) => update({ detenteur_name })}
+      />
+
+      <Text style={styles.label}>{t("mobile.intervention.fgas.equipment_identification")}</Text>
+      <TextInput
+        style={styles.input}
+        value={draft.equipment_identification}
+        onChangeText={(equipment_identification) => update({ equipment_identification })}
+      />
+      <Text style={styles.label}>{t("mobile.intervention.fgas.refrigerant_name")}</Text>
+      <TextInput
+        style={styles.input}
+        autoCapitalize="characters"
+        value={draft.refrigerant_name}
+        onChangeText={(refrigerant_name) => update({ refrigerant_name })}
+      />
+      <Text style={styles.label}>{t("mobile.intervention.fgas.total_charge_kg")}</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="decimal-pad"
+        value={draft.total_charge_kg}
+        onChangeText={(total_charge_kg) => update({ total_charge_kg })}
+      />
+      <Text style={styles.label}>{t("mobile.intervention.fgas.co2_equivalent_tonnes")}</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="decimal-pad"
+        value={draft.co2_equivalent_tonnes}
+        onChangeText={(co2_equivalent_tonnes) => update({ co2_equivalent_tonnes })}
+      />
+
+      {MULTI_SELECT_SECTIONS.map(({ section, field, label }) => (
+        <View key={section}>
+          <Text style={styles.label}>{t(label)}</Text>
+          <View style={styles.choices}>
+            {FGAS_CODES[section].map((code) => {
+              const selected = (draft[field] as string[]).includes(code);
+              return (
+                <Pressable
+                  key={code}
+                  onPress={() => toggleCode(field as "nature_of_intervention" | "waste_classification", code)}
+                  style={[styles.choice, selected && styles.choiceSelected]}
+                >
+                  <Text>{t(`fgas.${section}.${code}`)}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      ))}
+      {draft.nature_of_intervention.includes("other") && (
+        <>
+          <Text style={styles.label}>{t("mobile.intervention.fgas.nature_other_detail")}</Text>
+          <TextInput
+            style={styles.input}
+            value={draft.nature_other_detail}
+            onChangeText={(nature_other_detail) => update({ nature_other_detail })}
+          />
+        </>
+      )}
+
+      <Text style={styles.label}>{t("mobile.intervention.fgas.leaks_found")}</Text>
+      <Switch
+        value={draft.leaks_found ?? false}
+        onValueChange={(leaks_found) => update({ leaks_found })}
+      />
+      {draft.leaks_found && (
+        <>
+          {draft.leaks.map((leak, index) => (
+            <View key={index} style={styles.partRow}>
+              <TextInput
+                style={[styles.input, styles.partReference]}
+                placeholder={t("mobile.intervention.fgas.leak_location")}
+                value={leak.location}
+                onChangeText={(location) => updateLeak(index, { location })}
+              />
+              <Switch
+                value={leak.repaired ?? false}
+                onValueChange={(repaired) => updateLeak(index, { repaired })}
+              />
+              <Button
+                title={t("mobile.intervention.closure.remove_part")}
+                onPress={() => update({ leaks: draft.leaks.filter((_, i) => i !== index) })}
+              />
+            </View>
+          ))}
+          <Button
+            title={t("mobile.intervention.fgas.add_leak")}
+            onPress={() =>
+              update({ leaks: [...draft.leaks, { location: "", repaired: false }] })
+            }
+          />
+        </>
+      )}
+
+      <Text style={styles.label}>{t("mobile.intervention.fgas.charged_virgin_kg")}</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="decimal-pad"
+        value={draft.charged_virgin_kg}
+        onChangeText={(charged_virgin_kg) => update({ charged_virgin_kg })}
+      />
+      <Text style={styles.label}>{t("mobile.intervention.fgas.charged_recycled_kg")}</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="decimal-pad"
+        value={draft.charged_recycled_kg}
+        onChangeText={(charged_recycled_kg) => update({ charged_recycled_kg })}
+      />
+      <Text style={styles.label}>{t("mobile.intervention.fgas.charged_regenerated_kg")}</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="decimal-pad"
+        value={draft.charged_regenerated_kg}
+        onChangeText={(charged_regenerated_kg) => update({ charged_regenerated_kg })}
+      />
+      <Text style={styles.label}>{t("mobile.intervention.fgas.recovered_for_treatment_kg")}</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="decimal-pad"
+        value={draft.recovered_for_treatment_kg}
+        onChangeText={(recovered_for_treatment_kg) => update({ recovered_for_treatment_kg })}
+      />
+      <Text style={styles.label}>{t("mobile.intervention.fgas.recovered_for_reuse_kg")}</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="decimal-pad"
+        value={draft.recovered_for_reuse_kg}
+        onChangeText={(recovered_for_reuse_kg) => update({ recovered_for_reuse_kg })}
+      />
+      <Text style={styles.label}>{t("mobile.intervention.fgas.bsff_number")}</Text>
+      <TextInput
+        style={styles.input}
+        value={draft.bsff_number}
+        onChangeText={(bsff_number) => update({ bsff_number })}
+      />
+
+      <Text style={styles.label}>{t("mobile.intervention.fgas.observations")}</Text>
+      <TextInput
+        style={styles.textInput}
+        multiline
+        value={draft.observations}
+        onChangeText={(observations) => update({ observations })}
+      />
+
+      <Text style={styles.label}>{t("mobile.intervention.fgas.operator_signatory_name")}</Text>
+      <TextInput
+        style={styles.input}
+        value={draft.operator_signatory_name}
+        onChangeText={(operator_signatory_name) => update({ operator_signatory_name })}
+      />
+      <Text style={styles.label}>{t("mobile.intervention.fgas.signed_at")}</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="2026-10-02"
+        value={draft.signed_at}
+        onChangeText={(signed_at) => update({ signed_at })}
       />
     </View>
   );

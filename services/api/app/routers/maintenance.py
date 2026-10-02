@@ -20,6 +20,16 @@ from app.closures import (
 )
 from app.deps import get_tenant_connection, get_tenant_id
 from app.errors import ApiError, api_error
+from app.fgas import (
+    FgasConflict,
+    FgasError,
+    FgasNotFound,
+    get_fgas_intervention,
+    record_fgas_intervention,
+)
+from app.fgas_vocabulary import FGAS_VOCABULARY_VERSION
+from app.fgas_vocabulary import SECTIONS as FGAS_SECTIONS
+from app.fgas_vocabulary import labels as fgas_labels
 from app.findings import displayed, get_finding, link_finding
 from app.graph import get_node
 from app.i18n import negotiate_locale
@@ -39,6 +49,8 @@ from app.schemas import (
     AlarmOut,
     ClosureCreate,
     ClosureOut,
+    FgasCreate,
+    FgasOut,
     FindingWorkOrderCreate,
     HandlingStatus,
     InterventionCreate,
@@ -784,3 +796,115 @@ def read_closure(
     if closure is None:
         raise ApiError(404, "CLOSURE_NOT_FOUND")
     return ClosureOut(**closure)
+
+
+# --- Fiche d'intervention fluides frigorigènes (CERFA 15497*04) --------
+
+
+@router.get("/fgas-vocabulary")
+def read_fgas_vocabulary(
+    request: Request,
+    _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> dict[str, Any]:
+    """Codes de la fiche F-Gas et leurs libellés dans la langue demandée.
+    Le code est enregistré, jamais le libellé (ADR 013)."""
+    locale = negotiate_locale(request.headers.get("accept-language"))
+    return {
+        "version": FGAS_VOCABULARY_VERSION,
+        **{section: fgas_labels(section, locale) for section in FGAS_SECTIONS},
+    }
+
+
+@router.post(
+    "/interventions/{intervention_id}/fgas",
+    response_model=FgasOut,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_fgas_intervention(
+    intervention_id: uuid.UUID,
+    body: FgasCreate,
+    response: Response,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
+    claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> FgasOut:
+    try:
+        _, created = record_fgas_intervention(
+            connection,
+            tenant_id=tenant_id,
+            intervention_id=intervention_id,
+            fiche_number=body.fiche_number,
+            operator_name=body.operator_name,
+            operator_address=body.operator_address,
+            operator_siret=body.operator_siret,
+            operator_capacity_number=body.operator_capacity_number,
+            detenteur_name=body.detenteur_name,
+            detenteur_address=body.detenteur_address,
+            detenteur_siret=body.detenteur_siret,
+            equipment_identification=body.equipment_identification,
+            refrigerant_name=body.refrigerant_name,
+            total_charge_kg=body.total_charge_kg,
+            co2_equivalent_tonnes=body.co2_equivalent_tonnes,
+            nature_of_intervention=body.nature_of_intervention,
+            nature_other_detail=body.nature_other_detail,
+            manual_leak_detector_identification=body.manual_leak_detector_identification,
+            manual_leak_detector_checked_on=body.manual_leak_detector_checked_on,
+            permanent_detection_system=body.permanent_detection_system,
+            leaks_found=body.leaks_found,
+            leaks=[leak.model_dump(exclude_none=True) for leak in body.leaks],
+            charged_virgin_kg=body.charged_virgin_kg,
+            charged_recycled_kg=body.charged_recycled_kg,
+            charged_regenerated_kg=body.charged_regenerated_kg,
+            charged_fluid_name_if_changed=body.charged_fluid_name_if_changed,
+            recovered_for_treatment_kg=body.recovered_for_treatment_kg,
+            recovered_for_reuse_kg=body.recovered_for_reuse_kg,
+            bsff_number=body.bsff_number,
+            container_identification=body.container_identification,
+            waste_classification=body.waste_classification,
+            waste_classification_other_non_flammable=(
+                body.waste_classification_other_non_flammable
+            ),
+            waste_classification_other_flammable=body.waste_classification_other_flammable,
+            destination_installation=body.destination_installation,
+            observations=body.observations,
+            operator_signatory_name=body.operator_signatory_name,
+            operator_signatory_role=body.operator_signatory_role,
+            detenteur_signatory_name=body.detenteur_signatory_name,
+            detenteur_signatory_role=body.detenteur_signatory_role,
+            signed_at=body.signed_at,
+            created_by=_actor(claims),
+        )
+    except FgasNotFound as exc:
+        raise api_error(exc, 404) from exc
+    except FgasConflict as exc:
+        raise api_error(exc, 409) from exc
+    except FgasError as exc:
+        raise api_error(exc, 400) from exc
+    if created:
+        append_audit_entry(
+            connection,
+            tenant_id=tenant_id,
+            actor=_actor(claims),
+            action="intervention.fgas_recorded",
+            entity_type="intervention",
+            entity_id=str(intervention_id),
+            payload={
+                "refrigerant_name": body.refrigerant_name,
+                "nature_of_intervention": body.nature_of_intervention,
+            },
+        )
+    else:
+        response.status_code = status.HTTP_200_OK
+    return FgasOut(**get_fgas_intervention(connection, intervention_id))
+
+
+@router.get("/interventions/{intervention_id}/fgas", response_model=FgasOut)
+def read_fgas_intervention(
+    intervention_id: uuid.UUID,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> FgasOut:
+    fgas = get_fgas_intervention(connection, intervention_id)
+    if fgas is None:
+        raise ApiError(404, "FGAS_RECORD_NOT_FOUND")
+    return FgasOut(**fgas)

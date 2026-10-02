@@ -69,6 +69,18 @@ def list_declarations(connection: Connection, *, site_id: uuid.UUID) -> list[dic
     ]
 
 
+def list_portfolio_declarations(connection: Connection) -> list[dict[str, Any]]:
+    """Toutes les déclarations du tenant (RLS), tous sites confondus — pour
+    la page portefeuille, un seul appel plutôt qu'un par site (directive
+    UI/dashboard, section 29)."""
+    return [
+        dict(row)
+        for row in connection.execute(
+            text(f"SELECT {_COLUMNS} FROM operat_declarations ORDER BY reference_year DESC")
+        ).mappings()
+    ]
+
+
 def create_draft_declaration(
     connection: Connection,
     *,

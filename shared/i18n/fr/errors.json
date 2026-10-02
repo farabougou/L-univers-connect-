@@ -79,6 +79,7 @@
     "FGAS_NATURE_REQUIRED": "La nature de l’intervention doit comporter au moins une case cochée.",
     "FGAS_OTHER_DETAIL_REQUIRED": "Le champ « {field} » doit être précisé.",
     "FGAS_QUANTITY_NEGATIVE": "La quantité du champ « {field} » ne peut pas être négative.",
+    "FGAS_RECORD_NOT_FOUND": "La fiche F-Gas demandée est introuvable.",
     "FINDING_ALREADY_CONFIRMED": "Ce constat est déjà confirmé.",
     "FINDING_CONFIRMATION_REQUIRES_PERSON": "Seule une personne peut confirmer un défaut.",
     "FINDING_NOT_FOUND": "Le constat demandé est introuvable.",
