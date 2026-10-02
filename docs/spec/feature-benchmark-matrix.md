@@ -732,10 +732,20 @@ aucune page qui ressemble à du développement, responsive déjà complet sur
 - ADD état de chargement manquant sur `historique.tsx` (mobile) : la liste
   vide s'affichait avant même la réponse du serveur.
 
-**Vérification finale** : 895/896 tests backend (1 échec confirmé flake —
-`test_groupe_electrogene_tension_reste_a_revoir`, délai UDP du simulateur
-BACnet sous charge, passe seul en isolation, sans lien avec les
-changements de cette session), 182 tests web, 114 tests mobile ; TS/ESLint/
+**02/10/2026 (suite) : flake BACnet corrigé à la racine.**
+`test_groupe_electrogene_tension_reste_a_revoir` partageait le même port
+UDP (`127.0.0.1:47846`) que le simulateur à portée module de
+`tests/test_bacnet_field_comparison_e2e.py` — sur la suite complète,
+selon l'ordre de collecte, le second pouvait démarrer avant que l'OS
+n'ait vraiment libéré le port fermé par le premier (fermeture asynchrone
+d'un socket UDP, jamais garantie instantanée), d'où le délai dépassé
+observé uniquement sous charge. Un commentaire affirmait déjà un « port
+dédié », mais seulement dédié au sein de son propre fichier, pas de toute
+la suite. Corrigé en lui donnant un port réellement unique (`47847`,
+vérifié par recherche sur l'ensemble des tests) ; suite complète rejouée
+deux fois de suite, 896/896 à chaque fois.
+
+**Vérification finale** : 896/896 tests backend, 182 tests web, 114 tests mobile ; TS/ESLint/
 build web propres ; TS mobile propre ; migrations rejouées en aller-retour
 (`alembic downgrade -1` / `upgrade head`) ; cycle sauvegarde/restauration
 testé manuellement. Aucune suite E2E pilotée par navigateur (Playwright/

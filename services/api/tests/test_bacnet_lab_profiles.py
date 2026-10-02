@@ -80,14 +80,19 @@ def test_chaque_profil_est_un_appareil_bacnet_reel_et_complet(profile):
 
 
 def test_groupe_electrogene_tension_reste_a_revoir():
-    # Port dédié, distinct de _ADDRESSES["groupe_electrogene"] : ce test
-    # tourne juste après test_chaque_profil_est_un_appareil_bacnet_reel_et_complet
-    # (même profil), qui vient de fermer un appareil simulé sur ce même port.
-    # Réutiliser le port expose exactement le risque que le commentaire de
-    # _ADDRESSES dit vouloir éviter — observé en CI (minuterie dépassée en
-    # lisant l'inventaire) alors que localement le port se libère toujours
-    # assez vite pour ne jamais le révéler.
-    address = "127.0.0.1:47846"
+    # Root cause réel du flake intermittent (trouvé le 02/10/2026, pas
+    # seulement contourné) : ce port était partagé à l'identique avec
+    # tests/test_bacnet_field_comparison_e2e.py (un simulateur BACnet UDP à
+    # portée module, démarré/arrêté une fois pour tout le fichier). Sur la
+    # suite complète, selon l'ordre de collecte, le simulateur de ce fichier
+    # pouvait démarrer avant que le port libéré par l'autre fichier ne soit
+    # réellement disponible côté OS (fermeture asynchrone d'un socket UDP,
+    # jamais garantie instantanée) — d'où le délai dépassé observé
+    # uniquement sous charge (suite complète), jamais en isolation. Un port
+    # dédié « distinct de _ADDRESSES » ne suffisait pas : il fallait un port
+    # distinct de TOUTE adresse utilisée ailleurs dans la suite, pas
+    # seulement dans ce fichier.
+    address = "127.0.0.1:47847"
     lab = BacnetLab(address, device_instance=5200, profile="groupe_electrogene")
     lab.start()
     try:
