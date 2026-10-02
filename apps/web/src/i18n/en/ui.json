@@ -78,6 +78,10 @@
     "retired": "Retired",
     "superseded": "Superseded"
   },
+  "control_mode": {
+    "automatic": "Automatic",
+    "manual": "Manual"
+  },
   "credential_type": {
     "public_key_assertion": "Signed public key",
     "shared_secret": "Shared secret"
@@ -607,6 +611,9 @@
         "other": "{count} archived sites"
       },
       "asset_code_label": "Inventory code",
+      "automation_rule_requested_value": "Value to apply",
+      "automation_rule_trigger_point": "Trigger point",
+      "automation_rules_title": "Automation rules",
       "bacnet_accept_button": "Accept",
       "bacnet_accept_confirm": "Confirm acceptance",
       "bacnet_accepted_point": "A point was created from this proposal.",
@@ -653,7 +660,16 @@
       "command_turn_on": "Turn on (test)",
       "confirm_finding": "Confirm",
       "confirm_note": "What was verified",
+      "control_mode_draft_pending": "Pending proposal: switch to {mode} mode.",
+      "control_mode_explanation": {
+        "automatic": "an active automation rule can command this point.",
+        "manual": "no automation rule can command this point."
+      },
+      "control_mode_label": "Mode",
+      "control_mode_propose": "Change this point's mode",
+      "control_mode_title": "Point mode",
       "correlation_rule_section_title": "Simultaneous heating and cooling",
+      "create_automation_rule": "Add an automation rule",
       "create_correlation_rule": "Add a simultaneity rule",
       "create_divergence_rule": "Add a desired-state divergence rule",
       "create_equipment_title": "Add equipment",
@@ -776,6 +792,7 @@
       "modbus_test_relay_note": "A simulated relay only validates the software command pipeline: never a real device.",
       "modbus_test_relay_point_label": "Controlled point",
       "no_active_tag": "No active tag.",
+      "no_automation_rules": "No automation rule defined for this point.",
       "no_desired_state": "No desired state declared.",
       "no_equipment": "No equipment registered yet.",
       "no_maintenance_provider": "No provider declared for this equipment.",

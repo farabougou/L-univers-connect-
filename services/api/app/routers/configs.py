@@ -5,8 +5,12 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.engine import Connection
 
+import app.automation_rules  # noqa: F401  (enregistre le type de configuration « automation_rule »)
+import app.command_policies  # noqa: F401  (enregistre le type de configuration « command_point_policy »)
 import app.connectors.device_mapping  # noqa: F401  (config « modbus_device_mapping »)
+import app.economics  # noqa: F401  (enregistre le type de configuration « energy_tariff »)
 import app.energy.baseline  # noqa: F401  (enregistre le type de configuration « energy_baseline »)
+import app.point_control_mode  # noqa: F401  (enregistre le type de configuration « point_control_mode »)
 from app.audit import append_audit_entry
 from app.auth import require_any_role
 from app.config_versions import (

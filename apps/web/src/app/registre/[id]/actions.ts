@@ -561,6 +561,69 @@ export async function cancelScheduledTestCommand(formData: FormData) {
   revalidatePath(`/registre/${nodeId}`);
 }
 
+/**
+ * Mode de point — manuel/automatique (V2, priorité « modes/consignes »,
+ * app/point_control_mode.py). Naît en brouillon, approbation à deux
+ * personnes obligatoire (comme une règle d'alarme) : activé via la même
+ * action générique `activateRule` (POST /configs/{id}/activate) que les
+ * règles — aucune action dédiée à écrire pour ça.
+ */
+export async function createPointControlMode(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+  const pointId = String(formData.get("point_id"));
+
+  const response = await apiFetch("/configs", accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      config_type: "point_control_mode",
+      subject_key: pointId,
+      reason: formData.get("reason"),
+      content: { mode: formData.get("mode") },
+    }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  revalidatePath(`/registre/${nodeId}`);
+}
+
+/**
+ * Règle d'automatisation (règle → commande, V2, dernière priorité,
+ * app/automation_rules.py) : naît en brouillon, approbation à deux
+ * personnes obligatoire — l'auteur ne peut jamais être celui qui l'active.
+ * `subject_key` = le point commandé (target_point_id), pour la lister au
+ * même endroit que le mode et la commande immédiate sur la fiche équipement.
+ */
+export async function createAutomationRule(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+  const targetPointId = String(formData.get("target_point_id"));
+
+  const response = await apiFetch("/configs", accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      config_type: "automation_rule",
+      subject_key: targetPointId,
+      reason: formData.get("reason"),
+      content: {
+        title: formData.get("title"),
+        trigger_point_id: formData.get("trigger_point_id"),
+        operator: formData.get("operator"),
+        threshold: Number(formData.get("threshold")),
+        target_point_id: targetPointId,
+        requested_value: Number(formData.get("requested_value")),
+      },
+    }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  revalidatePath(`/registre/${nodeId}`);
+}
+
 export async function createWorkOrderForEquipment(formData: FormData) {
   const accessToken = await requireAccessToken();
   const nodeId = String(formData.get("node_id"));

@@ -78,6 +78,10 @@
     "retired": "Retirée",
     "superseded": "Remplacée"
   },
+  "control_mode": {
+    "automatic": "Automatique",
+    "manual": "Manuel"
+  },
   "credential_type": {
     "public_key_assertion": "Clé publique signée",
     "shared_secret": "Secret partagé"
@@ -607,6 +611,9 @@
         "other": "{count} sites archivés"
       },
       "asset_code_label": "Code d’inventaire",
+      "automation_rule_requested_value": "Valeur à appliquer",
+      "automation_rule_trigger_point": "Point déclencheur",
+      "automation_rules_title": "Règles d’automatisation",
       "bacnet_accept_button": "Accepter",
       "bacnet_accept_confirm": "Confirmer l’acceptation",
       "bacnet_accepted_point": "Point créé à partir de cette proposition.",
@@ -653,7 +660,16 @@
       "command_turn_on": "Allumer (test)",
       "confirm_finding": "Confirmer",
       "confirm_note": "Ce qui a été vérifié",
+      "control_mode_draft_pending": "Proposition en attente : passage en mode {mode}.",
+      "control_mode_explanation": {
+        "automatic": "une règle d’automatisation active peut commander ce point.",
+        "manual": "aucune règle d’automatisation ne peut commander ce point."
+      },
+      "control_mode_label": "Mode",
+      "control_mode_propose": "Changer le mode de ce point",
+      "control_mode_title": "Mode du point",
       "correlation_rule_section_title": "Chauffage et refroidissement simultanés",
+      "create_automation_rule": "Ajouter une règle d’automatisation",
       "create_correlation_rule": "Ajouter une règle de simultanéité",
       "create_divergence_rule": "Ajouter une règle d’écart à la consigne",
       "create_equipment_title": "Ajouter un équipement",
@@ -776,6 +792,7 @@
       "modbus_test_relay_note": "Un relais simulé valide uniquement le pilotage logiciel : jamais un équipement réel.",
       "modbus_test_relay_point_label": "Point piloté",
       "no_active_tag": "Aucune étiquette active.",
+      "no_automation_rules": "Aucune règle d’automatisation définie pour ce point.",
       "no_desired_state": "Aucun état souhaité déclaré.",
       "no_equipment": "Aucun équipement enregistré pour le moment.",
       "no_maintenance_provider": "Aucun prestataire déclaré pour cet équipement.",

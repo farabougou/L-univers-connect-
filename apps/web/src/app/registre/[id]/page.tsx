@@ -50,11 +50,13 @@ import {
   clearAlarm,
   computeEnergyResult,
   confirmFinding,
+  createAutomationRule,
   createBacnetDeviceMapping,
   createCorrelationRule,
   createDeviceMapping,
   createDivergenceRule,
   createEnergyBaseline,
+  createPointControlMode,
   createSimulatedRelayMapping,
   createTagForEquipment,
   createThresholdRule,
@@ -81,6 +83,28 @@ type ScheduledCommand = {
   scheduled_for: string;
   status: "pending" | "dispatched" | "cancelled" | "failed";
   failure_reason: string | null;
+};
+
+type PointControlModeVersion = {
+  id: string;
+  version: number;
+  status: string;
+  content: { mode: "manual" | "automatic" };
+};
+
+type AutomationRuleContent = {
+  title: string;
+  trigger_point_id: string;
+  operator: ">" | "<";
+  threshold: number;
+  target_point_id: string;
+  requested_value: number;
+};
+type AutomationRuleVersion = {
+  id: string;
+  version: number;
+  status: string;
+  content: AutomationRuleContent;
 };
 
 type ImpactedNode = {
@@ -465,6 +489,31 @@ export default async function EquipmentPage({
     scheduledCommands = scheduledResponse.ok ? await scheduledResponse.json() : [];
   }
 
+  // Mode du point (V2, priorité « modes/consignes ») : manuel par défaut,
+  // verrou qui conditionne l'automatisation ci-dessous (app.point_control_mode).
+  let controlModeVersions: PointControlModeVersion[] = [];
+  if (relayPointId) {
+    const modeResponse = await apiFetch(
+      `/configs?config_type=point_control_mode&subject_key=${relayPointId}`,
+      accessToken,
+    );
+    controlModeVersions = modeResponse.ok ? await modeResponse.json() : [];
+  }
+  const activeControlMode =
+    controlModeVersions.find((version) => version.status === "active")?.content.mode ?? "manual";
+
+  // Règles d'automatisation (V2, dernière priorité) : portées par le point
+  // commandé (subject_key = relayPointId), jamais par le point déclencheur
+  // (qui peut varier d'une règle à l'autre) — voir app/automation_rules.py.
+  let automationRuleVersions: AutomationRuleVersion[] = [];
+  if (relayPointId) {
+    const automationResponse = await apiFetch(
+      `/configs?config_type=automation_rule&subject_key=${relayPointId}`,
+      accessToken,
+    );
+    automationRuleVersions = automationResponse.ok ? await automationResponse.json() : [];
+  }
+
   // Découverte BACnet (BACnet V1, lecture seule) : mêmes principes que la
   // connexion Modbus ci-dessus, sujet = l'équipement (voir
   // app/bacnet_discovery.py). Un équipement introuvable côté API (nœud qui
@@ -807,7 +856,11 @@ export default async function EquipmentPage({
             relayPointId={relayPointId}
             lastCommand={lastCommand}
             scheduledCommands={scheduledCommands}
+            activeControlMode={activeControlMode}
+            controlModeVersions={controlModeVersions}
+            automationRuleVersions={automationRuleVersions}
             canSendCommand={canSendCommand}
+            canManage={canManage}
             locale={locale}
             timeZone={timeZone}
             t={t}
@@ -2046,17 +2099,25 @@ function CommandBlock({
   relayPointId,
   lastCommand,
   scheduledCommands,
+  activeControlMode,
+  controlModeVersions,
+  automationRuleVersions,
   canSendCommand,
+  canManage,
   locale,
   timeZone,
   t,
 }: {
   nodeId: string;
-  points: { id: string; name: string }[];
+  points: { id: string; name: string; value_type: string }[];
   relayPointId: string | null;
   lastCommand: PassportCommand | null;
   scheduledCommands: ScheduledCommand[];
+  activeControlMode: "manual" | "automatic";
+  controlModeVersions: PointControlModeVersion[];
+  automationRuleVersions: AutomationRuleVersion[];
   canSendCommand: boolean;
+  canManage: boolean;
   locale: Locale;
   timeZone: string | null;
   t: (key: string, params?: Record<string, string>) => string;
@@ -2065,9 +2126,60 @@ function CommandBlock({
     return <p style={mutedStyle}>{t("web.registre.modbus_no_mapping")}</p>;
   }
   const pointName = points.find((point) => point.id === relayPointId)?.name ?? relayPointId;
+  const numericPoints = points.filter((point) => point.value_type === "number");
+  const draftModeVersion = controlModeVersions.find((version) => version.status === "draft");
   return (
     <div>
       <p style={{ margin: 0 }}>{pointName}</p>
+      <div style={{ marginTop: 8 }}>
+        <p style={{ ...mutedStyle, margin: 0, fontWeight: 600 }}>
+          {t("web.registre.control_mode_title")}
+        </p>
+        <p style={{ margin: 0 }}>
+          {t(`control_mode.${activeControlMode}`)} — {t(`web.registre.control_mode_explanation.${activeControlMode}`)}
+        </p>
+        {draftModeVersion && (
+          <p style={{ margin: 0 }}>
+            {t("web.registre.control_mode_draft_pending", {
+              mode: t(`control_mode.${draftModeVersion.content.mode}`),
+            })}
+            {canManage && (
+              <form action={activateRule} style={{ display: "inline", marginLeft: 8 }}>
+                <input type="hidden" name="version_id" value={draftModeVersion.id} />
+                <input type="hidden" name="node_id" value={nodeId} />
+                <button type="submit">{t("web.registre.activate_rule")}</button>
+              </form>
+            )}
+          </p>
+        )}
+        {canManage && !draftModeVersion && (
+          <details>
+            <summary>{t("web.registre.control_mode_propose")}</summary>
+            <form action={createPointControlMode} style={{ maxWidth: 360 }}>
+              <input type="hidden" name="node_id" value={nodeId} />
+              <input type="hidden" name="point_id" value={relayPointId} />
+              <label style={labelStyle}>
+                {t("web.registre.control_mode_label")}
+                <select
+                  name="mode"
+                  defaultValue={activeControlMode === "automatic" ? "manual" : "automatic"}
+                  style={fieldStyle}
+                >
+                  <option value="manual">{t("control_mode.manual")}</option>
+                  <option value="automatic">{t("control_mode.automatic")}</option>
+                </select>
+              </label>
+              <label style={labelStyle}>
+                {t("web.registre.rule_reason")}
+                <input name="reason" required style={fieldStyle} />
+              </label>
+              <button type="submit" style={submitStyle}>
+                {t("web.registre.submit")}
+              </button>
+            </form>
+          </details>
+        )}
+      </div>
       {canSendCommand && (
         <div style={signalActionsStyle}>
           <form action={sendTestCommand}>
@@ -2177,6 +2289,101 @@ function CommandBlock({
           </>
         ) : (
           <p style={mutedStyle}>{t("web.registre.command_no_command")}</p>
+        )}
+      </div>
+      <div style={{ marginTop: 12 }}>
+        <p style={{ ...mutedStyle, margin: 0, fontWeight: 600 }}>
+          {t("web.registre.automation_rules_title")}
+        </p>
+        {automationRuleVersions.length === 0 && (
+          <p style={mutedStyle}>{t("web.registre.no_automation_rules")}</p>
+        )}
+        {automationRuleVersions.map((version) => {
+          const triggerPointName =
+            points.find((point) => point.id === version.content.trigger_point_id)?.name ??
+            version.content.trigger_point_id;
+          return (
+            <p key={version.id} style={{ margin: 0 }}>
+              {t("web.registre.rule_version", { version: String(version.version) })} —{" "}
+              {t(`config_status.${version.status}`)} — {version.content.title} ({triggerPointName}{" "}
+              {version.content.operator === ">"
+                ? t("web.registre.rule_operator_gt")
+                : t("web.registre.rule_operator_lt")}{" "}
+              {version.content.threshold} →{" "}
+              {t("web.registre.command_requested_value", {
+                value: formatNumber(locale, version.content.requested_value),
+              })}
+              )
+              {canManage && version.status === "draft" && (
+                <form action={activateRule} style={{ display: "inline", marginLeft: 8 }}>
+                  <input type="hidden" name="version_id" value={version.id} />
+                  <input type="hidden" name="node_id" value={nodeId} />
+                  <button type="submit">{t("web.registre.activate_rule")}</button>
+                </form>
+              )}
+              {canManage && version.status !== "retired" && (
+                <form action={retireRule} style={{ display: "inline-flex", gap: 4, marginLeft: 8 }}>
+                  <input type="hidden" name="version_id" value={version.id} />
+                  <input type="hidden" name="node_id" value={nodeId} />
+                  <input name="reason" required placeholder={t("web.registre.retire_reason")} />
+                  <button type="submit">{t("web.registre.retire_rule")}</button>
+                </form>
+              )}
+              {canManage && version.status === "retired" && (
+                <form action={restoreRule} style={{ display: "inline-flex", gap: 4, marginLeft: 8 }}>
+                  <input type="hidden" name="version_id" value={version.id} />
+                  <input type="hidden" name="node_id" value={nodeId} />
+                  <input name="reason" required placeholder={t("web.registre.restore_reason")} />
+                  <button type="submit">{t("web.registre.restore_rule")}</button>
+                </form>
+              )}
+            </p>
+          );
+        })}
+        {canManage && (
+          <details>
+            <summary>{t("web.registre.create_automation_rule")}</summary>
+            <form action={createAutomationRule} style={{ maxWidth: 360 }}>
+              <input type="hidden" name="node_id" value={nodeId} />
+              <input type="hidden" name="target_point_id" value={relayPointId} />
+              <label>
+                {t("web.registre.rule_title")}
+                <input name="title" required style={fieldStyle} />
+              </label>
+              <label style={labelStyle}>
+                {t("web.registre.automation_rule_trigger_point")}
+                <select name="trigger_point_id" required style={fieldStyle}>
+                  {numericPoints.map((point) => (
+                    <option key={point.id} value={point.id}>
+                      {point.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label style={labelStyle}>
+                {t("web.registre.rule_operator_gt")} / {t("web.registre.rule_operator_lt")}
+                <select name="operator" defaultValue=">" style={fieldStyle}>
+                  <option value=">">{t("web.registre.rule_operator_gt")}</option>
+                  <option value="<">{t("web.registre.rule_operator_lt")}</option>
+                </select>
+              </label>
+              <label style={labelStyle}>
+                {t("web.registre.rule_threshold")}
+                <input name="threshold" type="number" step="any" required style={fieldStyle} />
+              </label>
+              <label style={labelStyle}>
+                {t("web.registre.automation_rule_requested_value")}
+                <input name="requested_value" type="number" step="any" required style={fieldStyle} />
+              </label>
+              <label style={labelStyle}>
+                {t("web.registre.rule_reason")}
+                <input name="reason" required style={fieldStyle} />
+              </label>
+              <button type="submit" style={submitStyle}>
+                {t("web.registre.submit")}
+              </button>
+            </form>
+          </details>
         )}
       </div>
     </div>
