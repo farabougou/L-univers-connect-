@@ -113,6 +113,32 @@ def purge_documents_for_tenant(tenant_id) -> None:
         admin_engine.dispose()
 
 
+def purge_fgas_records_for_tenant(tenant_id) -> None:
+    """Les fiches d'intervention F-Gas sont des preuves légales, protégées
+    contre toute suppression (voir la migration adce8b5d46b8)."""
+    admin_engine = create_engine(ADMIN_DATABASE_URL)
+    try:
+        with admin_engine.begin() as connection:
+            connection.execute(
+                text(
+                    "ALTER TABLE fgas_intervention_records "
+                    "DISABLE TRIGGER fgas_intervention_records_no_delete"
+                )
+            )
+            connection.execute(
+                text("DELETE FROM fgas_intervention_records WHERE tenant_id = :id"),
+                {"id": tenant_id},
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE fgas_intervention_records "
+                    "ENABLE TRIGGER fgas_intervention_records_no_delete"
+                )
+            )
+    finally:
+        admin_engine.dispose()
+
+
 def purge_intervention_closures_for_tenant(tenant_id) -> None:
     """Les clôtures d'intervention sont des preuves, protégées contre toute
     suppression (voir la migration a4a1fa8a4cfa)."""

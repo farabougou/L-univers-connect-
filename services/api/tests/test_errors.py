@@ -178,7 +178,7 @@ def _strings(node, prefix=""):
             yield from _strings(value, f"{prefix}.{key}" if prefix else key)
 
 
-@pytest.mark.parametrize("namespace", ["errors", "findings", "closure", "events"])
+@pytest.mark.parametrize("namespace", ["errors", "findings", "closure", "events", "fgas"])
 def test_french_typography(namespace) -> None:
     """Apostrophe typographique, espace insécable avant « : ; ? ! » et à
     l'intérieur des guillemets français, dans tous les catalogues de l'API."""

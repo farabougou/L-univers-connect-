@@ -1,0 +1,18 @@
+{
+  "nature_of_intervention": {
+    "assembly": "Assembly of the equipment",
+    "commissioning": "Commissioning of the equipment",
+    "modification": "Modification of the equipment",
+    "maintenance": "Maintenance of the equipment",
+    "leak_check_periodic": "Periodic leak check",
+    "leak_check_non_periodic": "Non-periodic leak check",
+    "decommissioning": "Decommissioning",
+    "other": "Other"
+  },
+  "waste_classification": {
+    "un1078_non_flammable": "UN 1078, refrigerant gas waste NOS, non-flammable",
+    "other_non_flammable": "Other non-flammable refrigerant",
+    "un3161_flammable": "UN 3161, liquefied flammable gas waste NOS",
+    "other_flammable": "Other flammable refrigerant"
+  }
+}
