@@ -184,6 +184,7 @@
     "RULE_POINT_NOT_VALIDATED": "The rule must apply to a point validated during commissioning.",
     "RULE_SHORT_CYCLING_REQUIRES_BOOLEAN": "A short-cycling rule only applies to a run/stop status point.",
     "RULE_THRESHOLD_REQUIRES_NUMBER": "A threshold applies only to a numeric point.",
+    "RULE_TREND_PROJECTION_REQUIRES_NUMBER": "A trend projection applies only to a numeric point.",
     "SEVERITY_UNKNOWN": "Unknown severity: “{severity}”.",
     "SIGNAL_ALREADY_CLEARED": "This signal has already returned to normal.",
     "SIGNAL_CONDITION_STILL_ACTIVE": "This signal cannot be closed while its condition is active. Wait for the return to normal or declare a false positive.",

@@ -26,6 +26,17 @@ Trois types de règles, stockées comme configurations versionnées
   vient d'être enregistrée n'est comptée comme un nouveau démarrage que si le
   relevé immédiatement antérieur n'était pas déjà à « marche », jamais à
   chaque relevé « marche » répété pendant qu'un cycle est déjà en cours.
+- `trend_projection` (02/10/2026, décision de Mohamed : le pipeline logiciel
+  de maintenance prédictive avance en simulation, seule l'annonce d'une
+  performance réelle reste `DEFERRED_PHYSICAL_VALIDATION`) : premier type de
+  règle qui porte sur l'avenir plutôt que sur le présent ou le passé →
+  constat de nature « prediction ». Projection linéaire déterministe
+  (`method="statistical"`, jamais `"ml"` : aucun modèle entraîné, une
+  extrapolation explicable à partir de deux points de l'historique récent) —
+  si la tendance actuelle atteindrait le seuil donné dans l'horizon donné,
+  et seulement si ce seuil n'est pas déjà franchi maintenant (ce cas relève
+  de `threshold`, qui constate, pas de `trend_projection`, qui prédit). Voir
+  `_evaluate_trend_projection`.
 
 Chaîne complète, synchrone à la réception d'une mesure (squelette de bout en
 bout M2) : mesure → contrôle de qualité → règle → constat → alarme → ordre de
@@ -71,15 +82,24 @@ _RULE_REASONS = {
     "desired_state_divergence": "RULE_DESIRED_STATE_DIVERGENCE",
     "simultaneous_heating_cooling": "RULE_SIMULTANEOUS_HEATING_COOLING",
     "short_cycling": "RULE_SHORT_CYCLING",
+    "trend_projection": "RULE_TREND_PROJECTION",
 }
 # Nature du constat ouvert par chaque type de règle (voir app/findings.py,
 # ck_findings_kind) : un écart à la consigne reste un sujet de mise en
-# service, tout le reste est une panne constatée.
+# service, tout le reste est une panne constatée — sauf trend_projection,
+# qui porte sur l'avenir, jamais sur le présent ou le passé.
 _FINDING_KIND = {
     "threshold": "fault",
     "desired_state_divergence": "commissioning",
     "simultaneous_heating_cooling": "fault",
     "short_cycling": "fault",
+    "trend_projection": "prediction",
+}
+# Méthode enregistrée pour le constat (ck_findings_method) : une projection
+# est un calcul statistique explicable, jamais un modèle entraîné (`"ml"`
+# resterait un mensonge tant qu'aucun modèle n'existe réellement).
+_RULE_METHOD = {
+    "trend_projection": "statistical",
 }
 
 
@@ -113,6 +133,21 @@ class ShortCyclingRule(_RuleBase):
     window_minutes: int = Field(gt=0)
 
 
+class TrendProjectionRule(_RuleBase):
+    """Projection linéaire déterministe d'un point numérique : si la pente
+    des `window_minutes` dernières minutes atteindrait `threshold` dans les
+    `horizon_minutes` à venir, ouvre un constat de prédiction (voir
+    `_evaluate_trend_projection`). Jamais déclenchée si le seuil est déjà
+    franchi maintenant — ce cas relève de `ThresholdRule`, qui constate,
+    jamais d'une règle qui prédit."""
+
+    kind: Literal["trend_projection"]
+    operator: Literal[">", "<"]
+    threshold: float = Field(allow_inf_nan=False)
+    window_minutes: int = Field(gt=0)
+    horizon_minutes: int = Field(gt=0)
+
+
 class CorrelationRule(BaseModel):
     """Compare deux points du même équipement au même instant (FDD) — jamais
     un seul point comme les deux règles ci-dessus, voir le docstring du
@@ -133,7 +168,7 @@ class CorrelationRule(BaseModel):
 
 class _RuleContent(BaseModel):
     rule: Annotated[
-        ThresholdRule | DivergenceRule | ShortCyclingRule | CorrelationRule,
+        ThresholdRule | DivergenceRule | ShortCyclingRule | CorrelationRule | TrendProjectionRule,
         Field(discriminator="kind"),
     ]
 
@@ -170,6 +205,8 @@ def _validate_alarm_rule(connection: Connection, content: dict[str, Any]) -> dic
         raise ConfigInvalid("RULE_THRESHOLD_REQUIRES_NUMBER")
     if isinstance(rule, ShortCyclingRule) and point["value_type"] != "boolean":
         raise ConfigInvalid("RULE_SHORT_CYCLING_REQUIRES_BOOLEAN")
+    if isinstance(rule, TrendProjectionRule) and point["value_type"] != "number":
+        raise ConfigInvalid("RULE_TREND_PROJECTION_REQUIRES_NUMBER")
     return rule.model_dump(mode="json", exclude_none=True)
 
 
@@ -311,6 +348,58 @@ def _evaluate_short_cycling(
     }
 
 
+def _evaluate_trend_projection(
+    connection: Connection, rule: dict[str, Any], point: dict[str, Any], value: float, at: datetime
+) -> dict[str, Any] | None:
+    """Projection linéaire déterministe (deux points : le début de la fenêtre
+    `window_minutes` et le relevé courant), jamais une régression statistique
+    complète — une sécante simple reste explicable, comme le reste du FDD de
+    ce module. Jamais déclenchée si le seuil est déjà franchi maintenant (ce
+    cas relève de `ThresholdRule`, qui constate, pas de cette règle, qui
+    prédit) ni sans assez d'historique dans la fenêtre pour estimer une
+    tendance (jamais une pente inventée à partir d'un seul point)."""
+    already_breached = (
+        value > rule["threshold"] if rule["operator"] == ">" else value < rule["threshold"]
+    )
+    if already_breached:
+        return None
+
+    from app.telemetry import list_measurements  # import tardif : évite un cycle avec ce module
+
+    window_start = at - timedelta(minutes=rule["window_minutes"])
+    history = list_measurements(connection, point_id=point["id"], since=window_start, limit=1000)
+    earliest = min(history, key=lambda row: row["measured_at"], default=None)
+    if earliest is None or earliest["measured_at"] >= at:
+        return None
+
+    elapsed_minutes = (at - earliest["measured_at"]).total_seconds() / 60
+    slope_per_minute = (value - earliest["value"]) / elapsed_minutes
+
+    moving_toward_threshold = (
+        slope_per_minute > 0 if rule["operator"] == ">" else slope_per_minute < 0
+    )
+    if not moving_toward_threshold:
+        return None
+
+    projected_minutes = (rule["threshold"] - value) / slope_per_minute
+    if projected_minutes < 0 or projected_minutes > rule["horizon_minutes"]:
+        return None
+
+    return {
+        "current_value": value,
+        "threshold": rule["threshold"],
+        "operator": rule["operator"],
+        # Arrondis pour l'affichage : une fausse précision (plusieurs
+        # décimales) affirmerait plus que ce qu'une sécante à deux points
+        # peut réellement garantir (ADR 013 — jamais plus que ce que le
+        # système sait).
+        "slope_per_minute": round(slope_per_minute, 4),
+        "projected_minutes": round(projected_minutes),
+        "window_minutes": rule["window_minutes"],
+        "horizon_minutes": rule["horizon_minutes"],
+    }
+
+
 def _evaluate(
     connection: Connection, rule: dict[str, Any], point: dict[str, Any], value: float, at: datetime
 ) -> dict[str, Any] | None:
@@ -328,6 +417,9 @@ def _evaluate(
 
     if rule["kind"] == "short_cycling":
         return _evaluate_short_cycling(connection, rule, point, value, at)
+
+    if rule["kind"] == "trend_projection":
+        return _evaluate_trend_projection(connection, rule, point, value, at)
 
     desired = desired_state_at(connection, point["id"], at)
     if desired is None:
@@ -440,7 +532,7 @@ def evaluate_after_measurement(
             subject_node_id=subject,
             point_id=point["id"],
             kind=_FINDING_KIND[rule["kind"]],
-            method="deterministic_rule",
+            method=_RULE_METHOD.get(rule["kind"], "deterministic_rule"),
             rule_config_version_id=version["id"],
             severity=rule["severity"],
             reason_code=_RULE_REASONS[rule["kind"]],
@@ -450,7 +542,10 @@ def evaluate_after_measurement(
             },
             title=rule["title"],
             recommended_action=rule.get("recommended_action"),
-            confidence=1.0,
+            # Une règle instantanée compare, elle ne se trompe jamais sur ce
+            # qu'elle observe : confiance totale. Une prédiction extrapole —
+            # jamais une certitude affirmée à sa place (ADR 013).
+            confidence=None if _FINDING_KIND[rule["kind"]] == "prediction" else 1.0,
             evidence={**base_evidence, **evidence, "trust_score": trust["score"]},
             seen_at=measured_at,
             **common,

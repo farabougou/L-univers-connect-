@@ -95,7 +95,25 @@ def _virtual_cta_tenant() -> dict:
             max_value=100,
             created_by="test",
         )
-        for point_id in (heating, cooling, damper):
+        supply_temp = create_point(
+            connection,
+            tenant_id=tenant_id,
+            code="CTA-01.t_depart",
+            name="Température départ CTA",
+            value_type="number",
+            point_class="supply_air_temperature_sensor",
+            unit="Cel",
+            functional_location_id=equipment_id,
+            expected_interval_seconds=300,
+            # Même plage que le profil virtuel (VirtualPointSpec "t_depart",
+            # app/connectors/virtual_telemetry.py) : une dérive qui sortirait
+            # de cette plage serait d'abord un problème de qualité de donnée
+            # (app.quality_flags), pas encore une prédiction à évaluer.
+            min_value=10,
+            max_value=30,
+            created_by="test",
+        )
+        for point_id in (heating, cooling, damper, supply_temp):
             decide_point(connection, point_id=point_id, decision="validated")
     return {
         "tenant_id": tenant_id,
@@ -103,6 +121,7 @@ def _virtual_cta_tenant() -> dict:
         "heating": heating,
         "cooling": cooling,
         "damper": damper,
+        "supply_temp": supply_temp,
     }
 
 
@@ -330,5 +349,118 @@ def test_healthy_baseline_never_raises_the_finding(tenant) -> None:
             received_at=T0 + timedelta(seconds=30),
         )
         findings = list_findings(connection)
+
+    assert findings == []
+
+
+def _activate_trend_projection_rule(connection, tenant) -> None:
+    content = {
+        "kind": "trend_projection",
+        "point_id": str(tenant["supply_temp"]),
+        "operator": ">",
+        "threshold": 28.0,
+        "window_minutes": 60,
+        "horizon_minutes": 180,
+        "severity": "warning",
+        "title": "Dérive du capteur de température de départ (actif virtuel)",
+        "recommended_action": "Planifier le remplacement avant qu'il ne sorte de sa plage.",
+    }
+    version_id = create_version(
+        connection,
+        tenant_id=tenant["tenant_id"],
+        config_type=ALARM_RULE,
+        subject_key="cta-01-virtuel-projection-derive",
+        content=content,
+        author="responsable",
+        reason="test",
+    )
+    activate_version(connection, version_id=version_id, activated_by="approbateur", activated_at=T0)
+
+
+def test_sensor_drift_scenario_raises_a_real_prediction(tenant) -> None:
+    """Palier FAILURE_TESTED pour la maintenance prédictive (02/10/2026,
+    décision de Mohamed) : le scénario `capteur_derive` déjà existant
+    (dérive linéaire de 4°C/heure, `app/connectors/virtual_telemetry.py`)
+    déclenche réellement `TrendProjectionRule` (`app/rules.py`) — aucun
+    nouveau mécanisme de simulation, seulement une nouvelle règle qui lit la
+    même télémétrie que les autres scénarios de ce fichier."""
+    scenario = failure_scenario("cta", "capteur_derive")
+
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant["tenant_id"])
+        _activate_trend_projection_rule(connection, tenant)
+
+        # Deux relevés dérivés, une heure d'écart : la pente observée (environ
+        # 4°C/heure) resterait sous le seuil de 28°C maintenant, mais
+        # l'atteindrait dans l'horizon de 180 minutes — une vraie prédiction,
+        # jamais un constat de seuil déjà franchi.
+        first_values = generate_profile_values(
+            "cta", now=T0, scenario=scenario, scenario_started_at=T0
+        )
+        record_measurement(
+            connection,
+            tenant_id=tenant["tenant_id"],
+            point=get_point(connection, tenant["supply_temp"]),
+            value=first_values["t_depart"],
+            measured_at=T0,
+            origin="simulated",
+            source="virtual_commissioning_lab",
+            received_at=T0,
+        )
+        second_values = generate_profile_values(
+            "cta",
+            now=T0 + timedelta(hours=1),
+            scenario=scenario,
+            scenario_started_at=T0,
+        )
+        record_measurement(
+            connection,
+            tenant_id=tenant["tenant_id"],
+            point=get_point(connection, tenant["supply_temp"]),
+            value=second_values["t_depart"],
+            measured_at=T0 + timedelta(hours=1),
+            origin="simulated",
+            source="virtual_commissioning_lab",
+            received_at=T0 + timedelta(hours=1),
+        )
+        findings = list_findings(connection, kind="prediction")
+
+    assert len(findings) == 1
+    finding = findings[0]
+    assert finding["reason_code"] == "RULE_TREND_PROJECTION"
+    assert finding["certainty"] == "prediction"
+    assert finding["confidence"] is None
+    assert finding["reason_params"]["current_value"] == second_values["t_depart"]
+
+
+def test_healthy_sensor_never_raises_a_prediction(tenant) -> None:
+    """Contrôle négatif : sans scénario, la valeur saine (oscillation autour
+    de 18°C) ne dérive vers aucun seuil — une prédiction exige un véritable
+    scénario de panne, jamais une fluctuation normale."""
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant["tenant_id"])
+        _activate_trend_projection_rule(connection, tenant)
+
+        record_measurement(
+            connection,
+            tenant_id=tenant["tenant_id"],
+            point=get_point(connection, tenant["supply_temp"]),
+            value=generate_profile_values("cta", now=T0)["t_depart"],
+            measured_at=T0,
+            origin="simulated",
+            source="virtual_commissioning_lab",
+            received_at=T0,
+        )
+        record_measurement(
+            connection,
+            tenant_id=tenant["tenant_id"],
+            point=get_point(connection, tenant["supply_temp"]),
+            value=generate_profile_values("cta", now=T0 + timedelta(hours=1))["t_depart"],
+            measured_at=T0 + timedelta(hours=1),
+            origin="simulated",
+            source="virtual_commissioning_lab",
+            received_at=T0 + timedelta(hours=1),
+        )
+        findings = list_findings(connection, kind="prediction")
 
     assert findings == []

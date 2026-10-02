@@ -184,6 +184,7 @@
     "RULE_POINT_NOT_VALIDATED": "La règle doit porter sur un point validé lors de la mise en service.",
     "RULE_SHORT_CYCLING_REQUIRES_BOOLEAN": "Une règle de cycles courts ne s’applique qu’à un point d’état marche/arrêt.",
     "RULE_THRESHOLD_REQUIRES_NUMBER": "Un seuil ne s’applique qu’à un point numérique.",
+    "RULE_TREND_PROJECTION_REQUIRES_NUMBER": "Une projection de tendance ne s’applique qu’à un point numérique.",
     "SEVERITY_UNKNOWN": "Gravité inconnue : « {severity} ».",
     "SIGNAL_ALREADY_CLEARED": "Ce signalement est déjà revenu à la normale.",
     "SIGNAL_CONDITION_STILL_ACTIVE": "Ce signalement ne peut pas être clos tant que sa condition est active. Attendez le retour à la normale ou déclarez un faux positif.",
