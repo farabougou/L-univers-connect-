@@ -12,6 +12,7 @@ from tests.db_helpers import (
     purge_config_versions_for_tenant,
     purge_fgas_records_for_tenant,
     purge_intervention_closures_for_tenant,
+    purge_operat_declarations_for_tenant,
     purge_relations_for_tenant,
 )
 
@@ -51,6 +52,7 @@ def purge_tenant(tenant_id) -> None:
     purge_relations_for_tenant(tenant_id)
     purge_intervention_closures_for_tenant(tenant_id)
     purge_fgas_records_for_tenant(tenant_id)
+    purge_operat_declarations_for_tenant(tenant_id)
     with engine.begin() as connection:
         set_tenant_context(connection, tenant_id)
         for table in _TABLES_IN_ORDER:

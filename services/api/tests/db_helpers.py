@@ -139,6 +139,33 @@ def purge_fgas_records_for_tenant(tenant_id) -> None:
         admin_engine.dispose()
 
 
+def purge_operat_declarations_for_tenant(tenant_id) -> None:
+    """Une déclaration OPERAT transmise est gelée (voir la migration
+    ada08b67a28c) ; un brouillon ou une déclaration prête reste supprimable
+    par l'application, mais le nettoyage de test passe par le même accès
+    administrateur pour couvrir les trois états en une fois."""
+    admin_engine = create_engine(ADMIN_DATABASE_URL)
+    try:
+        with admin_engine.begin() as connection:
+            connection.execute(
+                text(
+                    "ALTER TABLE operat_declarations "
+                    "DISABLE TRIGGER operat_declarations_protect_delete"
+                )
+            )
+            connection.execute(
+                text("DELETE FROM operat_declarations WHERE tenant_id = :id"), {"id": tenant_id}
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE operat_declarations "
+                    "ENABLE TRIGGER operat_declarations_protect_delete"
+                )
+            )
+    finally:
+        admin_engine.dispose()
+
+
 def purge_intervention_closures_for_tenant(tenant_id) -> None:
     """Les clôtures d'intervention sont des preuves, protégées contre toute
     suppression (voir la migration a4a1fa8a4cfa)."""
