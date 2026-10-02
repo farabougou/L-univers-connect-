@@ -308,7 +308,11 @@
       "drill_down": "View",
       "site_equipment_title": "Equipment — {name}",
       "back_to_portfolio": "Back to overview",
-      "no_sites": "No site registered yet."
+      "no_sites": "No site registered yet.",
+      "search_placeholder": "Search a site, an equipment, an identifier…",
+      "search_submit": "Search",
+      "search_results_title": "Results for “{query}”",
+      "search_no_results": "No results for “{query}”."
     },
     "edge": {
       "title": "Edge and connectivity",
@@ -796,5 +800,12 @@
     "heating_valve_position": "Heating valve position",
     "cooling_valve_position": "Cooling valve position",
     "on_off_command": "On/off command"
+  },
+  "search_result_kind": {
+    "site": "Site",
+    "space": "Space",
+    "functional_location": "Equipment",
+    "tag": "Tag",
+    "work_order": "Work order"
   }
 }

@@ -308,7 +308,11 @@
       "drill_down": "Voir",
       "site_equipment_title": "Équipements — {name}",
       "back_to_portfolio": "Retour à la vue d’ensemble",
-      "no_sites": "Aucun site enregistré pour le moment."
+      "no_sites": "Aucun site enregistré pour le moment.",
+      "search_placeholder": "Rechercher un site, un équipement, un identifiant…",
+      "search_submit": "Rechercher",
+      "search_results_title": "Résultats pour « {query} »",
+      "search_no_results": "Aucun résultat pour « {query} »."
     },
     "edge": {
       "title": "Edge et connectivité",
@@ -796,5 +800,12 @@
     "heating_valve_position": "Position vanne chaude",
     "cooling_valve_position": "Position vanne froide",
     "on_off_command": "Commande marche/arrêt"
+  },
+  "search_result_kind": {
+    "site": "Site",
+    "space": "Espace",
+    "functional_location": "Équipement",
+    "tag": "Étiquette",
+    "work_order": "Ordre de travail"
   }
 }

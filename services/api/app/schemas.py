@@ -1100,3 +1100,14 @@ class PortfolioEquipmentStatusOut(BaseModel):
     current: bool
     as_of: datetime | None
     reason: str | None
+
+
+class SearchResultOut(BaseModel):
+    """Un résultat de recherche globale (app/search.py) : `kind` dit quelle
+    table a répondu (site, space, functional_location, tag, work_order),
+    `id` est l'identifiant à utiliser pour y naviguer (pour `tag`, l'id du
+    nœud du graphe qu'il désigne, pas l'id de l'étiquette elle-même)."""
+
+    kind: Literal["site", "space", "functional_location", "tag", "work_order"]
+    id: uuid.UUID
+    label: str

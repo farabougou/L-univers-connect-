@@ -24,6 +24,7 @@ from app.routers.maintenance import router as maintenance_router
 from app.routers.passport import router as passport_router
 from app.routers.points import router as points_router
 from app.routers.providers import router as providers_router
+from app.routers.search import router as search_router
 from app.routers.spatial import router as spatial_router
 from app.routers.telemetry import router as telemetry_router
 
@@ -49,6 +50,7 @@ app.include_router(floor_plans_router)
 app.include_router(ifc_import_router)
 app.include_router(documents_router)
 app.include_router(providers_router)
+app.include_router(search_router)
 
 
 @app.get("/health")

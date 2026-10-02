@@ -20,10 +20,12 @@ import {
   cardStyle,
   cellStyle,
   colors,
+  fieldStyle,
   headerCellStyle,
   pageContainerStyle,
   pageHeaderStyle,
   sectionTitleStyle,
+  submitStyle,
   tableScrollStyle,
 } from "@/lib/formStyles";
 import {
@@ -75,6 +77,27 @@ type Me = {
 
 type FunctionalLocation = PortfolioLocation & { code: string; name: string };
 
+type SearchResult = {
+  kind: "site" | "space" | "functional_location" | "tag" | "work_order";
+  id: string;
+  label: string;
+};
+
+// Un segment sans destination connue reste du texte, jamais un lien mort
+// (même principe que Breadcrumb.tsx) : un espace ou un ordre de travail
+// n'ont pas encore de fiche dédiée à laquelle renvoyer.
+function searchResultHref(result: SearchResult): string | null {
+  switch (result.kind) {
+    case "site":
+      return `/?site=${result.id}`;
+    case "functional_location":
+    case "tag":
+      return `/registre/${result.id}`;
+    default:
+      return null;
+  }
+}
+
 const COMMUNICATION_COLOR: Record<string, string> = {
   online: "#16a34a",
   offline: "#dc2626",
@@ -122,12 +145,18 @@ async function _openSignals<T extends { severity: string }>(
 export default async function PortfolioPage({
   searchParams,
 }: {
-  searchParams: Promise<{ site?: string }>;
+  searchParams: Promise<{ site?: string; q?: string }>;
 }) {
   const accessToken = await requireAccessToken();
   const { t } = await getTranslator();
   const locale = await getLocale();
-  const { site: selectedSiteId } = await searchParams;
+  const { site: selectedSiteId, q: searchQuery } = await searchParams;
+
+  const searchResultsResponse = searchQuery
+    ? await apiFetch(`/search?q=${encodeURIComponent(searchQuery)}`, accessToken)
+    : null;
+  const searchResults: SearchResult[] =
+    searchResultsResponse?.ok ? await searchResultsResponse.json() : [];
 
   const [
     meResponse,
@@ -378,6 +407,51 @@ export default async function PortfolioPage({
           {t("web.dashboard.registry_link")} →
         </Link>
       </nav>
+
+      <form
+        action="/"
+        style={{ display: "flex", gap: 8, marginBottom: 24, maxWidth: 480 }}
+      >
+        <input
+          type="search"
+          name="q"
+          defaultValue={searchQuery ?? ""}
+          placeholder={t("web.dashboard.search_placeholder")}
+          style={{ ...fieldStyle, flex: 1 }}
+        />
+        <button type="submit" style={submitStyle}>
+          {t("web.dashboard.search_submit")}
+        </button>
+      </form>
+
+      {searchQuery && (
+        <section style={{ ...cardStyle, marginBottom: 24 }}>
+          <h2 style={sectionTitleStyle}>
+            {t("web.dashboard.search_results_title", { query: searchQuery })}
+          </h2>
+          {searchResults.length === 0 ? (
+            <p style={{ color: colors.textMuted }}>
+              {t("web.dashboard.search_no_results", { query: searchQuery })}
+            </p>
+          ) : (
+            searchResults.map((result) => {
+              const href = searchResultHref(result);
+              const label = `${t(`search_result_kind.${result.kind}`)} — ${result.label}`;
+              return (
+                <p key={`${result.kind}-${result.id}`} style={{ margin: "0 0 4px" }}>
+                  {href ? (
+                    <Link href={href} style={{ color: colors.accent }}>
+                      {label}
+                    </Link>
+                  ) : (
+                    label
+                  )}
+                </p>
+              );
+            })
+          )}
+        </section>
+      )}
 
       <section style={{ ...cardStyle, marginBottom: 24 }}>
         <h2 style={sectionTitleStyle}>{t("web.dashboard.portfolio_title")}</h2>
