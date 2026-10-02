@@ -20,12 +20,13 @@ from app.connectors.virtual_telemetry import (
 from app.point_vocabulary import POINT_CLASSES, UNITS, check_point_definition
 
 
-def test_six_profiles_present() -> None:
+def test_seven_profiles_present() -> None:
     assert list_profiles() == [
         "comptage",
         "cta",
         "groupe_electrogene",
         "groupe_froid",
+        "pompe",
         "sous_station_thermique",
         "vrv_drv",
     ]
@@ -175,6 +176,58 @@ def test_stuck_economizer_damper_overrides_ignore_normal_modulation() -> None:
         now = datetime(2026, 10, 1, hour, 0, tzinfo=UTC)
         values = generate_profile_values("cta", now=now, scenario=scenario)
         assert values["volet_air_neuf"] == 5.0
+
+
+def test_low_pressure_scenario_overrides_pump_discharge_pressure() -> None:
+    scenario = failure_scenario("pompe", "cavitation")
+    now = datetime(2026, 10, 1, 14, 0, tzinfo=UTC)
+    values = generate_profile_values("pompe", now=now, scenario=scenario)
+    assert values["pression_refoulement"] == 0.4
+
+
+def test_pump_power_draw_drift_moves_outside_the_normal_band_over_time() -> None:
+    scenario = failure_scenario("pompe", "derive_puissance")
+    started_at = datetime(2026, 10, 1, 10, 0, tzinfo=UTC)
+    later = generate_profile_values(
+        "pompe",
+        now=started_at + timedelta(hours=10),
+        scenario=scenario,
+        scenario_started_at=started_at,
+    )
+    # +0.3 kW/heure pendant 10h (+3 kW) : largement au-delà du bruit et de la
+    # variation jour/nuit (+/-0.5 kW) de la puissance absorbée saine.
+    assert later["puissance_absorbee"] > 7.0
+
+
+def test_chiller_return_overheat_scenario_overrides_return_temperature() -> None:
+    scenario = failure_scenario("groupe_froid", "surchauffe_retour")
+    now = datetime(2026, 10, 1, 14, 0, tzinfo=UTC)
+    values = generate_profile_values("groupe_froid", now=now, scenario=scenario)
+    assert values["t_eau_glacee_retour"] == 22.0
+
+
+def test_chiller_exchanger_drift_moves_outside_the_normal_band_over_time() -> None:
+    scenario = failure_scenario("groupe_froid", "derive_echangeur")
+    started_at = datetime(2026, 10, 1, 10, 0, tzinfo=UTC)
+    spec = next(s for s in profile_points("groupe_froid") if s.code_suffix == "t_eau_glacee_depart")
+    later = generate_profile_values(
+        "groupe_froid",
+        now=started_at + timedelta(hours=20),
+        scenario=scenario,
+        scenario_started_at=started_at,
+    )
+    assert later["t_eau_glacee_depart"] > spec.max_value
+
+
+def test_incoherent_meter_reading_scenario_overrides_with_an_impossible_value() -> None:
+    """Valeur incohérente (02/10/2026, demande explicite de Mohamed) : un
+    compteur de consommation ne peut pas renvoyer une puissance négative —
+    distinct d'une dérive progressive, c'est une valeur immédiatement
+    impossible, jamais une tendance à extrapoler."""
+    scenario = failure_scenario("comptage", "releve_incoherent")
+    now = datetime(2026, 10, 1, 14, 0, tzinfo=UTC)
+    values = generate_profile_values("comptage", now=now, scenario=scenario)
+    assert values["puissance_active"] == -500.0
 
 
 def test_other_profile_points_are_unaffected_by_a_scenario() -> None:

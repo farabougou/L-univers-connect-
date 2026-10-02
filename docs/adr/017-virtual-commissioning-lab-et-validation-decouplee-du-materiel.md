@@ -218,3 +218,32 @@ existant, jamais mélangé à un tenant client réel).
   citer cette ADR ; nouvelle sous-section « Validation virtuelle (Virtual Commissioning
   Lab, Replay Mode) ».
 - Prochaine étape réelle (non codée par cette ADR) : incrément 1 de la section 7.
+
+## 8. Extension du 02/10/2026 (demande explicite de Mohamed)
+
+Les incréments 1 à 4 de la section 7 étaient faits. Demande explicite : pouvoir simuler
+des pompes en plus des profils existants, des valeurs incohérentes en plus des dérives et
+pertes de communication, des règles FDD multi-points, et des commandes en DRY_RUN/SHADOW
+— « le simulateur doit alimenter exactement la même chaîne que les futurs équipements
+réels ». Aucune nouvelle décision d'architecture : extension du même modèle (profils,
+scénarios, règles, exécuteur simulé) déjà posé en section 2 et 4.
+
+- Septième profil, **pompe** (`app/connectors/virtual_telemetry.py`), classes de points
+  déjà existantes uniquement.
+- Cinq nouveaux scénarios de panne (`surchauffe_retour`, `derive_echangeur`, `cavitation`,
+  `derive_puissance`, `releve_incoherent`) — le dernier introduit la distinction
+  « valeur incohérente » (immédiatement impossible) face à « dérive » (progressive),
+  qualifiée par `app.quality_flags`, jamais par une règle FDD.
+- `scripts/seed_virtual_site.py` câble désormais, pour chaque équipement créé, les
+  règles FDD par défaut du profil (y compris `simultaneous_heating_cooling`, seul type
+  multi-points du moteur), un état souhaité (CTA), un point commandable
+  `simulated_relay` (pompe) et une relation `dependsOn` réaliste — toujours de façon
+  idempotente, jamais une seconde fois à un rejeu du script. Alarmes, chronologie et
+  ordres de travail restent des effets automatiques ou des vues pures déjà câblés,
+  jamais une donnée seedée séparément.
+- `short_cycling` reste hors du câblage par défaut (aucun mécanisme d'oscillation
+  marche/arrêt dans le simulateur) et le démon reste un processus par équipement
+  (cohérent avec Modbus/BACnet/OPC UA/MQTT) : les deux DEFER étaient déjà documentés et
+  restent non bloquants — lancer plusieurs processus simule déjà un site complet.
+- Aucun matériel ni document externe requis : conforme à la demande, ce chantier
+  n'attendait ni l'un ni l'autre et n'a pas eu besoin d'en attendre.

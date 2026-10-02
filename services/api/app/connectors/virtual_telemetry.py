@@ -12,9 +12,10 @@ aucune de ces valeurs ne doit jamais être présentée comme une mesure réelle
 sans que `origin` le dise explicitement (ADR 013, aucune valeur simulée
 affichée comme mesurée).
 
-Six profils, repris tels quels de `tests/bacnet_lab.py` (CVC, froid,
-production électrique de secours, VRV/DRV, réseaux thermiques urbains,
-comptage) — mêmes catégories d'équipement, cette fois exprimées avec les
+Sept profils : les six repris tels quels de `tests/bacnet_lab.py` (CVC,
+froid, production électrique de secours, VRV/DRV, réseaux thermiques
+urbains, comptage), plus un septième (02/10/2026, demande explicite de
+Mohamed) : pompes. Mêmes catégories d'équipement, exprimées avec les
 classes de points de `app/point_vocabulary.py` plutôt qu'avec des objets
 BACnet, pour qu'un point créé soit directement validable et exploitable par
 le reste de la plateforme (FDD, alertes, chronologie…) sans traduction.
@@ -312,6 +313,44 @@ PROFILES: dict[str, tuple[VirtualPointSpec, ...]] = {
             min_value=0.0,
         ),
     ),
+    # Septième profil (02/10/2026, demande explicite de Mohamed : « pompes »
+    # dans la liste des équipements à simuler) — uniquement des classes de
+    # points déjà existantes (run_status, fault_status, pressure_sensor,
+    # electric_power_sensor) : aucun ajout à app/point_vocabulary.py n'était
+    # nécessaire, conforme à la « règle des trois » du fichier (une classe
+    # s'ajoute avec un cas réel, jamais au cas où).
+    "pompe": (
+        VirtualPointSpec(
+            "marche",
+            "Marche pompe",
+            "run_status",
+            "boolean",
+            active_hours=(0, 24),
+        ),
+        VirtualPointSpec("defaut_pompe", "Défaut pompe", "fault_status", "boolean"),
+        VirtualPointSpec(
+            "pression_refoulement",
+            "Pression refoulement pompe",
+            "pressure_sensor",
+            "number",
+            "bar",
+            base=3.5,
+            noise=0.1,
+            min_value=0.0,
+            max_value=8.0,
+        ),
+        VirtualPointSpec(
+            "puissance_absorbee",
+            "Puissance absorbée pompe",
+            "electric_power_sensor",
+            "number",
+            "kW",
+            base=5.5,
+            diurnal_amplitude=0.5,
+            noise=0.2,
+            min_value=0.0,
+        ),
+    ),
 }
 
 
@@ -353,13 +392,19 @@ class FailureScenario:
     suppressed: frozenset[str] = frozenset()
 
 
-# Trois scénarios nommés propres au profil "cta" — choisis pour retomber sur
-# des mécanismes déjà construits et testés ailleurs dans la plateforme :
-# `vanne_bloquee` et `chauffage_froid_simultane` alimentent directement la
-# règle FDD déjà écrite (`app.rules.CorrelationRule`,
-# `simultaneous_heating_cooling`), `capteur_derive` une sortie de plage que
-# `app.quality_flags`/`app.trust` savent déjà qualifier.
-_CTA_SCENARIOS: dict[str, FailureScenario] = {
+# Scénarios nommés par profil — choisis pour retomber sur des mécanismes déjà
+# construits et testés ailleurs dans la plateforme, jamais un nouveau moyen de
+# produire une valeur : `vanne_bloquee` et `chauffage_froid_simultane`
+# alimentent la règle FDD à deux points déjà écrite
+# (`app.rules.CorrelationRule`, `simultaneous_heating_cooling`),
+# `capteur_derive`/`derive_puissance`/`derive_echangeur` la règle de
+# projection de tendance (`app.rules.TrendProjectionRule`), `cavitation` et
+# `surchauffe_retour` une règle de seuil simple (`app.rules.ThresholdRule`),
+# `releve_incoherent` une valeur immédiatement impossible (distincte d'une
+# dérive progressive) que `app.quality_flags` qualifie dès la réception.
+# `perte_communication` (ci-dessous, `communication_loss_scenario`) reste
+# générique à tout profil, aucune entrée dédiée n'est nécessaire ici.
+_SCENARIOS: dict[str, FailureScenario] = {
     "economiseur_bloque": FailureScenario(
         name="economiseur_bloque",
         profile="cta",
@@ -395,6 +440,53 @@ _CTA_SCENARIOS: dict[str, FailureScenario] = {
         ),
         overrides={"vanne_chaude": 60.0, "vanne_froide": 60.0},
     ),
+    "surchauffe_retour": FailureScenario(
+        name="surchauffe_retour",
+        profile="groupe_froid",
+        description=(
+            "Eau glacée retour anormalement chaude (refroidissement "
+            "insuffisant) — déclenche une règle de seuil simple."
+        ),
+        overrides={"t_eau_glacee_retour": 22.0},
+    ),
+    "derive_echangeur": FailureScenario(
+        name="derive_echangeur",
+        profile="groupe_froid",
+        description=(
+            "L'échangeur s'encrasse progressivement : la température d'eau "
+            "glacée départ dérive à la hausse, hors de sa plage normale."
+        ),
+        drift_per_hour={"t_eau_glacee_depart": 0.5},
+    ),
+    "cavitation": FailureScenario(
+        name="cavitation",
+        profile="pompe",
+        description=(
+            "Pression de refoulement anormalement basse (cavitation ou "
+            "désamorçage) — déclenche une règle de seuil simple."
+        ),
+        overrides={"pression_refoulement": 0.4},
+    ),
+    "derive_puissance": FailureScenario(
+        name="derive_puissance",
+        profile="pompe",
+        description=(
+            "Usure progressive des roulements : la puissance absorbée dérive "
+            "à la hausse avec le temps."
+        ),
+        drift_per_hour={"puissance_absorbee": 0.3},
+    ),
+    "releve_incoherent": FailureScenario(
+        name="releve_incoherent",
+        profile="comptage",
+        description=(
+            "Relevé immédiatement impossible (puissance négative sur un "
+            "compteur de consommation) — valeur incohérente, jamais une "
+            "dérive progressive : qualifiée dès la réception "
+            "(app.quality_flags), jamais évaluée par une règle FDD."
+        ),
+        overrides={"puissance_active": -500.0},
+    ),
 }
 
 
@@ -416,14 +508,14 @@ def list_failure_scenarios(profile: str) -> list[str]:
     """Noms valides pour `failure_scenario(profile, ...)` — toujours au moins
     `perte_communication`, générique à tout profil."""
     names = {"perte_communication"}
-    names.update(name for name, scenario in _CTA_SCENARIOS.items() if scenario.profile == profile)
+    names.update(name for name, scenario in _SCENARIOS.items() if scenario.profile == profile)
     return sorted(names)
 
 
 def failure_scenario(profile: str, name: str) -> FailureScenario:
     if name == "perte_communication":
         return communication_loss_scenario(profile)
-    scenario = _CTA_SCENARIOS.get(name)
+    scenario = _SCENARIOS.get(name)
     if scenario is None or scenario.profile != profile:
         raise ValueError(
             f"scénario de panne inconnu pour le profil {profile!r} : {name!r} "
