@@ -352,59 +352,6 @@ export default async function PortfolioPage({
         </a>
       </header>
 
-      <nav
-        style={{ display: "flex", gap: 20, marginBottom: 24, flexWrap: "wrap" }}
-      >
-        <Link href="/alarmes" style={{ color: colors.accent, fontWeight: 600 }}>
-          {t("web.dashboard.alarms_link")} →
-        </Link>
-        <Link
-          href="/ordres-de-travail"
-          style={{ color: colors.accent, fontWeight: 600 }}
-        >
-          {t("web.dashboard.maintenance_link")} →
-        </Link>
-        <Link href="/energie" style={{ color: colors.accent, fontWeight: 600 }}>
-          {t("web.dashboard.energy_link")} →
-        </Link>
-        <Link
-          href="/telemetrie"
-          style={{ color: colors.accent, fontWeight: 600 }}
-        >
-          {t("web.dashboard.telemetry_link")} →
-        </Link>
-        <Link
-          href="/documents"
-          style={{ color: colors.accent, fontWeight: 600 }}
-        >
-          {t("web.dashboard.documents_link")} →
-        </Link>
-        <Link href="/plans" style={{ color: colors.accent, fontWeight: 600 }}>
-          {t("web.dashboard.spatial_link")} →
-        </Link>
-        <Link
-          href="/automation"
-          style={{ color: colors.accent, fontWeight: 600 }}
-        >
-          {t("web.dashboard.automation_link")} →
-        </Link>
-        <Link href="/operat" style={{ color: colors.accent, fontWeight: 600 }}>
-          {t("web.dashboard.operat_link")} →
-        </Link>
-        <Link href="/acces" style={{ color: colors.accent, fontWeight: 600 }}>
-          {t("web.dashboard.access_link")} →
-        </Link>
-        <Link href="/edge" style={{ color: colors.accent, fontWeight: 600 }}>
-          {t("web.dashboard.edge_link")} →
-        </Link>
-        <Link
-          href="/registre"
-          style={{ color: colors.accent, fontWeight: 600 }}
-        >
-          {t("web.dashboard.registry_link")} →
-        </Link>
-      </nav>
-
       <form
         action="/"
         style={{ display: "flex", gap: 8, marginBottom: 24, maxWidth: 480 }}
