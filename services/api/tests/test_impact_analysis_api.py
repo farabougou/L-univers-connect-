@@ -124,6 +124,21 @@ def test_ce_qui_depend_transitivement_est_regroupe(tenant) -> None:
     assert impacted_by_id[str(tenant["equip_b"])]["open_finding_count"] == 1
 
 
+def test_noeud_impacte_porte_son_code_et_son_nom(tenant) -> None:
+    manager = _headers(tenant, ["responsable_exploitation"])
+    _depends_on(tenant, tenant["equip_a"], tenant["gateway"], manager)
+
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        response = client.get(f"/graph/nodes/{tenant['gateway']}/impact", headers=_headers(tenant))
+
+    assert response.status_code == 200
+    impacted = response.json()["impacted"]
+    assert len(impacted) == 1
+    assert impacted[0]["node_id"] == str(tenant["equip_a"])
+    assert impacted[0]["code"] == "cta-01"
+    assert impacted[0]["name"] == "cta-01"
+
+
 def test_aucune_dependance_renvoie_une_liste_vide(tenant) -> None:
     with patch("app.auth.fetch_jwks", return_value=JWKS):
         response = client.get(f"/graph/nodes/{tenant['gateway']}/impact", headers=_headers(tenant))

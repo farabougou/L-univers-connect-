@@ -24,6 +24,7 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
+from app.assets import get_functional_location
 from app.findings import list_findings
 from app.graph import NodeNotFound, get_node
 from app.signal_vocabulary import HANDLING_OPEN
@@ -76,11 +77,20 @@ def impact_report(connection: Connection, node_id: uuid.UUID) -> dict[str, Any]:
         node = get_node(connection, dependent_id)
         if node is None:
             continue
+        code = None
+        name = None
+        if node["node_type"] == "functional_location":
+            location = get_functional_location(connection, dependent_id)
+            if location is not None:
+                code = location["code"]
+                name = location["name"]
         impacted.append(
             {
                 "node_id": dependent_id,
                 "node_type": node["node_type"],
                 "open_finding_count": _open_finding_count(connection, dependent_id),
+                "code": code,
+                "name": name,
             }
         )
 

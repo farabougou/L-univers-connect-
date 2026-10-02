@@ -642,6 +642,8 @@ class ImpactedNodeOut(BaseModel):
     node_id: uuid.UUID
     node_type: str
     open_finding_count: int
+    code: str | None = None
+    name: str | None = None
 
 
 class ImpactReportOut(BaseModel):

@@ -57,6 +57,18 @@ import {
   setProperty,
 } from "./actions";
 
+type ImpactedNode = {
+  node_id: string;
+  node_type: string;
+  open_finding_count: number;
+  code: string | null;
+  name: string | null;
+};
+type ImpactReport = {
+  node_id: string;
+  open_finding_count: number;
+  impacted: ImpactedNode[];
+};
 type RuleContent = {
   kind: "threshold" | "desired_state_divergence" | "simultaneous_heating_cooling";
   severity: string;
@@ -305,16 +317,27 @@ export default async function EquipmentPage({
   const timelineQuery = timelineBefore
     ? `?before=${encodeURIComponent(timelineBefore)}&limit=20`
     : "?limit=20";
-  const [response, meResponse, providersResponse, relationsResponse, timelineResponse, sitesResponse] =
-    await Promise.all([
-      apiFetch(`/graph/nodes/${id}/passport`, accessToken),
-      apiFetch("/me", accessToken),
-      apiFetch("/providers", accessToken),
-      apiFetch(`/graph/nodes/${id}/relations`, accessToken),
-      apiFetch(`/graph/nodes/${id}/timeline${timelineQuery}`, accessToken),
-      apiFetch("/sites", accessToken),
-    ]);
+  const [
+    response,
+    meResponse,
+    providersResponse,
+    relationsResponse,
+    timelineResponse,
+    sitesResponse,
+    impactResponse,
+  ] = await Promise.all([
+    apiFetch(`/graph/nodes/${id}/passport`, accessToken),
+    apiFetch("/me", accessToken),
+    apiFetch("/providers", accessToken),
+    apiFetch(`/graph/nodes/${id}/relations`, accessToken),
+    apiFetch(`/graph/nodes/${id}/timeline${timelineQuery}`, accessToken),
+    apiFetch("/sites", accessToken),
+    apiFetch(`/graph/nodes/${id}/impact`, accessToken),
+  ]);
   const sites: { id: string; name: string }[] = sitesResponse.ok ? await sitesResponse.json() : [];
+  const impactReport: ImpactReport | null = impactResponse.ok
+    ? await impactResponse.json()
+    : null;
   const providers: Provider[] = providersResponse.ok ? await providersResponse.json() : [];
   const relations: Relation[] = relationsResponse.ok ? await relationsResponse.json() : [];
   const maintenanceProviders = relations.filter((relation) => relation.predicate === "maintainedBy");
@@ -599,6 +622,11 @@ export default async function EquipmentPage({
           }
           t={t}
         />
+      </section>
+
+      <section style={sectionStyle}>
+        <h2 style={sectionTitleStyle}>{t("web.registre.impact_section_title")}</h2>
+        <ImpactBlock report={impactReport} t={t} />
       </section>
 
       <section style={sectionStyle}>
@@ -935,6 +963,55 @@ function IdentityHeader({
         </p>
       )}
     </section>
+  );
+}
+
+function ImpactBlock({
+  report,
+  t,
+}: {
+  report: ImpactReport | null;
+  t: (key: string, params?: Record<string, string>) => string;
+}) {
+  if (report === null) {
+    return <p style={mutedStyle}>{t("web.registre.impact_unavailable")}</p>;
+  }
+  return (
+    <>
+      <p style={mutedStyle}>{t("web.registre.impact_intro")}</p>
+      {report.impacted.length === 0 ? (
+        <p>{t("web.registre.impact_no_dependents")}</p>
+      ) : (
+        <table style={{ borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              <th style={{ textAlign: "left", paddingRight: 16 }}>
+                {t("web.registre.impact_col_equipment")}
+              </th>
+              <th style={{ textAlign: "left" }}>
+                {t("web.registre.impact_col_open_findings")}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {report.impacted.map((node) => (
+              <tr key={node.node_id}>
+                <td style={{ paddingRight: 16 }}>
+                  {node.name ? (
+                    <Link href={`/registre/${node.node_id}`} style={{ color: colors.accent }}>
+                      {node.code} — {node.name}
+                    </Link>
+                  ) : (
+                    t(`search_result_kind.${node.node_type}`)
+                  )}
+                </td>
+                <td>{node.open_finding_count}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </>
   );
 }
 
