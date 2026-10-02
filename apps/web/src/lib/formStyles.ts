@@ -54,6 +54,7 @@ export const colors = {
   textPrimary: "#0f172a",
   textMuted: "#64748b",
   accent: "#2563eb",
+  danger: "#c0392b",
 };
 
 export const pageContainerStyle = {

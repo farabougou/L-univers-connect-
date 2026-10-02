@@ -205,7 +205,7 @@ export default async function MaintenancePage({
         )}
         <div style={{ padding: 24 }}>
           <h2 style={sectionTitleStyle}>{t("web.work_orders.create")}</h2>
-          {error && <p style={{ color: "#c0392b" }}>{error}</p>}
+          {error && <p style={{ color: colors.danger }}>{error}</p>}
           <form action={createWorkOrder} style={{ maxWidth: 400 }}>
             <label>
               {t("web.work_orders.col_title")}

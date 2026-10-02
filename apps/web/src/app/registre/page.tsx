@@ -4,9 +4,11 @@ import { type Translator, formatDateTime } from "@/i18n/translator";
 import { apiFetch, requireAccessToken } from "@/lib/api";
 import {
   cellStyle,
+  colors,
   fieldStyle,
   headerCellStyle,
   labelStyle,
+  pageContainerStyle,
   submitStyle,
   tableScrollStyle,
 } from "@/lib/formStyles";
@@ -133,9 +135,13 @@ export default async function RegistrePage({
 
   if (!canManage) {
     return (
-      <main style={{ maxWidth: 720, margin: "40px auto", padding: "0 16px" }}>
-        <Link href="/">← {t("common.back")}</Link>
-        <h1>{t("web.registre.title")}</h1>
+      <main style={pageContainerStyle}>
+        <Link href="/" style={{ color: colors.accent }}>
+          ← {t("common.back")}
+        </Link>
+        <h1 style={{ fontSize: 24, margin: "12px 0 20px" }}>
+          {t("web.registre.title")}
+        </h1>
         <p>{t("web.registre.access_denied")}</p>
       </main>
     );
@@ -220,15 +226,19 @@ export default async function RegistrePage({
   );
 
   return (
-    <main style={{ maxWidth: 720, margin: "40px auto", padding: "0 16px" }}>
-      <Link href="/">← {t("common.back")}</Link>
-      <h1>{t("web.registre.title")}</h1>
-      {error && <p style={{ color: "#c0392b" }}>{error}</p>}
+    <main style={pageContainerStyle}>
+      <Link href="/" style={{ color: colors.accent }}>
+        ← {t("common.back")}
+      </Link>
+      <h1 style={{ fontSize: 24, margin: "12px 0 20px" }}>
+        {t("web.registre.title")}
+      </h1>
+      {error && <p style={{ color: colors.danger }}>{error}</p>}
 
       {params.tag && tagSvg && (
         <section
           style={{
-            border: "1px solid #2563eb",
+            border: `1px solid ${colors.accent}`,
             borderRadius: 8,
             padding: 16,
             margin: "16px 0",
@@ -241,7 +251,9 @@ export default async function RegistrePage({
           <p>
             {t("web.registre.tag_code_label")} : <strong>{params.tag}</strong>
           </p>
-          <p style={{ color: "#666" }}>{t("web.registre.tag_hint")}</p>
+          <p style={{ color: colors.textMuted }}>
+            {t("web.registre.tag_hint")}
+          </p>
           <Link href="/registre">{t("web.registre.tag_close")}</Link>
         </section>
       )}
@@ -557,7 +569,7 @@ export default async function RegistrePage({
                     </>
                   )}
                   <br />
-                  <span style={{ color: "#666" }}>
+                  <span style={{ color: colors.textMuted }}>
                     {t("web.registre.floor_plans_uploaded_by", {
                       actor: plan.uploaded_by,
                       date: formatDateTime(locale, plan.uploaded_at),
@@ -640,7 +652,7 @@ export default async function RegistrePage({
                   {batch.status === "failed" &&
                     ` — ${errorMessage(locale, batch.error_code ?? "") ?? batch.error_code}`}
                   <br />
-                  <span style={{ color: "#666" }}>
+                  <span style={{ color: colors.textMuted }}>
                     {t("web.registre.ifc_import_uploaded_by", {
                       actor: batch.uploaded_by,
                       date: formatDateTime(locale, batch.uploaded_at),

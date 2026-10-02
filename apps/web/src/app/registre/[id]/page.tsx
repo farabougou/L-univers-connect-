@@ -249,7 +249,7 @@ const WORK_ORDER_PRIORITIES = ["low", "medium", "high", "urgent"];
 
 const sectionStyle = { borderTop: "1px solid #eee", paddingTop: 12, marginTop: 16 };
 const sectionTitleStyle = { fontSize: 16, fontWeight: 600 as const, marginBottom: 8 };
-const mutedStyle = { color: "#666" };
+const mutedStyle = { color: colors.textMuted };
 const strongStyle = { fontWeight: 600 as const };
 const signalActionsStyle = { display: "flex", gap: 8, marginTop: 4 };
 
@@ -448,11 +448,11 @@ export default async function EquipmentPage({
           {passport.functional_location.code} — {passport.functional_location.name}
         </h1>
       )}
-      {error && <p style={{ color: "#c0392b" }}>{error}</p>}
+      {error && <p style={{ color: colors.danger }}>{error}</p>}
 
       {configDiff && (
         <section
-          style={{ border: "1px solid #2563eb", borderRadius: 8, padding: 16, margin: "16px 0" }}
+          style={{ border: `1px solid ${colors.accent}`, borderRadius: 8, padding: 16, margin: "16px 0" }}
         >
           <h2 style={sectionTitleStyle}>
             {t("web.registre.rule_diff_title", {
@@ -484,7 +484,7 @@ export default async function EquipmentPage({
 
       {ruleSimulation && (
         <section
-          style={{ border: "1px solid #2563eb", borderRadius: 8, padding: 16, margin: "16px 0" }}
+          style={{ border: `1px solid ${colors.accent}`, borderRadius: 8, padding: 16, margin: "16px 0" }}
         >
           <h2 style={sectionTitleStyle}>{t("web.registre.rule_simulation_title")}</h2>
           <p style={{ margin: 0 }}>

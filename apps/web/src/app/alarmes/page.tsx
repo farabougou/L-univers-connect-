@@ -130,7 +130,7 @@ export default async function AlarmsPage({
       <h1 style={{ fontSize: 24, margin: "12px 0 20px" }}>
         {t("web.alarms_page.title")}
       </h1>
-      {error && <p style={{ color: "#c0392b" }}>{error}</p>}
+      {error && <p style={{ color: colors.danger }}>{error}</p>}
 
       <section
         style={{

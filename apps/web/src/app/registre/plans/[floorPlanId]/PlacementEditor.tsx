@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { fieldStyle, labelStyle, submitStyle } from "@/lib/formStyles";
+import { colors, fieldStyle, labelStyle, submitStyle } from "@/lib/formStyles";
 
 import { createPlacement } from "./actions";
 
@@ -64,7 +64,7 @@ export function PlacementEditor({
 
   return (
     <div>
-      <p style={{ color: "#666" }}>{labels.clickHint}</p>
+      <p style={{ color: colors.textMuted }}>{labels.clickHint}</p>
       <div style={{ position: "relative", display: "inline-block", maxWidth: "100%" }}>
         {/* eslint-disable-next-line @next/next/no-img-element -- image distante, présignée, jamais optimisable par next/image */}
         <img
@@ -127,7 +127,7 @@ export function PlacementEditor({
               width: 16,
               height: 16,
               borderRadius: "50%",
-              border: "2px dashed #2563eb",
+              border: `2px dashed ${colors.accent}`,
               transform: "translate(-50%, -50%)",
             }}
           />
