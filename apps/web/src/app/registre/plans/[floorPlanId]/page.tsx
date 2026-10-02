@@ -1,12 +1,16 @@
 import Link from "next/link";
 
 import { apiFetch, requireAccessToken } from "@/lib/api";
+import { Breadcrumb, type BreadcrumbSegment } from "@/components/Breadcrumb";
+import { SiteSwitcher } from "@/components/SiteSwitcher";
 import { cellStyle, headerCellStyle, tableScrollStyle } from "@/lib/formStyles";
 import { errorMessage, getLocale, getTranslator } from "@/lib/i18n";
 import { canManage as computeCanManage, type Me } from "@/lib/roles";
 
 import { deletePlacement, validatePlacement } from "./actions";
 import { PlacementEditor } from "./PlacementEditor";
+
+type Site = { id: string; name: string };
 
 type FloorPlan = {
   id: string;
@@ -78,6 +82,7 @@ export default async function PlanEditorPage({
     pointsResponse,
     openFindingsResponse,
     inProgressFindingsResponse,
+    sitesResponse,
   ] = await Promise.all([
     apiFetch(`/floor-plans/${floorPlanId}`, accessToken),
     apiFetch(`/floor-plans/${floorPlanId}/placements`, accessToken),
@@ -87,6 +92,7 @@ export default async function PlanEditorPage({
     apiFetch("/points", accessToken),
     apiFetch("/findings?handling_status=open", accessToken),
     apiFetch("/findings?handling_status=in_progress", accessToken),
+    apiFetch("/sites", accessToken),
   ]);
 
   if (!planResponse.ok || !canManage) {
@@ -119,9 +125,11 @@ export default async function PlanEditorPage({
   const inProgressFindings: Finding[] = inProgressFindingsResponse.ok
     ? await inProgressFindingsResponse.json()
     : [];
+  const sites: Site[] = sitesResponse.ok ? await sitesResponse.json() : [];
 
   const currentSpace = allSpaces.find((space) => space.id === plan.space_id);
   const siteId = currentSpace?.site_id;
+  const currentSite = sites.find((site) => site.id === siteId) ?? null;
   const siteSpaces = allSpaces.filter((space) => space.site_id === siteId);
   const siteLocations = allLocations.filter(
     (location) => location.site_id === siteId,
@@ -195,9 +203,22 @@ export default async function PlanEditorPage({
     ? (errorMessage(locale, errorCode) ?? t("web.registre.creation_failed"))
     : null;
 
+  const segments: BreadcrumbSegment[] = [
+    { label: t("common.home"), href: "/" },
+    ...(currentSite ? [{ label: currentSite.name, href: `/registre#site-${currentSite.id}` }] : []),
+    ...(currentSpace ? [{ label: currentSpace.name, href: null }] : []),
+    { label: plan.filename, href: null },
+  ];
+
   return (
     <main style={{ maxWidth: 900, margin: "40px auto", padding: "0 16px" }}>
-      <Link href="/registre">← {t("common.back")}</Link>
+      <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+        <Breadcrumb segments={segments} />
+        <SiteSwitcher sites={sites} currentSiteId={siteId ?? null} label={t("breadcrumb.switch_site")} />
+      </div>
+      <p style={{ marginTop: 8 }}>
+        <Link href="/registre">← {t("common.back")}</Link>
+      </p>
       <h1>{t("plan_editor.title")}</h1>
       <p>
         {t("plan_editor.plan_label")} : {plan.filename} —{" "}
