@@ -253,7 +253,7 @@ export async function sendCommand(
  * (apps/web/src/components/Timeline.tsx), jamais une seconde logique.
  */
 export type TimelineEntry = {
-  kind: "intervention" | "work_order" | "alarm" | "finding" | "lifecycle";
+  kind: "intervention" | "work_order" | "alarm" | "finding" | "lifecycle" | "event";
   at: string;
   reference_id: string;
   title: string | null;

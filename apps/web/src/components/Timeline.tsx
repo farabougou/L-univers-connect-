@@ -18,7 +18,7 @@ import { colors } from "@/lib/formStyles";
  * l'URL réelle.
  */
 export type TimelineEntry = {
-  kind: "intervention" | "work_order" | "alarm" | "finding" | "lifecycle";
+  kind: "intervention" | "work_order" | "alarm" | "finding" | "lifecycle" | "event";
   at: string;
   reference_id: string;
   title: string | null;
@@ -45,6 +45,12 @@ export function timelineStatusLabel(
   t: (key: string, params?: Record<string, string>) => string,
 ): string | null {
   if (!entry.status) return null;
+  if (entry.kind === "event") {
+    // Le titre de l'événement (`app/timeline.py`, `_render_event_title`)
+    // contient déjà tout ce qu'il y a à dire ; `status` ne porte que le
+    // code stable (ex. DEVICE_WENT_OFFLINE), jamais affiché brut (ADR 013).
+    return null;
+  }
   if (entry.kind === "work_order" && entry.field === "status") {
     return t(`work_order.status.${entry.status}`);
   }

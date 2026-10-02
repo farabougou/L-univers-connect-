@@ -3,22 +3,25 @@
  * dashboard du 30/09/2026, section 16). Fonctions pures : aucun appel
  * réseau ici. La donnée brute vient de GET /activity/recent (voir
  * apps/web/src/app/page.tsx), qui fusionne côté API interventions, ordres
- * de travail, alarmes et constats pour tout le portefeuille
+ * de travail, alarmes, constats et depuis le 02/10/2026 le journal système
  * (app/timeline.py::portfolio_timeline) — jamais un appel par équipement.
  *
  * Volontairement absents aujourd'hui (aucune trace exploitable) :
- * changements d'état d'équipement, événements énergétiques, incidents ; et
- * présents côté système mais pas encore raccordés ici : événements Edge,
- * changements de connectivité, commandes (voir la table `events` et
- * app/events.py) — DEFER, documenté dans la matrice plutôt qu'ignoré.
+ * événements énergétiques, incidents (distincts des alarmes, section 24).
  */
 
 import { type Locale, formatDateTime } from "@/i18n/translator";
 
-export type ActivityKind = "alarm" | "finding" | "work_order" | "intervention";
+export type ActivityKind = "alarm" | "finding" | "work_order" | "intervention" | "event";
 
 // Ordre d'affichage des filtres : le plus urgent d'abord, jamais alphabétique.
-export const ACTIVITY_KINDS: ActivityKind[] = ["alarm", "finding", "work_order", "intervention"];
+export const ACTIVITY_KINDS: ActivityKind[] = [
+  "alarm",
+  "finding",
+  "work_order",
+  "intervention",
+  "event",
+];
 
 export type PortfolioTimelineEntry = {
   kind: ActivityKind;

@@ -281,7 +281,8 @@
         "alarm": "Alarme",
         "finding": "Constat",
         "work_order": "Ordre de travail",
-        "intervention": "Intervention"
+        "intervention": "Intervention",
+        "event": "Événement système"
       },
       "col_severity": "Gravité",
       "col_message": "Description",
@@ -722,7 +723,8 @@
     "kind_work_order": "Ordre de travail",
     "kind_alarm": "Alarme",
     "kind_finding": "Constat",
-    "kind_lifecycle": "Cycle de vie"
+    "kind_lifecycle": "Cycle de vie",
+    "kind_event": "Événement système"
   },
   "space_type": {
     "building": "Bâtiment",

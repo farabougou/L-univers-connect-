@@ -56,4 +56,12 @@ describe("timelineStatusLabel", () => {
     );
     expect(label).toBe("raw_value");
   });
+
+  it("n'affiche jamais le code brut d'un événement système, déjà rendu dans le titre", () => {
+    const label = timelineStatusLabel(
+      entry({ kind: "event", status: "DEVICE_WENT_OFFLINE", title: "Équipement passé hors ligne" }),
+      t,
+    );
+    expect(label).toBeNull();
+  });
 });

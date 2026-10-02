@@ -1,0 +1,13 @@
+{
+  "titles": {
+    "COMMAND_DISPATCHED": "Command dispatched to the device",
+    "COMMAND_FAILED": "Command failed ({failure_reason})",
+    "COMMAND_REQUESTED": "Command requested (value {requested_value})",
+    "COMMAND_TIMED_OUT": "Command received no response within the expected time",
+    "COMMAND_VERIFIED": "Command verified (value {actual_value})",
+    "DATA_BECAME_STALE": "Data became stale",
+    "DATA_FRESHNESS_RESTORED": "Data freshness restored",
+    "DEVICE_CAME_ONLINE": "Equipment back online",
+    "DEVICE_WENT_OFFLINE": "Equipment went offline"
+  }
+}

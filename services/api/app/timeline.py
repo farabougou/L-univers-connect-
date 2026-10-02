@@ -2,8 +2,10 @@
 des années après » (feature-benchmark-matrix.md, ligne « Mémoire
 opérationnelle »). Pas de nouvelle base : un assemblage, au moment de la
 consultation, des historiques qui existent déjà séparément (interventions,
-ordres de travail, alarmes, constats, cycle de vie d'un exemplaire) — une
-vue pure, comme le passeport (app/passport.py), jamais un effet de bord.
+ordres de travail, alarmes, constats, cycle de vie d'un exemplaire, et
+depuis le 02/10/2026 le journal système `app/events.py` — hors ligne/en
+ligne, donnée périmée/rétablie, cycle de vie d'une commande) — une vue pure,
+comme le passeport (app/passport.py), jamais un effet de bord.
 """
 
 import uuid
@@ -14,7 +16,7 @@ from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
 from app.findings import displayed
-from app.i18n import DEFAULT_LOCALE
+from app.i18n import DEFAULT_LOCALE, load_catalog, render_text
 from app.lifecycle import lifecycle_history
 
 SUPPORTED_NODE_TYPES = ("functional_location", "physical_unit")
@@ -140,6 +142,53 @@ def _lifecycle(connection: Connection, physical_unit_id: uuid.UUID) -> list[dict
     ]
 
 
+# Un équipement a toujours une identité d'appareil Edge au plus, et chacun de
+# ses points porte au plus une commande à la fois — jamais vrai pour deux
+# équipements à la fois, donc une seule requête suffit, jamais du N+1.
+_EVENTS_FOR_LOCATION_SQL = text(
+    "SELECT id, event_type, subject_id, payload, occurred_at FROM events WHERE "
+    "(subject_type = 'functional_location' AND subject_id = :id) OR "
+    "(subject_type = 'point' AND subject_id IN "
+    "  (SELECT id FROM points WHERE functional_location_id = :id)) OR "
+    "(subject_type = 'command' AND subject_id IN "
+    "  (SELECT id FROM commands WHERE point_id IN "
+    "    (SELECT id FROM points WHERE functional_location_id = :id))) "
+    "ORDER BY occurred_at DESC LIMIT :limit"
+)
+
+
+def _render_event_title(event_type: str, payload: dict[str, Any], locale: str) -> str:
+    """Code stable + paramètres, jamais une phrase stockée (ADR 013) — même
+    principe que `app.findings.displayed`."""
+    catalog = load_catalog(locale, "events")
+    return render_text(catalog["titles"][event_type], payload)
+
+
+def _events(
+    connection: Connection, node_id: uuid.UUID, locale: str, limit: int = 200
+) -> list[dict]:
+    """Journal système (`app/events.py`) : hors ligne/en ligne de
+    l'équipement, donnée périmée/rétablie sur l'un de ses points, cycle de
+    vie d'une commande sur l'un de ses points — jamais pour un exemplaire
+    (`physical_unit`), ces trois faits ne concernent qu'une position
+    fonctionnelle. Longtemps documenté comme un écart volontaire (« présents
+    dans events mais pas encore raccordés ici »), comblé le 02/10/2026."""
+    rows = connection.execute(_EVENTS_FOR_LOCATION_SQL, {"id": node_id, "limit": limit}).mappings()
+    return [
+        {
+            "kind": "event",
+            "at": row["occurred_at"],
+            "reference_id": row["id"],
+            "title": _render_event_title(row["event_type"], row["payload"], locale),
+            "field": None,
+            "status": row["event_type"],
+            "changed_by": None,
+            "note": None,
+        }
+        for row in rows
+    ]
+
+
 # --- Chronologie portefeuille : bloc « Activité récente » du Global Command
 # Center (directive UI/dashboard, section 16). Mêmes quatre sources et même
 # forme d'entrée que `node_timeline`, mais sans filtre d'équipement et avec
@@ -258,22 +307,52 @@ def _portfolio_findings(connection: Connection, limit: int, locale: str) -> list
     return entries
 
 
+def _portfolio_events(connection: Connection, limit: int, locale: str) -> list[dict]:
+    rows = connection.execute(
+        text(
+            "SELECT e.id, e.event_type, e.payload, e.occurred_at, "
+            "COALESCE(p.functional_location_id, c_fl.functional_location_id, e.subject_id) "
+            "AS functional_location_id "
+            "FROM events e "
+            "LEFT JOIN points p ON e.subject_type = 'point' AND p.id = e.subject_id "
+            "LEFT JOIN commands c ON e.subject_type = 'command' AND c.id = e.subject_id "
+            "LEFT JOIN points c_fl ON c_fl.id = c.point_id "
+            "WHERE e.subject_type IN ('functional_location', 'point', 'command') "
+            "ORDER BY e.occurred_at DESC LIMIT :limit"
+        ),
+        {"limit": limit},
+    ).mappings()
+    return [
+        {
+            "kind": "event",
+            "at": row["occurred_at"],
+            "functional_location_id": row["functional_location_id"],
+            "reference_id": row["id"],
+            "title": _render_event_title(row["event_type"], row["payload"], locale),
+            "field": None,
+            "status": row["event_type"],
+            "changed_by": None,
+            "note": None,
+        }
+        for row in rows
+    ]
+
+
 def portfolio_timeline(
     connection: Connection, *, locale: str = DEFAULT_LOCALE, limit: int = 20
 ) -> list[dict[str, Any]]:
-    """Bloc « Activité récente » du Global Command Center : les quatre
-    sources déjà unifiées par `node_timeline`, pour tout le portefeuille du
-    tenant plutôt qu'un seul équipement. Volontairement absents (aucune
-    trace exploitable aujourd'hui) : changements d'état d'équipement,
-    événements énergétiques, incidents (distincts des alarmes, section 24) ;
-    et présents dans `events` mais pas encore raccordés ici : événements
-    Edge, changements de connectivité, commandes — DEFER, signalé dans
-    docs/spec/feature-benchmark-matrix.md plutôt qu'ignoré."""
+    """Bloc « Activité récente » du Global Command Center : les cinq sources
+    désormais unifiées par `node_timeline`, pour tout le portefeuille du
+    tenant plutôt qu'un seul équipement — `events` raccordé le 02/10/2026
+    (écart volontaire jusqu'ici, signalé plutôt qu'ignoré). Volontairement
+    toujours absents (aucune trace exploitable à ce jour) : événements
+    énergétiques, incidents (distincts des alarmes, section 24)."""
     entries = (
         _portfolio_interventions(connection, limit)
         + _portfolio_work_orders(connection, limit)
         + _portfolio_alarms(connection, limit)
         + _portfolio_findings(connection, limit, locale)
+        + _portfolio_events(connection, limit, locale)
     )
     entries.sort(key=lambda entry: entry["at"], reverse=True)
     return entries[:limit]
@@ -299,6 +378,11 @@ def node_timeline(
     )
     if node_type == "physical_unit":
         entries += _lifecycle(connection, node_id)
+    else:
+        # Hors ligne/en ligne, donnée périmée/rétablie, cycle de vie d'une
+        # commande : trois faits qui ne concernent qu'une position
+        # fonctionnelle, jamais un exemplaire (voir `_events`).
+        entries += _events(connection, node_id, locale)
 
     entries.sort(key=lambda entry: entry["at"], reverse=True)
     if before is not None:

@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import text
 
 from app.db import engine
+from app.events import record_event
 from app.findings import raise_or_repeat_finding
 from app.main import app
 from app.tenancy import set_tenant_context
@@ -151,6 +152,74 @@ def test_timeline_merges_interventions_work_orders_and_alarms(two_tenants) -> No
     assert all(e["title"] == "Défaut haute pression" for e in alarm_entries)
 
 
+def test_timeline_includes_system_events(two_tenants) -> None:
+    """Le journal système (app/events.py) était documenté comme un écart
+    volontaire (« présents dans events mais pas encore raccordés ici »),
+    comblé le 02/10/2026 : hors ligne/en ligne de l'équipement, donnée
+    périmée/rétablie sur l'un de ses points, cycle de vie d'une commande sur
+    l'un de ses points — trois sujets différents, une seule chronologie."""
+    tenant_a, _ = two_tenants
+    point_id = uuid.uuid4()
+    command_id = uuid.uuid4()
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_a["tenant_id"])
+        connection.execute(
+            text(
+                "INSERT INTO points (id, tenant_id, code, name, value_type, mapping_status, "
+                "functional_location_id, created_by) VALUES "
+                "(:id, :tenant_id, 'PAC01-TEMP', 'Température', 'number', 'validated', "
+                ":loc, 'test')"
+            ),
+            {"id": point_id, "tenant_id": tenant_a["tenant_id"], "loc": tenant_a["loc"]},
+        )
+        connection.execute(
+            text(
+                "INSERT INTO commands (id, tenant_id, point_id, requested_value, requested_by) "
+                "VALUES (:id, :tenant_id, :point_id, 1, 'test')"
+            ),
+            {"id": command_id, "tenant_id": tenant_a["tenant_id"], "point_id": point_id},
+        )
+        record_event(
+            connection,
+            tenant_id=tenant_a["tenant_id"],
+            event_type="DEVICE_WENT_OFFLINE",
+            subject_type="functional_location",
+            subject_id=tenant_a["loc"],
+            payload={"as_of": T0.isoformat()},
+            occurred_at=T0,
+        )
+        record_event(
+            connection,
+            tenant_id=tenant_a["tenant_id"],
+            event_type="DATA_BECAME_STALE",
+            subject_type="point",
+            subject_id=point_id,
+            payload={"last_measured_at": T0.isoformat()},
+            occurred_at=T0 + timedelta(minutes=1),
+        )
+        record_event(
+            connection,
+            tenant_id=tenant_a["tenant_id"],
+            event_type="COMMAND_REQUESTED",
+            subject_type="command",
+            subject_id=command_id,
+            payload={"point_id": str(point_id), "requested_value": 1},
+            occurred_at=T0 + timedelta(minutes=2),
+        )
+
+    response = _call("GET", f"/graph/nodes/{tenant_a['loc']}/timeline", _tech(tenant_a))
+    assert response.status_code == 200, response.text
+    event_entries = [e for e in response.json() if e["kind"] == "event"]
+    assert {e["status"] for e in event_entries} == {
+        "DEVICE_WENT_OFFLINE",
+        "DATA_BECAME_STALE",
+        "COMMAND_REQUESTED",
+    }
+    titles = {e["status"]: e["title"] for e in event_entries}
+    assert titles["DEVICE_WENT_OFFLINE"] == "Équipement passé hors ligne"
+    assert titles["COMMAND_REQUESTED"] == "Commande demandée (valeur 1)"
+
+
 def test_timeline_of_another_tenant_node_is_not_found(two_tenants) -> None:
     tenant_a, tenant_b = two_tenants
     response = _call("GET", f"/graph/nodes/{tenant_a['loc']}/timeline", _tech(tenant_b))
@@ -254,6 +323,38 @@ def test_recent_activity_merges_sources_across_the_whole_portfolio(two_tenants) 
     ats = [entry["at"] for entry in entries]
     assert ats == sorted(ats, reverse=True)
     assert "lifecycle" not in kinds
+
+
+def test_recent_activity_includes_system_events_with_their_equipment(two_tenants) -> None:
+    tenant_a, _ = two_tenants
+    point_id = uuid.uuid4()
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_a["tenant_id"])
+        connection.execute(
+            text(
+                "INSERT INTO points (id, tenant_id, code, name, value_type, mapping_status, "
+                "functional_location_id, created_by) VALUES "
+                "(:id, :tenant_id, 'PAC01-TEMP', 'Température', 'number', 'validated', "
+                ":loc, 'test')"
+            ),
+            {"id": point_id, "tenant_id": tenant_a["tenant_id"], "loc": tenant_a["loc"]},
+        )
+        record_event(
+            connection,
+            tenant_id=tenant_a["tenant_id"],
+            event_type="DATA_BECAME_STALE",
+            subject_type="point",
+            subject_id=point_id,
+            payload={"last_measured_at": T0.isoformat()},
+            occurred_at=T0,
+        )
+
+    response = _call("GET", "/activity/recent", _tech(tenant_a))
+    assert response.status_code == 200, response.text
+    entries = [e for e in response.json() if e["kind"] == "event"]
+    assert len(entries) == 1
+    assert entries[0]["functional_location_id"] == str(tenant_a["loc"])
+    assert entries[0]["title"] == "Donnée devenue périmée"
 
 
 def test_recent_activity_respects_the_limit(two_tenants) -> None:

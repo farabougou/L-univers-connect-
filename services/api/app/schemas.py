@@ -215,7 +215,7 @@ class WorkOrderStatusHistoryOut(BaseModel):
 
 
 class TimelineEntryOut(BaseModel):
-    kind: Literal["intervention", "work_order", "alarm", "finding", "lifecycle"]
+    kind: Literal["intervention", "work_order", "alarm", "finding", "lifecycle", "event"]
     at: datetime
     reference_id: uuid.UUID
     title: str | None
@@ -231,7 +231,7 @@ class PortfolioTimelineEntryOut(BaseModel):
     `lifecycle` (propre à un exemplaire physique, pas au portefeuille), avec
     `functional_location_id` en plus pour le lien de chaque ligne."""
 
-    kind: Literal["intervention", "work_order", "alarm", "finding"]
+    kind: Literal["intervention", "work_order", "alarm", "finding", "event"]
     at: datetime
     functional_location_id: uuid.UUID | None
     reference_id: uuid.UUID

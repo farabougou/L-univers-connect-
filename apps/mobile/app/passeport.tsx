@@ -344,6 +344,11 @@ const TIMELINE_STATUS_CATALOG: Record<string, string> = {
 
 function timelineStatusLabel(entry: TimelineEntry): string | null {
   if (!entry.status) return null;
+  if (entry.kind === "event") {
+    // Le titre de l'événement contient déjà tout ce qu'il y a à dire ;
+    // `status` ne porte que le code stable, jamais affiché brut (ADR 013).
+    return null;
+  }
   if (entry.kind === "work_order" && entry.field === "status") {
     return t(`work_order.status.${entry.status}`);
   }
@@ -354,8 +359,10 @@ function timelineStatusLabel(entry: TimelineEntry): string | null {
 /**
  * Chronologie fusionnée de l'équipement (même donnée et même comportement
  * que le composant web partagé, apps/web/src/components/Timeline.tsx) :
- * interventions, ordres de travail, alarmes, constats et changements de
- * cycle de vie, dans un seul historique ordonné par date.
+ * interventions, ordres de travail, alarmes, constats, changements de
+ * cycle de vie et, depuis le 02/10/2026, le journal système (hors ligne/en
+ * ligne, donnée périmée/rétablie, cycle de vie d'une commande), dans un
+ * seul historique ordonné par date.
  */
 function TimelineView({
   entries,

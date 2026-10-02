@@ -281,7 +281,8 @@
         "alarm": "Alarm",
         "finding": "Finding",
         "work_order": "Work order",
-        "intervention": "Intervention"
+        "intervention": "Intervention",
+        "event": "System event"
       },
       "col_severity": "Severity",
       "col_message": "Description",
@@ -722,7 +723,8 @@
     "kind_work_order": "Work order",
     "kind_alarm": "Alarm",
     "kind_finding": "Finding",
-    "kind_lifecycle": "Lifecycle"
+    "kind_lifecycle": "Lifecycle",
+    "kind_event": "System event"
   },
   "space_type": {
     "building": "Building",
