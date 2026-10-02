@@ -5,9 +5,10 @@ import { colors } from "@/lib/formStyles";
 /**
  * Changement rapide de site (directive Command Center, ADR 014 §36.2, même
  * ligne que Breadcrumb.tsx) : une liste déroulante pure HTML (`<details>`),
- * sans JavaScript, vers la ligne du site dans le tableau de `/registre`
- * (ancre `site-{id}`, voir apps/web/src/app/registre/page.tsx). N'affiche
- * rien pour un client à un seul site — rien à changer.
+ * sans JavaScript, vers la vue Portfolio déjà filtrable par site
+ * (`/?site={id}`, apps/web/src/app/page.tsx — mécanisme existant, pas
+ * construit pour ce composant). N'affiche rien pour un client à un seul
+ * site — rien à changer.
  */
 export function SiteSwitcher({
   sites,
@@ -44,7 +45,7 @@ export function SiteSwitcher({
         {others.map((site) => (
           <li key={site.id}>
             <Link
-              href={`/registre#site-${site.id}`}
+              href={`/?site=${site.id}`}
               style={{
                 display: "block",
                 padding: "6px 10px",
