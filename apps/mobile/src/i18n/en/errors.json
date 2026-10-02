@@ -1,16 +1,4 @@
 {
-  "titles": {
-    "400": "Bad request",
-    "401": "Authentication required",
-    "403": "Access denied",
-    "404": "Not found",
-    "405": "Method not allowed",
-    "409": "Conflict",
-    "410": "Gone",
-    "422": "Invalid data",
-    "500": "Internal error",
-    "503": "Service unavailable"
-  },
   "codes": {
     "ACTUAL_STATE_MISMATCH": "The actual state read back after execution does not match the requested value.",
     "ALARM_NOT_FOUND": "The requested alarm could not be found.",
@@ -36,6 +24,10 @@
     "COMMAND_ALREADY_ACKNOWLEDGED": "This command has already received a response.",
     "COMMAND_NOT_FOUND": "The requested command could not be found.",
     "COMMAND_POINT_NOT_CONTROLLABLE": "This point is not driven by a simulated device: no command is possible.",
+    "COMMAND_POINT_POLICY_CONTENT_INVALID": "This command policy has invalid fields: {fields}.",
+    "COMMAND_POINT_POLICY_UNKNOWN_ROLE": "This command policy references an unknown role: {roles}.",
+    "COMMAND_POLICY_ROLE_NOT_ALLOWED": "Your role cannot command this point under its active policy: allowed roles {allowed_roles}.",
+    "COMMAND_POLICY_VALUE_NOT_ALLOWED": "This value is not allowed for this point under its active policy: allowed values {allowed_values}.",
     "CONFIG_ACTIVATION_REQUIRES_DRAFT": "Only a draft version can be activated; this version is “{status}”.",
     "CONFIG_ACTIVATION_REQUIRES_SECOND_PERSON": "You proposed this version: someone else must activate it (two-person approval).",
     "CONFIG_DIFF_SUBJECT_MISMATCH": "The two versions do not relate to the same item.",
@@ -239,5 +231,17 @@
     "VALUE_STATE_UNKNOWN": "The value {value} does not match any state of this point.",
     "WORK_ORDER_NOT_FOUND": "The requested work order could not be found.",
     "WORK_ORDER_STATUS_UNKNOWN": "Unknown work order status: “{status}”."
+  },
+  "titles": {
+    "400": "Bad request",
+    "401": "Authentication required",
+    "403": "Access denied",
+    "404": "Not found",
+    "405": "Method not allowed",
+    "409": "Conflict",
+    "410": "Gone",
+    "422": "Invalid data",
+    "500": "Internal error",
+    "503": "Service unavailable"
   }
 }

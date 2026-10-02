@@ -1,16 +1,4 @@
 {
-  "titles": {
-    "400": "Requête incorrecte",
-    "401": "Authentification requise",
-    "403": "Accès refusé",
-    "404": "Ressource introuvable",
-    "405": "Méthode non autorisée",
-    "409": "Conflit",
-    "410": "Ressource retirée",
-    "422": "Données invalides",
-    "500": "Erreur interne",
-    "503": "Service indisponible"
-  },
   "codes": {
     "ACTUAL_STATE_MISMATCH": "L’état réel relevé après exécution ne correspond pas à la valeur demandée.",
     "ALARM_NOT_FOUND": "L’alarme demandée est introuvable.",
@@ -36,6 +24,10 @@
     "COMMAND_ALREADY_ACKNOWLEDGED": "Cette commande a déjà reçu une réponse.",
     "COMMAND_NOT_FOUND": "La commande demandée est introuvable.",
     "COMMAND_POINT_NOT_CONTROLLABLE": "Ce point n’est pas piloté par un appareil simulé : aucune commande n’est possible.",
+    "COMMAND_POINT_POLICY_CONTENT_INVALID": "Cette politique de commande contient des champs invalides : {fields}.",
+    "COMMAND_POINT_POLICY_UNKNOWN_ROLE": "Cette politique de commande cite un rôle inconnu : {roles}.",
+    "COMMAND_POLICY_ROLE_NOT_ALLOWED": "Votre rôle ne permet pas de commander ce point selon sa politique active : rôles autorisés {allowed_roles}.",
+    "COMMAND_POLICY_VALUE_NOT_ALLOWED": "Cette valeur n’est pas autorisée pour ce point selon sa politique active : valeurs autorisées {allowed_values}.",
     "CONFIG_ACTIVATION_REQUIRES_DRAFT": "Seule une version brouillon peut être activée ; cette version est à l’état « {status} ».",
     "CONFIG_ACTIVATION_REQUIRES_SECOND_PERSON": "Cette version a été proposée par vous : une autre personne doit l’activer (approbation à deux).",
     "CONFIG_DIFF_SUBJECT_MISMATCH": "Les deux versions ne concernent pas le même élément.",
@@ -239,5 +231,17 @@
     "VALUE_STATE_UNKNOWN": "La valeur {value} ne correspond à aucun état de ce point.",
     "WORK_ORDER_NOT_FOUND": "L’ordre de travail demandé est introuvable.",
     "WORK_ORDER_STATUS_UNKNOWN": "Statut d’ordre de travail inconnu : « {status} »."
+  },
+  "titles": {
+    "400": "Requête incorrecte",
+    "401": "Authentification requise",
+    "403": "Accès refusé",
+    "404": "Ressource introuvable",
+    "405": "Méthode non autorisée",
+    "409": "Conflit",
+    "410": "Ressource retirée",
+    "422": "Données invalides",
+    "500": "Erreur interne",
+    "503": "Service indisponible"
   }
 }

@@ -3,7 +3,15 @@ import Link from "next/link";
 import { apiFetch, requireAccessToken } from "@/lib/api";
 import { Breadcrumb, type BreadcrumbSegment } from "@/components/Breadcrumb";
 import { SiteSwitcher } from "@/components/SiteSwitcher";
-import { cellStyle, headerCellStyle, tableScrollStyle } from "@/lib/formStyles";
+import {
+  cardStyle,
+  cellStyle,
+  colors,
+  headerCellStyle,
+  pageContainerStyle,
+  sectionTitleStyle,
+  tableScrollStyle,
+} from "@/lib/formStyles";
 import { errorMessage, getLocale, getTranslator } from "@/lib/i18n";
 import { canManage as computeCanManage, type Me } from "@/lib/roles";
 
@@ -97,10 +105,12 @@ export default async function PlanEditorPage({
 
   if (!planResponse.ok || !canManage) {
     return (
-      <main style={{ maxWidth: 720, margin: "40px auto", padding: "0 16px" }}>
-        <Link href="/registre">← {t("common.back")}</Link>
-        <h1>{t("plan_editor.title")}</h1>
-        <p>{t("web.registre.access_denied")}</p>
+      <main style={pageContainerStyle}>
+        <Link href="/registre" style={{ color: colors.accent }}>
+          ← {t("common.back")}
+        </Link>
+        <h1 style={{ fontSize: 24, margin: "12px 0 20px" }}>{t("plan_editor.title")}</h1>
+        <p style={{ color: colors.textMuted }}>{t("web.registre.access_denied")}</p>
       </main>
     );
   }
@@ -211,20 +221,22 @@ export default async function PlanEditorPage({
   ];
 
   return (
-    <main style={{ maxWidth: 900, margin: "40px auto", padding: "0 16px" }}>
+    <main style={pageContainerStyle}>
       <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
         <Breadcrumb segments={segments} />
         <SiteSwitcher sites={sites} currentSiteId={siteId ?? null} label={t("breadcrumb.switch_site")} />
       </div>
       <p style={{ marginTop: 8 }}>
-        <Link href="/registre">← {t("common.back")}</Link>
+        <Link href="/registre" style={{ color: colors.accent }}>
+          ← {t("common.back")}
+        </Link>
       </p>
-      <h1>{t("plan_editor.title")}</h1>
-      <p>
+      <h1 style={{ fontSize: 24, margin: "12px 0 20px" }}>{t("plan_editor.title")}</h1>
+      <p style={{ color: colors.textMuted }}>
         {t("plan_editor.plan_label")} : {plan.filename} —{" "}
         {t("plan_editor.version_label", { version: plan.version })}
       </p>
-      {error && <p style={{ color: "#c0392b" }}>{error}</p>}
+      {error && <p style={{ color: colors.danger }}>{error}</p>}
 
       {!isImage ? (
         <p>{t("plan_editor.unsupported_content_type")}</p>
@@ -256,40 +268,62 @@ export default async function PlanEditorPage({
         />
       )}
 
-      <h2 style={{ marginTop: 32 }}>{t("plan_editor.markers_title")}</h2>
-      {placements.length === 0 ? (
-        <p>{t("plan_editor.markers_none")}</p>
-      ) : (
-        <div style={tableScrollStyle}>
-          <table
-            className="responsive-table"
-            style={{ width: "100%", borderCollapse: "collapse" }}
-          >
-            <thead>
-              <tr>
-                <th style={headerCellStyle}>{t("web.dashboard.name")}</th>
-                <th style={headerCellStyle} />
-                <th style={headerCellStyle} />
-              </tr>
-            </thead>
-            <tbody>
-              {placements.map((placement) => (
-                <tr key={placement.id}>
-                  <td data-label={t("web.dashboard.name")} style={cellStyle}>
-                    {targetLabel(placement)} —{" "}
-                    {t(`plan_editor.marker_status_${placement.status}`)}
-                    {placement.point_id !== null &&
-                      pointHasOpenFinding(placement.point_id) && (
-                        <span style={{ color: "#dc2626" }}>
-                          {" "}
-                          — {t("plan_editor.marker_open_finding")}
-                        </span>
+      <section style={{ ...cardStyle, marginTop: 24 }}>
+        <h2 style={sectionTitleStyle}>{t("plan_editor.markers_title")}</h2>
+        {placements.length === 0 ? (
+          <p style={{ color: colors.textMuted }}>{t("plan_editor.markers_none")}</p>
+        ) : (
+          <div style={tableScrollStyle}>
+            <table
+              className="responsive-table"
+              style={{ width: "100%", borderCollapse: "collapse" }}
+            >
+              <thead>
+                <tr>
+                  <th style={headerCellStyle}>{t("web.dashboard.name")}</th>
+                  <th style={headerCellStyle} />
+                  <th style={headerCellStyle} />
+                </tr>
+              </thead>
+              <tbody>
+                {placements.map((placement) => (
+                  <tr key={placement.id}>
+                    <td data-label={t("web.dashboard.name")} style={cellStyle}>
+                      {targetLabel(placement)} —{" "}
+                      {t(`plan_editor.marker_status_${placement.status}`)}
+                      {placement.point_id !== null &&
+                        pointHasOpenFinding(placement.point_id) && (
+                          <span style={{ color: colors.danger }}>
+                            {" "}
+                            — {t("plan_editor.marker_open_finding")}
+                          </span>
+                        )}
+                    </td>
+                    <td style={cellStyle}>
+                      {placement.status === "proposed" && (
+                        <form
+                          action={validatePlacement}
+                          style={{ display: "inline" }}
+                        >
+                          <input
+                            type="hidden"
+                            name="floor_plan_id"
+                            value={plan.id}
+                          />
+                          <input
+                            type="hidden"
+                            name="placement_id"
+                            value={placement.id}
+                          />
+                          <button type="submit">
+                            {t("plan_editor.marker_validate")}
+                          </button>
+                        </form>
                       )}
-                  </td>
-                  <td style={cellStyle}>
-                    {placement.status === "proposed" && (
+                    </td>
+                    <td style={cellStyle}>
                       <form
-                        action={validatePlacement}
+                        action={deletePlacement}
                         style={{ display: "inline" }}
                       >
                         <input
@@ -303,37 +337,17 @@ export default async function PlanEditorPage({
                           value={placement.id}
                         />
                         <button type="submit">
-                          {t("plan_editor.marker_validate")}
+                          {t("plan_editor.marker_delete")}
                         </button>
                       </form>
-                    )}
-                  </td>
-                  <td style={cellStyle}>
-                    <form
-                      action={deletePlacement}
-                      style={{ display: "inline" }}
-                    >
-                      <input
-                        type="hidden"
-                        name="floor_plan_id"
-                        value={plan.id}
-                      />
-                      <input
-                        type="hidden"
-                        name="placement_id"
-                        value={placement.id}
-                      />
-                      <button type="submit">
-                        {t("plan_editor.marker_delete")}
-                      </button>
-                    </form>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </main>
   );
 }

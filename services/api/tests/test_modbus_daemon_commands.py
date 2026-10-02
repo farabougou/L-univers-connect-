@@ -13,6 +13,7 @@ from pymodbus.server import ServerStop, StartTcpServer
 from sqlalchemy import text
 from starlette.testclient import TestClient
 
+from app.command_policies import COMMAND_ROLES
 from app.commands import create_command, get_command
 from app.connectors.edge_client import EdgeApiClient
 from app.connectors.offline_buffer import OfflineBuffer
@@ -92,6 +93,7 @@ def test_commande_executee_verifiee_et_visible_en_telemetrie(commandable_tenant,
             point_id=commandable_tenant["point_id"],
             requested_value=1.0,
             requested_by="mohamed",
+            requester_roles=list(COMMAND_ROLES),
         )
 
     with _api(commandable_tenant) as api:
@@ -127,6 +129,7 @@ def test_deux_commandes_successives_sont_toutes_deux_verifiees(commandable_tenan
             point_id=commandable_tenant["point_id"],
             requested_value=1.0,
             requested_by="mohamed",
+            requester_roles=list(COMMAND_ROLES),
         )
 
     buffer = OfflineBuffer(tmp_path / "buffer.jsonl")
@@ -147,6 +150,7 @@ def test_deux_commandes_successives_sont_toutes_deux_verifiees(commandable_tenan
                 point_id=commandable_tenant["point_id"],
                 requested_value=0.0,
                 requested_by="mohamed",
+                requester_roles=list(COMMAND_ROLES),
             )
         run(
             api=api,

@@ -9,6 +9,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from sqlalchemy import text
 
+from app.command_policies import COMMAND_ROLES
 from app.commands import (
     UNCONFIRMED_AFTER,
     CommandConflict,
@@ -77,6 +78,7 @@ def test_creer_une_commande_sur_un_point_pilote_par_un_appareil_simule(commandab
             point_id=commandable["point_id"],
             requested_value=1.0,
             requested_by="mohamed",
+            requester_roles=list(COMMAND_ROLES),
         )
         command = get_command(connection, command_id)
 
@@ -95,6 +97,7 @@ def test_refuse_une_commande_sur_un_point_non_pilotable(not_commandable):
                 point_id=not_commandable["point_id"],
                 requested_value=1.0,
                 requested_by="mohamed",
+                requester_roles=list(COMMAND_ROLES),
             )
     assert info.value.code == "COMMAND_POINT_NOT_CONTROLLABLE"
 
@@ -110,6 +113,7 @@ def test_refuse_une_commande_sur_un_point_sans_aucune_configuration(commandable)
                 point_id=autre_point_id,
                 requested_value=1.0,
                 requested_by="mohamed",
+                requester_roles=list(COMMAND_ROLES),
             )
 
 
@@ -127,6 +131,7 @@ def test_tenant_annonce_a_tort_ne_voit_pas_la_commande_de_l_autre(commandable):
             point_id=commandable["point_id"],
             requested_value=1.0,
             requested_by="mohamed",
+            requester_roles=list(COMMAND_ROLES),
         )
 
     with engine.begin() as connection:
@@ -153,6 +158,7 @@ def test_claim_marque_sent_et_ne_renvoie_pas_deux_fois_la_meme_commande(commanda
             point_id=commandable["point_id"],
             requested_value=1.0,
             requested_by="mohamed",
+            requester_roles=list(COMMAND_ROLES),
         )
 
         first_claim = claim_pending_commands(
@@ -188,6 +194,7 @@ def test_acquittement_reussi_avec_valeur_conforme_est_verifie(commandable):
             point_id=commandable["point_id"],
             requested_value=1.0,
             requested_by="mohamed",
+            requester_roles=list(COMMAND_ROLES),
         )
         claim_pending_commands(
             connection, equipment_id=commandable["location_id"], edge_device_id=device_id, at=T0
@@ -221,6 +228,7 @@ def test_acquittement_avec_valeur_differente_echoue(commandable):
             point_id=commandable["point_id"],
             requested_value=1.0,
             requested_by="mohamed",
+            requester_roles=list(COMMAND_ROLES),
         )
         claim_pending_commands(
             connection, equipment_id=commandable["location_id"], edge_device_id=device_id, at=T0
@@ -254,6 +262,7 @@ def test_acquittement_d_echec_declare_par_l_edge(commandable):
             point_id=commandable["point_id"],
             requested_value=1.0,
             requested_by="mohamed",
+            requester_roles=list(COMMAND_ROLES),
         )
         claim_pending_commands(
             connection, equipment_id=commandable["location_id"], edge_device_id=device_id, at=T0
@@ -286,6 +295,7 @@ def test_acquitter_deux_fois_la_meme_commande_est_refuse(commandable):
             point_id=commandable["point_id"],
             requested_value=1.0,
             requested_by="mohamed",
+            requester_roles=list(COMMAND_ROLES),
         )
         claim_pending_commands(
             connection, equipment_id=commandable["location_id"], edge_device_id=device_id, at=T0
@@ -352,6 +362,7 @@ def test_chaque_etape_produit_un_evenement(commandable):
             point_id=commandable["point_id"],
             requested_value=1.0,
             requested_by="mohamed",
+            requester_roles=list(COMMAND_ROLES),
             at=T0,
         )
         claim_pending_commands(
@@ -391,6 +402,7 @@ def test_commande_envoyee_depuis_trop_longtemps_devient_timed_out(commandable):
             point_id=commandable["point_id"],
             requested_value=1.0,
             requested_by="mohamed",
+            requester_roles=list(COMMAND_ROLES),
             at=T0,
         )
         claim_pending_commands(

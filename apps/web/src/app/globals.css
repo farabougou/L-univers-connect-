@@ -1,13 +1,10 @@
+/* Palette sombre/navy forcée (directive de Mohamed, 02/10/2026 : centre de
+   contrôle professionnel, pas un thème qui dépend des préférences système)
+   — reprend les jetons de apps/web/src/lib/formStyles.ts, seule source. */
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #050b1a;
+  --foreground: #f8fafc;
+  color-scheme: dark;
 }
 
 html {
@@ -42,15 +39,17 @@ body {
   margin: 0;
 }
 
+/* Sous 900px, la console web cède la place à l'application mobile dédiée
+   pour l'usage terrain (voir Sidebar.tsx) : jamais une sidebar tassée. */
+@media (max-width: 900px) {
+  .app-sidebar {
+    display: none;
+  }
+}
+
 a {
   color: inherit;
   text-decoration: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
 }
 
 /*
@@ -80,7 +79,7 @@ a {
   }
 
   .responsive-table tr {
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid #1e293b;
     padding: 10px 0;
   }
 
@@ -120,8 +119,8 @@ a {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  border: 3px solid rgba(100, 116, 139, 0.25);
-  border-top-color: #64748b;
+  border: 3px solid rgba(148, 163, 184, 0.25);
+  border-top-color: #94a3b8;
   animation: loading-spin 0.8s linear infinite;
 }
 

@@ -10,6 +10,8 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 
+from app.command_policies import COMMAND_POINT_POLICY
+from app.config_versions import activate_version, create_version
 from app.db import engine
 from app.devices import provision_device
 from app.main import app
@@ -327,6 +329,128 @@ def test_commande_envoyee_depuis_trop_longtemps_devient_timed_out_a_la_lecture()
                 .first()
             )
         assert finding["reason_code"] == "COMMAND_UNCONFIRMED"
+    finally:
+        _cleanup(tenant["tenant_id"])
+
+
+def _activate_policy(tenant, **content):
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant["tenant_id"])
+        version_id = create_version(
+            connection,
+            tenant_id=tenant["tenant_id"],
+            config_type=COMMAND_POINT_POLICY,
+            subject_key=str(tenant["point_id"]),
+            content=content,
+            author="responsable",
+            reason="test",
+        )
+        activate_version(
+            connection,
+            version_id=version_id,
+            activated_by="responsable",
+            activated_at=datetime.now(UTC),
+        )
+
+
+def test_essai_a_blanc_ne_cree_aucune_commande():
+    tenant = _commandable_tenant()
+    try:
+        with patch("app.auth.fetch_jwks", return_value=JWKS):
+            response = client.post(
+                "/commands",
+                json={
+                    "point_id": str(tenant["point_id"]),
+                    "requested_value": 1.0,
+                    "dry_run": True,
+                },
+                headers=_human_headers(tenant["tenant_id"]),
+            )
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body == {
+            "mode": "dry_run",
+            "point_id": str(tenant["point_id"]),
+            "requested_value": 1.0,
+            "valid": True,
+        }
+
+        with patch("app.auth.fetch_jwks", return_value=JWKS):
+            listed = client.get(
+                f"/commands?point_id={tenant['point_id']}",
+                headers=_human_headers(tenant["tenant_id"]),
+            )
+        assert listed.json() == []
+    finally:
+        _cleanup(tenant["tenant_id"])
+
+
+def test_essai_a_blanc_sur_un_point_non_pilotable_est_refuse_comme_une_vraie_commande():
+    tenant = create_tenant_with_energy_point("ClientDryRunNonPilotable")
+    activate_device_mapping(
+        tenant_id=tenant["tenant_id"],
+        equipment_id=tenant["location_id"],
+        host="127.0.0.1",
+        port=5020,
+        points=[{"point_id": str(tenant["point_id"]), "register_name": "total_active_energy"}],
+    )
+    try:
+        with patch("app.auth.fetch_jwks", return_value=JWKS):
+            response = client.post(
+                "/commands",
+                json={
+                    "point_id": str(tenant["point_id"]),
+                    "requested_value": 1.0,
+                    "dry_run": True,
+                },
+                headers=_human_headers(tenant["tenant_id"]),
+            )
+        assert response.status_code == 422
+        assert response.json()["code"] == "COMMAND_POINT_NOT_CONTROLLABLE"
+    finally:
+        _cleanup(tenant["tenant_id"])
+
+
+def test_une_policy_active_refuse_la_creation_d_une_commande_au_role_non_liste():
+    tenant = _commandable_tenant()
+    try:
+        _activate_policy(tenant, allowed_roles=["admin_tenant"])
+        with patch("app.auth.fetch_jwks", return_value=JWKS):
+            response = client.post(
+                "/commands",
+                json={"point_id": str(tenant["point_id"]), "requested_value": 1.0},
+                headers=_human_headers(tenant["tenant_id"], roles=("technicien",)),
+            )
+        assert response.status_code == 403
+        assert response.json()["code"] == "COMMAND_POLICY_ROLE_NOT_ALLOWED"
+
+        with patch("app.auth.fetch_jwks", return_value=JWKS):
+            allowed = client.post(
+                "/commands",
+                json={"point_id": str(tenant["point_id"]), "requested_value": 1.0},
+                headers=_human_headers(tenant["tenant_id"], roles=("admin_tenant",)),
+            )
+        assert allowed.status_code == 201
+    finally:
+        _cleanup(tenant["tenant_id"])
+
+
+def test_une_policy_active_refuse_aussi_un_essai_a_blanc_a_une_valeur_non_listee():
+    tenant = _commandable_tenant()
+    try:
+        _activate_policy(tenant, allowed_values=[0.0, 1.0])
+        with patch("app.auth.fetch_jwks", return_value=JWKS):
+            response = client.post(
+                "/commands",
+                json={
+                    "point_id": str(tenant["point_id"]),
+                    "requested_value": 2.0,
+                    "dry_run": True,
+                },
+                headers=_human_headers(tenant["tenant_id"]),
+            )
+        assert response.status_code == 403
+        assert response.json()["code"] == "COMMAND_POLICY_VALUE_NOT_ALLOWED"
     finally:
         _cleanup(tenant["tenant_id"])
 

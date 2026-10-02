@@ -56,7 +56,7 @@ export function RecentActivityFeed({
                 padding: "4px 12px",
                 fontSize: 12,
                 fontWeight: 600,
-                background: active ? colors.accent : colors.surface,
+                background: active ? colors.accentStrong : colors.surface,
                 color: active ? "white" : colors.textMuted,
               }}
             >

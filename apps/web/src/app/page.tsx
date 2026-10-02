@@ -837,7 +837,7 @@ export default async function PortfolioPage({
                     <div
                       style={{
                         flex: 1,
-                        background: "#f3f4f6",
+                        background: colors.border,
                         borderRadius: 4,
                         height: 8,
                         overflow: "hidden",

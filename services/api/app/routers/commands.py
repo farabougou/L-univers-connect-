@@ -7,12 +7,13 @@ import uuid
 from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response, status
 from pydantic import BaseModel, Field
 from sqlalchemy.engine import Connection
 
 from app.audit import append_audit_entry
 from app.auth import get_current_claims, require_any_role, require_device_scope
+from app.command_policies import PolicyViolation
 from app.commands import (
     CommandConflict,
     CommandNotAllowed,
@@ -23,6 +24,7 @@ from app.commands import (
     effective_status,
     get_command,
     list_commands_for_point,
+    validate_command,
 )
 from app.db import engine
 from app.deps import get_tenant_connection, get_tenant_id
@@ -38,6 +40,18 @@ _COMMAND_ROLES = ("technicien", "responsable_exploitation", "admin_tenant")
 class CommandCreate(BaseModel):
     point_id: uuid.UUID
     requested_value: float
+    # Essai à blanc (V2, priorité « Dry Run/Shadow ») : vérifie la
+    # commandabilité et la policy active sans rien créer ni jamais
+    # atteindre l'Edge. Jamais le défaut : une commande reste réelle sauf
+    # demande explicite.
+    dry_run: bool = False
+
+
+class CommandDryRunOut(BaseModel):
+    mode: str = "dry_run"
+    point_id: uuid.UUID
+    requested_value: float
+    valid: bool = True
 
 
 class CommandOut(BaseModel):
@@ -75,14 +89,39 @@ def _out(command: dict, *, now: datetime) -> CommandOut:
     return CommandOut(**{**command, "status": effective_status(command, now=now)})
 
 
-@router.post("/commands", response_model=CommandOut, status_code=201)
+@router.post("/commands", status_code=201)
 def create_command_route(
     body: CommandCreate,
+    response: Response,
     connection: Annotated[Connection, Depends(get_tenant_connection)],
     tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
     claims: Annotated[dict, Depends(require_any_role(*_COMMAND_ROLES))],
-) -> CommandOut:
+) -> CommandOut | CommandDryRunOut:
     actor = _actor(claims)
+    roles = list(claims.get("realm_access", {}).get("roles", []))
+
+    if body.dry_run:
+        response.status_code = status.HTTP_200_OK
+        try:
+            validate_command(
+                connection,
+                point_id=body.point_id,
+                requested_value=body.requested_value,
+                requester_roles=roles,
+            )
+        except (CommandNotAllowed, PolicyViolation) as exc:
+            raise api_error(exc, exc.status) from exc
+        append_audit_entry(
+            connection,
+            tenant_id=tenant_id,
+            actor=actor,
+            action="command.dry_run",
+            entity_type="point",
+            entity_id=str(body.point_id),
+            payload={"requested_value": body.requested_value},
+        )
+        return CommandDryRunOut(point_id=body.point_id, requested_value=body.requested_value)
+
     try:
         command_id = create_command(
             connection,
@@ -90,9 +129,10 @@ def create_command_route(
             point_id=body.point_id,
             requested_value=body.requested_value,
             requested_by=actor,
+            requester_roles=roles,
         )
-    except CommandNotAllowed as exc:
-        raise api_error(exc, 422) from exc
+    except (CommandNotAllowed, PolicyViolation) as exc:
+        raise api_error(exc, exc.status) from exc
 
     append_audit_entry(
         connection,

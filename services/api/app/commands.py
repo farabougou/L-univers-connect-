@@ -44,6 +44,13 @@ Chaque étape franchie par une commande produit un événement persistant
 (app/events.py) — État → Événement → Politique → Alerte, directive de
 Mohamed du 24/09/2026 : COMMAND_REQUESTED, COMMAND_DISPATCHED,
 COMMAND_VERIFIED, COMMAND_FAILED, COMMAND_TIMED_OUT.
+
+V2 (02/10/2026) : `validate_command` regroupe les vérifications qu'une
+commande doit passer (commandabilité puis policy active du point, voir
+app/command_policies.py) sans rien créer — appelée par `create_command`
+avant insertion, et seule à s'exécuter pour un essai à blanc (dry-run,
+POST /commands?dry_run=true côté routeur) : un essai à blanc ne saute
+jamais une vérification que la création réelle ferait.
 """
 
 import uuid
@@ -53,6 +60,7 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
+from app.command_policies import enforce_policy, get_active_policy
 from app.connectors.device_mapping import SIMULATED_DEVICE_TYPES, get_active_mapping
 from app.errors import DomainError
 from app.events import record_event
@@ -101,6 +109,24 @@ def _assert_point_is_commandable(connection: Connection, point_id: uuid.UUID) ->
         raise CommandNotAllowed("COMMAND_POINT_NOT_CONTROLLABLE", point_id=str(point_id))
 
 
+def validate_command(
+    connection: Connection,
+    *,
+    point_id: uuid.UUID,
+    requested_value: float,
+    requester_roles: list[str],
+) -> None:
+    """Les vérifications qu'une commande doit passer, sans rien créer :
+    commandabilité (règle non négociable 1) puis policy active du point
+    (app.command_policies), si elle existe. Utilisée par create_command
+    avant insertion, et seule à s'exécuter en mode dry-run (POST
+    /commands?dry_run) — le dry-run ne doit jamais sauter une vérification
+    que la création réelle ferait, ni en faire une de plus."""
+    _assert_point_is_commandable(connection, point_id)
+    policy = get_active_policy(connection, point_id)
+    enforce_policy(policy, requested_value=requested_value, roles=requester_roles)
+
+
 def create_command(
     connection: Connection,
     *,
@@ -108,9 +134,15 @@ def create_command(
     point_id: uuid.UUID,
     requested_value: float,
     requested_by: str,
+    requester_roles: list[str],
     at: datetime | None = None,
 ) -> uuid.UUID:
-    _assert_point_is_commandable(connection, point_id)
+    validate_command(
+        connection,
+        point_id=point_id,
+        requested_value=requested_value,
+        requester_roles=requester_roles,
+    )
     at = at or datetime.now(UTC)
 
     new_id = uuid.uuid4()

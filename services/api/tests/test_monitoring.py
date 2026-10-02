@@ -6,6 +6,7 @@ from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import text
 
+from app.command_policies import COMMAND_ROLES
 from app.commands import create_command
 from app.db import engine
 from app.devices import provision_device
@@ -214,6 +215,7 @@ def test_commande_non_confirmee_leve_une_alerte():
                 point_id=tenant["point_id"],
                 requested_value=1.0,
                 requested_by="mohamed",
+                requester_roles=list(COMMAND_ROLES),
                 at=T0,
             )
             connection.execute(

@@ -840,6 +840,13 @@
       "title": "Asset registry",
       "unarchive": "Unarchive"
     },
+    "sidebar": {
+      "group_automation": "Automation",
+      "group_energy": "Energy and compliance",
+      "group_operations": "Operations",
+      "group_overview": "Overview",
+      "group_platform": "Platform"
+    },
     "spatial_page": {
       "col_placements": "Validated placements",
       "col_site": "Site",

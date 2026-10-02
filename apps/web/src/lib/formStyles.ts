@@ -13,18 +13,18 @@ export const labelStyle = { display: "block", marginTop: 12 };
 export const submitStyle = {
   marginTop: 16,
   padding: "10px 20px",
-  background: "#2563eb",
+  background: "#1d4ed8",
   color: "white",
   border: "none",
   borderRadius: 8,
 };
 export const cellStyle = {
-  borderBottom: "1px solid #eee",
+  borderBottom: "1px solid #1e293b",
   padding: "6px 8px",
   textAlign: "left" as const,
 };
 export const headerCellStyle = {
-  borderBottom: "1px solid #ddd",
+  borderBottom: "1px solid #243047",
   padding: "6px 8px",
   textAlign: "left" as const,
   whiteSpace: "nowrap" as const,
@@ -46,15 +46,28 @@ export const tableScrollStyle = { overflowX: "auto" as const };
  * un tout petit nombre de jetons et de blocs de présentation réutilisables,
  * pas une bibliothèque de composants. Étendu progressivement, jamais
  * remplacé d'un coup (voir feature-benchmark-matrix.md).
+ *
+ * Palette sombre/navy (directive de Mohamed, 02/10/2026 : « centre de
+ * contrôle moderne », professionnel, dense mais lisible, bleu comme
+ * accent) — reprend exactement la palette déjà posée sur l'écran de
+ * connexion (`apps/web/src/app/login/page.tsx`, directive « structure
+ * cible », 23/09/2026) plutôt que d'en inventer une nouvelle, pour que
+ * tout l'écosystème change de place en même temps que ces jetons. `accent`
+ * sert au texte/liens/bordures (contraste élevé sur fond sombre) ;
+ * `accentStrong` sert aux fonds pleins qui portent du texte blanc (un
+ * bleu clair en fond plein n'offrirait pas un contraste suffisant pour du
+ * blanc par-dessus). Vert/orange/rouge restent réservés aux états
+ * (StatusBadge, SEVERITY_COLOR, COMMUNICATION_COLOR), jamais touchés ici.
  */
 export const colors = {
-  pageBackground: "#f8fafc",
-  surface: "#ffffff",
-  border: "#e5e7eb",
-  textPrimary: "#0f172a",
-  textMuted: "#64748b",
-  accent: "#2563eb",
-  danger: "#c0392b",
+  pageBackground: "#050b1a",
+  surface: "#0f1b33",
+  border: "#1e293b",
+  textPrimary: "#f8fafc",
+  textMuted: "#94a3b8",
+  accent: "#38bdf8",
+  accentStrong: "#1d4ed8",
+  danger: "#f87171",
 };
 
 export const pageContainerStyle = {
@@ -77,7 +90,7 @@ export const cardStyle = {
   border: `1px solid ${colors.border}`,
   borderRadius: 12,
   padding: "20px 24px",
-  boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
+  boxShadow: "0 1px 2px rgba(0, 0, 0, 0.3)",
 };
 
 export const sectionTitleStyle = {

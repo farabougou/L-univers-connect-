@@ -435,6 +435,7 @@ def test_passport_point_shows_desired_state_and_commands(two_tenants) -> None:
     """Le jumeau numérique d'un point réunit son état réel (mesure), son état
     souhaité déclaré et ses commandes de test — trois notions séparées, dans
     la même réponse (ADR 004, ADR 012 §2.3)."""
+    from app.command_policies import COMMAND_ROLES
     from app.commands import create_command
     from app.desired_states import declare_desired_state
     from app.points import create_point, decide_point
@@ -481,6 +482,7 @@ def test_passport_point_shows_desired_state_and_commands(two_tenants) -> None:
             point_id=point_id,
             requested_value=1.0,
             requested_by="mohamed",
+            requester_roles=list(COMMAND_ROLES),
         )
 
     response = _call("GET", f"/graph/nodes/{tenant_a['loc']}/passport", _tech(tenant_a))

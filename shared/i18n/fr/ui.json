@@ -840,6 +840,13 @@
       "title": "Registre d’actifs",
       "unarchive": "Désarchiver"
     },
+    "sidebar": {
+      "group_automation": "Automatisation",
+      "group_energy": "Énergie et conformité",
+      "group_operations": "Exploitation",
+      "group_overview": "Vue d’ensemble",
+      "group_platform": "Plateforme"
+    },
     "spatial_page": {
       "col_placements": "Placements validés",
       "col_site": "Site",

@@ -35,7 +35,7 @@ export function SiteSwitcher({
           padding: 4,
           position: "absolute",
           zIndex: 1,
-          background: "white",
+          background: colors.surface,
           border: `1px solid ${colors.border}`,
           borderRadius: 6,
           boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
