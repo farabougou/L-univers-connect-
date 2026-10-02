@@ -1,3 +1,4 @@
+import re
 import uuid
 from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
@@ -27,6 +28,7 @@ from app.fgas import (
     get_fgas_intervention,
     record_fgas_intervention,
 )
+from app.fgas_pdf import render_cerfa_pdf
 from app.fgas_vocabulary import FGAS_VOCABULARY_VERSION
 from app.fgas_vocabulary import SECTIONS as FGAS_SECTIONS
 from app.fgas_vocabulary import labels as fgas_labels
@@ -908,3 +910,25 @@ def read_fgas_intervention(
     if fgas is None:
         raise ApiError(404, "FGAS_RECORD_NOT_FOUND")
     return FgasOut(**fgas)
+
+
+@router.get("/interventions/{intervention_id}/fgas/cerfa.pdf")
+def read_fgas_intervention_cerfa_pdf(
+    intervention_id: uuid.UUID,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> Response:
+    """CERFA 15497*04 officiel, pré-rempli à partir de la fiche enregistrée
+    (app.fgas_pdf) — un document à archiver ou transmettre, pas une
+    déclaration transmise automatiquement à l'administration."""
+    fgas = get_fgas_intervention(connection, intervention_id)
+    if fgas is None:
+        raise ApiError(404, "FGAS_RECORD_NOT_FOUND")
+    pdf_bytes = render_cerfa_pdf(fgas)
+    safe_suffix = re.sub(r"[^A-Za-z0-9_-]", "_", fgas["fiche_number"] or str(fgas["id"]))
+    filename = f"cerfa-15497-{safe_suffix}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

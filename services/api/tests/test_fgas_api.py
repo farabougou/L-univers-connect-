@@ -3,12 +3,14 @@
 discipline que la clôture structurée (tests/test_passport.py) : idempotence,
 conflit sur renvoi différent, immutabilité en base, isolation tenant."""
 
+import io
 import uuid
 from datetime import UTC, datetime
 from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
+from pypdf import PdfReader
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 
@@ -232,3 +234,50 @@ def test_tenant_isolation_on_fgas_records(two_tenants) -> None:
     # Une intervention d'un autre tenant n'existe pas de son point de vue.
     cross = _call("POST", f"/interventions/{intervention_id}/fgas", _tech(tenant_b), json=_FGAS)
     assert cross.status_code == 404
+
+
+def test_cerfa_pdf_download_contains_the_recorded_values(two_tenants) -> None:
+    """GET .../fgas/cerfa.pdf (app.fgas_pdf) : le CERFA 15497*04 officiel,
+    rempli depuis la fiche déjà enregistrée — pas une saisie séparée."""
+    tenant_a, _ = two_tenants
+    intervention_id = _intervention(tenant_a)
+    _call(
+        "POST",
+        f"/interventions/{intervention_id}/fgas",
+        _tech(tenant_a),
+        json={**_FGAS, "leaks_found": True, "leaks": [{"location": "Vanne", "repaired": True}]},
+    )
+
+    response = _call("GET", f"/interventions/{intervention_id}/fgas/cerfa.pdf", _tech(tenant_a))
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "application/pdf"
+    assert "cerfa-15497-2026-001.pdf" in response.headers["content-disposition"]
+
+    reader = PdfReader(io.BytesIO(response.content))
+    fields = reader.get_fields()
+    assert fields["Fiche_no"]["/V"] == "2026-001"
+    assert fields["Equipement_Fluide"]["/V"] == "R410A"
+    assert fields["Case_Maintenance"]["/V"] == "/Yes"
+    assert fields["Case_Fuite_Oui"]["/V"] == "/Yes"
+    assert fields["Fuite_Loca_1"]["/V"] == "Vanne"
+    assert fields["Case_Rep_Fuite1_realisee"]["/V"] == "/Yes"
+
+
+def test_cerfa_pdf_download_requires_an_existing_record(two_tenants) -> None:
+    tenant_a, _ = two_tenants
+    intervention_id = _intervention(tenant_a)
+    response = _call("GET", f"/interventions/{intervention_id}/fgas/cerfa.pdf", _tech(tenant_a))
+    assert response.status_code == 404
+    assert response.json()["code"] == "FGAS_RECORD_NOT_FOUND"
+
+
+def test_cerfa_pdf_download_is_tenant_isolated(two_tenants) -> None:
+    tenant_a, tenant_b = two_tenants
+    intervention_id = _intervention(tenant_a)
+    _call("POST", f"/interventions/{intervention_id}/fgas", _tech(tenant_a), json=_FGAS)
+
+    response = _call(
+        "GET", f"/interventions/{intervention_id}/fgas/cerfa.pdf", _tech(tenant_b)
+    )
+    assert response.status_code == 404
