@@ -130,6 +130,13 @@
     "removed": "Déposé"
   },
   "mobile": {
+    "alerts": {
+      "title": "Alertes",
+      "empty": "Aucune alarme ni aucun constat ouvert pour le moment.",
+      "load_failed": "Les alertes n’ont pas pu être chargées. Vérifiez la connexion au réseau.",
+      "kind_alarm": "Alarme",
+      "kind_finding": "Constat"
+    },
     "history": {
       "empty": "Aucune intervention envoyée pour le moment.",
       "load_failed": "L’historique n’a pas pu être chargé. Vérifiez la connexion au réseau.",

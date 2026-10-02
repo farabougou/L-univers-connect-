@@ -5,6 +5,7 @@ import { config } from "../src/lib/config";
 import { useAuth } from "../src/lib/auth";
 import { locale, t } from "../src/lib/i18n";
 import { formatDateTime } from "../src/i18n/translator";
+import { colors } from "../src/design/colors";
 
 type Intervention = {
   id: string;
@@ -82,12 +83,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   error: {
-    color: "#c0392b",
+    color: colors.danger,
     marginBottom: 12,
   },
   row: {
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: colors.divider,
     paddingVertical: 10,
   },
   rowType: {

@@ -9,6 +9,7 @@ export default function RootLayout() {
       <Stack.Screen name="nouvelle-intervention" options={{ title: t("mobile.intervention.title") }} />
       <Stack.Screen name="historique" options={{ title: t("mobile.home.history") }} />
       <Stack.Screen name="passeport" options={{ title: t("mobile.passport.screen_title") }} />
+      <Stack.Screen name="alertes" options={{ title: t("mobile.alerts.title") }} />
     </Stack>
   );
 }

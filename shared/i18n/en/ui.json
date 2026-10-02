@@ -130,6 +130,13 @@
     "removed": "Removed"
   },
   "mobile": {
+    "alerts": {
+      "title": "Alerts",
+      "empty": "No open alarm or finding right now.",
+      "load_failed": "Alerts could not be loaded. Check the network connection.",
+      "kind_alarm": "Alarm",
+      "kind_finding": "Finding"
+    },
     "history": {
       "empty": "No intervention sent yet.",
       "load_failed": "The history could not be loaded. Check the network connection.",

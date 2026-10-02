@@ -30,6 +30,8 @@ import {
   sendCommand,
   statusMessage,
 } from "../src/lib/passport";
+import { colors, equipmentStatusToAssetStatus } from "../src/design/colors";
+import { AssetStatusBadge, SeverityBadge } from "../src/design/StatusBadge";
 
 /**
  * Lecture de l'étiquette par l'appareil photo, ou saisie du code imprimé sous
@@ -273,20 +275,30 @@ function PassportView({
 
       <Section title={t("mobile.passport.signals")}>
         {alarms.map((alarm) => (
-          <Text key={alarm.id}>
-            {t("mobile.passport.alarm")} · {t(`severity.${alarm.severity}`)} ·{" "}
-            {t(`condition_state.${alarm.condition_state}`)} · {t(`ack_state.${alarm.ack_state}`)}
-            {"\n"}
-            {alarm.message}
-          </Text>
+          <View key={alarm.id} style={styles.signalRow}>
+            <SeverityBadge severity={alarm.severity} label={t(`severity.${alarm.severity}`)} />
+            <View style={styles.signalText}>
+              <Text style={styles.strong}>{t("mobile.passport.alarm")}</Text>
+              <Text>{alarm.message}</Text>
+              <Text style={styles.muted}>
+                {t(`condition_state.${alarm.condition_state}`)} ·{" "}
+                {t(`ack_state.${alarm.ack_state}`)}
+              </Text>
+            </View>
+          </View>
         ))}
         {passport.open_findings.map((finding) => (
-          <Text key={finding.id}>
-            {t("mobile.passport.finding")} · {t(`severity.${finding.severity}`)} ·{" "}
-            {t(`certainty.${finding.certainty}`)} · {t(`condition_state.${finding.condition_state}`)}
-            {"\n"}
-            {finding.title}
-          </Text>
+          <View key={finding.id} style={styles.signalRow}>
+            <SeverityBadge severity={finding.severity} label={t(`severity.${finding.severity}`)} />
+            <View style={styles.signalText}>
+              <Text style={styles.strong}>{t("mobile.passport.finding")}</Text>
+              <Text>{finding.title}</Text>
+              <Text style={styles.muted}>
+                {t(`certainty.${finding.certainty}`)} ·{" "}
+                {t(`condition_state.${finding.condition_state}`)}
+              </Text>
+            </View>
+          </View>
         ))}
         {alarms.length === 0 && passport.open_findings.length === 0 && (
           <Text>{t("mobile.passport.nothing_open")}</Text>
@@ -502,7 +514,15 @@ function StatusLine({ status, timeZone }: { status: EquipmentStatus; timeZone: s
       name === "since" ? formatDateTime(locale, value, timeZone) : t(value),
     ]),
   );
-  return <Text style={status.current ? styles.strong : undefined}>{t(key, rendered)}</Text>;
+  // Même vocabulaire d'état universel que le web (StatusBadge.tsx,
+  // ADR 014) : jamais un deuxième jeu de couleurs pour la même signification.
+  const assetStatus = equipmentStatusToAssetStatus(status);
+  return (
+    <View style={styles.statusLine}>
+      <AssetStatusBadge status={assetStatus} label={t(`asset_status.${assetStatus}`)} />
+      <Text>{t(key, rendered)}</Text>
+    </View>
+  );
 }
 
 function UnitView({ unit }: { unit: PassportUnit }) {
@@ -545,15 +565,15 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: colors.border,
     borderRadius: 6,
     padding: 10,
   },
   error: {
-    color: "#c0392b",
+    color: colors.danger,
   },
   workOrderLink: {
-    color: "#1d4ed8",
+    color: colors.link,
     textDecorationLine: "underline",
   },
   scanner: {
@@ -574,7 +594,7 @@ const styles = StyleSheet.create({
   },
   section: {
     borderTopWidth: 1,
-    borderTopColor: "#eee",
+    borderTopColor: colors.divider,
     paddingTop: 8,
     gap: 4,
   },
@@ -586,6 +606,21 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   muted: {
-    color: "#666",
+    color: colors.textMuted,
+  },
+  statusLine: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  signalRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    paddingVertical: 4,
+  },
+  signalText: {
+    flex: 1,
+    gap: 2,
   },
 });

@@ -36,6 +36,7 @@ import {
 } from "../src/lib/fgas";
 import { takePhoto } from "../src/lib/photos";
 import { synchronize } from "../src/lib/sync";
+import { colors } from "../src/design/colors";
 
 // Codes des vérifications (enregistrés tels quels) ; libellés dans le catalogue.
 const CHECKLIST_ITEMS = ["pression_ok", "bruit_anormal", "filtre_propre"];
@@ -158,12 +159,12 @@ export default function NouvelleInterventionScreen() {
         <Button
           title={t("intervention_type.intervention")}
           onPress={() => setInterventionType("intervention")}
-          color={interventionType === "intervention" ? undefined : "#999"}
+          color={interventionType === "intervention" ? undefined : colors.inactive}
         />
         <Button
           title={t("intervention_type.ronde")}
           onPress={() => setInterventionType("ronde")}
-          color={interventionType === "ronde" ? undefined : "#999"}
+          color={interventionType === "ronde" ? undefined : colors.inactive}
         />
       </View>
 
@@ -556,7 +557,7 @@ const styles = StyleSheet.create({
   closure: {
     gap: 8,
     borderTopWidth: 1,
-    borderTopColor: "#eee",
+    borderTopColor: colors.divider,
     paddingTop: 8,
   },
   sectionTitle: {
@@ -571,18 +572,18 @@ const styles = StyleSheet.create({
   },
   choice: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: colors.border,
     borderRadius: 16,
     paddingVertical: 8,
     paddingHorizontal: 12,
   },
   choiceSelected: {
-    borderColor: "#2563eb",
-    backgroundColor: "#dbeafe",
+    borderColor: colors.selectedBorder,
+    backgroundColor: colors.selectedBackground,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: colors.border,
     borderRadius: 8,
     padding: 10,
   },
@@ -617,14 +618,14 @@ const styles = StyleSheet.create({
   },
   textInput: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: colors.border,
     borderRadius: 8,
     padding: 12,
     minHeight: 80,
     textAlignVertical: "top",
   },
   hint: {
-    color: "#666",
+    color: colors.textMuted,
     fontStyle: "italic",
   },
   locationList: {
@@ -632,13 +633,13 @@ const styles = StyleSheet.create({
   },
   locationItem: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: colors.border,
     borderRadius: 8,
     padding: 10,
   },
   locationItemSelected: {
-    borderColor: "#2563eb",
-    backgroundColor: "#eff6ff",
+    borderColor: colors.selectedBorder,
+    backgroundColor: colors.selectedBackground,
   },
   checklistRow: {
     flexDirection: "row",

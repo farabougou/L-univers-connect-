@@ -9,6 +9,7 @@ import { useAuth } from "../src/lib/auth";
 import { countPendingInterventions } from "../src/lib/db";
 import { roleLabels } from "../src/lib/roles";
 import { synchronize } from "../src/lib/sync";
+import { colors } from "../src/design/colors";
 
 type MeResponse = {
   sub: string;
@@ -112,6 +113,7 @@ export default function HomeScreen() {
       />
       <Button title={t("mobile.home.history")} onPress={() => router.push("/historique")} />
       <Button title={t("mobile.home.passport")} onPress={() => router.push("/passeport")} />
+      <Button title={t("mobile.alerts.title")} onPress={() => router.push("/alertes")} />
 
       <Text>
         {pendingCount > 0
@@ -138,9 +140,9 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   subtitle: {
-    color: "#666",
+    color: colors.textMuted,
   },
   error: {
-    color: "#c0392b",
+    color: colors.danger,
   },
 });
