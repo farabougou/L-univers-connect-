@@ -95,6 +95,23 @@ python scripts/supervision_sweep.py --interval 60
 En production (Railway), ce même script s'exécute avec `--once` sur un service Cron Jobs
 plutôt qu'en boucle : voir `app/supervision_sweep.py` pour le détail du mécanisme.
 
+## Balayage périodique des commandes planifiées (V2)
+
+Une commande planifiée (`POST /scheduled-commands`, priorité « planification » de la
+feuille de route V2) ne s'exécute jamais toute seule à l'heure dite : un balayage
+périodique, même principe que la supervision ci-dessus, la trouve et la déclenche.
+En local :
+
+```bash
+cd services/api
+python scripts/scheduled_commands_sweep.py --interval 30
+```
+
+En production (Railway), ce même script s'exécute avec `--once` sur un service Cron Jobs
+(toutes les minutes suffit) : voir `app/scheduled_commands_sweep.py` pour le détail du
+mécanisme. La commandabilité du point et sa policy active (`app/command_policies.py`)
+sont revérifiées à chaque déclenchement, jamais seulement à la planification.
+
 ## Ancrage externe du journal d'audit
 
 Le journal d'audit (`app/audit.py`) est chaîné par hachage à l'intérieur de la base :

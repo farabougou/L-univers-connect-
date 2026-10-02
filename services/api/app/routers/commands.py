@@ -30,6 +30,15 @@ from app.db import engine
 from app.deps import get_tenant_connection, get_tenant_id
 from app.errors import api_error
 from app.monitoring import evaluate_command_timeout
+from app.scheduled_commands import (
+    ScheduledCommandConflict,
+    ScheduledCommandInThePast,
+    ScheduledCommandNotFound,
+    cancel_scheduled_command,
+    get_scheduled_command,
+    list_scheduled_commands_for_point,
+    schedule_command,
+)
 from app.tenancy import set_tenant_context
 
 router = APIRouter()
@@ -79,6 +88,27 @@ class CommandAck(BaseModel):
     success: bool
     actual_value: float | None = None
     failure_reason: str | None = Field(default=None, max_length=200)
+
+
+class ScheduledCommandCreate(BaseModel):
+    point_id: uuid.UUID
+    requested_value: float
+    scheduled_for: datetime
+
+
+class ScheduledCommandOut(BaseModel):
+    id: uuid.UUID
+    point_id: uuid.UUID
+    requested_value: float
+    scheduled_for: datetime
+    requested_by: str
+    status: str
+    command_id: uuid.UUID | None
+    failure_reason: str | None
+    created_at: datetime
+    dispatched_at: datetime | None
+    cancelled_at: datetime | None
+    cancelled_by: str | None
 
 
 def _actor(claims: dict) -> str:
@@ -230,3 +260,88 @@ def acknowledge_command_route(
             },
         )
     return _out(command, now=datetime.now(UTC))
+
+
+@router.post("/scheduled-commands", response_model=ScheduledCommandOut, status_code=201)
+def schedule_command_route(
+    body: ScheduledCommandCreate,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
+    claims: Annotated[dict, Depends(require_any_role(*_COMMAND_ROLES))],
+) -> ScheduledCommandOut:
+    """Planifie une commande pour plus tard (V2, priorité « planification »).
+    Revérifiée intégralement au déclenchement, pas seulement ici — voir
+    app/scheduled_commands.py."""
+    actor = _actor(claims)
+    roles = list(claims.get("realm_access", {}).get("roles", []))
+    try:
+        scheduled_id = schedule_command(
+            connection,
+            tenant_id=tenant_id,
+            point_id=body.point_id,
+            requested_value=body.requested_value,
+            scheduled_for=body.scheduled_for,
+            requested_by=actor,
+            requester_roles=roles,
+        )
+    except (CommandNotAllowed, PolicyViolation, ScheduledCommandInThePast) as exc:
+        raise api_error(exc, exc.status) from exc
+
+    append_audit_entry(
+        connection,
+        tenant_id=tenant_id,
+        actor=actor,
+        action="scheduled_command.created",
+        entity_type="scheduled_command",
+        entity_id=str(scheduled_id),
+        payload={
+            "point_id": str(body.point_id),
+            "requested_value": body.requested_value,
+            "scheduled_for": body.scheduled_for.isoformat(),
+        },
+    )
+    return ScheduledCommandOut(**get_scheduled_command(connection, scheduled_id))
+
+
+@router.get("/scheduled-commands", response_model=list[ScheduledCommandOut])
+def list_scheduled_commands_route(
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    _claims: Annotated[dict, Depends(get_current_claims)],
+    point_id: Annotated[uuid.UUID, Query()],
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+) -> list[ScheduledCommandOut]:
+    return [
+        ScheduledCommandOut(**row)
+        for row in list_scheduled_commands_for_point(connection, point_id=point_id, limit=limit)
+    ]
+
+
+@router.post(
+    "/scheduled-commands/{scheduled_command_id}/cancel", response_model=ScheduledCommandOut
+)
+def cancel_scheduled_command_route(
+    scheduled_command_id: uuid.UUID,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
+    claims: Annotated[dict, Depends(require_any_role(*_COMMAND_ROLES))],
+) -> ScheduledCommandOut:
+    actor = _actor(claims)
+    try:
+        updated = cancel_scheduled_command(
+            connection,
+            scheduled_command_id=scheduled_command_id,
+            cancelled_by=actor,
+            at=datetime.now(UTC),
+        )
+    except (ScheduledCommandNotFound, ScheduledCommandConflict) as exc:
+        raise api_error(exc, exc.status) from exc
+
+    append_audit_entry(
+        connection,
+        tenant_id=tenant_id,
+        actor=actor,
+        action="scheduled_command.cancelled",
+        entity_type="scheduled_command",
+        entity_id=str(scheduled_command_id),
+    )
+    return ScheduledCommandOut(**updated)

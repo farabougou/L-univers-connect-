@@ -35,6 +35,7 @@ def _cleanup(tenant_id):
         set_tenant_context(connection, tenant_id)
         for table in (
             "events",
+            "scheduled_commands",
             "commands",
             "edge_devices",
             "finding_status_history",

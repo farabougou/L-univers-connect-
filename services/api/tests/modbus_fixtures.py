@@ -286,6 +286,7 @@ def cleanup_tenant(tenant: dict) -> None:
         set_tenant_context(connection, tenant_id)
         for table in (
             "events",
+            "scheduled_commands",
             "commands",
             "device_assertion_nonces",
             "edge_devices",

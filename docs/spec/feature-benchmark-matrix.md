@@ -178,6 +178,7 @@ passant : la ligne « Mise en service et recommissioning continu » affirmait en
 | Edge runtime (tampon hors ligne, envoi différé) | ✅ Démon parle par HTTP, plus d'accès direct base (24/09/2026, `app/connectors/edge_client.py`) — le démon Modbus s'authentifie avec sa propre identité d'appareil et n'utilise plus jamais les identifiants de l'API : `GET /edge/config` pour la configuration, `POST /edge/measurements` pour la télémétrie. Tampon hors ligne (`app/connectors/offline_buffer.py`) : fichier local, une mesure déjà lue n'est jamais perdue si l'API est injoignable, renvoi automatique dès la reprise. Démon mono-processus : pas de flotte, pas de PKI, pas encore un vrai agent Edge déployable | Passerelles matures chez Schneider/Siemens ; automates Smart & Connective | MQTT 5 (sessions persistantes, QoS 1) | Haute | Agent Edge ; ingestion idempotente (F3) | ADD frontière HTTP + tampon fichier (24/09/2026) ; DEFER flotte/PKI/MQTT (M4+) | Lien Edge ↔ cloud à concevoir bidirectionnel dès M3 (ADR 012, risque 4). La frontière réseau que la PKI protégera existe maintenant : plus seulement une base de données partagée. |
 | Gestion de flotte Edge (mises à jour signées, déploiement progressif, retour arrière) | ❌ Absent | Plateformes IoT des grands clouds (non revérifié) | TUF / Uptane (mises à jour sécurisées) | Moyenne | `config_versions` + identité des appareils | DEFER (M4) | Conçue pour une grande flotte, pas pour 10 passerelles. |
 | Commande distante sécurisée | ⚠️ Partiel (incrément 4 fait, 1er octobre 2026) — interdite vers un équipement réel par la règle non négociable 1, inchangée. `IMPLEMENTED`, `SHADOW_TESTED` : interface `CommandExecutor` (`app/connectors/executors.py`, ADR 017 §4.1) — `SimulatedExecutor` nommé explicitement, `resolve_executor(device_type)` remplace le branchement implicite qu'avait `scripts/modbus_daemon.py` (REFACTOR de seam, aucune nouvelle logique métier : `app/commands.py` inchangé, `tests/test_modbus_daemon_commands.py` — la preuve de bout en bout Decision → Authorization → Policy & Safety → Simulated Command → Audit → Simulated Verification — toujours au vert sans modification). 4 nouveaux tests contre un vrai relais Modbus simulé (écriture/relecture réelles, code d'échec stable `MODBUS_WRITE_ERROR` si injoignable, jamais une phrase en dur dans la donnée persistée). Toujours un seul `device_type` commandable (`simulated_relay`) : l'ajout d'un futur exécuteur réel (BACnet ou Modbus) sera une entrée de table, jamais une nouvelle branche de code, et reste couvert par l'ADR 016 (validation terrain + décision explicite séparée). **02/10/2026 : précision de Mohamed** — aucun LIVE CONTROL avant la fin de V4, décision déjà fixée pour toute la durée de la roadmap, pas une question en attente d'un feu vert à chaque audit : Shadow/Dry Run continue de se développer et se prouver sans qu'il y ait quoi que ce soit à redemander. **V2, 02/10/2026 (priorités commande sécurisée + autorisation/policies + Dry Run/Shadow)** — `app/command_policies.py` : policy versionnée par point (voir la ligne « Autorisations fines » ci-dessus), vérifiée par `validate_command` avant toute création. `validate_command` est maintenant la seule porte d'entrée des vérifications (commandabilité puis policy), appelée par `create_command` ET par le nouveau mode essai à blanc explicite et tracé : `POST /commands` avec `dry_run: true` exécute exactement les mêmes vérifications, sans jamais créer de commande ni atteindre l'Edge, renvoie `{mode: "dry_run", valid: true, ...}`, et journalise quand même une entrée d'audit (`command.dry_run`) — un essai à blanc reste une action qui mérite une trace, même sans effet. Distinct du Shadow Mode de l'ADR 017 (qui simule un équipement entier dans le Virtual Commissioning Lab) : ce dry-run valide une commande précise contre les règles d'autorisation, sans environnement simulé requis | Honeywell Forge, Johnson Controls OpenBlue, Schneider EcoStruxure | IEC 62443 | Haute pour le Shadow Mode ; aucun LIVE CONTROL avant la fin de V4 (décision fixée, pas en attente) | ADR 012 §2.5-2.6 ; ADR 016 (BACnet) ; ADR 017 §4 ; `app/connectors/executors.py` ; `app/command_policies.py` (V2) | ADD Shadow Mode (incrément 4 fait, ADR 017) ; ADD Command Policy Engine + dry-run explicite (V2, 02/10/2026) ; DEFER toute commande réelle jusqu'à la fin de V4 (décision fixée le 02/10/2026) | Chaîne Identity → Authorization → Policy → Safety → Arbitration → Edge → Controller → Verification ; sécurités locales toujours prioritaires. `SimulatedExecutor` remplaçable plus tard par un exécuteur réel sans changer le moteur métier ni la boucle du démon. **Grille produit (ADR 014)** : Backend DONE, API DONE (`dry_run` sur `POST /commands`, routes `/configs` génériques pour la policy), Web DEFER (pas encore d'écran dédié à la gestion des policies — la commande elle-même reste accessible depuis la fiche équipement), Mobile N/A, Edge N/A, Tests DONE (7 tests domaine `test_command_policies.py`, 4 tests API dans `test_commands_api.py` : dry-run réussi sans création, dry-run refusé sur un point non pilotable, policy qui bloque une création par rôle, policy qui bloque un dry-run par valeur), Documentation DONE (cette ligne). |
+| Planification de commande (exécution différée) | ⚠️ **V2, 02/10/2026 (priorité « planification »)** — `app/scheduled_commands.py` : une commande planifiée déclare une valeur et un instant futur uniques (jamais une récurrence/cron — règle des trois, un vrai cas d'usage récurrent attendra avant d'être deviné). Revérifie tout à la planification ET au déclenchement (commandabilité, policy active) : un point qui cesse d'être commandable ou une policy qui change entre les deux fait échouer le déclenchement (`status = 'failed'`), jamais une commande forcée parce que la planification avait réussi hier. Les rôles de la personne sont capturés à la planification (`requester_roles`, JSONB) et revérifiés à l'identique au déclenchement, un balayage automatique n'ayant pas de session active. Déclenchée, une commande planifiée appelle `app.commands.create_command` tel quel — aucune deuxième logique d'exécution ni de vérification, seulement l'audit de cette création (acteur `scheduler:{id}`, aucune requête HTTP ne l'auditerait sinon). Balayage périodique (`app/scheduled_commands_sweep.py`, `scripts/scheduled_commands_sweep.py`), même mécanisme que `app/supervision_sweep.py` : un tenant en échec n'empêche jamais les autres. 3 routes `/scheduled-commands` (créer, lister par point, annuler), mêmes rôles que `/commands`. Affiché sur la fiche équipement (section « Commande »), à côté de la commande immédiate — pas un deuxième écran | Johnson Controls OpenBlue, Siemens Desigo (scénarios planifiés, non revérifié en détail) | — | Moyenne | `app/scheduled_commands.py`, `app/scheduled_commands_sweep.py` (V2) ; migration `b3f7a1c9d2e4` | ADD planification à instant unique (V2, 02/10/2026) ; DEFER récurrence/cron (aucun cas d'usage réel identifié) | **Grille produit (ADR 014)** : Backend DONE, API DONE, Web DONE (formulaire + liste + annulation sur la fiche équipement), Mobile N/A (pas un geste terrain), Edge N/A, Tests DONE (12 tests domaine `test_scheduled_commands.py` dont 3 sur le déclenchement — due/pas due/devenue invalide entre-temps —, 6 tests API `test_scheduled_commands_api.py`, 2 tests de balayage `test_scheduled_commands_sweep.py` dont la résilience multi-tenant), Documentation DONE (cette ligne, `infra/README.md`). |
 | Arbitrage des commandes (priorités, dérogations temporaires, expiration) | ❌ Absent | Natif dans BACnet et les GTB | Tableau de priorités BACnet (16 niveaux) | Aucun LIVE CONTROL avant la fin de V4 (décision fixée, pas en attente) | ADR 012 §2.5 ; ADR 016 (spécification de la future écriture BACnet, non activée) | DEFER, conçu | Arbitrage déterministe exécuté sur l'Edge pour fonctionner sans Internet ; anti-boucle par chaîne de causalité. |
 | Moteur d'automatisation / GTB native | ❌ Absent | Cœur des grands éditeurs et de Smart & Connective | — | Postérieure à la sûreté | ADR 004 | DEFER | Aucun LIVE CONTROL avant la fin de V4 (décision fixée le 02/10/2026, pas une question en attente d'un feu vert). |
 | Retrofit léger (GTB non supposée, monitoring sans contrôle) | ✅ Principe respecté — registre et GMAO utilisables sans aucune connexion | Smart & Connective (GTB Light sans travaux) | LoRaWAN, EnOcean, Zigbee (capteurs sans fil de retrofit) | Haute | Profils d'intégration par site | KEEP + DEFER profils (M3) | Le client peut commencer par la maintenance seule, puis ajouter des capteurs. |
@@ -817,15 +818,14 @@ vérifications, réutilisée par la création réelle et par le nouveau mode
 journalise quand même une entrée d'audit. 11 tests ajoutés (7 domaine +
 4 API), 920/920 tests backend.
 
-**Modes/consignes, planification, automatisation (règle → commande)** :
-`DEFER` pour cette tranche, pas par oubli. `app/desired_states.py` reste
-un instrument de lecture seule par choix d'architecture explicite
-(docstring de `app/commands.py`) — y relier des commandes ou des policies
-avant que l'autorisation elle-même existe aurait inversé l'ordre de
-construction. Prochaine tranche logique une fois cette base posée :
-planification (une commande programmée, plutôt qu'immédiate) puis
-automatisation (un nouveau type de règle, strictement scopé aux points déjà
-commandables, gardé par le Policy Engine).
+**Modes/consignes, automatisation (règle → commande)** : `DEFER` pour cette
+tranche, pas par oubli. `app/desired_states.py` reste un instrument de
+lecture seule par choix d'architecture explicite (docstring de
+`app/commands.py`) — y relier des commandes ou des policies avant que
+l'autorisation elle-même existe aurait inversé l'ordre de construction.
+Prochaine tranche logique une fois cette base posée : automatisation (un
+nouveau type de règle, strictement scopé aux points déjà commandables,
+gardé par le Policy Engine).
 
 **Interface, évolution progressive (même tranche)** : palette sombre/navy
 généralisée et nouveau composant `Sidebar.tsx` — voir la ligne « Design
@@ -840,6 +840,30 @@ l'authentification Keycloak ici.
 
 **Vérification** : 920/920 tests backend, 182 tests web, 114 tests mobile ;
 TS/ESLint/build web et mobile propres.
+
+### V2 — suite, 02/10/2026 : planification
+
+Priorité « planification » de la feuille de route — voir la ligne
+« Planification de commande (exécution différée) » ci-dessus pour le
+détail complet. En résumé : `app/scheduled_commands.py` (une valeur et un
+instant futur uniques, jamais une récurrence devinée), revérification
+complète (commandabilité + policy) à la planification ET au déclenchement,
+rôles de la personne capturés à la planification et rejoués à l'identique
+(un balayage automatique n'a pas de session). Balayage périodique
+(`app/scheduled_commands_sweep.py`), même mécanisme que la supervision.
+3 routes `/scheduled-commands`, et un formulaire + une liste + l'annulation
+sur la fiche équipement, à côté de la commande immédiate. 20 tests ajoutés
+(12 domaine + 6 API + 2 balayage), 940/940 tests backend ; TS/ESLint/build
+web propres (182 tests web, inchangé — aucun nouveau test unitaire web, la
+page reste un composant serveur sans logique propre à isoler).
+
+Reste DEFER pour une prochaine tranche : automatisation (dernière priorité
+de la feuille de route, règle → commande). Nécessite de décider d'abord
+comment une règle automatique s'arrête d'elle-même en cas de doute (jamais
+un deuxième avis humain requis pour CHAQUE déclenchement, sinon ce n'est
+plus de l'automatisation, mais pas non plus un système qui s'emballe sans
+garde-fou) — un vrai blocage de conception à trancher avant de coder,
+signalé ici plutôt que deviné.
 
 ## Mise à jour de ce document
 

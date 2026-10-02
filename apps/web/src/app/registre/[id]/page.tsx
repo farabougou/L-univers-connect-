@@ -45,6 +45,7 @@ import {
   acceptBacnetProposal,
   acknowledgeSignal,
   activateRule,
+  cancelScheduledTestCommand,
   changeLifecycleState,
   clearAlarm,
   computeEnergyResult,
@@ -67,11 +68,20 @@ import {
   retireRule,
   revokeTag,
   scanBacnetDevice,
+  scheduleTestCommand,
   sendTestCommand,
   setAssetCode,
   setHandling,
   setProperty,
 } from "./actions";
+
+type ScheduledCommand = {
+  id: string;
+  requested_value: number;
+  scheduled_for: string;
+  status: "pending" | "dispatched" | "cancelled" | "failed";
+  failure_reason: string | null;
+};
 
 type ImpactedNode = {
   node_id: string;
@@ -443,6 +453,18 @@ export default async function EquipmentPage({
   const relayPoint = relayPointId ? points.find((point) => point.id === relayPointId) : null;
   const lastCommand: PassportCommand | null = relayPoint?.commands[0] ?? null;
 
+  // Commandes planifiées (V2, priorité « planification ») : même point que
+  // la commande immédiate ci-dessus, jamais un deuxième mécanisme de
+  // commandabilité.
+  let scheduledCommands: ScheduledCommand[] = [];
+  if (relayPointId) {
+    const scheduledResponse = await apiFetch(
+      `/scheduled-commands?point_id=${relayPointId}&limit=5`,
+      accessToken,
+    );
+    scheduledCommands = scheduledResponse.ok ? await scheduledResponse.json() : [];
+  }
+
   // Découverte BACnet (BACnet V1, lecture seule) : mêmes principes que la
   // connexion Modbus ci-dessus, sujet = l'équipement (voir
   // app/bacnet_discovery.py). Un équipement introuvable côté API (nœud qui
@@ -784,6 +806,7 @@ export default async function EquipmentPage({
             points={points}
             relayPointId={relayPointId}
             lastCommand={lastCommand}
+            scheduledCommands={scheduledCommands}
             canSendCommand={canSendCommand}
             locale={locale}
             timeZone={timeZone}
@@ -2022,6 +2045,7 @@ function CommandBlock({
   points,
   relayPointId,
   lastCommand,
+  scheduledCommands,
   canSendCommand,
   locale,
   timeZone,
@@ -2031,6 +2055,7 @@ function CommandBlock({
   points: { id: string; name: string }[];
   relayPointId: string | null;
   lastCommand: PassportCommand | null;
+  scheduledCommands: ScheduledCommand[];
   canSendCommand: boolean;
   locale: Locale;
   timeZone: string | null;
@@ -2057,6 +2082,68 @@ function CommandBlock({
             <input type="hidden" name="requested_value" value="0" />
             <button type="submit">{t("web.registre.command_turn_off")}</button>
           </form>
+        </div>
+      )}
+      {canSendCommand && (
+        <form
+          action={scheduleTestCommand}
+          style={{ display: "flex", alignItems: "flex-end", gap: 8, flexWrap: "wrap", marginTop: 12 }}
+        >
+          <input type="hidden" name="node_id" value={nodeId} />
+          <input type="hidden" name="point_id" value={relayPointId} />
+          <div>
+            <label style={{ ...labelStyle, marginTop: 0 }}>
+              {t("web.registre.scheduled_command_value_label")}
+            </label>
+            <select name="requested_value" style={fieldStyle} defaultValue="1">
+              <option value="1">{t("web.registre.command_turn_on")}</option>
+              <option value="0">{t("web.registre.command_turn_off")}</option>
+            </select>
+          </div>
+          <div>
+            <label style={{ ...labelStyle, marginTop: 0 }}>
+              {t("web.registre.scheduled_command_when_label")}
+            </label>
+            <input type="datetime-local" name="scheduled_for" required style={fieldStyle} />
+          </div>
+          <button type="submit">{t("web.registre.scheduled_command_submit")}</button>
+        </form>
+      )}
+      {scheduledCommands.length > 0 && (
+        <div style={{ marginTop: 12 }}>
+          <p style={{ ...mutedStyle, margin: 0, fontWeight: 600 }}>
+            {t("web.registre.scheduled_command_list_title")}
+          </p>
+          <ul style={{ listStyle: "none", padding: 0, margin: "4px 0 0" }}>
+            {scheduledCommands.map((scheduled) => (
+              <li
+                key={scheduled.id}
+                style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}
+              >
+                <span>
+                  {t(`scheduled_command_status.${scheduled.status}`)} —{" "}
+                  {t("web.registre.command_requested_value", {
+                    value: formatNumber(locale, scheduled.requested_value),
+                  })}{" "}
+                  —{" "}
+                  {t("web.registre.scheduled_command_for", {
+                    when: formatDateTime(locale, scheduled.scheduled_for, timeZone),
+                  })}
+                  {scheduled.failure_reason &&
+                    ` — ${t("web.registre.command_failure_reason", {
+                      reason: t(`command_failure_reason.${scheduled.failure_reason}`),
+                    })}`}
+                </span>
+                {scheduled.status === "pending" && canSendCommand && (
+                  <form action={cancelScheduledTestCommand}>
+                    <input type="hidden" name="node_id" value={nodeId} />
+                    <input type="hidden" name="scheduled_command_id" value={scheduled.id} />
+                    <button type="submit">{t("web.registre.scheduled_command_cancel")}</button>
+                  </form>
+                )}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
       <div style={{ marginTop: 8 }}>

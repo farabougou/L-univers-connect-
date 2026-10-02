@@ -520,6 +520,47 @@ export async function sendTestCommand(formData: FormData) {
   revalidatePath(`/registre/${nodeId}`);
 }
 
+export async function scheduleTestCommand(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+  const pointId = formData.get("point_id");
+  const requestedValue = formData.get("requested_value");
+  const scheduledFor = formData.get("scheduled_for");
+
+  const response = await apiFetch("/scheduled-commands", accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      point_id: pointId,
+      requested_value: Number(requestedValue),
+      // L'input HTML datetime-local n'a pas de fuseau : interprété dans
+      // celui du serveur, comme toute saisie horaire sans fuseau explicite
+      // ailleurs dans le dépôt (voir ADR 014 pour le fuseau des sites).
+      scheduled_for: new Date(String(scheduledFor)).toISOString(),
+    }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  revalidatePath(`/registre/${nodeId}`);
+}
+
+export async function cancelScheduledTestCommand(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+  const scheduledCommandId = formData.get("scheduled_command_id");
+
+  const response = await apiFetch(
+    `/scheduled-commands/${scheduledCommandId}/cancel`,
+    accessToken,
+    { method: "POST" },
+  );
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  revalidatePath(`/registre/${nodeId}`);
+}
+
 export async function createWorkOrderForEquipment(formData: FormData) {
   const accessToken = await requireAccessToken();
   const nodeId = String(formData.get("node_id"));

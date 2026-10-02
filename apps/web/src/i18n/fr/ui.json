@@ -38,7 +38,10 @@
   },
   "command_failure_reason": {
     "ACTUAL_STATE_MISMATCH": "L’état réel ne correspond pas à la valeur demandée.",
+    "COMMAND_POINT_NOT_CONTROLLABLE": "Ce point n’est plus piloté par un appareil simulé.",
     "COMMAND_POINT_NOT_IN_CONFIG": "Le point visé n’est plus dans la configuration active.",
+    "COMMAND_POLICY_ROLE_NOT_ALLOWED": "Le rôle de la personne qui avait planifié cette commande n’est plus autorisé par la politique active de ce point.",
+    "COMMAND_POLICY_VALUE_NOT_ALLOWED": "Cette valeur n’est plus autorisée par la politique active de ce point.",
     "MODBUS_WRITE_ERROR": "L’appareil a refusé l’écriture."
   },
   "command_status": {
@@ -344,6 +347,12 @@
     "admin_tenant": "Administrateur",
     "responsable_exploitation": "Responsable d’exploitation",
     "technicien": "Technicien"
+  },
+  "scheduled_command_status": {
+    "cancelled": "Annulée",
+    "dispatched": "Déclenchée",
+    "failed": "Échouée",
+    "pending": "En attente"
   },
   "search_result_kind": {
     "functional_location": "Équipement",
@@ -817,6 +826,12 @@
       "rule_tolerance": "Tolérance",
       "rule_version": "Version {version}",
       "rules_title": "Règles de détection",
+      "scheduled_command_cancel": "Annuler",
+      "scheduled_command_for": "pour le {when}",
+      "scheduled_command_list_title": "Commandes planifiées",
+      "scheduled_command_submit": "Planifier",
+      "scheduled_command_value_label": "Valeur à envoyer",
+      "scheduled_command_when_label": "Date et heure",
       "serial_number": "Numéro de série",
       "site_name": "Nom du site",
       "site_timezone": "Fuseau horaire (identifiant IANA, par exemple Europe/Paris)",

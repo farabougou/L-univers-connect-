@@ -38,7 +38,10 @@
   },
   "command_failure_reason": {
     "ACTUAL_STATE_MISMATCH": "The actual state does not match the requested value.",
+    "COMMAND_POINT_NOT_CONTROLLABLE": "This point is no longer controlled by a simulated device.",
     "COMMAND_POINT_NOT_IN_CONFIG": "The target point is no longer in the active configuration.",
+    "COMMAND_POLICY_ROLE_NOT_ALLOWED": "The role of the person who scheduled this command is no longer allowed by this point's active policy.",
+    "COMMAND_POLICY_VALUE_NOT_ALLOWED": "This value is no longer allowed by this point's active policy.",
     "MODBUS_WRITE_ERROR": "The device refused the write."
   },
   "command_status": {
@@ -344,6 +347,12 @@
     "admin_tenant": "Administrator",
     "responsable_exploitation": "Operations manager",
     "technicien": "Technician"
+  },
+  "scheduled_command_status": {
+    "cancelled": "Cancelled",
+    "dispatched": "Dispatched",
+    "failed": "Failed",
+    "pending": "Pending"
   },
   "search_result_kind": {
     "functional_location": "Equipment",
@@ -817,6 +826,12 @@
       "rule_tolerance": "Tolerance",
       "rule_version": "Version {version}",
       "rules_title": "Detection rules",
+      "scheduled_command_cancel": "Cancel",
+      "scheduled_command_for": "for {when}",
+      "scheduled_command_list_title": "Scheduled commands",
+      "scheduled_command_submit": "Schedule",
+      "scheduled_command_value_label": "Value to send",
+      "scheduled_command_when_label": "Date and time",
       "serial_number": "Serial number",
       "site_name": "Site name",
       "site_timezone": "Time zone (IANA identifier, for example Europe/Paris)",
