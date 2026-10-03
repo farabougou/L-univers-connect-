@@ -920,6 +920,61 @@ Mohamed : évolution UX/UI (dashboard opérationnel, actifs filtrables,
 fiches équipements, vues Alarmes/Maintenance/Énergie, mobile terrain
 responsive).
 
+### V2 — correction critique, 03/10/2026 : console web illisible sur téléphone
+
+Mohamed a transmis une capture d'écran de l'accueil (`/`) consultée depuis
+Safari iOS : texte éclaté lettre par lettre (« In/te/rv/e/nt/io/n »,
+« A/u/c/u/n/e ») et contenu poussé hors de l'écran. Diagnostic avant
+correction, deux causes distinctes et cumulatives, toutes deux corrigées :
+
+1. **Cause principale : aucune balise `<meta name="viewport">`.** Next.js
+   (App Router) n'en injecte pas automatiquement — il faut l'exporter
+   explicitement (`export const viewport`, API `Viewport` depuis `next`).
+   Sans elle, Safari mobile suppose une page conçue pour un écran de bureau
+   (~980px de large) : la règle `@media (max-width: 900px)` qui masque la
+   Sidebar (`apps/web/src/components/Sidebar.tsx`) ne se déclenche jamais,
+   et toute la page s'affiche dézoomée — exactement le symptôme observé
+   (contenu poussé à droite, zone vide à gauche). Corrigé dans
+   `apps/web/src/app/layout.tsx` : `viewport = { width: "device-width",
+   initialScale: 1 }`. Vérifié en direct (serveur de développement local,
+   `curl /login`) : la balise apparaît bien dans le HTML servi.
+2. **Cause aggravante : `overflow-wrap: anywhere` global
+   (`globals.css`).** Posée à juste titre pour empêcher un identifiant
+   technique sans espace (UUID) de faire déborder la page silencieusement
+   (`overflow-x: hidden` sur `html`/`body`). Effet de bord non prévu,
+   propre à la spécification CSS : contrairement à `break-word`, la valeur
+   `anywhere` réduit aussi la largeur minimale (*min-content*) qu'un
+   navigateur calcule pour un enfant flex — un mot ordinaire comme
+   « Intervention » ou « Aucune » peut alors se faire réduire à la largeur
+   d'un seul caractère par un conteneur flex à deux éléments (étiquette +
+   valeur, ex. `RecentActivityFeed.tsx` et les cellules `.responsive-table`
+   de `app/page.tsx`) dès que l'espace devient un peu juste, plutôt que de
+   passer à la ligne par mot entier. Reproduit et confirmé par une page de
+   test isolée (Playwright, capture d'écran à largeur réduite) avant et
+   après correction. Corrigé par un seul mot changé dans `globals.css` :
+   `overflow-wrap: break-word` — `break-word` offre la même protection
+   contre un UUID qui déborderait (cassure en dernier recours), sans
+   modifier le calcul de largeur minimale des conteneurs flex. Aucun
+   composant React modifié : la correction est centralisée, pas répétée
+   écran par écran.
+
+Priorité haute : régression visible sur l'écran le plus consulté de la
+console (l'accueil), affectant potentiellement tout écran avec un
+conteneur flex étiquette/valeur sur téléphone. Fichiers touchés :
+`apps/web/src/app/layout.tsx`, `apps/web/src/app/globals.css`. Décision :
+KEEP le principe des deux protections d'origine (anti-dézoom, anti-
+débordement d'un identifiant technique) ; REFACTOR leur implémentation
+(balise viewport ajoutée, `anywhere` → `break-word`), aucune régression de
+protection. Vérification : TS/ESLint/vitest (182 tests)/build Next.js
+propres après correction ; balise viewport confirmée présente dans le HTML
+servi par un serveur de développement local (`curl` sur `/login`) ; le
+motif exact du bug (étiquette + valeur dans un conteneur flex, à largeur
+réduite) reproduit puis corrigé dans une page de test isolée avec
+Playwright, captures à l'appui avant/après. Pas de test automatisé ajouté
+pour le rendu visuel mobile de l'application elle-même (nécessiterait un
+environnement Playwright persistant avec authentification Keycloak, hors
+périmètre de cette correction ponctuelle) — signalé, pas bloquant.
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente

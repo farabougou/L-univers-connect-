@@ -29,8 +29,16 @@ body {
   /* Un identifiant technique (UUID, jeton) ne contient pas d'espace : sans
      ceci, un seul de ces identifiants peut forcer toute la page à dépasser
      la largeur de l'écran, et le texte en trop devient invisible (silencieux
-     à cause de overflow-x: hidden ci-dessus, jamais un scroll visible). */
-  overflow-wrap: anywhere;
+     à cause de overflow-x: hidden ci-dessus, jamais un scroll visible).
+     `break-word`, pas `anywhere` : les deux empêchent un token sans espace
+     de dépasser la largeur de l'écran, mais seul `anywhere` modifie aussi la
+     largeur minimale calculée par un conteneur flex (`min-content`) — un
+     vrai bug trouvé le 03/10/2026 (capture d'écran mobile de Mohamed) :
+     toute rangée flex à deux éléments (étiquette + valeur, ex. l'activité
+     récente ou un tableau responsive) se réduisait au premier caractère de
+     la valeur plutôt que de passer à la ligne par mot entier, dès que les
+     deux éléments ne tenaient plus côte à côte sur un téléphone étroit. */
+  overflow-wrap: break-word;
 }
 
 * {

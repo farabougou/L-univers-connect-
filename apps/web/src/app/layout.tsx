@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 import { Sidebar, type SidebarGroup } from "@/components/Sidebar";
@@ -11,6 +11,19 @@ export async function generateMetadata(): Promise<Metadata> {
     description: `${t("common.app_name")} — ${t("common.tagline")} — ${t("web.console")}`,
   };
 }
+
+/**
+ * Sans cette balise, un navigateur mobile suppose une page conçue pour un
+ * écran de bureau (~980px) et l'affiche dédézoomée plutôt que de respecter
+ * nos règles `@media` (sidebar, tableaux responsives) — trouvé le
+ * 03/10/2026 (capture d'écran mobile de Mohamed, console zoomée et
+ * illisible). `width: device-width` fait correspondre la largeur CSS à la
+ * largeur réelle de l'écran ; `initialScale: 1` démarre sans zoom.
+ */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { t } = await getTranslator();
