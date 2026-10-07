@@ -1073,6 +1073,82 @@ un vrai flux vidéo, hors de portée de vitest/jsdom) — signalé, pas
 bloquant ; la résolution de code (le chemin partagé par les deux méthodes)
 est, elle, entièrement testée.
 
+### V2 — audit de fermeture, 07/10/2026 : chaîne Intent → Automation vérifiée de bout en bout
+
+Reprise du développement sur la branche actuelle, inspection complète de
+toute la chaîne V2 (Intent → Authorization → RBAC/ABAC → Policy/Safety →
+Command Proposal → Approval → DRY_RUN/SHADOW → Verification → Audit →
+Scheduling → Automation) avant toute nouvelle écriture, conformément à la
+directive de Mohamed de ne rien reconstruire qui existe déjà.
+
+**Constat de l'audit, module par module** (tous déjà en place, aucun
+recodé) : `app/commands.py` (cycle complet pending→sent→acknowledged→
+verified/failed/timed_out/unconfirmed, `validate_command` partagé par la
+création réelle et le dry-run) ; `app/command_policies.py` (RBAC/ABAC par
+point, restreint jamais n'étend) ; `app/point_control_mode.py`
+(manuel/automatique, `manual` par défaut, jamais l'inverse) ;
+`app/scheduled_commands.py` + `scripts/scheduled_commands_sweep.py`
+(revérification complète à la planification ET au déclenchement) ;
+`app/automation_rules.py` + `scripts/automation_rules_sweep.py` (cinq
+garde-fous dans l'ordre : fiabilité de la donnée, mode automatique,
+commandabilité, policy active, anti-emballement) ;
+`app/connectors/executors.py` (`SimulatedExecutor`, seul exécuteur
+enregistré) ; `app/audit.py` (journal chaîné par hachage, verrou
+consultatif par tenant). Chaîne réellement cohérente, pas seulement codée
+en apparence : chaque maillon revérifie ce que le précédent a déjà
+vérifié, jamais une confiance aveugle d'une étape à l'autre.
+
+**Manque réel trouvé et comblé — Command Policy sans écran** : le moteur
+RBAC/ABAC par point (`app/command_policies.py`, 02/10/2026) n'avait jamais
+reçu d'interface : seul un appel direct à l'API pouvait poser une policy.
+Nouvelle section « Policy de commande » sur la fiche équipement web
+(`/registre/[id]`), même mécanisme de configuration versionnée que le mode
+du point et les règles d'automatisation juste au-dessus — voir la ligne
+dédiée plus bas pour le détail.
+
+**Manque réel trouvé et comblé — parité mobile incomplète sur le
+passeport** : `app/passeport.tsx` (mobile) affichait déjà les boutons de
+commande et la dernière commande, mais rien sur le mode du point ni les
+commandes planifiées — un technicien ne voyait pas si l'automatisation
+pouvait agir sur ce point avant d'intervenir manuellement, alors que la
+fiche équipement web montre les deux. Ajouté en lecture seule
+(`fetchControlMode`, `fetchScheduledCommands` dans
+`apps/mobile/src/lib/passport.ts`, mêmes endpoints `GET /configs?
+config_type=point_control_mode` et `GET /scheduled-commands` que le web) :
+planifier ou configurer l'automatisation reste un geste d'administration
+réservé au web (ADR 014 §11, « parité fonctionnelle intelligente » —
+directive de Mohamed du 07/10/2026 : une donnée métier ne doit jamais
+donner une vérité différente selon la plateforme, mais une fonction
+d'administration lourde reste au bon endroit).
+
+**Gap opérationnel signalé, pas corrigé par du code** : aucun service Cron
+Jobs n'est configuré sur le projet Railway (vérifié directement via
+l'API Railway) pour les trois balayages périodiques (supervision,
+commandes planifiées, automatisation) — voir `infra/README.md`, section
+« Balayage périodique du moteur d'automatisation », pour le détail complet
+et la nouvelle documentation manquante ajoutée pour `automation_rules_sweep`
+(seul des trois à n'avoir jamais eu de section dédiée). Le mécanisme
+fonctionne (suite de tests + vérification locale), mais une commande
+planifiée ou une règle d'automatisation activée sur le staging actuel
+resterait `pending`/jamais évaluée tant qu'aucune tâche planifiée externe
+ne tourne réellement. Ce n'est pas un défaut Critical/High du logiciel
+livré ; c'est une tâche d'infrastructure (créer des services Cron Jobs
+payants sur Railway) qui relève d'une décision de Mohamed, pas d'une
+correction de code autonome — signalé en `BLOCKERS`, pas contourné
+silencieusement.
+
+**LIVE_CONTROL** : confirmé absent de tout le dépôt (`mode="shadow"` seul
+sur `CommandOut`, seul `simulated_relay` dans `_EXECUTORS`) — aucune
+commande réelle possible, conforme à la règle non négociable 1.
+
+Priorité haute (fermeture V2). Fichiers touchés :
+`apps/web/src/app/registre/[id]/{page.tsx,actions.ts,actions.test.ts}`,
+`apps/mobile/src/lib/passport.ts`, `apps/mobile/app/passeport.tsx`,
+`infra/README.md`. Décision : ADD (écran Command Policy, parité mobile
+mode/planification) ; aucun REPLACE ni REFACTOR du moteur existant.
+Vérification : `tsc`/ESLint/`next build` web propres, 198 tests vitest web
+(3 nouveaux) ; `tsc --noEmit` mobile propre, 121/121 tests vitest mobile.
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente

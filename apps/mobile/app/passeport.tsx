@@ -21,9 +21,12 @@ import {
   type PassportCommand,
   type PassportUnit,
   type ScanResult,
+  type ScheduledCommand,
   type TimelineEntry,
+  fetchControlMode,
   fetchPassportById,
   fetchPassportByTag,
+  fetchScheduledCommands,
   fetchSimulatedRelayPointId,
   fetchTimeline,
   isPlatformTag,
@@ -57,6 +60,8 @@ export default function PasseportScreen() {
   const [message, setMessage] = useState<string | null>(null);
   const [passport, setPassport] = useState<Passport | null>(null);
   const [relayPointId, setRelayPointId] = useState<string | null>(null);
+  const [controlMode, setControlMode] = useState<"manual" | "automatic">("manual");
+  const [scheduledCommands, setScheduledCommands] = useState<ScheduledCommand[]>([]);
   const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
   const [timelineLoading, setTimelineLoading] = useState(false);
   const [scanning, setScanning] = useState(false);
@@ -71,9 +76,23 @@ export default function PasseportScreen() {
     if (result.ok) {
       setPassport(result.passport);
       if (result.passport.node_type === "functional_location") {
-        setRelayPointId(
-          await fetchSimulatedRelayPointId(config.apiUrl, token, result.passport.node_id),
+        const pointId = await fetchSimulatedRelayPointId(
+          config.apiUrl,
+          token,
+          result.passport.node_id,
         );
+        setRelayPointId(pointId);
+        if (pointId) {
+          const [mode, scheduled] = await Promise.all([
+            fetchControlMode(config.apiUrl, token, pointId),
+            fetchScheduledCommands(config.apiUrl, token, pointId),
+          ]);
+          setControlMode(mode);
+          setScheduledCommands(scheduled);
+        } else {
+          setControlMode("manual");
+          setScheduledCommands([]);
+        }
       }
       setTimeline(await fetchTimeline(config.apiUrl, token, result.passport.node_id));
     } else {
@@ -84,6 +103,8 @@ export default function PasseportScreen() {
   async function lookUp(raw: string) {
     setPassport(null);
     setRelayPointId(null);
+    setControlMode("manual");
+    setScheduledCommands([]);
     setTimeline([]);
     const code = parseTagCode(raw);
     if (!code) {
@@ -106,6 +127,8 @@ export default function PasseportScreen() {
   async function lookUpById(nodeId: string) {
     setPassport(null);
     setRelayPointId(null);
+    setControlMode("manual");
+    setScheduledCommands([]);
     setTimeline([]);
     const token = await auth.getAccessToken();
     if (!token) {
@@ -221,6 +244,8 @@ export default function PasseportScreen() {
         <PassportView
           passport={passport}
           relayPointId={relayPointId}
+          controlMode={controlMode}
+          scheduledCommands={scheduledCommands}
           onSendCommand={sendTestCommand}
           sending={loading}
           timeline={timeline}
@@ -235,6 +260,8 @@ export default function PasseportScreen() {
 function PassportView({
   passport,
   relayPointId,
+  controlMode,
+  scheduledCommands,
   onSendCommand,
   sending,
   timeline,
@@ -243,6 +270,8 @@ function PassportView({
 }: {
   passport: Passport;
   relayPointId: string | null;
+  controlMode: "manual" | "automatic";
+  scheduledCommands: ScheduledCommand[];
   onSendCommand: (pointId: string, requestedValue: number) => void;
   sending: boolean;
   timeline: TimelineEntry[];
@@ -307,6 +336,8 @@ function PassportView({
           <CommandSection
             points={passport.points ?? []}
             relayPointId={relayPointId}
+            controlMode={controlMode}
+            scheduledCommands={scheduledCommands}
             onSendCommand={onSendCommand}
             sending={sending}
             timeZone={timeZone}
@@ -484,12 +515,16 @@ function TimelineView({
 function CommandSection({
   points,
   relayPointId,
+  controlMode,
+  scheduledCommands,
   onSendCommand,
   sending,
   timeZone,
 }: {
   points: { id: string; name: string; commands: PassportCommand[] }[];
   relayPointId: string;
+  controlMode: "manual" | "automatic";
+  scheduledCommands: ScheduledCommand[];
   onSendCommand: (pointId: string, requestedValue: number) => void;
   sending: boolean;
   timeZone: string | null;
@@ -541,6 +576,37 @@ function CommandSection({
         </>
       ) : (
         <Text style={styles.muted}>{t("web.registre.command_no_command")}</Text>
+      )}
+
+      {/* Lecture seule (parité web/mobile, audit de fermeture V2,
+          07/10/2026) : planifier ou configurer l'automatisation reste un
+          geste d'administration, web uniquement (ADR 014 §11) — un
+          technicien a seulement besoin de voir ce qui est déjà programmé
+          ou actif avant d'intervenir manuellement sur l'équipement. */}
+      <Text style={{ ...styles.muted, fontWeight: "600", marginTop: 8 }}>
+        {t("web.registre.control_mode_title")}
+      </Text>
+      <Text>
+        {t(`control_mode.${controlMode}`)} — {t(`web.registre.control_mode_explanation.${controlMode}`)}
+      </Text>
+
+      {scheduledCommands.length > 0 && (
+        <>
+          <Text style={{ ...styles.muted, fontWeight: "600", marginTop: 8 }}>
+            {t("web.registre.scheduled_command_list_title")}
+          </Text>
+          {scheduledCommands.map((scheduled) => (
+            <Text key={scheduled.id} style={styles.muted}>
+              {t(`scheduled_command_status.${scheduled.status}`)} —{" "}
+              {t("web.registre.command_requested_value", {
+                value: formatNumber(locale, scheduled.requested_value),
+              })}{" "}
+              {t("web.registre.scheduled_command_for", {
+                when: formatDateTime(locale, scheduled.scheduled_for, timeZone),
+              })}
+            </Text>
+          ))}
+        </>
       )}
     </View>
   );

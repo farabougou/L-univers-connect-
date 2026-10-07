@@ -248,6 +248,67 @@ export async function fetchSimulatedRelayPointId(
   return active?.content.points[0]?.point_id ?? null;
 }
 
+/**
+ * Mode du point commandable (manuel/automatique, `app.point_control_mode`),
+ * même source et même valeur par défaut (`manual`) que la fiche équipement
+ * web — jamais une seconde logique de lecture. Affiché à côté des boutons
+ * de commande (06/10/2026, audit de fermeture V2, parité web/mobile) :
+ * un technicien voit si l'automatisation peut agir sur ce point avant
+ * d'envoyer lui-même une commande.
+ */
+export async function fetchControlMode(
+  apiUrl: string,
+  accessToken: string,
+  pointId: string,
+): Promise<"manual" | "automatic"> {
+  let response: Response;
+  try {
+    response = await fetch(
+      `${apiUrl}/configs?config_type=point_control_mode&subject_key=${encodeURIComponent(pointId)}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    );
+  } catch {
+    return "manual";
+  }
+  if (!response.ok) return "manual";
+  const versions = (await response.json()) as {
+    status: string;
+    content: { mode: "manual" | "automatic" };
+  }[];
+  return versions.find((version) => version.status === "active")?.content.mode ?? "manual";
+}
+
+export type ScheduledCommand = {
+  id: string;
+  requested_value: number;
+  scheduled_for: string;
+  status: "pending" | "dispatched" | "cancelled" | "failed";
+  failure_reason: string | null;
+};
+
+/**
+ * Commandes planifiées pour ce point (`app.scheduled_commands`), même
+ * endpoint que la fiche équipement web — lecture seule ici : planifier ou
+ * annuler une commande reste un geste de configuration, pas un geste
+ * terrain rapide (ADR 014 §11), un technicien a seulement besoin de voir
+ * ce qui est programmé avant d'intervenir manuellement sur l'équipement.
+ */
+export async function fetchScheduledCommands(
+  apiUrl: string,
+  accessToken: string,
+  pointId: string,
+): Promise<ScheduledCommand[]> {
+  let response: Response;
+  try {
+    response = await fetch(`${apiUrl}/scheduled-commands?point_id=${encodeURIComponent(pointId)}&limit=5`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+  } catch {
+    return [];
+  }
+  return response.ok ? ((await response.json()) as ScheduledCommand[]) : [];
+}
+
 export type CommandResult =
   | { ok: true; command: PassportCommand }
   | { ok: false; messageKey: string; params?: Record<string, number> };

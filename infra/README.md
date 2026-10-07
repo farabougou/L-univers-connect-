@@ -112,6 +112,35 @@ En production (Railway), ce même script s'exécute avec `--once` sur un service
 mécanisme. La commandabilité du point et sa policy active (`app/command_policies.py`)
 sont revérifiées à chaque déclenchement, jamais seulement à la planification.
 
+## Balayage périodique du moteur d'automatisation (V2)
+
+Une règle d'automatisation (`config_type = automation_rule`, dernière priorité de la
+feuille de route V2 : règle → commande) ne s'évalue jamais sur l'arrivée d'une mesure,
+contrairement aux règles FDD/alarme — un balayage périodique, même principe que les deux
+balayages ci-dessus, l'évalue. En local :
+
+```bash
+cd services/api
+python scripts/automation_rules_sweep.py --interval 30
+```
+
+En production (Railway), ce même script s'exécute avec `--once` sur un service Cron Jobs
+(toutes les minutes suffit) : voir `app/automation_rules_sweep.py` et
+`app/automation_rules.py` pour le détail du mécanisme et des garde-fous (mode du point,
+commandabilité, policy active, anti-emballement, tous revérifiés à chaque tour).
+
+**État réel (07/10/2026, audit de fermeture V2)** : les trois balayages ci-dessus
+(supervision, commandes planifiées, automatisation) sont codés, testés et documentés,
+mais **aucun service Cron Jobs n'est aujourd'hui configuré sur le projet Railway** (ni en
+staging ni en production) — vérifié directement via l'API Railway, qui ne liste que les
+services Postgres, Keycloak, l'API et le web. Une commande planifiée ou une règle
+d'automatisation activée sur ce staging reste donc `pending`/jamais évaluée tant
+qu'aucune tâche planifiée externe ne tourne. Ce n'est pas un défaut du logiciel — le
+mécanisme fonctionne (vérifié par la suite de tests et en local) — mais une tâche
+d'infrastructure restant à faire avant un usage réel : créer un service Cron Jobs par
+balayage sur Railway, pointant chacun vers le script `--once` correspondant. Signalé
+explicitement plutôt que supposé fait.
+
 ## Ancrage externe du journal d'audit
 
 Le journal d'audit (`app/audit.py`) est chaîné par hachage à l'intérieur de la base :
