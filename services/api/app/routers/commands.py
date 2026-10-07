@@ -76,6 +76,14 @@ class CommandOut(BaseModel):
     acknowledged_at: datetime | None
     verified_at: datetime | None
     edge_device_id: uuid.UUID | None
+    # Explicite plutôt qu'implicite via le device_type (directive de
+    # Mohamed, 06/10/2026) : toute commande réelle de ce dépôt vise
+    # aujourd'hui exclusivement un appareil explicitement simulé (règle non
+    # négociable 1), jamais un équipement réel — "shadow" le dit sans
+    # ambiguïté, à côté de "dry_run" (CommandDryRunOut) qui ne crée jamais
+    # rien. "live" n'existe nulle part dans ce dépôt ; l'ajouter exigerait
+    # une nouvelle décision explicite séparée (CLAUDE.md, exception §1bis).
+    mode: str = "shadow"
 
 
 class EdgeCommandOut(BaseModel):
