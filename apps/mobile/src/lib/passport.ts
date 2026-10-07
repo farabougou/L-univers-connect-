@@ -111,6 +111,7 @@ export type Passport = {
     severity: string;
     title: string;
     certainty: string;
+    confidence: number | null;
     condition_state: string;
     ack_state: string;
     handling_status: string;

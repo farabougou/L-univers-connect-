@@ -1261,12 +1261,36 @@ déclenchement, non-déclenchement dans la baseline, pas assez
 d'échantillons, écart-type nul, seuil non franchi, validation de type de
 point, isolation tenant), `shared/i18n/{fr,en}/findings.json`
 (`RULE_STATISTICAL_ANOMALY`), `shared/i18n/{fr,en}/errors.json`
-(`RULE_STATISTICAL_ANOMALY_REQUIRES_NUMBER`). Pas d'écran de configuration
-web pour l'instant — pas un manque réel de ce lot, juste la priorité
-suivante (configuration avancée, web, mirroring des formulaires
-`threshold`/`trend_projection` déjà en place sur `/registre/[id]`).
+(`RULE_STATISTICAL_ANOMALY_REQUIRES_NUMBER`). Pas d'écran de création web
+dédié — cohérent avec `trend_projection`, qui n'en a pas non plus
+aujourd'hui : les deux seules règles « prédictives/statistiques » du moteur
+restent créables par API, jamais par un formulaire sur `/registre/[id]`,
+contrairement aux règles déterministes (seuil, corrélation). Pas traité
+comme un manque de ce lot précisément pour ne pas introduire une asymétrie
+nouvelle entre les deux ; DEFER documenté une seule fois pour les deux,
+plutôt que de corriger arbitrairement l'une sans l'autre.
 Vérification : 965/965 tests backend (958 + 7 nouveaux), `ruff check`
 propre.
+
+**Suite, même jour : la confiance calculée était invisible.** `app/passport.py`
+sélectionnait déjà `confidence` dans sa requête SQL interne, mais ne la
+faisait pas remonter dans la réponse `GET /graph/nodes/{id}/passport` —
+premier constat de nature « fault » à porter une confiance réellement
+inférieure à 1.0 (`statistical_anomaly`), donc premier cas où l'oubli
+devenait visible : sans correction, la fiche équipement et le passeport
+mobile auraient montré ce constat exactement comme un fait certain.
+Corrigé (`confidence` ajouté à la requête), affiché à côté de la certitude
+sur le web (`apps/web/src/app/registre/[id]/page.tsx`) et le mobile
+(`apps/mobile/app/passeport.tsx`), uniquement quand non nul — jamais
+affiché pour une prédiction (`confidence` y reste `None`, déjà couvert par
+`certainty.prediction`). Nouvelle clé i18n partagée
+`mobile.passport.finding_confidence` (réutilisée par le web, comme
+`mobile.passport.finding`/`alarm` déjà réutilisées depuis `/registre/[id]`
+— convention existante de ce fichier, jamais une deuxième traduction pour
+la même donnée). 2 nouveaux tests backend (`tests/test_passport.py` :
+confiance calculée transmise, confiance absente pour une prédiction reste
+`None`) ; 198/198 tests web, 121/121 tests mobile, `tsc`/ESLint/`next build`
+web propres, `tsc --noEmit` mobile propre.
 
 ## Mise à jour de ce document
 

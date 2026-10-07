@@ -954,7 +954,12 @@ export default async function EquipmentPage({
               <span style={badgeStyle(SEVERITY_COLOR[finding.severity as Severity])}>
                 {t(`severity.${finding.severity}`)}
               </span>{" "}
-              · {t(`certainty.${finding.certainty}`)} · {t(`condition_state.${finding.condition_state}`)} ·{" "}
+              · {t(`certainty.${finding.certainty}`)}
+              {finding.confidence !== null &&
+                ` (${t("mobile.passport.finding_confidence", {
+                  percent: formatNumber(locale, Math.round(finding.confidence * 100)),
+                })})`}{" "}
+              · {t(`condition_state.${finding.condition_state}`)} ·{" "}
               {t(`handling_status.${finding.handling_status}`)}
               <br />
               {finding.title}

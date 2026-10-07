@@ -9,6 +9,7 @@ from sqlalchemy.exc import DBAPIError
 
 from app.closure_vocabulary import SECTIONS as CLOSURE_SECTIONS
 from app.db import engine
+from app.findings import raise_or_repeat_finding
 from app.i18n import load_catalog
 from app.main import app
 from app.tenancy import set_tenant_context
@@ -204,6 +205,72 @@ def test_passport_of_another_tenant_node_is_not_found(two_tenants) -> None:
     tenant_a, tenant_b = two_tenants
     response = _call("GET", f"/graph/nodes/{tenant_a['loc']}/passport", _tech(tenant_b))
     assert response.status_code == 404
+
+
+# --- Constats ouverts ------------------------------------------------
+
+
+def test_passport_open_findings_include_their_confidence(two_tenants) -> None:
+    """07/10/2026 : la confiance calculée d'un constat (ex. anomalie
+    statistique, app/rules.py) ne doit jamais rester invisible sur le
+    passeport, sans quoi une inférence réellement incertaine serait montrée
+    exactement comme un fait constaté (ADR 013)."""
+    tenant_a, _ = two_tenants
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_a["tenant_id"])
+        raise_or_repeat_finding(
+            connection,
+            tenant_id=tenant_a["tenant_id"],
+            dedup_key=f"test:confidence:{tenant_a['loc']}",
+            subject_node_id=tenant_a["loc"],
+            kind="fault",
+            method="statistical",
+            severity="warning",
+            reason_code="TEST_REASON",
+            reason_params={},
+            evidence={},
+            seen_at=T0,
+            changed_by="technicien",
+            title="Anomalie statistique",
+            confidence=0.73,
+        )
+
+    response = _call("GET", f"/graph/nodes/{tenant_a['loc']}/passport", _tech(tenant_a))
+    assert response.status_code == 200, response.text
+    findings = response.json()["open_findings"]
+
+    assert len(findings) == 1
+    assert findings[0]["confidence"] == 0.73
+
+
+def test_passport_open_finding_without_a_computed_confidence_shows_none(two_tenants) -> None:
+    """Une règle instantanée (seuil, cycles courts) n'affirme jamais une
+    confiance calculée : `None` reste `None` jusqu'à l'affichage, jamais
+    remplacé par une valeur inventée."""
+    tenant_a, _ = two_tenants
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_a["tenant_id"])
+        raise_or_repeat_finding(
+            connection,
+            tenant_id=tenant_a["tenant_id"],
+            dedup_key=f"test:no-confidence:{tenant_a['loc']}",
+            subject_node_id=tenant_a["loc"],
+            kind="prediction",
+            method="statistical",
+            severity="warning",
+            reason_code="TEST_REASON",
+            reason_params={},
+            evidence={},
+            seen_at=T0,
+            changed_by="technicien",
+            title="Projection",
+        )
+
+    response = _call("GET", f"/graph/nodes/{tenant_a['loc']}/passport", _tech(tenant_a))
+    findings = response.json()["open_findings"]
+
+    assert len(findings) == 1
+    assert findings[0]["confidence"] is None
 
 
 # --- Propriétés techniques ------------------------------------------------

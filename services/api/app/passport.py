@@ -224,7 +224,7 @@ def build_passport(
     open_findings = _all(
         connection,
         "SELECT id, kind, severity, reason_code, reason_params, title, recommended_action, "
-        "certainty, condition_state, ack_state, handling_status, occurrence_count, "
+        "certainty, confidence, condition_state, ack_state, handling_status, occurrence_count, "
         "last_seen_at FROM findings WHERE handling_status IN ('open', 'in_progress') "
         "AND (subject_node_id = :id OR subject_node_id = :location) ORDER BY last_seen_at DESC",
         {"id": node_id, "location": location_id or node_id},

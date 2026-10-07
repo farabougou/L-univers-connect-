@@ -366,8 +366,12 @@ function PassportView({
               <Text style={styles.strong}>{t("mobile.passport.finding")}</Text>
               <Text>{finding.title}</Text>
               <Text style={styles.muted}>
-                {t(`certainty.${finding.certainty}`)} ·{" "}
-                {t(`condition_state.${finding.condition_state}`)}
+                {t(`certainty.${finding.certainty}`)}
+                {finding.confidence !== null &&
+                  ` (${t("mobile.passport.finding_confidence", {
+                    percent: formatNumber(locale, Math.round(finding.confidence * 100)),
+                  })})`}{" "}
+                · {t(`condition_state.${finding.condition_state}`)}
               </Text>
             </View>
           </View>
