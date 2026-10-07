@@ -1202,6 +1202,72 @@ commandes planifiées, automatisation) en staging — gap d'infrastructure,
 pas de logiciel, nécessite une décision de Mohamed (coût, pas une simple
 correction de code). Voir `infra/README.md`.
 
+## V3 — lancement, 07/10/2026 : première règle FDD d'anomalie statistique
+
+V2 fermée (section précédente), feuille de route V3 engagée sans
+interruption (Predict → Diagnose → Compare → Optimize), conformément à la
+décision de Mohamed de ne pas s'arrêter pour demander l'autorisation une
+fois V2 réellement close. Premier incrément : `statistical_anomaly`, un
+nouveau type de règle FDD dans `app/rules.py`, qui détecte un écart entre
+un relevé et la baseline récente du point lui-même (moyenne et écart-type
+glissants sur `window_minutes`), plutôt qu'à un seuil fixé par une
+personne — complète les trois priorités V3 « anomaly detection »,
+« diagnostic confidence/quality » et « ML preparation » à la fois.
+
+**Pourquoi étendre le moteur existant plutôt qu'en créer un nouveau** :
+`app/rules.py` dispatchait déjà quatre types de règles (seuil, divergence
+d'état souhaité, corrélation chauffage/froid, cycles courts, projection de
+tendance) à partir d'un unique mécanisme (`_RuleContent`, discriminateur
+Pydantic, `_evaluate()`, `evaluate_after_measurement()`). Le nouveau type
+s'ajoute au même dispatch, sans nouvelle table ni nouvelle migration : les
+valeurs d'énumération `kind="fault"` et `method="statistical"` existent
+déjà dans les contraintes `ck_findings_kind`/`ck_findings_method`
+(réutilisées par `trend_projection` pour `method`, par les règles
+instantanées pour `kind`).
+
+**Confiance réellement calculée, pas une certitude affirmée par défaut** :
+contrairement aux règles instantanées (seuil, cycles courts, corrélation),
+qui comparent ce qu'elles observent et peuvent légitimement afficher une
+confiance de 1.0, une anomalie statistique reste une inférence — jamais
+présentée comme une certitude (ADR 013 : jamais plus que ce que le système
+sait). `_evaluate_statistical_anomaly` calcule une confiance entre 0.5 et
+0.95, fonction de l'ampleur du dépassement du seuil de déviation et du
+nombre d'échantillons disponibles pour estimer la baseline — jamais 1.0,
+jamais une valeur inventée. `evaluate_after_measurement()` a été
+généralisé pour honorer une confiance calculée par l'évaluateur quand elle
+est présente dans ses preuves, au lieu du choix binaire précédent
+(1.0 sauf prédiction). Aucune garde-fou existant modifié pour les quatre
+types de règles précédents (confidence=1.0 ou None inchangés).
+
+**Garde-fous** : aucun constat sans au moins `min_samples` relevés dans la
+fenêtre (une baseline à partir de trop peu de mesures resterait du bruit) ;
+aucun constat si l'écart-type de la baseline est nul (un z-score serait
+une division par zéro, pas un calcul) ; le relevé courant est toujours
+exclu du calcul de sa propre baseline (sinon un écart extrême dilue la
+moyenne qui devrait le détecter).
+
+**Préparation ML, jamais un modèle** : comme pour `trend_projection`,
+`method="statistical"` documente un calcul explicable à partir de données
+réelles, jamais `"ml"` — ce mensonge resterait un mensonge tant qu'aucun
+modèle entraîné n'existe réellement (ADR 013, feature-benchmark-matrix.md
+déjà rappelé pour `trend_projection`). Ce module établit le signal qu'un
+futur modèle pourrait consommer ; il n'en est pas un.
+
+Décision : **ADD**. Priorité haute (premier incrément V3). Fichiers
+touchés : `services/api/app/rules.py` (modèle, validateur, évaluateur,
+dispatch, confiance générique),
+`services/api/tests/test_rules_statistical_anomaly.py` (7 tests :
+déclenchement, non-déclenchement dans la baseline, pas assez
+d'échantillons, écart-type nul, seuil non franchi, validation de type de
+point, isolation tenant), `shared/i18n/{fr,en}/findings.json`
+(`RULE_STATISTICAL_ANOMALY`), `shared/i18n/{fr,en}/errors.json`
+(`RULE_STATISTICAL_ANOMALY_REQUIRES_NUMBER`). Pas d'écran de configuration
+web pour l'instant — pas un manque réel de ce lot, juste la priorité
+suivante (configuration avancée, web, mirroring des formulaires
+`threshold`/`trend_projection` déjà en place sur `/registre/[id]`).
+Vérification : 965/965 tests backend (958 + 7 nouveaux), `ruff check`
+propre.
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente

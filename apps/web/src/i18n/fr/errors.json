@@ -194,6 +194,7 @@
     "RULE_POINT_NOT_FOUND": "La règle désigne un point introuvable.",
     "RULE_POINT_NOT_VALIDATED": "La règle doit porter sur un point validé lors de la mise en service.",
     "RULE_SHORT_CYCLING_REQUIRES_BOOLEAN": "Une règle de cycles courts ne s’applique qu’à un point d’état marche/arrêt.",
+    "RULE_STATISTICAL_ANOMALY_REQUIRES_NUMBER": "Une anomalie statistique ne s’applique qu’à un point numérique.",
     "RULE_THRESHOLD_REQUIRES_NUMBER": "Un seuil ne s’applique qu’à un point numérique.",
     "RULE_TREND_PROJECTION_REQUIRES_NUMBER": "Une projection de tendance ne s’applique qu’à un point numérique.",
     "SCHEDULED_COMMAND_IN_THE_PAST": "L’instant choisi est déjà passé : une commande planifiée doit viser un moment futur.",

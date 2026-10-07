@@ -10,6 +10,7 @@
     "RULE_DESIRED_STATE_DIVERGENCE": "Deviation between actual and desired state on point {point_code}: value {actual}, expected value {desired}",
     "RULE_SHORT_CYCLING": "Short cycling on point {point_code}: {start_count} starts in {window_minutes} min (limit {max_starts})",
     "RULE_SIMULTANEOUS_HEATING_COOLING": "Heating and cooling active at the same time: point {heating_point_code} at {heating_value}, point {cooling_point_code} at {cooling_value}",
+    "RULE_STATISTICAL_ANOMALY": "Statistical anomaly on point {point_code}: value {value} at {z_score} standard deviations from the recent average ({mean}, threshold {deviation_threshold})",
     "RULE_THRESHOLD_EXCEEDED": "Threshold crossed on point {point_code}: value {value} (condition {operator} {threshold})",
     "RULE_TREND_PROJECTION": "Projection on point {point_code}: at the current rate, threshold {threshold} would be reached in about {projected_minutes} min"
   },
@@ -24,6 +25,7 @@
     "RULE_DESIRED_STATE_DIVERGENCE": "Check the time schedule and the operation of the equipment.",
     "RULE_SHORT_CYCLING": "Check the equipment’s control sequence and anti-short-cycling protection.",
     "RULE_SIMULTANEOUS_HEATING_COOLING": "Check the valves and the control sequence of the equipment: both circuits should never be active at the same time.",
+    "RULE_STATISTICAL_ANOMALY": "Check the equipment: this reading deviates markedly from its recent behaviour.",
     "RULE_THRESHOLD_EXCEEDED": "Check the operation of the equipment concerned.",
     "RULE_TREND_PROJECTION": "Check the equipment before the observed trend reaches the expected threshold."
   }

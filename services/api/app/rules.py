@@ -37,6 +37,20 @@ Trois types de règles, stockées comme configurations versionnées
   et seulement si ce seuil n'est pas déjà franchi maintenant (ce cas relève
   de `threshold`, qui constate, pas de `trend_projection`, qui prédit). Voir
   `_evaluate_trend_projection`.
+- `statistical_anomaly` (07/10/2026, V3 — priorité « anomaly detection » de
+  la feuille de route : Predict → Diagnose → Compare → Optimize) : premier
+  type de règle qui ne porte pas sur un seuil fixé par une personne, mais
+  sur un écart à la baseline récente du point lui-même (moyenne + écart-type
+  glissants, `window_minutes`) → constat de nature « fault »,
+  `method="statistical"` (même principe que `trend_projection` : un calcul
+  explicable, jamais un modèle entraîné — « préparation ML » au sens de la
+  feuille de route veut dire que ce module sait déjà produire le signal
+  qu'un futur modèle consommerait, pas qu'un modèle existe). Contrairement
+  aux autres règles, le constat porte une confiance calculée (`confidence`,
+  jamais 1.0 : une inférence statistique reste une inférence, jamais une
+  certitude comme un seuil franchi) — fondée sur l'ampleur de l'écart et le
+  nombre de mesures disponibles pour estimer la baseline. Voir
+  `_evaluate_statistical_anomaly`.
 
 Chaîne complète, synchrone à la réception d'une mesure (squelette de bout en
 bout M2) : mesure → contrôle de qualité → règle → constat → alarme → ordre de
@@ -48,6 +62,7 @@ travail. Garde-fous :
 - aucune règle ne commande quoi que ce soit (règle non négociable 1).
 """
 
+import statistics
 import uuid
 from datetime import datetime, timedelta
 from typing import Annotated, Any, Literal
@@ -83,6 +98,7 @@ _RULE_REASONS = {
     "simultaneous_heating_cooling": "RULE_SIMULTANEOUS_HEATING_COOLING",
     "short_cycling": "RULE_SHORT_CYCLING",
     "trend_projection": "RULE_TREND_PROJECTION",
+    "statistical_anomaly": "RULE_STATISTICAL_ANOMALY",
 }
 # Nature du constat ouvert par chaque type de règle (voir app/findings.py,
 # ck_findings_kind) : un écart à la consigne reste un sujet de mise en
@@ -94,12 +110,15 @@ _FINDING_KIND = {
     "simultaneous_heating_cooling": "fault",
     "short_cycling": "fault",
     "trend_projection": "prediction",
+    "statistical_anomaly": "fault",
 }
 # Méthode enregistrée pour le constat (ck_findings_method) : une projection
-# est un calcul statistique explicable, jamais un modèle entraîné (`"ml"`
-# resterait un mensonge tant qu'aucun modèle n'existe réellement).
+# ou une anomalie statistique sont des calculs explicables, jamais un modèle
+# entraîné (`"ml"` resterait un mensonge tant qu'aucun modèle n'existe
+# réellement).
 _RULE_METHOD = {
     "trend_projection": "statistical",
+    "statistical_anomaly": "statistical",
 }
 
 
@@ -148,6 +167,20 @@ class TrendProjectionRule(_RuleBase):
     horizon_minutes: int = Field(gt=0)
 
 
+class StatisticalAnomalyRule(_RuleBase):
+    """Porte sur un point numérique : moyenne et écart-type glissants sur
+    `window_minutes` (hors le relevé courant), constat ouvert si le relevé
+    courant s'en écarte de plus de `deviation_threshold` écarts-types (voir
+    `_evaluate_statistical_anomaly`). Jamais déclenchée sans au moins
+    `min_samples` relevés dans la fenêtre — une baseline à partir de trop peu
+    de mesures resterait un bruit statistique, jamais un calcul fiable."""
+
+    kind: Literal["statistical_anomaly"]
+    window_minutes: int = Field(gt=0)
+    min_samples: int = Field(gt=1)
+    deviation_threshold: float = Field(gt=0, allow_inf_nan=False)
+
+
 class CorrelationRule(BaseModel):
     """Compare deux points du même équipement au même instant (FDD) — jamais
     un seul point comme les deux règles ci-dessus, voir le docstring du
@@ -168,7 +201,12 @@ class CorrelationRule(BaseModel):
 
 class _RuleContent(BaseModel):
     rule: Annotated[
-        ThresholdRule | DivergenceRule | ShortCyclingRule | CorrelationRule | TrendProjectionRule,
+        ThresholdRule
+        | DivergenceRule
+        | ShortCyclingRule
+        | CorrelationRule
+        | TrendProjectionRule
+        | StatisticalAnomalyRule,
         Field(discriminator="kind"),
     ]
 
@@ -207,6 +245,8 @@ def _validate_alarm_rule(connection: Connection, content: dict[str, Any]) -> dic
         raise ConfigInvalid("RULE_SHORT_CYCLING_REQUIRES_BOOLEAN")
     if isinstance(rule, TrendProjectionRule) and point["value_type"] != "number":
         raise ConfigInvalid("RULE_TREND_PROJECTION_REQUIRES_NUMBER")
+    if isinstance(rule, StatisticalAnomalyRule) and point["value_type"] != "number":
+        raise ConfigInvalid("RULE_STATISTICAL_ANOMALY_REQUIRES_NUMBER")
     return rule.model_dump(mode="json", exclude_none=True)
 
 
@@ -400,6 +440,54 @@ def _evaluate_trend_projection(
     }
 
 
+def _evaluate_statistical_anomaly(
+    connection: Connection, rule: dict[str, Any], point: dict[str, Any], value: float, at: datetime
+) -> dict[str, Any] | None:
+    """Moyenne et écart-type sur l'historique de `window_minutes` qui précède
+    `at`, le relevé courant exclu (une baseline ne doit jamais s'inclure
+    elle-même, sans quoi un écart extrême tire sa propre moyenne vers lui et
+    se dilue). Sans assez de relevés pour une baseline fiable, ou si
+    l'écart-type est nul (aucune variation réelle sur la fenêtre, un
+    z-score serait une division par zéro, pas un calcul), aucun constat.
+    `confidence` mélange l'ampleur du dépassement du seuil et le nombre de
+    relevés disponibles — toujours strictement sous 1.0 : une inférence
+    statistique reste une inférence, jamais la certitude d'une comparaison
+    instantanée (ADR 013)."""
+    from app.telemetry import list_measurements  # import tardif : évite un cycle avec ce module
+
+    window_start = at - timedelta(minutes=rule["window_minutes"])
+    recent = list_measurements(connection, point_id=point["id"], since=window_start, limit=1000)
+    history = [row["value"] for row in recent if row["measured_at"] < at]
+    sample_count = len(history)
+    if sample_count < rule["min_samples"]:
+        return None
+
+    mean = statistics.fmean(history)
+    std_dev = statistics.stdev(history)
+    if std_dev == 0:
+        return None
+
+    z_score = (value - mean) / std_dev
+    if abs(z_score) <= rule["deviation_threshold"]:
+        return None
+
+    excess = abs(z_score) - rule["deviation_threshold"]
+    magnitude_factor = min(1.0, excess / rule["deviation_threshold"])
+    sample_factor = min(1.0, sample_count / (rule["min_samples"] * 3))
+    confidence = round(0.5 + 0.45 * magnitude_factor * sample_factor, 2)
+
+    return {
+        "value": value,
+        "mean": round(mean, 4),
+        "std_dev": round(std_dev, 4),
+        "z_score": round(z_score, 2),
+        "deviation_threshold": rule["deviation_threshold"],
+        "window_minutes": rule["window_minutes"],
+        "sample_count": sample_count,
+        "confidence": confidence,
+    }
+
+
 def _evaluate(
     connection: Connection, rule: dict[str, Any], point: dict[str, Any], value: float, at: datetime
 ) -> dict[str, Any] | None:
@@ -420,6 +508,9 @@ def _evaluate(
 
     if rule["kind"] == "trend_projection":
         return _evaluate_trend_projection(connection, rule, point, value, at)
+
+    if rule["kind"] == "statistical_anomaly":
+        return _evaluate_statistical_anomaly(connection, rule, point, value, at)
 
     desired = desired_state_at(connection, point["id"], at)
     if desired is None:
@@ -536,16 +627,29 @@ def evaluate_after_measurement(
             rule_config_version_id=version["id"],
             severity=rule["severity"],
             reason_code=_RULE_REASONS[rule["kind"]],
+            # "desired_state_id" et "confidence" sont déjà portés par ailleurs
+            # (le lien vers l'état souhaité, la colonne confidence du constat)
+            # : jamais dupliqués comme paramètre d'affichage du titre.
             reason_params={
                 **point_code,
-                **{k: v for k, v in evidence.items() if k != "desired_state_id"},
+                **{
+                    k: v
+                    for k, v in evidence.items()
+                    if k not in ("desired_state_id", "confidence")
+                },
             },
             title=rule["title"],
             recommended_action=rule.get("recommended_action"),
             # Une règle instantanée compare, elle ne se trompe jamais sur ce
             # qu'elle observe : confiance totale. Une prédiction extrapole —
-            # jamais une certitude affirmée à sa place (ADR 013).
-            confidence=None if _FINDING_KIND[rule["kind"]] == "prediction" else 1.0,
+            # jamais une certitude affirmée à sa place (ADR 013). Une règle
+            # statistique (ex. statistical_anomaly) calcule sa propre
+            # confiance dans ses preuves : elle prime quand elle est présente.
+            confidence=(
+                evidence["confidence"]
+                if "confidence" in evidence
+                else (None if _FINDING_KIND[rule["kind"]] == "prediction" else 1.0)
+            ),
             evidence={**base_evidence, **evidence, "trust_score": trust["score"]},
             seen_at=measured_at,
             **common,

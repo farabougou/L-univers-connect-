@@ -10,6 +10,7 @@
     "RULE_DESIRED_STATE_DIVERGENCE": "Écart entre l’état réel et l’état souhaité sur le point {point_code} : valeur {actual}, valeur attendue {desired}",
     "RULE_SHORT_CYCLING": "Cycles courts sur le point {point_code} : {start_count} démarrages en {window_minutes} min (limite {max_starts})",
     "RULE_SIMULTANEOUS_HEATING_COOLING": "Chauffage et refroidissement actifs en même temps : point {heating_point_code} à {heating_value}, point {cooling_point_code} à {cooling_value}",
+    "RULE_STATISTICAL_ANOMALY": "Anomalie statistique sur le point {point_code} : valeur {value} à {z_score} écarts-types de la moyenne récente ({mean}, seuil {deviation_threshold})",
     "RULE_THRESHOLD_EXCEEDED": "Seuil franchi sur le point {point_code} : valeur {value} (condition {operator} {threshold})",
     "RULE_TREND_PROJECTION": "Projection sur le point {point_code} : au rythme actuel, le seuil {threshold} serait atteint dans environ {projected_minutes} min"
   },
@@ -24,6 +25,7 @@
     "RULE_DESIRED_STATE_DIVERGENCE": "Vérifiez la programmation horaire et le fonctionnement de l’équipement.",
     "RULE_SHORT_CYCLING": "Vérifiez la régulation et la protection anti-courts cycles de l’équipement.",
     "RULE_SIMULTANEOUS_HEATING_COOLING": "Vérifiez les vannes et la régulation de l’équipement : les deux circuits ne devraient jamais être actifs en même temps.",
+    "RULE_STATISTICAL_ANOMALY": "Vérifiez l’équipement : cette lecture s’écarte nettement de son comportement récent.",
     "RULE_THRESHOLD_EXCEEDED": "Vérifiez le fonctionnement de l’équipement concerné.",
     "RULE_TREND_PROJECTION": "Vérifiez l’équipement avant que la tendance observée n’atteigne le seuil attendu."
   }

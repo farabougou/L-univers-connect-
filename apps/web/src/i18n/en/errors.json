@@ -194,6 +194,7 @@
     "RULE_POINT_NOT_FOUND": "The rule refers to a point that could not be found.",
     "RULE_POINT_NOT_VALIDATED": "The rule must apply to a point validated during commissioning.",
     "RULE_SHORT_CYCLING_REQUIRES_BOOLEAN": "A short-cycling rule only applies to a run/stop status point.",
+    "RULE_STATISTICAL_ANOMALY_REQUIRES_NUMBER": "A statistical anomaly rule applies only to a numeric point.",
     "RULE_THRESHOLD_REQUIRES_NUMBER": "A threshold applies only to a numeric point.",
     "RULE_TREND_PROJECTION_REQUIRES_NUMBER": "A trend projection applies only to a numeric point.",
     "SCHEDULED_COMMAND_IN_THE_PAST": "The chosen time is already in the past: a scheduled command must target a future time.",
