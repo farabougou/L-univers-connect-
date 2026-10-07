@@ -129,17 +129,39 @@ En production (Railway), ce même script s'exécute avec `--once` sur un service
 `app/automation_rules.py` pour le détail du mécanisme et des garde-fous (mode du point,
 commandabilité, policy active, anti-emballement, tous revérifiés à chaque tour).
 
-**État réel (07/10/2026, audit de fermeture V2)** : les trois balayages ci-dessus
-(supervision, commandes planifiées, automatisation) sont codés, testés et documentés,
-mais **aucun service Cron Jobs n'est aujourd'hui configuré sur le projet Railway** (ni en
+**État réel (07/10/2026, audit de fermeture V2 ; reconfirmé 07/10/2026, V4)** :
+**DEFERRED_EXTERNAL_DEPLOYMENT** — les quatre balayages (supervision, commandes
+planifiées, automatisation, ancrage d'audit) sont codés, testés et documentés, mais
+**aucun service Cron Jobs n'est aujourd'hui configuré sur le projet Railway** (ni en
 staging ni en production) — vérifié directement via l'API Railway, qui ne liste que les
 services Postgres, Keycloak, l'API et le web. Une commande planifiée ou une règle
 d'automatisation activée sur ce staging reste donc `pending`/jamais évaluée tant
 qu'aucune tâche planifiée externe ne tourne. Ce n'est pas un défaut du logiciel — le
-mécanisme fonctionne (vérifié par la suite de tests et en local) — mais une tâche
-d'infrastructure restant à faire avant un usage réel : créer un service Cron Jobs par
-balayage sur Railway, pointant chacun vers le script `--once` correspondant. Signalé
-explicitement plutôt que supposé fait.
+mécanisme fonctionne (vérifié par la suite de tests et en local) — mais une action sur
+un compte d'hébergement réel, jamais prise sans l'accord explicite de Mohamed (règle du
+cahier des charges : « ne déploie rien sans mon accord »). Reste à faire le jour où cet
+accord est donné : créer un service Cron Jobs par balayage sur Railway, pointant chacun
+vers le script `--once` correspondant. Signalé explicitement plutôt que supposé fait, et
+ne bloque pas la fermeture logicielle de V4 : voir ci-dessous comment vérifier dès
+aujourd'hui, sans Railway, que chaque balayage tourne et son dernier résultat.
+
+### Vérifier qu'un balayage tourne (sans attendre Railway Cron Jobs)
+
+Chaque script `--once` enregistre son résultat (succès/échec, durée, résumé) dans la
+table `scheduled_job_runs` (V4, `app/job_runs.py`) — jamais seulement dans les journaux,
+perdus dès que le conteneur d'un tour se termine. `GET /metrics` (sans authentification,
+même niveau de sensibilité que `/health`) expose pour chaque tâche son dernier tour connu :
+
+```
+paios_job_last_run_success{job="supervision_sweep"} 1.0
+paios_job_last_run_timestamp_seconds{job="supervision_sweep"} 1791374400.0
+paios_job_last_run_duration_seconds{job="supervision_sweep"} 0.3
+```
+
+`paios_job_last_run_success` à `0` ou une tâche absente de `/metrics` depuis plus que son
+intervalle attendu signale un balayage arrêté ou jamais lancé — exploitable dès
+aujourd'hui en local, et par la même supervision externe (Prometheus ou autre) qui lira
+déjà `/metrics` une fois Railway Cron Jobs activé.
 
 ## Ancrage externe du journal d'audit
 

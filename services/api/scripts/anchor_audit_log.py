@@ -20,6 +20,7 @@ from types import FrameType
 
 from app.audit_anchor import anchor_once
 from app.db import engine
+from app.job_runs import run_and_record
 from app.observability import configure_logging
 
 logger = logging.getLogger("paios.audit_anchor")
@@ -50,7 +51,9 @@ def main() -> None:
     args = _parse_args()
 
     if args.once:
-        summary = anchor_once(engine)
+        summary = run_and_record(
+            engine, job_name="audit_anchor", run_once=lambda: anchor_once(engine)
+        )
         logger.info(f"ancrage terminé : {summary}")
         return
 
@@ -59,7 +62,9 @@ def main() -> None:
     logger.info(f"ancrage périodique démarré, toutes les {args.interval:g}s")
     while not _stop:
         cycle_started = time.monotonic()
-        summary = anchor_once(engine)
+        summary = run_and_record(
+            engine, job_name="audit_anchor", run_once=lambda: anchor_once(engine)
+        )
         logger.info(f"ancrage effectué : {summary}")
         remaining = args.interval - (time.monotonic() - cycle_started)
         if remaining > 0 and not _stop:

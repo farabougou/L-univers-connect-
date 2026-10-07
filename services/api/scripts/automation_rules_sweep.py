@@ -21,6 +21,7 @@ from types import FrameType
 
 from app.automation_rules_sweep import sweep_once
 from app.db import engine
+from app.job_runs import run_and_record
 from app.observability import configure_logging
 
 logger = logging.getLogger("paios.automation_rules_sweep")
@@ -51,7 +52,9 @@ def main() -> None:
     args = _parse_args()
 
     if args.once:
-        summary = sweep_once(engine)
+        summary = run_and_record(
+            engine, job_name="automation_rules_sweep", run_once=lambda: sweep_once(engine)
+        )
         logger.info(f"balayage terminé : {summary}")
         return
 
@@ -60,7 +63,9 @@ def main() -> None:
     logger.info(f"balayage périodique démarré, toutes les {args.interval:g}s")
     while not _stop:
         cycle_started = time.monotonic()
-        summary = sweep_once(engine)
+        summary = run_and_record(
+            engine, job_name="automation_rules_sweep", run_once=lambda: sweep_once(engine)
+        )
         logger.info(f"balayage effectué : {summary}")
         remaining = args.interval - (time.monotonic() - cycle_started)
         if remaining > 0 and not _stop:

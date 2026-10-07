@@ -1613,6 +1613,84 @@ même raison que le catalogue de connecteurs.
 + 2 santé de l'agent), `ruff check` propre ; web : `tsc --noEmit`, ESLint,
 198/198 tests vitest, `next build` propres.
 
+## V4 — Déploiement, 07/10/2026 : observabilité des tâches planifiées
+
+**Déploiement — observabilité, logs, métriques, health checks** (priorité
+« Déploiement » de V4) : les quatre balayages périodiques (supervision,
+commandes planifiées, automatisation, ancrage d'audit — tous construits en
+V2/V3) tournaient déjà correctement (isolation par tenant, résumé loggé à
+chaque tour), mais leur seule trace était une ligne de journal, perdue dès
+que le conteneur d'un tour `--once` se termine — le cas normal d'une tâche
+planifiée externe. Pas moyen de répondre à « est-ce que ça tourne encore ? »
+sans fouiller des journaux.
+
+`app/job_runs.py` (migration `5d158928f01b`, table `scheduled_job_runs`,
+donnée de plateforme sans RLS — même raisonnement que `tenants`) :
+`run_and_record` enregistre chaque tour (succès/échec, durée, résumé),
+jamais une nouvelle politique, juste l'appelant manquant autour des quatre
+fonctions `*_once()` déjà testées. `GET /metrics` (`app/metrics.py`) lit la
+table à chaque lecture — jamais en mémoire, puisque le processus qui écrit
+un tour (le script `--once`) n'est jamais celui qui sert `/metrics` — et
+expose trois jauges par tâche (`paios_job_last_run_success`,
+`_timestamp_seconds`, `_duration_seconds`), au même niveau de sensibilité
+que `/health` (agrégats seuls, jamais une donnée de tenant — vérifié par
+test). Décision : **ADD**, une extension de l'observabilité déjà en place
+(logs structurés F6, métriques HTTP V3), jamais un nouveau tableau de bord.
+
+**Railway Cron Jobs reste DEFERRED_EXTERNAL_DEPLOYMENT** (décision de
+Mohamed, 07/10/2026) : activer réellement ces balayages en production exige
+une action sur son compte d'hébergement, jamais prise sans son accord
+explicite — la règle du cahier des charges ne change pas. Ce n'est plus un
+blocage pour la fermeture logicielle de V4 : les points d'entrée
+(`--once`/`--interval`), l'idempotence (chaque tour relit l'état courant,
+jamais un delta accumulé) et l'état dernier tour/succès/échec sont
+désormais propres et vérifiables dès aujourd'hui, sans Railway — voir
+`infra/README.md`.
+
+**Vérification** : suite backend complète + 5 tests nouveaux (4
+`tests/test_job_runs.py`, 1 `tests/test_metrics.py`), `ruff check` propre ;
+vérifié aussi en conditions réelles (`python scripts/supervision_sweep.py
+--once`, ligne visible ensuite dans `scheduled_job_runs` et sur `/metrics`).
+
+## V4 — Sécurité, 07/10/2026 : rotation du secret de jeton Edge
+
+**Sécurité — secrets, rotation** (priorité « Sécurité » de V4) : l'identité
+d'un appareil (secret partagé ou clé privée, jamais transmise) a déjà sa
+rotation construite depuis la sécurité machine (`set_public_key`,
+`key_rotated_at`). Restait une question ouverte, jamais vérifiée : que se
+passe-t-il si on fait tourner `device_token_secret`, le secret qui signe
+les jetons d'accès côté serveur (`app/auth.py`) ? Cette rotation invalide
+d'un coup tous les jetons déjà émis, pour tous les tenants.
+
+Réponse trouvée en lisant le code déjà écrit (`EdgeApiClient._authorized_request`,
+M4) plutôt qu'en construisant un nouveau mécanisme : ce secret ne vérifie
+jamais l'identité de l'appareil lui-même, seulement la signature du jeton
+qu'il reçoit en retour — donc un 401 inattendu après rotation déclenche
+exactement la reprise déjà prévue pour un jeton révoqué ou une horloge
+décalée. Un test (`tests/test_edge_client.py`) le prouve maintenant
+explicitement : jeton mis en cache, secret changé, appel suivant toujours
+réussi, avec un jeton différent. Décision : **KEEP documenté**, jamais une
+nouvelle construction — la propriété existait déjà, elle n'était ni
+vérifiée ni écrite nulle part.
+
+Portée restante hors logiciel : rotation des secrets d'infrastructure
+(mot de passe Postgres, clé OIDC) — gérée par les variables d'environnement
+Railway, jamais par du code applicatif (`app/config.py`), cohérent avec
+« aucun secret dans le dépôt » (règle non négociable 5).
+
+**Droits intégrateurs/prestataires** (même priorité) : `app/routers/providers.py`
+tient déjà un répertoire de prestataires de maintenance (contact, lien
+« maintainedBy » vers un actif), mais aucune identité de connexion propre à
+un intégrateur externe (accès scopé à travers plusieurs tenants clients)
+n'existe. Décision : **DEFERRED** — une vraie identité cross-tenant
+changerait le modèle d'isolation central (règle non négociable 2) et n'a
+aucun besoin client réel aujourd'hui ; la construire maintenant serait
+exactement l'accumulation de fonctions métier que cette feuille de route
+interdit. À concevoir le jour où un premier intégrateur réel le demande.
+
+**Vérification** : suite backend complète + 1 test nouveau
+(`tests/test_edge_client.py`), `ruff check` propre.
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente

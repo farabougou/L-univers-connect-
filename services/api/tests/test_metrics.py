@@ -1,9 +1,16 @@
-"""Métriques HTTP minimales (app/metrics.py, feature-benchmark-matrix.md,
-ligne « Observabilité ») : agrégats seulement, jamais de donnée métier ni
-par tenant."""
+"""Métriques HTTP et tâches planifiées (app/metrics.py,
+feature-benchmark-matrix.md, ligne « Observabilité ») : agrégats seulement,
+jamais de donnée métier ni par tenant."""
 
+import uuid
+from datetime import UTC, datetime, timedelta
+
+import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import text
 
+from app.db import engine
+from app.job_runs import record_job_run
 from app.main import app
 from app.metrics import REGISTRY
 
@@ -51,3 +58,36 @@ def test_metrics_never_expose_tenant_or_business_data() -> None:
 
     body = response.text
     assert "tenant" not in body.lower()
+
+
+def test_metrics_reflete_le_dernier_tour_connu_d_une_tache() -> None:
+    """V4 (priorité « Déploiement ») : /metrics est la seule trace
+    exploitable d'un tour exécuté dans un autre processus (le script
+    --once d'une tâche planifiée externe, voir app/job_runs.py)."""
+    job_name = f"test_job_{uuid.uuid4().hex}"
+    started_at = datetime(2026, 10, 7, 12, 0, tzinfo=UTC)
+    finished_at = started_at + timedelta(seconds=5)
+    with engine.begin() as connection:
+        record_job_run(
+            connection,
+            job_name=job_name,
+            started_at=started_at,
+            finished_at=finished_at,
+            succeeded=True,
+            summary={"tenants_ok": 1},
+        )
+    try:
+        response = client.get("/metrics")
+        assert response.status_code == 200
+        labels = {"job": job_name}
+        assert _sample("paios_job_last_run_success", labels) == 1.0
+        assert _sample("paios_job_last_run_duration_seconds", labels) == 5.0
+        assert _sample("paios_job_last_run_timestamp_seconds", labels) == pytest.approx(
+            finished_at.timestamp()
+        )
+    finally:
+        with engine.begin() as connection:
+            connection.execute(
+                text("DELETE FROM scheduled_job_runs WHERE job_name = :job_name"),
+                {"job_name": job_name},
+            )

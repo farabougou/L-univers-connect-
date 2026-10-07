@@ -91,10 +91,14 @@ def health_db() -> dict[str, str]:
 
 @app.get("/metrics")
 def metrics() -> Response:
-    """Agrégats seulement (requêtes par méthode/route/statut, durée) : aucune
-    donnée métier ni par tenant — même niveau de sensibilité que /health,
-    donc sans authentification (voir app/metrics.py)."""
-    body, content_type = render_latest()
+    """Agrégats seulement (requêtes par méthode/route/statut, durée, dernier
+    tour de chaque tâche planifiée) : aucune donnée métier ni par tenant —
+    même niveau de sensibilité que /health, donc sans authentification
+    (voir app/metrics.py). Connexion directe, sans contexte tenant : les
+    tâches planifiées (app/job_runs.py) ne sont pas une donnée de tenant,
+    même raisonnement que `tenants` elle-même."""
+    with engine.connect() as connection:
+        body, content_type = render_latest(connection)
     return Response(content=body, media_type=content_type)
 
 

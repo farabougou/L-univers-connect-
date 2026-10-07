@@ -6,6 +6,17 @@ Le jeton d'appareil est renouvelé automatiquement avant son expiration, et
 une seule fois de plus sur un 401 inattendu (jeton révoqué, horloge
 décalée) — jamais une boucle de nouvelles tentatives.
 
+Cette même reprise absorbe seule la rotation de `device_token_secret`
+(V4, priorité « Sécurité » : secrets, rotation — voir
+tests/test_edge_client.py) : ce secret ne sert qu'à signer le jeton
+d'accès côté serveur, jamais à vérifier l'identité de l'appareil
+(secret partagé ou clé privée, toujours vérifiés par /devices/auth,
+jamais affectés par cette rotation). Le faire tourner invalide d'un coup
+tous les jetons déjà émis ; chaque appareil obtient son premier 401 au
+prochain appel, se réauthentifie tout seul et repart — sans
+intervention sur site, sans fenêtre de double-lecture à gérer côté
+serveur.
+
 Deux façons de prouver son identité à `/devices/auth` (voir app/devices.py
 pour le détail du modèle) : `SharedSecretCredential` (compatibilité
 uniquement, à ne plus utiliser pour du nouveau matériel) ou
