@@ -1440,6 +1440,87 @@ le calcul sont déjà couverts (catalogues i18n, tests `test_passport.py`
 pour le même champ côté backend) — ce lot n'ajoute qu'un affichage, jamais
 une nouvelle logique à prouver séparément.
 
+## V3 Software Complete — 07/10/2026
+
+**V3 SOFTWARE COMPLETE: YES**
+
+Feuille de route V3 (Compare → Drift → Diagnose → Explain → Optimize)
+vérifiée réellement couverte, module par module, avant cette fermeture —
+jamais supposée faite :
+
+**Compare** : `app/comparison.py` (`GET /points/{id}/compare`) — un point
+comparé à ses pairs de même `point_class`, équipements et sites confondus,
+en une lecture pure, jamais un constat automatique. Couvre à la fois
+« comparaison d'équipements », « entre unités/sites » et « sur mêmes
+classes de points », qui ne sont qu'une seule population comparée.
+
+**Drift** : `baseline_drift` (`app/rules.py`) — fenêtre récente contre
+fenêtre de référence du même point, détecte un changement de comportement
+sans seuil absolu fixé par une personne.
+
+**FDD avancé / exploitation de l'historique** : `app/rules.py` porte
+désormais six types de règles (`threshold`, `desired_state_divergence`,
+`simultaneous_heating_cooling`, `short_cycling`, `trend_projection`,
+`statistical_anomaly`, `baseline_drift` — sept en comptant juste) dont
+trois exploitent directement l'historique de mesures plutôt que l'instant
+présent seul (`short_cycling`, `trend_projection`, `statistical_anomaly`,
+`baseline_drift` — quatre). Zéro nouveau moteur créé depuis le début de
+V3 : chaque ajout étend `_evaluate()` et le même mécanisme de dispatch.
+
+**Diagnose** : la confiance calculée (`confidence`) et l'action
+recommandée (`recommended_action`) de chaque constat, déjà transmises par
+le backend, sont désormais affichées partout où un constat apparaît — la
+fiche équipement (web et mobile) et les écrans de portefeuille (`/alarmes`
+web, Alertes mobile). Trois oublis d'affichage réels trouvés et corrigés
+pendant cette fermeture (jamais un défaut du backend, qui portait déjà
+ces champs). La corrélation entre signaux existait déjà depuis V2 :
+`simultaneous_heating_cooling` (deux points, même équipement, même
+instant) et `app/impact_analysis.py` (relations `dependsOn`, groupe sous
+un nœud en panne tout ce qui en dépend et son nombre de constats ouverts)
+— aucune réécriture nécessaire, un parcours de ce qui existe déjà.
+
+**Explain** : chaque constat porte un code de raison stable, des
+paramètres, un titre et une action recommandée dans la langue de la
+personne (ADR 013, inchangé depuis L3) — jamais une phrase générée stockée
+comme vérité. `method` distingue explicitement `"deterministic_rule"` de
+`"statistical"`, jamais `"ml"` tant qu'aucun modèle entraîné n'existe :
+cette discipline, maintenue sur sept types de règles maintenant, *est* la
+préparation ML de la feuille de route — établir le signal qu'un futur
+modèle consommerait, pas en fabriquer un qui n'existe pas.
+
+**Optimize** : `app/energy/` (baseline, normalisation, comparaison,
+`app/energy/comparison.py`) compare déjà une consommation réelle à une
+baseline réelle, avec un écart calculé (`percent_deviation`, `reduced`),
+jamais un gain ou une économie affirmée sans source réelle — exactement
+la contrainte de cette feuille de route (« optimisation uniquement
+lorsque les données disponibles permettent une conclusion réelle »).
+Une optimisation automatique à proprement parler (recommandation
+d'action corrective générée par le système) reste `DEFERRED` : aucune
+donnée réelle de plusieurs cycles sur une installation réelle n'existe
+encore pour la valider, cohérent avec la maintenance prédictive (ligne
+dédiée de ce document, `DEFERRED_PHYSICAL_VALIDATION`).
+
+**Aucune prétention de validation terrain non réalisée** : chaque règle
+statistique ajoutée (`statistical_anomaly`, `baseline_drift`) et la
+comparaison de parc restent validées par des tests contre une vraie base
+(mesures réelles insérées, moteur réel exécuté) — jamais une performance
+réelle annoncée. Les données servant aux tests sont synthétiques par
+construction (`T0` fixe, valeurs choisies) : cela valide l'architecture,
+le pipeline et le comportement logiciel, jamais une performance sur
+installation réelle.
+
+**Aucun défaut Critical/High connu.** Vérification complète exécutée le
+jour de cette fermeture : 985/985 tests backend (pytest), `ruff check`
+propre ; 198/198 tests web (vitest), `tsc --noEmit` + ESLint + `next
+build` propres ; 121/121 tests mobile (vitest), `tsc --noEmit` propre.
+
+**Web et mobile partagent la même vérité métier** : la comparaison de parc
+et les deux champs de diagnostic (confiance, action recommandée) exposent
+la même réponse backend des deux côtés, avec une densité d'affichage
+adaptée à chaque plateforme (web : liste complète des pairs ; mobile :
+résumé compact à la demande) — jamais une donnée différente selon la
+plateforme consultée.
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente
