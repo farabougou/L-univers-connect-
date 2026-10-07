@@ -269,6 +269,7 @@
       "equipment_type": "Type : {type}",
       "finding": "Constat",
       "finding_confidence": "confiance {percent} %",
+      "finding_recommended_action": "Action recommandée : {action}",
       "flagged": "valeur à vérifier",
       "forbidden": "Accès refusé : reconnectez-vous.",
       "foreign_qr": "Ce QR code n’est pas une étiquette de la plateforme.",

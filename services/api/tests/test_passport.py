@@ -273,6 +273,66 @@ def test_passport_open_finding_without_a_computed_confidence_shows_none(two_tena
     assert findings[0]["confidence"] is None
 
 
+def test_passport_open_finding_includes_its_recommended_action(two_tenants) -> None:
+    """07/10/2026 : l'action recommandée écrite par l'auteur d'une règle
+    (ex. statistical_anomaly) ne doit jamais rester invisible sur le
+    passeport — jusqu'ici seul le titre du constat était exposé."""
+    tenant_a, _ = two_tenants
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_a["tenant_id"])
+        raise_or_repeat_finding(
+            connection,
+            tenant_id=tenant_a["tenant_id"],
+            dedup_key=f"test:action:{tenant_a['loc']}",
+            subject_node_id=tenant_a["loc"],
+            kind="fault",
+            method="statistical",
+            severity="warning",
+            reason_code="RULE_STATISTICAL_ANOMALY",
+            reason_params={},
+            evidence={},
+            seen_at=T0,
+            changed_by="technicien",
+            title="Anomalie statistique",
+            recommended_action="Comparer avec la consigne et le fonctionnement attendu.",
+        )
+
+    response = _call("GET", f"/graph/nodes/{tenant_a['loc']}/passport", _tech(tenant_a))
+    findings = response.json()["open_findings"]
+
+    assert len(findings) == 1
+    assert findings[0]["recommended_action"] == (
+        "Comparer avec la consigne et le fonctionnement attendu."
+    )
+
+
+def test_passport_open_finding_without_a_recommended_action_shows_none(two_tenants) -> None:
+    tenant_a, _ = two_tenants
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_a["tenant_id"])
+        raise_or_repeat_finding(
+            connection,
+            tenant_id=tenant_a["tenant_id"],
+            dedup_key=f"test:no-action:{tenant_a['loc']}",
+            subject_node_id=tenant_a["loc"],
+            kind="fault",
+            method="statistical",
+            severity="warning",
+            reason_code="RULE_STATISTICAL_ANOMALY",
+            reason_params={},
+            evidence={},
+            seen_at=T0,
+            changed_by="technicien",
+            title="Anomalie statistique",
+        )
+
+    response = _call("GET", f"/graph/nodes/{tenant_a['loc']}/passport", _tech(tenant_a))
+    findings = response.json()["open_findings"]
+
+    assert len(findings) == 1
+    assert findings[0]["recommended_action"] is None
+
+
 # --- Propriétés techniques ------------------------------------------------
 
 

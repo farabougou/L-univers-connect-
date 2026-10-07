@@ -373,6 +373,13 @@ function PassportView({
                   })})`}{" "}
                 · {t(`condition_state.${finding.condition_state}`)}
               </Text>
+              {finding.recommended_action && (
+                <Text style={styles.muted}>
+                  {t("mobile.passport.finding_recommended_action", {
+                    action: finding.recommended_action,
+                  })}
+                </Text>
+              )}
             </View>
           </View>
         ))}

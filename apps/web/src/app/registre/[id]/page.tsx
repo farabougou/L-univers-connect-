@@ -963,6 +963,16 @@ export default async function EquipmentPage({
               {t(`handling_status.${finding.handling_status}`)}
               <br />
               {finding.title}
+              {finding.recommended_action && (
+                <>
+                  <br />
+                  <span style={mutedStyle}>
+                    {t("mobile.passport.finding_recommended_action", {
+                      action: finding.recommended_action,
+                    })}
+                  </span>
+                </>
+              )}
             </p>
             <SignalActions
               kind="finding"

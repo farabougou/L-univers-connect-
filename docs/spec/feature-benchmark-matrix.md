@@ -1292,6 +1292,25 @@ confiance calculée transmise, confiance absente pour une prédiction reste
 `None`) ; 198/198 tests web, 121/121 tests mobile, `tsc`/ESLint/`next build`
 web propres, `tsc --noEmit` mobile propre.
 
+**Même audit, deuxième oubli trouvé : l'action recommandée d'un constat
+n'était jamais affichée.** `recommended_action` était déjà sélectionnée et
+traduite par `app.findings.displayed()` (texte de l'auteur de la règle ou
+texte du catalogue par défaut), déjà transmise par le passeport — mais ni
+`apps/web/src/app/registre/[id]/page.tsx` ni `apps/mobile/app/passeport.tsx`
+ne l'affichaient jamais : seul le titre du constat était montré, jamais ce
+qu'il est possible de faire à ce sujet. Explication conforme à ADR 013
+(« ce qui n'a pas pu être fait et l'action possible ») appliquée jusqu'ici
+seulement aux erreurs système, jamais aux constats eux-mêmes. Corrigé des
+deux côtés, affiché uniquement quand non nul (une règle sans action
+recommandée reste `None`, jamais un texte inventé). Nouvelle clé partagée
+`mobile.passport.finding_recommended_action`, même convention de réemploi
+web/mobile que `finding_confidence` ci-dessus. 2 nouveaux tests backend
+(action recommandée transmise quand fournie par une règle authentifiée
+— `RULE_STATISTICAL_ANOMALY`, reste `None` sinon) : 969/969 tests backend
+au total pour cette journée (967 + 2), `ruff check` propre ; 198/198 web,
+121/121 mobile, `tsc`/ESLint/`next build` web propres, `tsc --noEmit`
+mobile propre.
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente

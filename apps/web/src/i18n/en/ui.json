@@ -269,6 +269,7 @@
       "equipment_type": "Type: {type}",
       "finding": "Finding",
       "finding_confidence": "confidence {percent}%",
+      "finding_recommended_action": "Recommended action: {action}",
       "flagged": "value to be checked",
       "forbidden": "Access denied: please sign in again.",
       "foreign_qr": "This QR code is not a platform tag.",

@@ -99,6 +99,7 @@ export type Passport = {
     kind: string;
     severity: string;
     title: string;
+    recommended_action: string | null;
     certainty: string;
     confidence: number | null;
     condition_state: string;
