@@ -1756,6 +1756,80 @@ pendant 12 mois, inchangé.
 contre la base de développement (`pg_class.relrowsecurity`), confirmant
 zéro régression d'isolation.
 
+## V4 Software Complete — 07/10/2026
+
+**V4 SOFTWARE COMPLETE: YES**
+
+Objectif V4 (Scale → Integrate → Deploy → Operate) vérifié réellement
+rempli, priorité par priorité, dans l'ordre de valeur demandé — jamais
+une accumulation de fonctions métier, jamais supposé fait :
+
+**Connecteurs** : catalogue déclaratif (`GET /connectors`, section
+« Connecteurs » de `/edge`) rendant explicite le contrat déjà fixé à
+l'ADR 012 §2.12 pour les quatre connecteurs réels (Modbus, BACnet, OPC UA,
+MQTT) — manifeste, capacités, certification Experimental/Verified/Certified
+honnêtement assignée (aucun `"certified"` déclaré, faute d'essai terrain),
+écriture toujours désactivée. Un guide concret
+(`docs/spec/api-stability-and-connector-sdk.md`) prouve que ce SDK est
+réellement exploitable pour un cinquième protocole, sans qu'aucun ait été
+ajouté juste pour en augmenter le nombre.
+
+**Edge** : santé de la flotte (version de l'agent, mesures en tampon)
+reportée par chaque démon et visible sur `/edge` ; store-and-forward
+(`app/connectors/offline_buffer.py`) et configuration centralisée
+(`GET /edge/config*`) existaient déjà depuis M4 et les quatre connecteurs,
+vérifiés de nouveau plutôt que reconstruits. Mises à jour/retour arrière
+du démon lui-même : `DEFERRED_PHYSICAL_VALIDATION`, la visibilité
+construite ici en étant le préalable honnête.
+
+**Déploiement** : les quatre balayages périodiques (supervision, commandes
+planifiées, automatisation, ancrage d'audit) enregistrent désormais leur
+dernier tour (`scheduled_job_runs`, `app/job_runs.py`), exposé par
+`GET /metrics` — état exploitable sans Railway. Activation réelle des
+Cron Jobs Railway : **DEFERRED_EXTERNAL_DEPLOYMENT** (décision de Mohamed,
+07/10/2026, pas prise sans son accord explicite sur son compte réel) ;
+documenté dans `infra/README.md`, ne bloque pas cette fermeture.
+
+**Multi-tenant / Scale** : audit direct de la base confirme 44/47 tables
+avec RLS active, les trois exceptions toutes délibérées. Quotas par tenant
+et multi-région : **DEFERRED**, faute de modèle de facturation ou de
+besoin réel (multi-région hors périmètre explicite du cahier des charges).
+
+**Sécurité** : la résilience du client Edge à la rotation de
+`device_token_secret` (reprise déjà existante sur 401 inattendu) est
+maintenant prouvée par test et documentée. Droits intégrateurs/prestataires
+cross-tenant : **DEFERRED**, changerait le modèle d'isolation central sans
+aucun intégrateur réel à servir aujourd'hui.
+
+**API / Écosystème** : politique de versioning additive écrite
+(`docs/spec/api-stability-and-connector-sdk.md`) sans changement d'URL
+spéculatif ; guide SDK et onboarding matériel consolidés dans le même
+document. Chargement dynamique de connecteurs tiers : **DEFERRED**, même
+raisonnement que les droits intégrateurs.
+
+**Rien n'a été reconstruit qui existait déjà** : chaque tranche V4 a
+commencé par relire le code et la documentation en place (ADR 012, M4,
+sécurité machine, connecteurs V3) avant d'écrire une ligne — zéro nouveau
+moteur, zéro nouvelle table RLS au-delà des deux données de plateforme
+explicitement justifiées (`scheduled_job_runs`, même raisonnement que
+`tenants`).
+
+**Aucune prétention de validation terrain non réalisée** : les niveaux de
+certification des connecteurs, la santé de la flotte et l'observabilité
+des tâches planifiées sont tous vérifiés par des tests contre un vrai
+protocole/une vraie base — jamais un équipement physique réel. Tout ce qui
+dépend encore d'une action réelle sur Railway, de matériel physique ou
+d'un intégrateur réel reste explicitement `DEFERRED_EXTERNAL_DEPLOYMENT`
+ou `DEFERRED`, sans bloquer cette fermeture logicielle.
+
+**Aucun défaut Critical/High connu.** Vérification complète exécutée le
+jour de cette fermeture : 996/996 tests backend (pytest), `ruff check`
+propre ; 198/198 tests web (vitest), `tsc --noEmit` + ESLint + `next
+build` propres ; 121/121 tests mobile (vitest), `tsc --noEmit` propre.
+
+**Après V4** : évolution continue du produit, sans V5 automatique — une V5
+sera décidée explicitement si et quand elle se justifie.
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente
