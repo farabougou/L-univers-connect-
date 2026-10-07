@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import { config } from "../src/lib/config";
 import { useAuth } from "../src/lib/auth";
 import { locale, t } from "../src/lib/i18n";
-import { formatDateTime } from "../src/i18n/translator";
+import { formatDateTime, formatNumber } from "../src/i18n/translator";
 import { type Alert, fetchOpenAlerts } from "../src/lib/alerts";
 import { colors } from "../src/design/colors";
 import { SeverityBadge } from "../src/design/StatusBadge";
@@ -79,8 +79,17 @@ function AlertRow({ alert }: { alert: Alert }) {
             : ""}
         </Text>
         <Text>{alert.message}</Text>
+        {alert.recommendedAction && (
+          <Text style={styles.muted}>
+            {t("mobile.passport.finding_recommended_action", { action: alert.recommendedAction })}
+          </Text>
+        )}
         <Text style={styles.muted}>
           {t(`ack_state.${alert.ackState}`)} · {formatDateTime(locale, alert.raisedAt)}
+          {alert.confidence !== null &&
+            ` · ${t("mobile.passport.finding_confidence", {
+              percent: formatNumber(locale, Math.round(alert.confidence * 100)),
+            })}`}
         </Text>
       </View>
     </>

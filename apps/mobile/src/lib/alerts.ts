@@ -19,6 +19,11 @@ export type Alert = {
   equipmentName: string | null;
   severity: string;
   message: string;
+  // Confiance et action recommandée : propres aux constats, toujours
+  // `null` pour une alarme (voir app/findings.py — une alarme n'a pas ces
+  // notions, jamais une valeur inventée pour combler le type partagé).
+  confidence: number | null;
+  recommendedAction: string | null;
   ackState: string;
   raisedAt: string;
 };
@@ -37,6 +42,8 @@ type RawFinding = {
   subject_node_id: string;
   severity: string;
   title: string;
+  recommended_action: string | null;
+  confidence: number | null;
   ack_state: string;
   last_seen_at: string;
 };
@@ -90,6 +97,8 @@ export async function fetchOpenAlerts(apiUrl: string, accessToken: string): Prom
         equipmentName: location?.name ?? null,
         severity: alarm.severity,
         message: alarm.message,
+        confidence: null,
+        recommendedAction: null,
         ackState: alarm.ack_state,
         raisedAt: alarm.raised_at,
       };
@@ -104,6 +113,8 @@ export async function fetchOpenAlerts(apiUrl: string, accessToken: string): Prom
         equipmentName: location?.name ?? null,
         severity: finding.severity,
         message: finding.title,
+        confidence: finding.confidence,
+        recommendedAction: finding.recommended_action,
         ackState: finding.ack_state,
         raisedAt: finding.last_seen_at,
       };

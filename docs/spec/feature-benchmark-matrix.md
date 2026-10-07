@@ -1412,6 +1412,34 @@ N/A, Tests DONE, Documentation DONE (cette ligne). Les constats qu'elle
 ouvre héritent déjà de l'affichage confidence/action recommandée ajouté
 plus haut dans cette section (web et mobile), sans travail supplémentaire.
 
+## V3 — troisième oubli d'affichage trouvé : les écrans de portefeuille, 07/10/2026
+
+Même audit que la confiance/action recommandée ci-dessus, poursuivi sur les
+écrans de portefeuille (pas seulement la fiche équipement) : `GET
+/findings` renvoie déjà `confidence`/`recommended_action`/`certainty`
+correctement traduits (`app.findings.displayed()`), mais ni la page web
+`/alarmes` (Alarms & Incidents, portefeuille complet) ni l'écran mobile
+Alertes ne les affichaient — la page web montrait `certainty` seul, l'écran
+mobile ne montrait même pas `certainty`. Pour un constat `statistical_anomaly`
+ou `baseline_drift`, c'est précisément l'écran que consulte en premier un
+responsable ou un technicien en triage qui restait muet sur la confiance et
+l'action possible.
+
+Corrigé des deux côtés, même convention que la fiche équipement : confiance
+affichée uniquement quand non nulle, action recommandée affichée uniquement
+quand non nulle, mêmes clés i18n déjà créées (`mobile.passport.finding_confidence`,
+`mobile.passport.finding_recommended_action`) — aucune nouvelle clé, aucun
+nouveau texte à faire approuver. Zéro changement backend : les champs
+étaient déjà dans la réponse, seul le typage client les ignorait.
+
+**Grille produit (ADR 014)** : les deux écrans de portefeuille (web
+`/alarmes`, mobile Alertes) passent de partiel à complet sur cet axe.
+198/198 tests web, 121/121 mobile, `tsc`/ESLint/`next build` web propres,
+`tsc --noEmit` mobile propre. Pas de nouveau test dédié : la traduction et
+le calcul sont déjà couverts (catalogues i18n, tests `test_passport.py`
+pour le même champ côté backend) — ce lot n'ajoute qu'un affichage, jamais
+une nouvelle logique à prouver séparément.
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente

@@ -18,7 +18,7 @@ import {
   SEVERITY_COLOR,
   prioritizeAlarms,
 } from "@/lib/portfolio";
-import { formatDateTime } from "@/i18n/translator";
+import { formatDateTime, formatNumber } from "@/i18n/translator";
 
 import {
   acknowledgeSignal,
@@ -54,7 +54,9 @@ type FindingDetail = {
   kind: string;
   severity: string;
   title: string;
+  recommended_action: string | null;
   certainty: string;
+  confidence: number | null;
   condition_state: string;
   ack_state: string;
   handling_status: string;
@@ -318,12 +320,35 @@ export default async function AlarmsPage({
                         style={cellStyle}
                       >
                         {finding.title}
+                        {finding.recommended_action && (
+                          <>
+                            <br />
+                            <span style={{ color: colors.textMuted }}>
+                              {t("mobile.passport.finding_recommended_action", {
+                                action: finding.recommended_action,
+                              })}
+                            </span>
+                          </>
+                        )}
                       </td>
                       <td
                         data-label={t("web.alarms_page.col_certainty")}
                         style={cellStyle}
                       >
                         {t(`certainty.${finding.certainty}`)}
+                        {finding.confidence !== null && (
+                          <>
+                            <br />
+                            <span style={{ color: colors.textMuted }}>
+                              {t("mobile.passport.finding_confidence", {
+                                percent: formatNumber(
+                                  locale,
+                                  Math.round(finding.confidence * 100),
+                                ),
+                              })}
+                            </span>
+                          </>
+                        )}
                       </td>
                       <td
                         data-label={t("web.dashboard.col_since")}
