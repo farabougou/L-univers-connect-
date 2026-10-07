@@ -1727,6 +1727,35 @@ DEFERRED pour la même raison.
 tester ; `docs/adr/012-fondations-architecture-v2.md` renvoie vers le
 nouveau document.
 
+## V4 — Multi-tenant / Scale, 07/10/2026 : audit isolation et permissions
+
+**Isolation tenant et permissions à grande échelle** (priorité
+« Multi-tenant/Scale » de V4) : audit de l'existant plutôt que nouvelle
+construction. Vérification directe sur la base réelle : 44 des 47 tables
+ont la RLS activée et forcée (`pg_class.relrowsecurity`) ; les trois
+exceptions sont toutes délibérées et documentées dans leur propre module —
+`tenants` (registre racine), `alembic_version` (interne à l'outil de
+migration), `scheduled_job_runs` (donnée de plateforme, V4, même
+raisonnement que `tenants`). Zéro table métier sans isolation trouvée.
+Les trois rôles (`technicien`, `responsable_exploitation`, `admin_tenant`)
+restent cohérents à travers tous les routeurs, chacun déjà couvert par ses
+propres tests d'autorisation. Décision : **KEEP**, confirmé par la preuve,
+jamais une nouvelle couche d'isolation ajoutée sans raison.
+
+**Quotas / limitation de débit / protection contre les abus** (même
+priorité, « si nécessaires » dans la feuille de route) : `app/rate_limit.py`
+couvre déjà la protection contre l'abus (120/minute par IP par défaut,
+10/minute sur `/devices/auth`). Un quota par tenant (nombre de sites,
+d'appareils, d'appels par plan commercial) exigerait un modèle de
+facturation qui n'existe pas encore — **DEFERRED**, construire ce
+mécanisme maintenant serait une politique sans aucun client réel pour la
+justifier. Multi-région : hors périmètre explicite du cahier des charges
+pendant 12 mois, inchangé.
+
+**Vérification** : audit seul, aucun changement de code — requête directe
+contre la base de développement (`pg_class.relrowsecurity`), confirmant
+zéro régression d'isolation.
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente
