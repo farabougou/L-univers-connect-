@@ -257,6 +257,13 @@ tests de conformité avec injection de pannes (inspirée des laboratoires de tes
 BTL). L'écriture exigera `Certified` + accord explicite du tenant + politique : jamais
 automatique.
 
+Ce contrat est repris en V4 (catalogue des connecteurs, `GET /connectors`,
+niveaux de certification réellement assignés aux quatre connecteurs
+existants) et rendu concrètement exploitable par
+`docs/spec/api-stability-and-connector-sdk.md` : guide pas à pas pour
+ajouter un cinquième protocole en suivant exactement ces règles, politique
+de versioning de l'API elle-même.
+
 ### 2.13 Tenant isolation — KEEP + REFACTOR de renforcement
 
 Les nouvelles tables (dès F1) utilisent des clés étrangères composées `(tenant_id, id)`.

@@ -1691,6 +1691,42 @@ interdit. À concevoir le jour où un premier intégrateur réel le demande.
 **Vérification** : suite backend complète + 1 test nouveau
 (`tests/test_edge_client.py`), `ruff check` propre.
 
+## V4 — API / Écosystème, 07/10/2026 : stabilité, SDK, onboarding
+
+**APIs stables et versionnées** (priorité « API/Écosystème » de V4) :
+l'API n'a aujourd'hui qu'un seul consommateur maîtrisé (web, mobile, démons
+Edge, tous dans ce dépôt) — préfixer `/v1/` maintenant serait un changement
+cassant sur toutes les routes pour un bénéfice nul. Décision : **KEEP +
+politique écrite**, jamais une réécriture d'URL spéculative. Politique
+retenue dans `docs/spec/api-stability-and-connector-sdk.md` : évolutions
+additives uniquement tant qu'aucun consommateur externe n'existe ; un
+préfixe `/v1/` se gèlera au-dessus des routeurs existants (sans réécriture)
+le jour où un premier consommateur externe apparaît — c'est cet événement,
+pas une date, qui déclenche le gel.
+
+**Connector SDK réellement exploitable** : le contrat (ADR 012 §2.12)
+existait déjà, suivi par les quatre connecteurs réels, mais jamais écrit
+comme un guide actionnable. `docs/spec/api-stability-and-connector-sdk.md`
+en tire un guide pas à pas (fichier par fichier, en pointant vers
+`app/connectors/mqtt.py` comme modèle le plus récent) pour ajouter un
+cinquième protocole — jamais une nouvelle abstraction, jamais un connecteur
+ajouté juste pour en augmenter le nombre. Démontre aussi, en le nommant
+explicitement, le bénéfice déjà obtenu du catalogue V4 : un connecteur
+ajouté au catalogue apparaît sur `/edge` sans aucun changement d'écran.
+Chargement dynamique de connecteurs tiers (plugins, marketplace) :
+**DEFERRED**, faute d'un premier intégrateur externe réel à servir.
+
+**Onboarding intégrateur** : le seul onboarding qui existe réellement
+aujourd'hui est matériel (provisionner un appareil Edge), déjà construit
+en M4/sécurité machine — consolidé en une procédure lisible dans le même
+document plutôt qu'éparpillé entre plusieurs docstrings. L'identité de
+connexion d'un intégrateur externe (section Sécurité ci-dessus) reste
+DEFERRED pour la même raison.
+
+**Vérification** : documentation seule, aucun changement de code — rien à
+tester ; `docs/adr/012-fondations-architecture-v2.md` renvoie vers le
+nouveau document.
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente
