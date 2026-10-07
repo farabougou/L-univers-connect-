@@ -29,9 +29,24 @@ type Device = {
   last_seen_at: string | null;
 };
 
+type Connector = {
+  protocol: string;
+  display_name: string;
+  capabilities: string[];
+  write_enabled: false;
+  certification_level: string;
+  active_equipment_count: number;
+};
+
 const ACCOUNT_COLOR: Record<string, string> = {
   active: "#16a34a",
   revoked: "#6b7280",
+};
+
+const CERTIFICATION_COLOR: Record<string, string> = {
+  experimental: "#f59e0b",
+  verified: "#16a34a",
+  certified: "#2563eb",
 };
 
 export default async function EdgeConnectivityPage() {
@@ -39,10 +54,12 @@ export default async function EdgeConnectivityPage() {
   const { t } = await getTranslator();
   const locale = await getLocale();
 
-  const [sitesResponse, devicesResponse] = await Promise.all([
-    apiFetch("/sites", accessToken),
-    apiFetch("/devices", accessToken),
-  ]);
+  const [sitesResponse, devicesResponse, connectorsResponse] =
+    await Promise.all([
+      apiFetch("/sites", accessToken),
+      apiFetch("/devices", accessToken),
+      apiFetch("/connectors", accessToken),
+    ]);
 
   const sites: Site[] = sitesResponse.ok ? await sitesResponse.json() : [];
   // Réservé aux rôles de gestion côté API — un rôle terrain voit un message
@@ -51,6 +68,9 @@ export default async function EdgeConnectivityPage() {
   const accessDenied = devicesResponse.status === 403;
   const devices: Device[] = devicesResponse.ok
     ? await devicesResponse.json()
+    : [];
+  const connectors: Connector[] = connectorsResponse.ok
+    ? await connectorsResponse.json()
     : [];
 
   const siteName = (id: string | null) =>
@@ -69,6 +89,7 @@ export default async function EdgeConnectivityPage() {
       siteName(b === "__unassigned__" ? null : b),
     ),
   );
+  const connectorsAccessDenied = connectorsResponse.status === 403;
 
   return (
     <main style={pageContainerStyle}>
@@ -81,6 +102,96 @@ export default async function EdgeConnectivityPage() {
       <p style={{ color: colors.textMuted, fontSize: 14, marginBottom: 24 }}>
         {t("web.edge.intro")}
       </p>
+
+      <section
+        style={{
+          ...cardStyle,
+          padding: 0,
+          overflow: "hidden",
+          marginBottom: 20,
+        }}
+      >
+        <div style={{ padding: "20px 24px 0" }}>
+          <h2 style={sectionTitleStyle}>{t("web.edge.connectors_title")}</h2>
+          <p
+            style={{ color: colors.textMuted, fontSize: 14, marginBottom: 16 }}
+          >
+            {t("web.edge.connectors_intro")}
+          </p>
+        </div>
+        {connectorsAccessDenied ? (
+          <p style={{ color: colors.textMuted, padding: "0 24px 20px" }}>
+            {t("web.edge.access_denied")}
+          </p>
+        ) : (
+          <div style={tableScrollStyle}>
+            <table
+              className="responsive-table"
+              style={{ width: "100%", borderCollapse: "collapse" }}
+            >
+              <thead>
+                <tr>
+                  <th style={headerCellStyle}>
+                    {t("web.edge.col_protocol")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.edge.col_capabilities")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.edge.col_certification")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.edge.col_equipment_count")}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {connectors.map((connector) => (
+                  <tr key={connector.protocol}>
+                    <td
+                      data-label={t("web.edge.col_protocol")}
+                      style={{ ...cellStyle, fontWeight: 600 }}
+                    >
+                      {connector.display_name}
+                    </td>
+                    <td
+                      data-label={t("web.edge.col_capabilities")}
+                      style={cellStyle}
+                    >
+                      {connector.capabilities
+                        .map((capability) =>
+                          t(`connector_capability.${capability}`),
+                        )
+                        .join(", ")}
+                    </td>
+                    <td
+                      data-label={t("web.edge.col_certification")}
+                      style={cellStyle}
+                    >
+                      <span
+                        style={badgeStyle(
+                          CERTIFICATION_COLOR[connector.certification_level] ??
+                            "#6b7280",
+                        )}
+                      >
+                        {t(
+                          `connector_certification_level.${connector.certification_level}`,
+                        )}
+                      </span>
+                    </td>
+                    <td
+                      data-label={t("web.edge.col_equipment_count")}
+                      style={cellStyle}
+                    >
+                      {connector.active_equipment_count}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
       {accessDenied ? (
         <section style={cardStyle}>

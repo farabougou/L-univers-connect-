@@ -18,6 +18,7 @@ from app.routers.assets import router as asset_registry_router
 from app.routers.bacnet_discovery import router as bacnet_discovery_router
 from app.routers.commands import router as commands_router
 from app.routers.configs import router as configs_router
+from app.routers.connectors import router as connectors_router
 from app.routers.devices import router as devices_router
 from app.routers.documents import router as documents_router
 from app.routers.energy import router as energy_router
@@ -56,6 +57,7 @@ app.include_router(graph_router)
 app.include_router(spatial_router)
 app.include_router(points_router)
 app.include_router(configs_router)
+app.include_router(connectors_router)
 app.include_router(devices_router)
 app.include_router(commands_router)
 app.include_router(analytics_router)

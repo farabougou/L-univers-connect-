@@ -78,6 +78,16 @@
     "retired": "Retired",
     "superseded": "Superseded"
   },
+  "connector_capability": {
+    "discover": "Discovery",
+    "read": "Read",
+    "subscribe": "Subscribe"
+  },
+  "connector_certification_level": {
+    "certified": "Certified",
+    "experimental": "Experimental",
+    "verified": "Verified"
+  },
   "control_mode": {
     "automatic": "Automatic",
     "manual": "Manual"
@@ -602,12 +612,18 @@
     "edge": {
       "access_denied": "This view requires a management role (operations manager or administrator).",
       "col_account": "Account",
+      "col_capabilities": "Capabilities",
+      "col_certification": "Certification",
       "col_communication": "Communication",
       "col_credential": "Authentication",
       "col_device": "Device identifier",
+      "col_equipment_count": "Active equipment",
       "col_fingerprint": "Key fingerprint",
       "col_last_seen": "Last activity",
+      "col_protocol": "Protocol",
       "col_provisioned": "Provisioned on",
+      "connectors_intro": "Catalogue of available connectors, read-only: none can send a command to equipment.",
+      "connectors_title": "Connectors",
       "intro": "Provisioned Edge gateways, grouped by site.",
       "last_seen_never": "Never seen",
       "no_devices": "No Edge gateway provisioned yet.",

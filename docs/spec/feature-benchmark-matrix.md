@@ -1521,6 +1521,55 @@ adaptée à chaque plateforme (web : liste complète des pairs ; mobile :
 résumé compact à la demande) — jamais une donnée différente selon la
 plateforme consultée.
 
+## V4 — lancement, 07/10/2026 : catalogue des connecteurs
+
+**Objectif V4** : Scale → Integrate → Deploy → Operate. V4 n'ajoute pas de
+nouvelles fonctions métier : il rend Enoryx industrialisable, extensible,
+déployable, exploitable à l'échelle — en s'appuyant sur ce qui existe déjà
+plutôt qu'en réécrivant le cœur.
+
+**Connecteurs — Connector SDK stable, catalogue, versioning, compatibilité**
+(priorité « Connecteurs » de V4) : `app/connectors/catalog.py` et
+`GET /connectors` (`app/routers/connectors.py`) rendent explicite et
+consultable le contrat déjà fixé par l'ADR 012 §2.12 (« Connector
+abstraction — DEFER (M3), contrat fixé maintenant ») : manifeste déclaratif
+par connecteur (protocole, capacités réellement implémentées, niveau de
+certification Experimental → Verified → Certified), jamais une réécriture
+des quatre connecteurs existants (Modbus, BACnet, OPC UA, MQTT) ni un
+nouveau moteur. Décision : **ADD**, directement grounded dans une décision
+d'architecture déjà écrite, pas une nouvelle invention.
+
+« Verified » est attribué aux quatre connecteurs sur la base de leur suite
+de tests réelle (injection de pannes contre un serveur/courtier réel —
+pymodbus, bacpypes3, asyncua, un courtier MQTT réel — jamais un mock et
+jamais un équipement physique) : c'est une vérification honnête de ce qui
+existe déjà, pas une nouvelle certification inventée. « Certified »
+exigerait un essai terrain sur un équipement physique réel et n'est donc
+déclaré pour aucun connecteur — cohérent avec `DEFERRED_PHYSICAL_VALIDATION`.
+
+L'écriture reste désactivée partout (`write_enabled` figé à `False` au
+niveau du type lui-même, pas seulement d'une valeur par défaut) : aucun
+connecteur ne peut se déclarer capable d'écrire depuis ce catalogue sans
+une nouvelle décision explicite de Mohamed écrite dans CLAUDE.md — règle
+non négociable 1 inchangée.
+
+Le nombre d'équipements avec une connexion active de chaque protocole
+(`active_equipment_count`) est calculé à la demande depuis
+`app/config_versions.py` (versions actives des quatre types de
+`*_device_mapping`), jamais une nouvelle table ni une donnée dupliquée —
+même principe que `app/impact_analysis.py` : un parcours de ce qui existe
+déjà, isolé par tenant (prouvé par test : un deuxième tenant ne voit rien).
+
+**Web** : nouvelle section « Connecteurs » sur l'écran Edge & Connectivité
+(`/edge`) — protocole, capacités, certification, équipements actifs du
+tenant. Rôle de gestion requis, comme `/devices`. **Mobile** : non
+applicable, volontairement — geste d'administration/industrialisation,
+pas un geste terrain (même principe que l'analyse d'impact en V2).
+
+**Vérification** : 988/988 tests backend (985 + 3 nouveaux), `ruff check`
+propre ; web : `tsc --noEmit`, ESLint, 198/198 tests vitest, `next build`
+propres.
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente

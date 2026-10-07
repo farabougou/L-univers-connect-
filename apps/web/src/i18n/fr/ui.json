@@ -78,6 +78,16 @@
     "retired": "Retirée",
     "superseded": "Remplacée"
   },
+  "connector_capability": {
+    "discover": "Découverte",
+    "read": "Lecture",
+    "subscribe": "Abonnement"
+  },
+  "connector_certification_level": {
+    "certified": "Certifié",
+    "experimental": "Expérimental",
+    "verified": "Vérifié"
+  },
   "control_mode": {
     "automatic": "Automatique",
     "manual": "Manuel"
@@ -602,12 +612,18 @@
     "edge": {
       "access_denied": "Cette vue nécessite un rôle de gestion (responsable d’exploitation ou administrateur).",
       "col_account": "Compte",
+      "col_capabilities": "Capacités",
+      "col_certification": "Certification",
       "col_communication": "Communication",
       "col_credential": "Authentification",
       "col_device": "Identifiant appareil",
+      "col_equipment_count": "Équipements actifs",
       "col_fingerprint": "Empreinte de clé",
       "col_last_seen": "Dernière activité",
+      "col_protocol": "Protocole",
       "col_provisioned": "Provisionné le",
+      "connectors_intro": "Catalogue des connecteurs disponibles, lecture seule : aucun ne peut envoyer de commande à un équipement.",
+      "connectors_title": "Connecteurs",
       "intro": "Passerelles Edge provisionnées, groupées par site.",
       "last_seen_never": "Jamais vue",
       "no_devices": "Aucune passerelle Edge provisionnée pour le moment.",
