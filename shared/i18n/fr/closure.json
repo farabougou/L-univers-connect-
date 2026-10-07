@@ -1,0 +1,44 @@
+{
+  "symptoms": {
+    "no_heating": "Absence de chauffage",
+    "no_cooling": "Absence de froid",
+    "insufficient_performance": "Performance insuffisante",
+    "abnormal_noise": "Bruit anormal",
+    "vibration": "Vibrations",
+    "water_leak": "Fuite d’eau",
+    "refrigerant_leak": "Fuite de fluide frigorigène",
+    "fault_code": "Code défaut affiché",
+    "abnormal_consumption": "Consommation anormale",
+    "preventive_check": "Aucun (contrôle préventif)",
+    "other": "Autre"
+  },
+  "causes": {
+    "wear": "Usure",
+    "fouling": "Encrassement ou colmatage",
+    "refrigerant_loss": "Perte de fluide frigorigène",
+    "electrical_fault": "Défaut électrique",
+    "control_setting": "Réglage ou programmation",
+    "sensor_fault": "Capteur défaillant",
+    "component_failure": "Composant défaillant",
+    "external_cause": "Cause extérieure (coupure, gel, choc…)",
+    "lack_of_maintenance": "Défaut d’entretien",
+    "no_fault_found": "Aucun défaut trouvé",
+    "unknown": "Cause non identifiée"
+  },
+  "actions": {
+    "adjustment": "Réglage",
+    "cleaning": "Nettoyage",
+    "repair": "Réparation",
+    "replacement": "Remplacement de pièce",
+    "refrigerant_recharge": "Recharge de fluide frigorigène",
+    "reset": "Réarmement",
+    "inspection_only": "Contrôle seul",
+    "temporary_fix": "Dépannage provisoire",
+    "other": "Autre"
+  },
+  "verification_results": {
+    "ok": "Fonctionnement rétabli",
+    "partial": "Fonctionnement partiellement rétabli",
+    "failed": "Fonctionnement non rétabli"
+  }
+}
