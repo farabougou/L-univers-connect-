@@ -67,6 +67,7 @@ export type PassportPoint = {
   code: string;
   name: string;
   unit: string;
+  value_type: string;
   mapping_status: string;
   latest: PassportMeasurement | null;
   // État souhaité déclaré (app/desired_states.py) et commandes de test
@@ -309,6 +310,51 @@ export async function fetchScheduledCommands(
     return [];
   }
   return response.ok ? ((await response.json()) as ScheduledCommand[]) : [];
+}
+
+// Comparaison de parc (V3, app/comparison.py), consultée à la demande —
+// jamais prégénérée pour chaque point, même principe que fetchControlMode
+// ci-dessus : une lecture pure, jamais un constat.
+export type PointComparisonPeer = {
+  point_id: string;
+  point_code: string;
+  functional_location_code: string | null;
+  functional_location_name: string | null;
+  site_id: string | null;
+  site_name: string | null;
+  value: number | null;
+  measured_at: string | null;
+};
+export type PointComparison = {
+  point_id: string;
+  point_code: string;
+  point_class: string | null;
+  value: number | null;
+  measured_at: string | null;
+  peer_count: number;
+  peers: PointComparisonPeer[];
+  comparable: boolean;
+  mean: number | null;
+  std_dev: number | null;
+  z_score: number | null;
+  is_outlier: boolean;
+  confidence: number | null;
+};
+
+export async function fetchPointComparison(
+  apiUrl: string,
+  accessToken: string,
+  pointId: string,
+): Promise<PointComparison | null> {
+  let response: Response;
+  try {
+    response = await fetch(`${apiUrl}/points/${encodeURIComponent(pointId)}/compare`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+  } catch {
+    return null;
+  }
+  return response.ok ? ((await response.json()) as PointComparison) : null;
 }
 
 export type CommandResult =

@@ -1311,6 +1311,62 @@ au total pour cette journée (967 + 2), `ruff check` propre ; 198/198 web,
 121/121 mobile, `tsc`/ESLint/`next build` web propres, `tsc --noEmit`
 mobile propre.
 
+## V3 — comparaison de parc, 07/10/2026 (priorité « Compare »)
+
+Deuxième incrément V3 (après `statistical_anomaly` et l'affichage de la
+confiance/action recommandée des constats ci-dessus) : `app/comparison.py`,
+nouveau module, compare la dernière valeur d'un point à celle de ses pairs —
+les autres points validés de même `point_class` dans tout le portefeuille du
+client, équipements et sites confondus. Couvre à la fois « comparaison
+d'équipements », « comparaison entre unités/sites » et « comparaison sur
+mêmes classes de points » : les trois ne sont qu'une seule et même
+population comparée, jamais trois mécanismes séparés.
+
+**Zéro nouveau moteur** : réutilise exactement le même calcul que
+`_evaluate_statistical_anomaly` (`app/rules.py`, moyenne, écart-type,
+z-score, confiance jamais à 1.0), simplement sur une population différente
+— les pairs au même instant plutôt que l'historique d'un seul point dans le
+temps. Réutilise `latest_usable_bulk` (`app/equipment_status.py`, lecture en
+une requête) et `list_points` (`app/points.py`) tels quels.
+
+**Lecture pure, jamais une détection automatique** : différence
+déterminante avec `statistical_anomaly`. `GET /points/{id}/compare`
+(`app/routers/analytics.py`) ne crée jamais de constat, d'alarme ni d'ordre
+de travail — consultée à la demande (web : lien « Comparer » par point
+numérique sur la fiche équipement ; mobile : même lien sur le passeport),
+jamais un calcul silencieux en arrière-plan. Un test dédié vérifie
+explicitement qu'aucun constat n'apparaît après un appel
+(`test_an_equipment_far_from_its_peers_is_flagged_an_outlier`).
+
+**Garde-fous identiques à la règle statistique** : jamais une comparaison
+entre deux grandeurs physiques différentes (seule la même `point_class`,
+jamais entre deux `point_class` même sur le même équipement) ; aucun verdict
+sous `MIN_PEERS_FOR_COMPARISON` (2) pairs avec une valeur récente ; aucun
+verdict si l'écart-type des pairs est nul (z-score serait une division par
+zéro) ; jamais un point sans valeur récente comparé lui-même. Isolation
+tenant vérifiée explicitement (même point_class chez un autre client :
+jamais un pair, confirmé par un test API dédié).
+
+**Web + mobile, même vérité** : `PointComparisonOut` (`app/schemas.py`) est
+la même réponse consommée par les deux plateformes. Web (`/registre/[id]`,
+pattern réutilisé du bouton « Simuler » existant : lien `?compare=<id>`,
+résultat affiché en section dédiée) montre la liste complète des pairs
+(site, équipement, valeur) ; mobile (passeport, bouton à la demande par
+point, jamais prégénéré pour économiser la donnée terrain) montre un résumé
+compact (position par rapport au groupe, confiance) sans la liste détaillée
+des pairs — parité fonctionnelle intelligente, pas duplication aveugle :
+même calcul, même vérité, densité d'affichage adaptée à chaque plateforme.
+
+**Grille produit (ADR 014)** : Backend DONE, API DONE
+(`GET /points/{id}/compare`), Web DONE, Mobile DONE, Edge N/A, Tests DONE (8
+tests `tests/test_comparison.py` : écart détecté avec confiance calculée,
+aucun constat créé par la lecture, pairs identiques sans verdict division
+par zéro, pas assez de pairs, point sans valeur récente, validation type
+numérique, point introuvable, isolation tenant via l'API), Documentation
+DONE (cette ligne). 977/977 tests backend (969 + 8), `ruff check` propre ;
+198/198 web, 121/121 mobile, `tsc`/ESLint/`next build` web propres, `tsc
+--noEmit` mobile propre.
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente

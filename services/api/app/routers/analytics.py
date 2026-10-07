@@ -7,6 +7,7 @@ from sqlalchemy.engine import Connection
 
 from app.audit import append_audit_entry
 from app.auth import require_any_role
+from app.comparison import compare_point_to_peers
 from app.deps import get_tenant_connection, get_tenant_id
 from app.desired_states import (
     DesiredStateInvalid,
@@ -21,13 +22,14 @@ from app.errors import ApiError, api_error
 from app.findings import confirm_finding, displayed, get_finding, list_findings
 from app.i18n import negotiate_locale
 from app.monitoring import evaluate_data_freshness
-from app.points import get_point
+from app.points import PointInvalid, PointNotFound, get_point
 from app.schemas import (
     DesiredStateCreate,
     DesiredStateEnd,
     DesiredStateOut,
     FindingConfirmation,
     FindingOut,
+    PointComparisonOut,
     PortfolioDesiredStateOut,
     SignalHandlingUpdate,
     SignalHistoryOut,
@@ -307,3 +309,26 @@ def read_point_trust(
     trust = compute_trust(connection, point, at)
     evaluate_data_freshness(connection, tenant_id=tenant_id, point=point, trust=trust, at=at)
     return TrustOut(**trust)
+
+
+# --- Comparaison de parc (V3, priorité « Compare ») --------------------
+
+
+@router.get("/points/{point_id}/compare", response_model=PointComparisonOut)
+def read_point_comparison(
+    point_id: uuid.UUID,
+    connection: Annotated[Connection, Depends(get_tenant_connection)],
+    _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+) -> PointComparisonOut:
+    """Position du point par rapport à ses pairs de parc (même point_class,
+    tout le portefeuille) maintenant. Lecture pure : contrairement à la
+    règle `statistical_anomaly` (app/rules.py), ceci ne crée jamais de
+    constat, d'alarme ni d'ordre de travail — une comparaison consultée à la
+    demande, pas une détection automatique."""
+    try:
+        comparison = compare_point_to_peers(connection, point_id, datetime.now(UTC))
+    except PointNotFound as exc:
+        raise api_error(exc, 404) from exc
+    except PointInvalid as exc:
+        raise api_error(exc, 422) from exc
+    return PointComparisonOut(**comparison)

@@ -160,6 +160,35 @@ type RuleSimulation = {
   breaches: { measured_at: string; value: number | boolean }[];
 };
 
+// Comparaison de parc (V3, app/comparison.py) : lecture pure, jamais un
+// constat — même forme que RuleSimulation ci-dessus (un résultat affiché à
+// la demande, jamais prégénéré pour chaque point de la fiche).
+type PointComparisonPeer = {
+  point_id: string;
+  point_code: string;
+  functional_location_code: string | null;
+  functional_location_name: string | null;
+  site_id: string | null;
+  site_name: string | null;
+  value: number | null;
+  measured_at: string | null;
+};
+type PointComparison = {
+  point_id: string;
+  point_code: string;
+  point_class: string | null;
+  value: number | null;
+  measured_at: string | null;
+  peer_count: number;
+  peers: PointComparisonPeer[];
+  comparable: boolean;
+  mean: number | null;
+  std_dev: number | null;
+  z_score: number | null;
+  is_outlier: boolean;
+  confidence: number | null;
+};
+
 type DeviceMappingContent = {
   device_type: string;
   host: string;
@@ -341,6 +370,7 @@ export default async function EquipmentPage({
     diff?: string;
     against?: string;
     simulate?: string;
+    compare?: string;
     timeline_before?: string;
     bacnet_batch?: string;
   }>;
@@ -351,6 +381,7 @@ export default async function EquipmentPage({
     diff: diffVersionId,
     against,
     simulate: simulateVersionId,
+    compare: comparePointId,
     timeline_before: timelineBefore,
     bacnet_batch: bacnetBatchId,
   } = await searchParams;
@@ -378,6 +409,12 @@ export default async function EquipmentPage({
       accessToken,
     );
     ruleSimulation = simulationResponse.ok ? await simulationResponse.json() : null;
+  }
+
+  let pointComparison: PointComparison | null = null;
+  if (comparePointId) {
+    const comparisonResponse = await apiFetch(`/points/${comparePointId}/compare`, accessToken);
+    pointComparison = comparisonResponse.ok ? await comparisonResponse.json() : null;
   }
 
   const timelineQuery = timelineBefore
@@ -649,6 +686,69 @@ export default async function EquipmentPage({
         </section>
       )}
 
+      {pointComparison && (
+        <section
+          style={{ border: `1px solid ${colors.accent}`, borderRadius: 8, padding: 16, margin: "16px 0" }}
+        >
+          <h2 style={sectionTitleStyle}>{t("web.registre.compare_title")}</h2>
+          <p style={{ margin: 0 }}>
+            {t("web.registre.compare_value_line", {
+              code: pointComparison.point_code,
+              value:
+                pointComparison.value === null
+                  ? t("web.registre.compare_no_value")
+                  : formatNumber(locale, pointComparison.value),
+            })}
+          </p>
+          {!pointComparison.comparable && (
+            <p style={mutedStyle}>{t("web.registre.compare_not_comparable")}</p>
+          )}
+          {pointComparison.comparable && (
+            <>
+              <p style={mutedStyle}>
+                {t("web.registre.compare_group_summary", {
+                  peer_count: String(pointComparison.peer_count),
+                  mean: formatNumber(locale, pointComparison.mean ?? 0),
+                })}
+              </p>
+              {pointComparison.z_score !== null && (
+                <p
+                  style={{
+                    margin: 0,
+                    fontWeight: pointComparison.is_outlier ? 600 : 400,
+                    color: pointComparison.is_outlier ? colors.danger : undefined,
+                  }}
+                >
+                  {t(
+                    pointComparison.is_outlier
+                      ? "web.registre.compare_outlier_line"
+                      : "web.registre.compare_normal_line",
+                    { z_score: formatNumber(locale, pointComparison.z_score) },
+                  )}
+                  {pointComparison.confidence !== null &&
+                    ` (${t("mobile.passport.finding_confidence", {
+                      percent: formatNumber(locale, Math.round(pointComparison.confidence * 100)),
+                    })})`}
+                </p>
+              )}
+            </>
+          )}
+          {pointComparison.peers.map((peer) => (
+            <p key={peer.point_id} style={mutedStyle}>
+              {t("web.registre.compare_peer_line", {
+                location: peer.functional_location_name ?? peer.point_code,
+                site: peer.site_name ?? "",
+                value:
+                  peer.value === null
+                    ? t("web.registre.compare_no_value")
+                    : formatNumber(locale, peer.value),
+              })}
+            </p>
+          ))}
+          <Link href={`/registre/${id}`}>{t("web.registre.tag_close")}</Link>
+        </section>
+      )}
+
       <IdentityHeader
         passport={passport}
         unit={unit}
@@ -802,6 +902,14 @@ export default async function EquipmentPage({
                 {point.latest && point.latest.quality_flags.length > 0
                   ? ` — ${t("mobile.passport.flagged")}`
                   : ""}
+                {point.value_type === "number" && (
+                  <>
+                    {" — "}
+                    <Link href={`/registre/${id}?compare=${point.id}`}>
+                      {t("web.registre.compare_link")}
+                    </Link>
+                  </>
+                )}
               </p>
               <DesiredStateBlock
                 point={point}

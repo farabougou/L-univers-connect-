@@ -145,6 +145,7 @@
     "POINT_CLASS_UNKNOWN": "Unknown point class: “{point_class}”.",
     "POINT_CLASS_VALUE_TYPE_MISMATCH": "A point of class “{point_class}” is of type “{expected}”, not “{value_type}”.",
     "POINT_CODE_ALREADY_USED": "The point code “{code}” is already in use.",
+    "POINT_COMPARISON_REQUIRES_NUMBER": "A fleet comparison applies only to a numeric point.",
     "POINT_CONTROL_MODE_CONTENT_INVALID": "This point mode has invalid fields: {fields}.",
     "POINT_DECISION_UNKNOWN": "Unknown decision: “{decision}”.",
     "POINT_FIELDS_NOT_EDITABLE": "The following fields cannot be modified: {fields}.",

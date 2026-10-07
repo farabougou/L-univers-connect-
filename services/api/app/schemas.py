@@ -968,6 +968,38 @@ class TrustOut(BaseModel):
     reasons: list[str]
 
 
+class PointComparisonPeerOut(BaseModel):
+    point_id: uuid.UUID
+    point_code: str
+    functional_location_code: str | None
+    functional_location_name: str | None
+    site_id: uuid.UUID | None
+    site_name: str | None
+    value: float | None
+    measured_at: datetime | None
+
+
+class PointComparisonOut(BaseModel):
+    point_id: uuid.UUID
+    point_code: str
+    point_class: str | None
+    functional_location_code: str | None
+    functional_location_name: str | None
+    site_id: uuid.UUID | None
+    site_name: str | None
+    value: float | None
+    measured_at: datetime | None
+    peer_count: int
+    peers: list[PointComparisonPeerOut]
+    comparable: bool
+    mean: float | None
+    std_dev: float | None
+    z_score: float | None
+    deviation_threshold: float
+    is_outlier: bool
+    confidence: float | None
+
+
 class LifecycleChange(BaseModel):
     to_state: Literal[
         "planned",

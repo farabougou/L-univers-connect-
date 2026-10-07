@@ -20,12 +20,14 @@ import {
   type Passport,
   type PassportCommand,
   type PassportUnit,
+  type PointComparison,
   type ScanResult,
   type ScheduledCommand,
   type TimelineEntry,
   fetchControlMode,
   fetchPassportById,
   fetchPassportByTag,
+  fetchPointComparison,
   fetchScheduledCommands,
   fetchSimulatedRelayPointId,
   fetchTimeline,
@@ -62,6 +64,10 @@ export default function PasseportScreen() {
   const [relayPointId, setRelayPointId] = useState<string | null>(null);
   const [controlMode, setControlMode] = useState<"manual" | "automatic">("manual");
   const [scheduledCommands, setScheduledCommands] = useState<ScheduledCommand[]>([]);
+  // Comparaison de parc (V3) : consultée point par point, à la demande —
+  // jamais prégénérée pour chaque point du passeport (coût réseau terrain).
+  const [comparisons, setComparisons] = useState<Record<string, PointComparison | null>>({});
+  const [comparingPointId, setComparingPointId] = useState<string | null>(null);
   const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
   const [timelineLoading, setTimelineLoading] = useState(false);
   const [scanning, setScanning] = useState(false);
@@ -166,6 +172,15 @@ export default function PasseportScreen() {
     setTimelineLoading(false);
   }
 
+  async function comparePoint(pointId: string) {
+    const token = await auth.getAccessToken();
+    if (!token) return;
+    setComparingPointId(pointId);
+    const result = await fetchPointComparison(config.apiUrl, token, pointId);
+    setComparisons((previous) => ({ ...previous, [pointId]: result }));
+    setComparingPointId(null);
+  }
+
   async function sendTestCommand(pointId: string, requestedValue: number) {
     const token = await auth.getAccessToken();
     if (!token) {
@@ -251,6 +266,9 @@ export default function PasseportScreen() {
           timeline={timeline}
           onLoadOlderTimeline={loadOlderTimeline}
           timelineLoading={timelineLoading}
+          comparisons={comparisons}
+          comparingPointId={comparingPointId}
+          onComparePoint={comparePoint}
         />
       )}
     </ScrollView>
@@ -267,6 +285,9 @@ function PassportView({
   timeline,
   onLoadOlderTimeline,
   timelineLoading,
+  comparisons,
+  comparingPointId,
+  onComparePoint,
 }: {
   passport: Passport;
   relayPointId: string | null;
@@ -277,6 +298,9 @@ function PassportView({
   timeline: TimelineEntry[];
   onLoadOlderTimeline: () => void;
   timelineLoading: boolean;
+  comparisons: Record<string, PointComparison | null>;
+  comparingPointId: string | null;
+  onComparePoint: (pointId: string) => void;
 }) {
   const router = useRouter();
   const unit = passport.physical_unit ?? passport.current_unit ?? null;
@@ -313,21 +337,52 @@ function PassportView({
 
       {passport.points && passport.points.length > 0 && (
         <Section title={t("mobile.passport.latest")}>
-          {passport.points.map((point) => (
-            <Text key={point.id}>
-              {point.name} —{" "}
-              {point.latest
-                ? `${formatNumber(locale, point.latest.value)} ${point.unit} (${formatDateTime(
-                    locale,
-                    point.latest.measured_at,
-                    timeZone,
-                  )})`
-                : t("mobile.passport.no_measurement")}
-              {point.latest && point.latest.quality_flags.length > 0
-                ? ` — ${t("mobile.passport.flagged")}`
-                : ""}
-            </Text>
-          ))}
+          {passport.points.map((point) => {
+            const comparison = comparisons[point.id];
+            return (
+              <View key={point.id} style={{ marginBottom: 8 }}>
+                <Text>
+                  {point.name} —{" "}
+                  {point.latest
+                    ? `${formatNumber(locale, point.latest.value)} ${point.unit} (${formatDateTime(
+                        locale,
+                        point.latest.measured_at,
+                        timeZone,
+                      )})`
+                    : t("mobile.passport.no_measurement")}
+                  {point.latest && point.latest.quality_flags.length > 0
+                    ? ` — ${t("mobile.passport.flagged")}`
+                    : ""}
+                </Text>
+                {point.value_type === "number" && (
+                  <Pressable onPress={() => onComparePoint(point.id)}>
+                    <Text style={{ color: colors.accent }}>
+                      {comparingPointId === point.id
+                        ? t("mobile.passport.comparing")
+                        : t("web.registre.compare_link")}
+                    </Text>
+                  </Pressable>
+                )}
+                {comparison && (
+                  <Text style={styles.muted}>
+                    {!comparison.comparable
+                      ? t("web.registre.compare_not_comparable")
+                      : comparison.z_score === null
+                        ? t("web.registre.compare_group_summary", {
+                            peer_count: String(comparison.peer_count),
+                            mean: formatNumber(locale, comparison.mean ?? 0),
+                          })
+                        : t(
+                            comparison.is_outlier
+                              ? "web.registre.compare_outlier_line"
+                              : "web.registre.compare_normal_line",
+                            { z_score: formatNumber(locale, comparison.z_score) },
+                          )}
+                  </Text>
+                )}
+              </View>
+            );
+          })}
         </Section>
       )}
 

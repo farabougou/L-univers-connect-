@@ -145,6 +145,7 @@
     "POINT_CLASS_UNKNOWN": "Classe de point inconnue : « {point_class} ».",
     "POINT_CLASS_VALUE_TYPE_MISMATCH": "Un point de classe « {point_class} » est de type « {expected} », et non « {value_type} ».",
     "POINT_CODE_ALREADY_USED": "Le code de point « {code} » est déjà utilisé.",
+    "POINT_COMPARISON_REQUIRES_NUMBER": "Une comparaison de parc ne s’applique qu’à un point numérique.",
     "POINT_CONTROL_MODE_CONTENT_INVALID": "Ce mode de point contient des champs invalides : {fields}.",
     "POINT_DECISION_UNKNOWN": "Décision inconnue : « {decision} ».",
     "POINT_FIELDS_NOT_EDITABLE": "Les champs suivants ne sont pas modifiables : {fields}.",
