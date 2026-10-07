@@ -1149,6 +1149,59 @@ mode/planification) ; aucun REPLACE ni REFACTOR du moteur existant.
 Vérification : `tsc`/ESLint/`next build` web propres, 198 tests vitest web
 (3 nouveaux) ; `tsc --noEmit` mobile propre, 121/121 tests vitest mobile.
 
+## V2 Software Complete — 07/10/2026
+
+**V2 SOFTWARE COMPLETE: YES**
+
+Chaîne Intent → Authorization → RBAC/ABAC → Policy/Safety → Command
+Proposal → Approval → DRY_RUN/SHADOW → Verification → Audit → Scheduling →
+Automation vérifiée réellement cohérente de bout en bout (audit détaillé
+dans la section « V2 — audit de fermeture, 07/10/2026 » juste au-dessus) :
+chaque maillon revérifie ce que le précédent a déjà vérifié, jamais une
+confiance aveugle d'une étape à l'autre. Deux manques réels trouvés et
+comblés durant cette fermeture (écran Command Policy web, parité mobile
+mode/planification) ; aucun moteur recodé.
+
+**Modes clairement distincts** : READ_ONLY (lecture seule, l'immense
+majorité du produit), DRY_RUN (`POST /commands?dry_run=true`, ne crée
+jamais rien), SHADOW (`CommandOut.mode = "shadow"`, seul mode qui crée une
+commande réelle — toujours contre `simulated_relay`, jamais un équipement
+réel), LIVE_CONTROL (absent de tout le dépôt, aucune route, aucun
+exécuteur, aucun texte d'interface qui le proposerait — règle non
+négociable 1, CLAUDE.md). Une commande simulée n'est jamais présentée
+comme une exécution réelle sur un équipement : web et mobile affichent
+tous deux un badge/texte « shadow » ou le statut de la commande simulée,
+jamais un vocabulaire qui laisserait croire à une action physique.
+
+**Toute commande** est autorisée (rôles Keycloak + policy par point),
+traçable (événements `COMMAND_*`), auditée (journal chaîné par hachage,
+`app/audit.py`), vérifiable (relecture de l'état réel après écriture,
+`acknowledge_command`), protégée par les policies (`app/command_policies.py`,
+maintenant avec écran web) et isolée par tenant (RLS sur chaque table,
+mécanisme déjà testé par tenant sur `commands`, `scheduled_commands`,
+`config_versions`).
+
+**Aucun défaut Critical/High connu** : 958/958 tests backend (pytest),
+198/198 tests web (vitest), 121/121 tests mobile (vitest) — suite complète
+exécutée le jour de cette fermeture, pas une suite partielle ni une
+exécution ancienne supposée toujours valide. `ruff check` backend, `tsc
+--noEmit` + ESLint + `next build` web, `tsc --noEmit` mobile tous propres.
+
+**Parité web/mobile** : une donnée métier (état, mesure, alarme, commande,
+mode d'automatisation) ne donne jamais une vérité différente selon la
+plateforme consultée — vérifié explicitement sur le passeport mobile vs la
+fiche équipement web durant cette fermeture. Les fonctions qui restent
+web-only (configurer une policy, planifier une commande, créer une règle
+d'automatisation) le sont par choix d'ergonomie/d'administration documenté
+(ADR 014 §11), jamais par une limitation artificielle du type « pas encore
+fait côté mobile ».
+
+**Connu et signalé, non bloquant** : aucun service Cron Jobs Railway ne
+fait tourner aujourd'hui les trois balayages périodiques (supervision,
+commandes planifiées, automatisation) en staging — gap d'infrastructure,
+pas de logiciel, nécessite une décision de Mohamed (coût, pas une simple
+correction de code). Voir `infra/README.md`.
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente
