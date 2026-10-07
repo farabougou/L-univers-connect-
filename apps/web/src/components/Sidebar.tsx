@@ -35,7 +35,13 @@ export function Sidebar({ appName, groups }: { appName: string; groups: SidebarG
         borderRight: `1px solid ${colors.border}`,
         padding: "20px 12px",
         minHeight: "100vh",
-        display: "flex",
+        // `display` vit dans globals.css (`.app-sidebar`), pas ici : un style
+        // en ligne l'emporte toujours sur une règle de feuille de style,
+        // media query ou non — mis ici, `display: none` sous 900px
+        // (globals.css) n'aurait jamais pu masquer cet élément (vrai bug
+        // trouvé le 07/10/2026, capture d'écran mobile de Mohamed : sidebar
+        // toujours visible malgré le correctif de viewport du 03/10/2026,
+        // qui lui était réel mais insuffisant).
         flexDirection: "column",
         gap: 24,
       }}

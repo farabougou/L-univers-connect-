@@ -975,6 +975,51 @@ pour le rendu visuel mobile de l'application elle-même (nécessiterait un
 environnement Playwright persistant avec authentification Keycloak, hors
 périmètre de cette correction ponctuelle) — signalé, pas bloquant.
 
+### V2 — correction critique, 07/10/2026 : la sidebar restait visible sur téléphone malgré le correctif du 03/10/2026
+
+Mohamed a transmis une nouvelle capture d'écran (Safari iOS, URL de staging
+visible dans la barre d'adresse) : la Sidebar entière (240px, groupes
+« Vue d'ensemble / Exploitation / Énergie et conformité / Automatisation /
+Plateforme ») reste affichée sur un écran de téléphone, le contenu
+(KPI « 1 Site », « 1 Équipement »…) écrasé dans la moitié restante. Le
+correctif du 03/10/2026 ci-dessus (balise viewport) était réel et toujours
+nécessaire, mais insuffisant à lui seul : le vrai second bug, resté caché
+derrière, n'avait jamais été testé sur le bon élément.
+
+**Cause réelle** : `Sidebar.tsx` fixait `display: "flex"` en **style en
+ligne** sur le même `<nav className="app-sidebar">` que la règle
+`globals.css` tente de masquer sous 900px (`@media (max-width: 900px) {
+.app-sidebar { display: none } }`). Un style en ligne l'emporte toujours
+sur une règle de feuille de style externe, media query ou non, sauf
+`!important` — la règle `display: none` ne pouvait donc jamais s'appliquer,
+quelle que soit la largeur de l'écran. Corrigé en déplaçant `display` du
+style en ligne vers `globals.css` (`.app-sidebar { display: flex }` comme
+valeur par défaut, l'override `display: none` sous 900px reprenant alors
+effectivement la main) ; `flexDirection`/`gap` restent en ligne, ils ne
+sont pas en conflit.
+
+**Pourquoi la vérification précédente ne l'avait pas trouvé** : la session
+du 03/10/2026 avait testé la page `/login`, où `Sidebar.tsx` retourne
+`null` (`if (pathname === "/login") return null`) — le test confirmait
+l'absence d'un élément qui n'était de toute façon jamais rendu, pas le
+comportement réel de la Sidebar. Cette fois, vérification directe sur le
+vrai composant : page de test temporaire montant `<Sidebar>` avec de vraies
+données, servie par le vrai serveur de développement (pas de mock, pas de
+page de connexion qui court-circuite le rendu), interrogée par Playwright
+avant ET après correction pour un contraste direct — `display: flex` avec
+une boîte de 240×844 à 390px de large avant, `display: none` sans boîte
+après, `display: flex` inchangé à 1200px dans les deux cas (desktop non
+affecté). Page de test supprimée après vérification, jamais commitée.
+
+Priorité haute : deuxième régression sur l'écran le plus consulté,
+persistante malgré un premier correctif réel. Fichiers touchés :
+`apps/web/src/components/Sidebar.tsx`, `apps/web/src/app/globals.css`.
+Décision : REFACTOR (déplacement d'une seule déclaration CSS, aucun
+changement visuel sur desktop). Vérification : TS/ESLint/vitest (182
+tests) propres après correction ; comportement reproduit puis corrigé sur
+le composant réel via Playwright, avant/après, aux deux largeurs (390px et
+1200px) — pas une capture unique prise pour acquis.
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente
