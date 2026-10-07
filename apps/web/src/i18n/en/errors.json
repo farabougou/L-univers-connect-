@@ -188,6 +188,7 @@
     "RELATION_NOT_FOUND": "The requested relation could not be found.",
     "ROLE_FORBIDDEN": "Your permissions do not allow this operation.",
     "ROUTE_NOT_FOUND": "The requested address does not exist.",
+    "RULE_BASELINE_DRIFT_REQUIRES_NUMBER": "A baseline drift rule applies only to a numeric point.",
     "RULE_CONTENT_INVALID": "The rule contains invalid fields: {fields}.",
     "RULE_CORRELATION_DIFFERENT_EQUIPMENT": "Both points of a two-point rule must belong to the same equipment.",
     "RULE_CORRELATION_REQUIRES_NUMBER": "A two-point rule only applies to numeric points.",

@@ -188,6 +188,7 @@
     "RELATION_NOT_FOUND": "La relation demandée est introuvable.",
     "ROLE_FORBIDDEN": "Vos droits ne permettent pas cette opération.",
     "ROUTE_NOT_FOUND": "L’adresse demandée n’existe pas.",
+    "RULE_BASELINE_DRIFT_REQUIRES_NUMBER": "Une dérive de baseline ne s’applique qu’à un point numérique.",
     "RULE_CONTENT_INVALID": "La règle contient des champs invalides : {fields}.",
     "RULE_CORRELATION_DIFFERENT_EQUIPMENT": "Les deux points d’une règle à deux points doivent appartenir au même équipement.",
     "RULE_CORRELATION_REQUIRES_NUMBER": "Une règle à deux points ne s’applique qu’à des points numériques.",

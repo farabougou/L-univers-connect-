@@ -1367,6 +1367,51 @@ DONE (cette ligne). 977/977 tests backend (969 + 8), `ruff check` propre ;
 198/198 web, 121/121 mobile, `tsc`/ESLint/`next build` web propres, `tsc
 --noEmit` mobile propre.
 
+## V3 — détection de dérive, 07/10/2026 (priorité « Drift »)
+
+Troisième incrément V3 : `baseline_drift` (`app/rules.py`), nouvelle règle
+FDD qui compare deux fenêtres temporelles du même point — une fenêtre
+récente contre la fenêtre de référence qui la précède immédiatement —
+plutôt qu'une valeur à une baseline instantanée (`statistical_anomaly`) ou
+à un seuil fixé par une personne (`trend_projection`, `threshold`).
+Détecte un changement de comportement du point par rapport à lui-même dans
+le temps, sans qu'aucune personne n'ait besoin de connaître à l'avance la
+valeur normale — exactement la priorité « exploitation de l'historique »
+et « Drift » de la feuille de route.
+
+**Zéro nouveau moteur, même famille de calcul** : moyenne/écart-type de la
+fenêtre de référence, moyenne de la fenêtre récente, z-score normalisé par
+l'écart-type de la référence (jamais celui de la fenêtre récente, pour que
+le seuil reste celui du comportement passé, pas celui qui dérive) ;
+confiance calculée entre 0,5 et 0,95, jamais 1.0, même formule que
+`statistical_anomaly`. Constat de nature « fault » (un changement déjà
+survenu, jamais une projection), `method="statistical"`. Zéro nouvelle
+migration (mêmes valeurs d'énumération déjà valides, réutilisées une
+troisième fois).
+
+**Garde-fous** : aucun constat sans au moins `min_samples` relevés dans
+*chacune* des deux fenêtres (comparer deux moyennes construites sur trop
+peu de mesures resterait un bruit statistique) ; aucun constat si
+l'écart-type de la fenêtre de référence est nul (z-score serait une
+division par zéro). 8 tests contre une vraie base
+(`tests/test_rules_baseline_drift.py`) : dérive franche détectée,
+fenêtres similaires sans effet, pas assez d'échantillons dans l'une ou
+l'autre fenêtre, écart-type de référence nul sans effet, seuil de
+déviation très large sans effet, validation de type numérique, isolation
+tenant.
+
+**Pas d'écran de création web dédié** — cohérent avec `statistical_anomaly`
+et `trend_projection`, pour la même raison déjà documentée : ne pas
+introduire une troisième asymétrie entre les règles « statistiques » et
+les règles déterministes (seuil, corrélation) qui en ont une. DEFER
+documenté une seule fois pour les trois.
+
+**Grille produit (ADR 014)** : Backend DONE, API DONE (créable via
+`POST /configs`), Web DEFER (création), Mobile N/A (configuration), Edge
+N/A, Tests DONE, Documentation DONE (cette ligne). Les constats qu'elle
+ouvre héritent déjà de l'affichage confidence/action recommandée ajouté
+plus haut dans cette section (web et mobile), sans travail supplémentaire.
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente

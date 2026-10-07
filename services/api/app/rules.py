@@ -51,6 +51,18 @@ Trois types de règles, stockées comme configurations versionnées
   certitude comme un seuil franchi) — fondée sur l'ampleur de l'écart et le
   nombre de mesures disponibles pour estimer la baseline. Voir
   `_evaluate_statistical_anomaly`.
+- `baseline_drift` (07/10/2026, V3 — priorité « Drift » de la feuille de
+  route : Compare → Drift → Diagnose → Explain → Optimize) : compare deux
+  fenêtres temporelles du même point (une fenêtre récente contre une
+  fenêtre de référence qui la précède immédiatement) plutôt qu'une valeur à
+  une baseline instantanée (`statistical_anomaly`) ou à un seuil fixé par
+  une personne (`trend_projection`, `threshold`) — détecte un changement de
+  comportement du point lui-même dans le temps, sans qu'aucune personne
+  n'ait besoin de connaître à l'avance la valeur normale. Constat de nature
+  « fault » (un changement déjà survenu dans l'historique récent, jamais
+  une projection vers l'avenir), `method="statistical"`, confiance calculée
+  comme pour `statistical_anomaly` — jamais 1.0. Voir
+  `_evaluate_baseline_drift`.
 
 Chaîne complète, synchrone à la réception d'une mesure (squelette de bout en
 bout M2) : mesure → contrôle de qualité → règle → constat → alarme → ordre de
@@ -99,6 +111,7 @@ _RULE_REASONS = {
     "short_cycling": "RULE_SHORT_CYCLING",
     "trend_projection": "RULE_TREND_PROJECTION",
     "statistical_anomaly": "RULE_STATISTICAL_ANOMALY",
+    "baseline_drift": "RULE_BASELINE_DRIFT",
 }
 # Nature du constat ouvert par chaque type de règle (voir app/findings.py,
 # ck_findings_kind) : un écart à la consigne reste un sujet de mise en
@@ -111,14 +124,16 @@ _FINDING_KIND = {
     "short_cycling": "fault",
     "trend_projection": "prediction",
     "statistical_anomaly": "fault",
+    "baseline_drift": "fault",
 }
-# Méthode enregistrée pour le constat (ck_findings_method) : une projection
-# ou une anomalie statistique sont des calculs explicables, jamais un modèle
-# entraîné (`"ml"` resterait un mensonge tant qu'aucun modèle n'existe
-# réellement).
+# Méthode enregistrée pour le constat (ck_findings_method) : une projection,
+# une anomalie statistique ou une dérive de baseline sont des calculs
+# explicables, jamais un modèle entraîné (`"ml"` resterait un mensonge tant
+# qu'aucun modèle n'existe réellement).
 _RULE_METHOD = {
     "trend_projection": "statistical",
     "statistical_anomaly": "statistical",
+    "baseline_drift": "statistical",
 }
 
 
@@ -181,6 +196,24 @@ class StatisticalAnomalyRule(_RuleBase):
     deviation_threshold: float = Field(gt=0, allow_inf_nan=False)
 
 
+class BaselineDriftRule(_RuleBase):
+    """Porte sur un point numérique : compare la moyenne de la fenêtre
+    récente (`recent_window_minutes`, qui se termine à l'instant évalué) à
+    la moyenne de la fenêtre de référence qui la précède immédiatement
+    (`reference_window_minutes`), normalisée par l'écart-type de cette
+    fenêtre de référence (voir `_evaluate_baseline_drift`). Jamais
+    déclenchée sans au moins `min_samples` relevés dans chacune des deux
+    fenêtres — comparer deux moyennes construites sur trop peu de mesures
+    resterait un bruit statistique, jamais un changement de comportement
+    réel."""
+
+    kind: Literal["baseline_drift"]
+    recent_window_minutes: int = Field(gt=0)
+    reference_window_minutes: int = Field(gt=0)
+    min_samples: int = Field(gt=1)
+    deviation_threshold: float = Field(gt=0, allow_inf_nan=False)
+
+
 class CorrelationRule(BaseModel):
     """Compare deux points du même équipement au même instant (FDD) — jamais
     un seul point comme les deux règles ci-dessus, voir le docstring du
@@ -206,7 +239,8 @@ class _RuleContent(BaseModel):
         | ShortCyclingRule
         | CorrelationRule
         | TrendProjectionRule
-        | StatisticalAnomalyRule,
+        | StatisticalAnomalyRule
+        | BaselineDriftRule,
         Field(discriminator="kind"),
     ]
 
@@ -247,6 +281,8 @@ def _validate_alarm_rule(connection: Connection, content: dict[str, Any]) -> dic
         raise ConfigInvalid("RULE_TREND_PROJECTION_REQUIRES_NUMBER")
     if isinstance(rule, StatisticalAnomalyRule) and point["value_type"] != "number":
         raise ConfigInvalid("RULE_STATISTICAL_ANOMALY_REQUIRES_NUMBER")
+    if isinstance(rule, BaselineDriftRule) and point["value_type"] != "number":
+        raise ConfigInvalid("RULE_BASELINE_DRIFT_REQUIRES_NUMBER")
     return rule.model_dump(mode="json", exclude_none=True)
 
 
@@ -488,6 +524,63 @@ def _evaluate_statistical_anomaly(
     }
 
 
+def _evaluate_baseline_drift(
+    connection: Connection, rule: dict[str, Any], point: dict[str, Any], value: float, at: datetime
+) -> dict[str, Any] | None:
+    """Compare la moyenne de la fenêtre récente (`recent_window_minutes`, le
+    relevé courant inclus) à la moyenne de la fenêtre de référence qui la
+    précède immédiatement (`reference_window_minutes`), normalisée par
+    l'écart-type de cette fenêtre de référence — jamais par celui de la
+    fenêtre récente, pour que le seuil reste celui du comportement passé,
+    pas celui qui dérive. Sans assez de relevés dans l'une des deux
+    fenêtres, ou si l'écart-type de référence est nul, aucun constat."""
+    from app.telemetry import list_measurements  # import tardif : évite un cycle avec ce module
+
+    recent_window_start = at - timedelta(minutes=rule["recent_window_minutes"])
+    reference_window_start = recent_window_start - timedelta(
+        minutes=rule["reference_window_minutes"]
+    )
+    history = list_measurements(
+        connection, point_id=point["id"], since=reference_window_start, limit=1000
+    )
+    reference_values = [row["value"] for row in history if row["measured_at"] < recent_window_start]
+    recent_values = [
+        row["value"] for row in history if recent_window_start <= row["measured_at"] < at
+    ]
+    recent_values.append(value)
+
+    if len(reference_values) < rule["min_samples"] or len(recent_values) < rule["min_samples"]:
+        return None
+
+    reference_mean = statistics.fmean(reference_values)
+    reference_std_dev = statistics.stdev(reference_values)
+    recent_mean = statistics.fmean(recent_values)
+    if reference_std_dev == 0:
+        return None
+
+    z_score = (recent_mean - reference_mean) / reference_std_dev
+    if abs(z_score) <= rule["deviation_threshold"]:
+        return None
+
+    excess = abs(z_score) - rule["deviation_threshold"]
+    magnitude_factor = min(1.0, excess / rule["deviation_threshold"])
+    sample_count = min(len(reference_values), len(recent_values))
+    sample_factor = min(1.0, sample_count / (rule["min_samples"] * 3))
+    confidence = round(0.5 + 0.45 * magnitude_factor * sample_factor, 2)
+
+    return {
+        "value": value,
+        "recent_mean": round(recent_mean, 4),
+        "reference_mean": round(reference_mean, 4),
+        "reference_std_dev": round(reference_std_dev, 4),
+        "z_score": round(z_score, 2),
+        "deviation_threshold": rule["deviation_threshold"],
+        "recent_window_minutes": rule["recent_window_minutes"],
+        "reference_window_minutes": rule["reference_window_minutes"],
+        "confidence": confidence,
+    }
+
+
 def _evaluate(
     connection: Connection, rule: dict[str, Any], point: dict[str, Any], value: float, at: datetime
 ) -> dict[str, Any] | None:
@@ -511,6 +604,9 @@ def _evaluate(
 
     if rule["kind"] == "statistical_anomaly":
         return _evaluate_statistical_anomaly(connection, rule, point, value, at)
+
+    if rule["kind"] == "baseline_drift":
+        return _evaluate_baseline_drift(connection, rule, point, value, at)
 
     desired = desired_state_at(connection, point["id"], at)
     if desired is None:
