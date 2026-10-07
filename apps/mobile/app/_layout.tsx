@@ -28,6 +28,7 @@ export default function RootLayout() {
         <Stack.Screen name="passeport" options={{ title: t("mobile.passport.screen_title") }} />
         <Stack.Screen name="alertes" options={{ title: t("mobile.alerts.title") }} />
         <Stack.Screen name="ajouter-site" options={{ title: t("mobile.add_site.title") }} />
+        <Stack.Screen name="plans" options={{ title: t("mobile.plans.title") }} />
         <Stack.Screen name="profil" options={{ title: t("mobile.profile.title") }} />
       </Stack>
     </>

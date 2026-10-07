@@ -30,6 +30,7 @@ const BASE_ITEMS: DrawerItem[] = [
   { key: "alerts", label: "mobile.alerts.title", icon: "warning-outline", route: "/alertes" },
   { key: "maintenance", label: "mobile.nav.maintenance", icon: "build-outline", route: "/maintenance" },
   { key: "energy", label: "mobile.energy.title", icon: "flash-outline", route: "/energie" },
+  { key: "plans", label: "mobile.plans.title", icon: "map-outline", route: "/plans" },
   { key: "profile", label: "mobile.profile.title", icon: "person-circle-outline", route: "/profil" },
 ];
 

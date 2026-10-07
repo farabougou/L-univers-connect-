@@ -327,6 +327,15 @@
       "invalid_timezone": "Ce fuseau horaire n’est pas reconnu.",
       "server_error": "Le site n’a pas pu être créé. Réessayez.",
       "offline": "Impossible de joindre le serveur. Vérifiez la connexion au réseau."
+    },
+    "plans": {
+      "title": "Plans",
+      "empty": "Aucun plan envoyé sur ce portefeuille.",
+      "load_failed": "Les plans n’ont pas pu être chargés. Vérifiez la connexion au réseau.",
+      "open": "Ouvrir",
+      "version": "Version {version}",
+      "uploaded_at": "Envoyé le {date}",
+      "open_failed": "Ce plan n’a pas pu être ouvert."
     }
   },
   "modbus_device_type": {

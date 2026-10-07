@@ -327,6 +327,15 @@
       "invalid_timezone": "This time zone is not recognized.",
       "server_error": "The site could not be created. Try again.",
       "offline": "Could not reach the server. Check your network connection."
+    },
+    "plans": {
+      "title": "Floor plans",
+      "empty": "No plan uploaded for this portfolio.",
+      "load_failed": "Floor plans could not be loaded. Check your network connection.",
+      "open": "Open",
+      "version": "Version {version}",
+      "uploaded_at": "Uploaded on {date}",
+      "open_failed": "This plan could not be opened."
     }
   },
   "modbus_device_type": {
