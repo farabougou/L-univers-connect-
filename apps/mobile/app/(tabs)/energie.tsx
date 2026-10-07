@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, StyleSheet, View } from "react-native";
 
-import { config } from "../src/lib/config";
-import { useAuth } from "../src/lib/auth";
-import { locale, t } from "../src/lib/i18n";
-import { formatDate, formatNumber } from "../src/i18n/translator";
-import { type EnergyMeter, fetchEnergyPortfolio } from "../src/lib/energy";
-import { colors } from "../src/design/colors";
+import { config } from "../../src/lib/config";
+import { useAuth } from "../../src/lib/auth";
+import { locale, t } from "../../src/lib/i18n";
+import { formatDate, formatNumber } from "../../src/i18n/translator";
+import { type EnergyMeter, fetchEnergyPortfolio } from "../../src/lib/energy";
+import { colors } from "../../src/design/colors";
+import { Screen } from "../../src/design/Screen";
+import { Text } from "../../src/design/Text";
 
 /**
  * Portefeuille énergie, terrain (app/actifs.tsx et app/alertes.tsx en sont
@@ -45,29 +47,33 @@ export default function EnergieScreen() {
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>{t("mobile.energy.title")}</Text>
-        <ActivityIndicator />
-      </View>
+      <Screen>
+        <View style={styles.container}>
+          <Text style={styles.title}>{t("mobile.energy.title")}</Text>
+          <ActivityIndicator />
+        </View>
+      </Screen>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{t("mobile.energy.title")}</Text>
-      {referenceDate && (
-        <Text style={styles.muted}>
-          {t("mobile.energy.reference_date", { date: formatDate(locale, referenceDate, null) })}
-        </Text>
-      )}
-      {error && <Text style={styles.error}>{error}</Text>}
-      <FlatList
-        data={meters}
-        keyExtractor={(item) => item.pointId}
-        ListEmptyComponent={<Text style={styles.muted}>{t("mobile.energy.empty")}</Text>}
-        renderItem={({ item }) => <MeterRow meter={item} />}
-      />
-    </View>
+    <Screen>
+      <View style={styles.container}>
+        <Text style={styles.title}>{t("mobile.energy.title")}</Text>
+        {referenceDate && (
+          <Text style={styles.muted}>
+            {t("mobile.energy.reference_date", { date: formatDate(locale, referenceDate, null) })}
+          </Text>
+        )}
+        {error && <Text style={styles.error}>{error}</Text>}
+        <FlatList
+          data={meters}
+          keyExtractor={(item) => item.pointId}
+          ListEmptyComponent={<Text style={styles.muted}>{t("mobile.energy.empty")}</Text>}
+          renderItem={({ item }) => <MeterRow meter={item} />}
+        />
+      </View>
+    </Screen>
   );
 }
 

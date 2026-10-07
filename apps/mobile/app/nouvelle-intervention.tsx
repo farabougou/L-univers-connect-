@@ -7,7 +7,6 @@ import {
   ScrollView,
   StyleSheet,
   Switch,
-  Text,
   TextInput,
   View,
 } from "react-native";
@@ -37,6 +36,7 @@ import {
 import { takePhoto } from "../src/lib/photos";
 import { synchronize } from "../src/lib/sync";
 import { colors } from "../src/design/colors";
+import { Text } from "../src/design/Text";
 
 // Codes des vérifications (enregistrés tels quels) ; libellés dans le catalogue.
 const CHECKLIST_ITEMS = ["pression_ok", "bruit_anormal", "filtre_propre"];
@@ -199,6 +199,7 @@ export default function NouvelleInterventionScreen() {
         style={styles.textInput}
         multiline
         placeholder={t("mobile.intervention.summary_placeholder")}
+        placeholderTextColor={colors.textMuted}
         value={summary}
         onChangeText={setSummary}
       />
@@ -303,6 +304,7 @@ function ClosureForm({
           <TextInput
             style={[styles.input, styles.partReference]}
             placeholder={t("mobile.intervention.closure.part_reference")}
+            placeholderTextColor={colors.textMuted}
             autoCapitalize="characters"
             value={part.reference}
             onChangeText={(reference) => updatePart(index, { reference })}
@@ -310,6 +312,7 @@ function ClosureForm({
           <TextInput
             style={[styles.input, styles.partQuantity]}
             placeholder={t("mobile.intervention.closure.part_quantity")}
+            placeholderTextColor={colors.textMuted}
             keyboardType="decimal-pad"
             value={part.quantity}
             onChangeText={(quantity) => updatePart(index, { quantity })}
@@ -464,6 +467,7 @@ function FgasForm({ draft, onChange }: { draft: FgasDraft; onChange: (draft: Fga
               <TextInput
                 style={[styles.input, styles.partReference]}
                 placeholder={t("mobile.intervention.fgas.leak_location")}
+                placeholderTextColor={colors.textMuted}
                 value={leak.location}
                 onChangeText={(location) => updateLeak(index, { location })}
               />
@@ -586,6 +590,8 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 8,
     padding: 10,
+    color: colors.textPrimary,
+    backgroundColor: colors.surface,
   },
   partRow: {
     flexDirection: "row",
@@ -623,6 +629,8 @@ const styles = StyleSheet.create({
     padding: 12,
     minHeight: 80,
     textAlignVertical: "top",
+    color: colors.textPrimary,
+    backgroundColor: colors.surface,
   },
   hint: {
     color: colors.textMuted,

@@ -10,3 +10,18 @@
 export function roleLabels(roles: string[], t: (key: string) => string): string {
   return roles.map((role) => t(`role.${role}`)).join(", ");
 }
+
+/**
+ * Rôles de gestion du registre (créer un site...), identiques à
+ * `_MANAGE_REGISTRY_ROLES` (services/api/app/routers/assets.py) et à
+ * `MANAGE_ROLES` côté web (apps/web/src/lib/roles.ts) — dupliqué ici
+ * uniquement parce que le téléphone ne peut pas lire le code Python, jamais
+ * comme une deuxième source de vérité : l'API revérifie toujours chaque
+ * action. N'affiche "Ajouter un site" (06/10/2026) que pour ces rôles,
+ * plutôt que de laisser un technicien ouvrir un formulaire qui échouera.
+ */
+export const MANAGE_ROLES = ["responsable_exploitation", "admin_tenant"];
+
+export function canManage(roles: string[]): boolean {
+  return roles.some((role) => MANAGE_ROLES.includes(role));
+}

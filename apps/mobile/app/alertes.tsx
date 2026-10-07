@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
 
 import { config } from "../src/lib/config";
@@ -9,6 +9,7 @@ import { formatDateTime } from "../src/i18n/translator";
 import { type Alert, fetchOpenAlerts } from "../src/lib/alerts";
 import { colors } from "../src/design/colors";
 import { SeverityBadge } from "../src/design/StatusBadge";
+import { Text } from "../src/design/Text";
 
 /**
  * Portefeuille terrain des alarmes et constats ouverts (même source et même

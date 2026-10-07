@@ -6,7 +6,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from "react-native";
@@ -34,6 +33,7 @@ import {
 } from "../src/lib/passport";
 import { colors, equipmentStatusToAssetStatus } from "../src/design/colors";
 import { AssetStatusBadge, SeverityBadge } from "../src/design/StatusBadge";
+import { Text } from "../src/design/Text";
 
 /**
  * Lecture de l'étiquette par l'appareil photo, ou saisie du code imprimé sous
@@ -212,6 +212,7 @@ export default function PasseportScreen() {
         autoCapitalize="none"
         autoCorrect={false}
         placeholder={t("mobile.passport.tag_placeholder")}
+        placeholderTextColor={colors.textMuted}
       />
       <Button title={t("mobile.passport.show")} onPress={() => lookUp(input)} disabled={loading} />
       {loading && <ActivityIndicator />}
@@ -608,6 +609,8 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 6,
     padding: 10,
+    color: colors.textPrimary,
+    backgroundColor: colors.surface,
   },
   error: {
     color: colors.danger,

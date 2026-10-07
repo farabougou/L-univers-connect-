@@ -175,7 +175,16 @@
       "subtitle": "Technician app",
       "sync": "Synchronise",
       "tenant": "Customer: {tenant}",
-      "user": "User: {user}"
+      "user": "User: {user}",
+      "kpi_sites": "Sites",
+      "kpi_buildings": "Buildings",
+      "kpi_equipment": "Equipment",
+      "kpi_alerts": "Alerts",
+      "counts_load_failed": "The indicators could not be loaded. Check your network connection.",
+      "quick_actions_title": "Quick actions",
+      "activity_title": "Recent activity",
+      "activity_empty": "No recent activity.",
+      "activity_load_failed": "Recent activity could not be loaded."
     },
     "intervention": {
       "check": {
@@ -294,6 +303,30 @@
       "unit": "Installed unit",
       "work_order_create_intervention": "Create an intervention",
       "work_orders": "Current work orders"
+    },
+    "nav": {
+      "open_menu": "Open menu",
+      "close_menu": "Close menu",
+      "home": "Home",
+      "maintenance": "Maintenance",
+      "add_site": "Add a site"
+    },
+    "profile": {
+      "title": "Profile",
+      "load_failed": "The profile could not be loaded."
+    },
+    "add_site": {
+      "title": "Add a site",
+      "name_label": "Site name",
+      "name_placeholder": "E.g. Horizon Tower",
+      "timezone_label": "Time zone",
+      "timezone_placeholder": "E.g. Europe/Paris",
+      "submit": "Create site",
+      "success": "Site created.",
+      "forbidden": "You do not have permission to create a site. Contact an operations manager.",
+      "invalid_timezone": "This time zone is not recognized.",
+      "server_error": "The site could not be created. Try again.",
+      "offline": "Could not reach the server. Check your network connection."
     }
   },
   "modbus_device_type": {

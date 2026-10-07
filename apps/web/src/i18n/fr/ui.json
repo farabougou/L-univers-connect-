@@ -175,7 +175,16 @@
       "subtitle": "Application technicien",
       "sync": "Synchroniser",
       "tenant": "Client : {tenant}",
-      "user": "Utilisateur : {user}"
+      "user": "Utilisateur : {user}",
+      "kpi_sites": "Sites",
+      "kpi_buildings": "Bâtiments",
+      "kpi_equipment": "Équipements",
+      "kpi_alerts": "Alertes",
+      "counts_load_failed": "Les indicateurs n’ont pas pu être chargés. Vérifiez la connexion au réseau.",
+      "quick_actions_title": "Actions rapides",
+      "activity_title": "Activité récente",
+      "activity_empty": "Aucune activité récente.",
+      "activity_load_failed": "L’activité récente n’a pas pu être chargée."
     },
     "intervention": {
       "check": {
@@ -294,6 +303,30 @@
       "unit": "Exemplaire installé",
       "work_order_create_intervention": "Créer une intervention",
       "work_orders": "Ordres de travail en cours"
+    },
+    "nav": {
+      "open_menu": "Ouvrir le menu",
+      "close_menu": "Fermer le menu",
+      "home": "Accueil",
+      "maintenance": "Maintenance",
+      "add_site": "Ajouter un site"
+    },
+    "profile": {
+      "title": "Profil",
+      "load_failed": "Le profil n’a pas pu être chargé."
+    },
+    "add_site": {
+      "title": "Ajouter un site",
+      "name_label": "Nom du site",
+      "name_placeholder": "Ex. Tour Horizon",
+      "timezone_label": "Fuseau horaire",
+      "timezone_placeholder": "Ex. Europe/Paris",
+      "submit": "Créer le site",
+      "success": "Site créé.",
+      "forbidden": "Vous n’avez pas les droits pour créer un site. Contactez un responsable d’exploitation.",
+      "invalid_timezone": "Ce fuseau horaire n’est pas reconnu.",
+      "server_error": "Le site n’a pas pu être créé. Réessayez.",
+      "offline": "Impossible de joindre le serveur. Vérifiez la connexion au réseau."
     }
   },
   "modbus_device_type": {

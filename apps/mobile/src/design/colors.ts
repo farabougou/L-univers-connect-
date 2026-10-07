@@ -6,12 +6,15 @@
  * veulent dire la même chose sur les deux applications ; dupliqué ici
  * (comme `roles.ts`) car web et mobile ne partagent pas de code.
  *
- * Les jetons de confort (fond, bordure, texte) restent volontairement
- * différents de la palette sombre « centre de contrôle » du web
- * (apps/web/src/lib/formStyles.ts) : un technicien lit cet écran dehors, en
- * plein soleil, parfois avec des gants — fond clair et contrastes élevés,
- * jamais une version compressée de l'écran de bureau (directive de
- * Mohamed, 02/10/2026 : le mobile terrain n'est pas un desktop réduit).
+ * Jetons de confort (06/10/2026, directive de Mohamed avec maquette de
+ * référence) : palette sombre/navy premium, alignée sur celle du web
+ * (`apps/web/src/lib/formStyles.ts`) — remplace le choix précédent (fond
+ * clair pour la lecture en plein soleil, 02/10/2026). Décision produit
+ * explicite et documentée, pas un oubli de cette justification antérieure :
+ * Mohamed a fourni une maquette précise à reprendre telle quelle. Le bleu
+ * reste réservé à la navigation/aux actions, le vert/orange/rouge
+ * uniquement aux états opérationnels (`SEVERITY_COLOR`, `ASSET_STATUS_COLOR`
+ * ci-dessous) — jamais à la décoration.
  */
 
 export const SEVERITY_COLOR: Record<string, string> = {
@@ -82,17 +85,21 @@ export function equipmentStatusToAssetStatus(status: {
 }
 
 export const colors = {
-  background: "#ffffff",
-  surface: "#f8fafc",
-  border: "#d1d5db",
-  divider: "#e5e7eb",
-  textPrimary: "#111827",
-  textMuted: "#4b5563",
-  link: "#1d4ed8",
-  danger: "#c0392b",
-  // Non sélectionné (bouton de choix, option de secours) : même teinte que
-  // ASSET_STATUS_COLOR.unknown, par cohérence plutôt que par coïncidence.
-  inactive: "#9ca3af",
-  selectedBorder: "#2563eb",
-  selectedBackground: "#dbeafe",
+  background: "#050b1a",
+  surface: "#0f1b33",
+  surfaceRaised: "#15213d",
+  border: "#1e293b",
+  divider: "#1e293b",
+  textPrimary: "#f8fafc",
+  textMuted: "#94a3b8",
+  link: "#38bdf8",
+  accent: "#38bdf8",
+  accentStrong: "#1d4ed8",
+  danger: "#f87171",
+  // Non sélectionné (bouton de choix, option de secours).
+  inactive: "#64748b",
+  selectedBorder: "#38bdf8",
+  selectedBackground: "#15213d",
+  // Superposition derrière le menu tiroir (Modal), jamais une vraie sidebar.
+  overlay: "rgba(2, 6, 16, 0.6)",
 };

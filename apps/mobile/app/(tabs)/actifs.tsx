@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 
-import { config } from "../src/lib/config";
-import { useAuth } from "../src/lib/auth";
-import { t } from "../src/lib/i18n";
-import { type AssetListItem, type Site, fetchAssets } from "../src/lib/assets";
-import { ASSET_STATUS_COLOR, type AssetStatus, colors } from "../src/design/colors";
-import { AssetStatusBadge } from "../src/design/StatusBadge";
+import { config } from "../../src/lib/config";
+import { useAuth } from "../../src/lib/auth";
+import { t } from "../../src/lib/i18n";
+import { type AssetListItem, type Site, fetchAssets } from "../../src/lib/assets";
+import { ASSET_STATUS_COLOR, type AssetStatus, colors } from "../../src/design/colors";
+import { Screen } from "../../src/design/Screen";
+import { AssetStatusBadge } from "../../src/design/StatusBadge";
+import { Text } from "../../src/design/Text";
 
 const ASSET_STATUSES: AssetStatus[] = Object.keys(ASSET_STATUS_COLOR) as AssetStatus[];
 
@@ -62,15 +64,18 @@ export default function ActifsScreen() {
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>{t("mobile.assets.title")}</Text>
-        <ActivityIndicator />
-      </View>
+      <Screen>
+        <View style={styles.container}>
+          <Text style={styles.title}>{t("mobile.assets.title")}</Text>
+          <ActivityIndicator />
+        </View>
+      </Screen>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <Screen>
+      <View style={styles.container}>
       <Text style={styles.title}>{t("mobile.assets.title")}</Text>
       {error && <Text style={styles.error}>{error}</Text>}
       <TextInput
@@ -78,6 +83,7 @@ export default function ActifsScreen() {
         value={query}
         onChangeText={setQuery}
         placeholder={t("mobile.assets.search_placeholder")}
+        placeholderTextColor={colors.textMuted}
         autoCapitalize="none"
         autoCorrect={false}
       />
@@ -132,7 +138,8 @@ export default function ActifsScreen() {
           </Pressable>
         )}
       />
-    </View>
+      </View>
+    </Screen>
   );
 }
 
@@ -168,6 +175,8 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 8,
     padding: 10,
+    color: colors.textPrimary,
+    backgroundColor: colors.surface,
   },
   chipRow: {
     flexDirection: "row",
