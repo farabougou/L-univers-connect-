@@ -292,7 +292,7 @@ def test_configuration_retiree_entre_deux_tours_n_arrete_pas_le_demon(
 def test_api_injoignable_met_en_tampon_puis_transmet_tout_au_retour(tenant, tmp_path, monkeypatch):
     buffer = OfflineBuffer(tmp_path / "buffer.jsonl")
 
-    def _echoue_toujours(items):
+    def _echoue_toujours(items, **kwargs):
         raise httpx.ConnectError("API injoignable (simulé)")
 
     with _api(tenant) as api:

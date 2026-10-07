@@ -265,6 +265,37 @@ def test_ingestion_edge_authentifiee_enregistre_la_mesure(tenant):
     assert row["source"] == f"edge:{device_id}"
 
 
+def test_ingestion_edge_reporte_la_sante_de_l_agent(tenant):
+    """V4 (priorité « Edge » : health monitoring) : agent_version et
+    pending_buffer_count annoncés dans le corps de /edge/measurements
+    sont visibles sur GET /devices, jamais une donnée inventée côté
+    serveur."""
+    token, device_id = _device_token(tenant)
+    response = client.post(
+        "/edge/measurements",
+        json={
+            "items": [
+                {
+                    "point_id": str(tenant["point_id"]),
+                    "value": 1234.5,
+                    "measured_at": "2026-09-24T10:00:00Z",
+                    "origin": "measured",
+                }
+            ],
+            "agent_version": "1",
+            "pending_buffer_count": 2,
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 200
+
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        devices = client.get("/devices", headers=_human_headers(tenant["tenant_id"])).json()
+    device = next(d for d in devices if d["id"] == device_id)
+    assert device["agent_version"] == "1"
+    assert device["pending_buffer_count"] == 2
+
+
 def test_ingestion_edge_refuse_un_jeton_humain(tenant):
     with patch("app.auth.fetch_jwks", return_value=JWKS):
         response = client.post(

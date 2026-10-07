@@ -122,6 +122,8 @@ class DeviceOut(BaseModel):
     communication_status: str
     created_at: datetime
     last_seen_at: datetime | None
+    agent_version: str | None
+    pending_buffer_count: int | None
 
 
 def _actor(claims: dict) -> str:
@@ -382,7 +384,13 @@ def create_edge_measurements(
             source=f"edge:{claims['device_id']}",
             received_at=received_at,
         )
-        touch_last_seen(connection, device_id=device_id, at=received_at)
+        touch_last_seen(
+            connection,
+            device_id=device_id,
+            at=received_at,
+            agent_version=body.agent_version,
+            pending_buffer_count=body.pending_buffer_count,
+        )
 
     locale = negotiate_locale(request.headers.get("accept-language"))
     for error in summary["errors"]:

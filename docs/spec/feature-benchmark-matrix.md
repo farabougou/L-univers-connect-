@@ -1570,6 +1570,49 @@ pas un geste terrain (même principe que l'analyse d'impact en V2).
 propre ; web : `tsc --noEmit`, ESLint, 198/198 tests vitest, `next build`
 propres.
 
+## V4 — Edge, 07/10/2026 : santé de la flotte
+
+**Edge — flotte de gateways, health monitoring** (priorité « Edge » de V4) :
+l'identité machine, le statut de communication (en ligne/hors ligne, dérivé
+de `last_seen_at`), la configuration centralisée (`GET /edge/config*`,
+relue à chaque tour sans redémarrage) et le tampon hors ligne
+(`app/connectors/offline_buffer.py`, store-and-forward réel, testé) étaient
+déjà construits — M4, sécurité machine, les quatre connecteurs. Ce qui
+manquait réellement pour une vraie visibilité de flotte : savoir, sans se
+connecter à chaque site, quelle version de démon tourne sur chaque
+appareil et si son tampon local a dû absorber une instabilité réseau
+récente.
+
+Deux colonnes nullables sur `edge_devices` (`agent_version`,
+`pending_buffer_count`, migration `9a4902b5c49b`), reportées par le démon
+lui-même dans le corps déjà existant de `POST /edge/measurements` — jamais
+une nouvelle table, jamais un nouvel appel réseau. `touch_last_seen` les
+met à jour par `COALESCE` : un appareil qui ne les reporte pas encore ne
+voit jamais sa dernière valeur connue effacée par une absence — même
+principe que « hors ligne montre le dernier état connu et sa date »
+(ADR 013). `AGENT_VERSION` est une constante unique dans
+`app/connectors/edge_client.py`, partagée par les quatre démons (Modbus,
+BACnet, OPC UA, MQTT) puisqu'ils évoluent tous depuis ce même module — à
+relever manuellement quand leur comportement change de façon notable.
+Décision : **ADD**, une extension de deux champs sur un mécanisme déjà en
+place, jamais un nouveau moteur de supervision.
+
+« Mises à jour, rollback » (même priorité) reste **DEFERRED_PHYSICAL_VALIDATION** :
+cette visibilité (quel démon tourne quelle version) est le préalable
+honnête à une distribution de mise à jour, mais construire le mécanisme de
+poussée/retour arrière lui-même sans flotte réelle à valider serait
+exactement le genre de moteur spéculatif que cette feuille de route
+interdit (« l'objectif n'est pas d'avoir toutes les fonctionnalités
+immédiatement »).
+
+**Web** : deux colonnes de plus sur le tableau des passerelles de `/edge`
+(version de l'agent, mesures en tampon). **Mobile** : non applicable,
+même raison que le catalogue de connecteurs.
+
+**Vérification** : 990/990 tests backend (985 + 3 catalogue de connecteurs
++ 2 santé de l'agent), `ruff check` propre ; web : `tsc --noEmit`, ESLint,
+198/198 tests vitest, `next build` propres.
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente

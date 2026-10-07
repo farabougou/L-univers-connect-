@@ -803,9 +803,17 @@ class MeasurementBatch(BaseModel):
 class EdgeMeasurementBatch(BaseModel):
     """Sans `source` : pour un appareil authentifié, la source est son
     identité vérifiée (voir app/routers/devices.py), jamais une valeur
-    annoncée dans le corps de la requête."""
+    annoncée dans le corps de la requête.
+
+    `agent_version`/`pending_buffer_count` : santé de l'agent Edge (V4,
+    ADR 012 §2.10 — priorité « Edge »), reportée par le démon lui-même,
+    jamais déduite. Absentes pour un appareil qui ne les reporte pas
+    encore : la dernière valeur connue est conservée côté serveur, voir
+    app/devices.py::touch_last_seen."""
 
     items: list[MeasurementItem] = Field(min_length=1, max_length=1000)
+    agent_version: str | None = Field(default=None, max_length=50)
+    pending_buffer_count: int | None = Field(default=None, ge=0)
 
 
 class MeasurementBatchError(BaseModel):

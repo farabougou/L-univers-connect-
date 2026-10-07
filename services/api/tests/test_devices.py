@@ -233,6 +233,35 @@ def test_statut_communication_derive_sans_etre_stocke(two_tenants):
         assert communication_status(device, now=T0 + timedelta(minutes=10)) == "offline"
 
 
+def test_sante_agent_reportee_et_jamais_effacee_par_une_absence(two_tenants):
+    """V4 (priorité « Edge » : health monitoring) : la version du démon et
+    la taille de son tampon sont reportées quand l'appareil les annonce,
+    et conservées (jamais remises à vide) quand une relève ne les
+    annonce pas — même principe que « hors ligne montre le dernier état
+    connu »."""
+    tenant_a, _ = two_tenants
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_a)
+        device_id, _ = provision_device(
+            connection, tenant_id=tenant_a, device_id="cpt01", created_by="test"
+        )
+        device = get_device(connection, device_id)
+        assert device["agent_version"] is None
+        assert device["pending_buffer_count"] is None
+
+        touch_last_seen(
+            connection, device_id=device_id, at=T0, agent_version="1", pending_buffer_count=3
+        )
+        device = get_device(connection, device_id)
+        assert device["agent_version"] == "1"
+        assert device["pending_buffer_count"] == 3
+
+        touch_last_seen(connection, device_id=device_id, at=T0 + timedelta(minutes=1))
+        device = get_device(connection, device_id)
+        assert device["agent_version"] == "1"
+        assert device["pending_buffer_count"] == 3
+
+
 # --- Identité par clé publique (modèle cible, Mohamed 24/09/2026) ---------
 
 

@@ -612,6 +612,8 @@
     "edge": {
       "access_denied": "This view requires a management role (operations manager or administrator).",
       "col_account": "Account",
+      "col_agent_version": "Agent version",
+      "col_buffer_backlog": "Buffered readings",
       "col_capabilities": "Capabilities",
       "col_certification": "Certification",
       "col_communication": "Communication",
@@ -629,7 +631,8 @@
       "no_devices": "No Edge gateway provisioned yet.",
       "no_fingerprint": "—",
       "title": "Edge and connectivity",
-      "unassigned_site": "No site"
+      "unassigned_site": "No site",
+      "value_unknown": "—"
     },
     "energy_page": {
       "col_consumption": "Consumption (yesterday)",

@@ -71,7 +71,8 @@ from app.errors import DomainError
 
 _COLUMNS = (
     "id, tenant_id, site_id, device_id, credential_type, status, created_by, created_at, "
-    "last_seen_at, revoked_at, revoked_by, revoked_reason, key_fingerprint, key_rotated_at"
+    "last_seen_at, revoked_at, revoked_by, revoked_reason, key_fingerprint, key_rotated_at, "
+    "agent_version, pending_buffer_count"
 )
 
 # Au-delà de ce délai sans relève, un appareil est considéré hors ligne
@@ -353,10 +354,31 @@ def authenticate_device_by_assertion(
     return dict(row)
 
 
-def touch_last_seen(connection: Connection, *, device_id: uuid.UUID, at: datetime) -> None:
+def touch_last_seen(
+    connection: Connection,
+    *,
+    device_id: uuid.UUID,
+    at: datetime,
+    agent_version: str | None = None,
+    pending_buffer_count: int | None = None,
+) -> None:
+    """`agent_version`/`pending_buffer_count` : seulement si l'appareil les
+    reporte dans cette relève (COALESCE) — une absence ne doit jamais
+    effacer la dernière valeur connue, même principe que « hors ligne
+    montre le dernier état connu »."""
     connection.execute(
-        text("UPDATE edge_devices SET last_seen_at = :at WHERE id = :id"),
-        {"at": at, "id": device_id},
+        text(
+            "UPDATE edge_devices SET last_seen_at = :at, "
+            "agent_version = COALESCE(:agent_version, agent_version), "
+            "pending_buffer_count = COALESCE(:pending_buffer_count, pending_buffer_count) "
+            "WHERE id = :id"
+        ),
+        {
+            "at": at,
+            "id": device_id,
+            "agent_version": agent_version,
+            "pending_buffer_count": pending_buffer_count,
+        },
     )
 
 

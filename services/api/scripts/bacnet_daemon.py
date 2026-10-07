@@ -27,7 +27,7 @@ from types import FrameType
 import httpx
 
 from app.connectors.bacnet import BacnetPoint, BacnetReadError, read_bacnet_points
-from app.connectors.edge_client import EdgeApiClient, PrivateKeyCredential
+from app.connectors.edge_client import AGENT_VERSION, EdgeApiClient, PrivateKeyCredential
 from app.connectors.offline_buffer import BufferedReading, OfflineBuffer
 from app.observability import configure_logging
 
@@ -127,7 +127,9 @@ def run(
                 pending = buffer.pending()
                 items = [reading.as_http_item() for reading in pending + new_readings]
                 try:
-                    summary = api.post_measurements(items)
+                    summary = api.post_measurements(
+                        items, agent_version=AGENT_VERSION, pending_buffer_count=len(pending)
+                    )
                     buffer.clear()
                     renvoi = f", {len(pending)} mesure(s) en tampon renvoyée(s)" if pending else ""
                     logger.info(f"relève effectuée{renvoi} : {summary}")

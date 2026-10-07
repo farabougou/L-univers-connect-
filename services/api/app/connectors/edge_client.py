@@ -26,6 +26,13 @@ from app.devices import ASSERTION_ALGORITHM, MAX_ASSERTION_TTL
 
 _TOKEN_REFRESH_MARGIN_SECONDS = 30
 
+# Version du démon qui parle par ce client (V4, priorité « Edge » : health
+# monitoring de la flotte) — à relever manuellement quand le comportement
+# d'un démon change de façon notable. Partagée par les quatre démons
+# (Modbus, BACnet, OPC UA, MQTT) : un seul chiffre à tenir à jour plutôt
+# qu'un par protocole, puisqu'ils évoluent tous depuis ce même module.
+AGENT_VERSION = "1"
+
 
 class DeviceCredential(Protocol):
     def auth_payload(self) -> dict[str, Any]:
@@ -177,8 +184,19 @@ class EdgeApiClient:
             raise
         return response.json()
 
-    def post_measurements(self, items: list[dict[str, Any]]) -> dict[str, Any]:
-        response = self._authorized_request("POST", "/edge/measurements", json={"items": items})
+    def post_measurements(
+        self,
+        items: list[dict[str, Any]],
+        *,
+        agent_version: str | None = None,
+        pending_buffer_count: int | None = None,
+    ) -> dict[str, Any]:
+        body: dict[str, Any] = {"items": items}
+        if agent_version is not None:
+            body["agent_version"] = agent_version
+        if pending_buffer_count is not None:
+            body["pending_buffer_count"] = pending_buffer_count
+        response = self._authorized_request("POST", "/edge/measurements", json=body)
         return response.json()
 
     def get_pending_bacnet_discovery(self, equipment_id: uuid.UUID) -> list[dict[str, Any]]:

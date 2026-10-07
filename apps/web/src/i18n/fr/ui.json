@@ -612,6 +612,8 @@
     "edge": {
       "access_denied": "Cette vue nécessite un rôle de gestion (responsable d’exploitation ou administrateur).",
       "col_account": "Compte",
+      "col_agent_version": "Version de l’agent",
+      "col_buffer_backlog": "Mesures en tampon",
       "col_capabilities": "Capacités",
       "col_certification": "Certification",
       "col_communication": "Communication",
@@ -629,7 +631,8 @@
       "no_devices": "Aucune passerelle Edge provisionnée pour le moment.",
       "no_fingerprint": "—",
       "title": "Edge et connectivité",
-      "unassigned_site": "Sans site"
+      "unassigned_site": "Sans site",
+      "value_unknown": "—"
     },
     "energy_page": {
       "col_consumption": "Consommation (hier)",

@@ -27,6 +27,8 @@ type Device = {
   communication_status: string;
   created_at: string;
   last_seen_at: string | null;
+  agent_version: string | null;
+  pending_buffer_count: number | null;
 };
 
 type Connector = {
@@ -238,6 +240,12 @@ export default async function EdgeConnectivityPage() {
                         {t("web.edge.col_fingerprint")}
                       </th>
                       <th style={headerCellStyle}>
+                        {t("web.edge.col_agent_version")}
+                      </th>
+                      <th style={headerCellStyle}>
+                        {t("web.edge.col_buffer_backlog")}
+                      </th>
+                      <th style={headerCellStyle}>
                         {t("web.edge.col_provisioned")}
                       </th>
                       <th style={headerCellStyle}>
@@ -303,6 +311,19 @@ export default async function EdgeConnectivityPage() {
                           ) : (
                             t("web.edge.no_fingerprint")
                           )}
+                        </td>
+                        <td
+                          data-label={t("web.edge.col_agent_version")}
+                          style={cellStyle}
+                        >
+                          {device.agent_version ?? t("web.edge.value_unknown")}
+                        </td>
+                        <td
+                          data-label={t("web.edge.col_buffer_backlog")}
+                          style={cellStyle}
+                        >
+                          {device.pending_buffer_count ??
+                            t("web.edge.value_unknown")}
                         </td>
                         <td
                           data-label={t("web.edge.col_provisioned")}
