@@ -1020,6 +1020,59 @@ tests) propres après correction ; comportement reproduit puis corrigé sur
 le composant réel via Playwright, avant/après, aux deux largeurs (390px et
 1200px) — pas une capture unique prise pour acquis.
 
+### V2 — ajout, 07/10/2026 : passeport par étiquette accessible depuis le web (code tapé ou scan QR navigateur)
+
+Mohamed teste la console depuis Safari iOS, pas l'application mobile Expo —
+deux choses distinctes (voir plus haut). Jusqu'ici, atteindre le passeport
+d'un équipement par étiquette (`GET /tags/{code}`) n'existait que côté
+mobile (ADR 014 §11 : « le web génère/imprime l'étiquette, le mobile la
+scanne sur le terrain »). Demande explicite de Mohamed : couvrir aussi le
+web, à la fois saisie manuelle du code **et** scan caméra — assouplit
+cette frontière ADR 014 §11 par décision produit explicite, pas par dérive.
+
+Nouvelle page `/passeport` (`apps/web/src/app/passeport/`) : un champ pour
+taper le code imprimé sous l'étiquette, et un bouton « Scanner une
+étiquette » qui active la caméra du téléphone directement dans le
+navigateur. Les deux chemins résolvent le même code via le même formulaire
+et la même action serveur (`lookupTag`, `GET /tags/{code}`), puis
+redirigent vers la fiche équipement déjà existante (`/registre/[id]`, même
+passeport que `GET /graph/nodes/{id}/passport` côté mobile) — **aucune
+deuxième vue passeport dupliquée**, aucun nouvel endpoint côté API.
+
+Scan caméra : Safari iOS ne supporte pas l'API native `BarcodeDetector`
+(contrairement à Chrome/Edge) ; décodage par `jsqr`, bibliothèque pure
+JavaScript sans dépendance native ni appel à un service tiers (même
+principe que `renderTagQr`, génération locale déjà en place) —
+`apps/web/src/components/QrScanner.tsx` capture un flux `getUserMedia`,
+décode chaque image sur un `<canvas>` caché, ignore tout QR qui n'a pas le
+préfixe `paios:tag:` (jamais une erreur technique pour un QR quelconque
+scanné par erreur). `ScannerPanel.tsx` bascule scan/annuler et soumet le
+code décodé au même formulaire caché que la saisie manuelle.
+
+Un code dont la forme est invalide (ni un code nu valide ni un QR de la
+plateforme) est rejeté avant tout appel réseau (`parseTagCode`, dupliqué du
+mobile — web et mobile ne partagent pas de code, même principe que les
+autres duplications du dépôt) ; une étiquette inconnue ou révoquée affiche
+le message du catalogue d'erreurs partagé avec l'API (`TAG_UNKNOWN`,
+`TAG_REVOKED`), jamais un message générique quand un message précis existe
+déjà. Entrée ajoutée au groupe « Exploitation » de la Sidebar.
+
+Priorité moyenne (confort terrain, pas un blocage fonctionnel — le mobile
+couvre déjà ce geste). Fichiers touchés : `apps/web/src/app/passeport/`,
+`apps/web/src/components/{QrScanner,ScannerPanel}.tsx`,
+`apps/web/src/lib/tagLookup.ts`, `apps/web/src/app/layout.tsx` (Sidebar) ;
+nouvelle dépendance `jsqr` (décodage QR pur JavaScript, aucune alternative
+sans dépendance pour Safari). Décision : ADD (assouplit explicitement
+ADR 014 §11 pour ce geste précis, le reste de la séparation web/mobile
+reste inchangé). Vérification : `tsc`/ESLint/`next build` propres, 195
+tests vitest web au vert (11 nouveaux : résolution d'un code tapé, d'un
+code préfixé comme un QR, rejet d'un code de forme invalide sans appel
+réseau, erreurs serveur étiquette inconnue/révoquée, et le parsing de code
+isolément). Pas de test automatisé du scan caméra lui-même (nécessiterait
+un vrai flux vidéo, hors de portée de vitest/jsdom) — signalé, pas
+bloquant ; la résolution de code (le chemin partagé par les deux méthodes)
+est, elle, entièrement testée.
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente

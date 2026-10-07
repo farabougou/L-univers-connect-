@@ -662,6 +662,20 @@
       "summary_title": "Résumé à saisir sur le portail OPERAT",
       "title": "Conformité OPERAT"
     },
+    "passport_page": {
+      "title": "Passeport",
+      "intro": "Scannez une étiquette avec la caméra ou saisissez le code imprimé dessous pour retrouver la fiche de l’équipement.",
+      "code_label": "Code de l’étiquette",
+      "code_placeholder": "Ex. AbC123xyZ",
+      "submit": "Afficher le passeport",
+      "scan": "Scanner une étiquette",
+      "scan_cancel": "Annuler",
+      "scan_hint": "Cadrez le QR de l’étiquette dans l’image.",
+      "camera_denied": "L’accès à la caméra a été refusé. Autorisez-le dans les réglages du navigateur, ou saisissez le code à la main.",
+      "camera_unsupported": "La caméra n’est pas disponible sur ce navigateur. Saisissez le code à la main.",
+      "lookup_failed": "Cette étiquette n’a pas pu être résolue.",
+      "code_invalid": "Ce code n’est pas un code d’étiquette valide."
+    },
     "registre": {
       "access_denied": "Cet écran est réservé aux responsables d’exploitation et aux administrateurs.",
       "acknowledge": "Acquitter",

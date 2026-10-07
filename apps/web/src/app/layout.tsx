@@ -36,6 +36,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       label: t("web.sidebar.group_operations"),
       items: [
         { href: "/registre", label: t("web.registre.title") },
+        { href: "/passeport", label: t("web.passport_page.title") },
         { href: "/alarmes", label: t("web.alarms_page.title") },
         { href: "/ordres-de-travail", label: t("web.work_orders.page_title") },
         { href: "/telemetrie", label: t("web.telemetry_page.title") },

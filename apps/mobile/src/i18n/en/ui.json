@@ -662,6 +662,20 @@
       "summary_title": "Figures to enter on the OPERAT portal",
       "title": "OPERAT compliance"
     },
+    "passport_page": {
+      "title": "Passport",
+      "intro": "Scan a tag with the camera, or type the code printed under it, to find the equipment record.",
+      "code_label": "Tag code",
+      "code_placeholder": "E.g. AbC123xyZ",
+      "submit": "Show passport",
+      "scan": "Scan a tag",
+      "scan_cancel": "Cancel",
+      "scan_hint": "Frame the tag's QR code in the image.",
+      "camera_denied": "Camera access was denied. Allow it in your browser settings, or type the code by hand.",
+      "camera_unsupported": "The camera is not available in this browser. Type the code by hand.",
+      "lookup_failed": "This tag could not be resolved.",
+      "code_invalid": "This is not a valid tag code."
+    },
     "registre": {
       "access_denied": "This screen is restricted to operations managers and administrators.",
       "acknowledge": "Acknowledge",
