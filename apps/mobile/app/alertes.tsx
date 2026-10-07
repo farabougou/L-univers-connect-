@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
 
 import { config } from "../src/lib/config";
 import { useAuth } from "../src/lib/auth";
@@ -65,8 +66,9 @@ export default function AlertesScreen() {
 }
 
 function AlertRow({ alert }: { alert: Alert }) {
-  return (
-    <View style={styles.row}>
+  const router = useRouter();
+  const content = (
+    <>
       <SeverityBadge severity={alert.severity} label={t(`severity.${alert.severity}`)} />
       <View style={styles.rowText}>
         <Text style={styles.strong}>
@@ -80,7 +82,20 @@ function AlertRow({ alert }: { alert: Alert }) {
           {t(`ack_state.${alert.ackState}`)} · {formatDateTime(locale, alert.raisedAt)}
         </Text>
       </View>
-    </View>
+    </>
+  );
+  if (!alert.equipmentId) {
+    return <View style={styles.row}>{content}</View>;
+  }
+  return (
+    <Pressable
+      style={styles.row}
+      onPress={() =>
+        router.push({ pathname: "/passeport", params: { functionalLocationId: alert.equipmentId! } })
+      }
+    >
+      {content}
+    </Pressable>
   );
 }
 

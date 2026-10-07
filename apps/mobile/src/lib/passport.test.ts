@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  fetchPassportById,
   fetchPassportByTag,
   fetchSimulatedRelayPointId,
   isPlatformTag,
@@ -67,6 +68,50 @@ describe("fetchPassportByTag", () => {
   it("signale l'absence de réseau", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Network request failed")));
     const result = await fetchPassportByTag("https://api.test", "jeton", "Ab3_x-9Zk2LmN0pQ", "fr");
+    expect(result).toEqual({ ok: false, messageKey: "mobile.passport.offline" });
+  });
+});
+
+describe("fetchPassportById", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function stubFetch(status: number, body: unknown = {}) {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: status >= 200 && status < 300,
+      status,
+      json: async () => body,
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    return fetchMock;
+  }
+
+  it("renvoie le passeport par identifiant direct et envoie le jeton", async () => {
+    const passport = { node_id: "n1", node_type: "functional_location", allowed_actions: [] };
+    const fetchMock = stubFetch(200, passport);
+
+    const result = await fetchPassportById("https://api.test", "jeton", "n1", "en");
+
+    expect(result).toEqual({ ok: true, passport });
+    expect(fetchMock).toHaveBeenCalledWith("https://api.test/graph/nodes/n1/passport", {
+      headers: { Authorization: "Bearer jeton", "Accept-Language": "en" },
+    });
+  });
+
+  it.each([
+    [404, { ok: false, messageKey: "mobile.passport.tag_unknown" }],
+    [403, { ok: false, messageKey: "mobile.passport.forbidden" }],
+    [500, { ok: false, messageKey: "mobile.passport.server_error", params: { status: 500 } }],
+  ])("traduit le code %i en clé de message", async (status, expected) => {
+    stubFetch(status);
+    const result = await fetchPassportById("https://api.test", "jeton", "n1", "fr");
+    expect(result).toEqual(expected);
+  });
+
+  it("signale l'absence de réseau", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Network request failed")));
+    const result = await fetchPassportById("https://api.test", "jeton", "n1", "fr");
     expect(result).toEqual({ ok: false, messageKey: "mobile.passport.offline" });
   });
 });

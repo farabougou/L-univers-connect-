@@ -5,17 +5,16 @@
  * technicien sur le terrain voit le même portefeuille qu'un responsable au
  * bureau, jamais une liste recalculée différemment.
  *
- * Pas de lien direct vers le passeport de l'équipement depuis cette liste :
- * le passeport mobile se consulte par étiquette (QR ou code, voir
- * `fetchPassportByTag`), jamais par identifiant brut — DEFER tant qu'aucun
- * besoin réel de « sauter » directement d'une alerte au passeport n'est
- * confirmé (afficher un lien qui ne mène nulle part serait pire que pas de
- * lien du tout).
+ * Lien vers le passeport de l'équipement (06/10/2026) : `equipmentId` porte
+ * l'identifiant du nœud, chargé directement (`fetchPassportById`, voir
+ * app/passeport.tsx) sans étiquette à scanner — referme le DEFER posé le
+ * 02/10/2026 (le passeport ne se consultait jusqu'ici que par étiquette).
  */
 
 export type Alert = {
   id: string;
   kind: "alarm" | "finding";
+  equipmentId: string | null;
   equipmentCode: string | null;
   equipmentName: string | null;
   severity: string;
@@ -86,6 +85,7 @@ export async function fetchOpenAlerts(apiUrl: string, accessToken: string): Prom
       return {
         id: alarm.id,
         kind: "alarm" as const,
+        equipmentId: location?.id ?? null,
         equipmentCode: location?.code ?? null,
         equipmentName: location?.name ?? null,
         severity: alarm.severity,
@@ -99,6 +99,7 @@ export async function fetchOpenAlerts(apiUrl: string, accessToken: string): Prom
       return {
         id: finding.id,
         kind: "finding" as const,
+        equipmentId: location?.id ?? null,
         equipmentCode: location?.code ?? null,
         equipmentName: location?.name ?? null,
         severity: finding.severity,

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { type BarcodeScanningResult, CameraView, useCameraPermissions } from "expo-camera";
 import {
   ActivityIndicator,
@@ -10,7 +10,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { config } from "../src/lib/config";
 import { useAuth } from "../src/lib/auth";
@@ -21,7 +21,9 @@ import {
   type Passport,
   type PassportCommand,
   type PassportUnit,
+  type ScanResult,
   type TimelineEntry,
+  fetchPassportById,
   fetchPassportByTag,
   fetchSimulatedRelayPointId,
   fetchTimeline,
@@ -38,9 +40,18 @@ import { AssetStatusBadge, SeverityBadge } from "../src/design/StatusBadge";
  * le QR (même vérification dans les deux cas : `parseTagCode`). Le QR ne
  * contient qu'un code opaque ; tout le contenu vient du serveur, selon les
  * droits de la personne connectée.
+ *
+ * Deuxième point d'entrée (06/10/2026) : arrivée depuis une liste qui connaît
+ * déjà l'identifiant de l'équipement (Actifs, Alertes) — `fetchPassportById`
+ * charge alors le même passeport directement, sans étiquette à scanner.
  */
+interface LookupFn {
+  (): Promise<ScanResult>;
+}
+
 export default function PasseportScreen() {
   const auth = useAuth();
+  const params = useLocalSearchParams<{ functionalLocationId?: string }>();
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -53,8 +64,22 @@ export default function PasseportScreen() {
   // Un QR reste devant l'objectif plusieurs images de suite : une seule lecture.
   const handled = useRef(false);
   // Retenu pour rafraîchir le passeport après l'envoi d'une commande, sans
-  // demander à la personne de rescanner l'étiquette.
-  const lastCode = useRef<string | null>(null);
+  // redemander une étiquette ni un identifiant à la personne.
+  const lastLookup = useRef<LookupFn | null>(null);
+
+  async function _applyResult(result: ScanResult, token: string) {
+    if (result.ok) {
+      setPassport(result.passport);
+      if (result.passport.node_type === "functional_location") {
+        setRelayPointId(
+          await fetchSimulatedRelayPointId(config.apiUrl, token, result.passport.node_id),
+        );
+      }
+      setTimeline(await fetchTimeline(config.apiUrl, token, result.passport.node_id));
+    } else {
+      setMessage(t(result.messageKey, result.params));
+    }
+  }
 
   async function lookUp(raw: string) {
     setPassport(null);
@@ -72,21 +97,36 @@ export default function PasseportScreen() {
     }
     setLoading(true);
     setMessage(null);
-    const result = await fetchPassportByTag(config.apiUrl, token, code, locale);
-    if (result.ok) {
-      lastCode.current = code;
-      setPassport(result.passport);
-      if (result.passport.node_type === "functional_location") {
-        setRelayPointId(
-          await fetchSimulatedRelayPointId(config.apiUrl, token, result.passport.node_id),
-        );
-      }
-      setTimeline(await fetchTimeline(config.apiUrl, token, result.passport.node_id));
-    } else {
-      setMessage(t(result.messageKey, result.params));
-    }
+    const fetchResult = () => fetchPassportByTag(config.apiUrl, token, code, locale);
+    lastLookup.current = fetchResult;
+    await _applyResult(await fetchResult(), token);
     setLoading(false);
   }
+
+  async function lookUpById(nodeId: string) {
+    setPassport(null);
+    setRelayPointId(null);
+    setTimeline([]);
+    const token = await auth.getAccessToken();
+    if (!token) {
+      setMessage(t("mobile.passport.sign_in_first"));
+      return;
+    }
+    setLoading(true);
+    setMessage(null);
+    const fetchResult = () => fetchPassportById(config.apiUrl, token, nodeId, locale);
+    lastLookup.current = fetchResult;
+    await _applyResult(await fetchResult(), token);
+    setLoading(false);
+  }
+
+  // Arrivée depuis une liste (Actifs, Alertes) : charge directement, sans
+  // attendre un scan ou une saisie manuelle.
+  useEffect(() => {
+    if (params.functionalLocationId) {
+      void lookUpById(params.functionalLocationId);
+    }
+  }, [params.functionalLocationId]);
 
   async function loadOlderTimeline() {
     if (!passport || timeline.length === 0) return;
@@ -117,12 +157,12 @@ export default function PasseportScreen() {
       setLoading(false);
       return;
     }
-    // Rejoue la lecture pour afficher l'état à jour de la commande.
-    if (lastCode.current) {
-      await lookUp(lastCode.current);
-    } else {
-      setLoading(false);
+    // Rejoue la même lecture (étiquette ou identifiant direct) pour
+    // afficher l'état à jour de la commande.
+    if (lastLookup.current) {
+      await _applyResult(await lastLookup.current(), token);
     }
+    setLoading(false);
   }
 
   async function startScan() {

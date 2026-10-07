@@ -114,6 +114,8 @@ export default function HomeScreen() {
       <Button title={t("mobile.home.history")} onPress={() => router.push("/historique")} />
       <Button title={t("mobile.home.passport")} onPress={() => router.push("/passeport")} />
       <Button title={t("mobile.alerts.title")} onPress={() => router.push("/alertes")} />
+      <Button title={t("mobile.assets.title")} onPress={() => router.push("/actifs")} />
+      <Button title={t("mobile.energy.title")} onPress={() => router.push("/energie")} />
 
       <Text>
         {pendingCount > 0

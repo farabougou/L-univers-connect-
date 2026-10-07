@@ -137,6 +137,23 @@
       "kind_alarm": "Alarme",
       "kind_finding": "Constat"
     },
+    "assets": {
+      "title": "Actifs",
+      "empty": "Aucun équipement ne correspond à ces filtres.",
+      "load_failed": "Les actifs n’ont pas pu être chargés. Vérifiez la connexion au réseau.",
+      "search_placeholder": "Rechercher un code ou un nom…",
+      "filter_all_sites": "Tous les sites",
+      "filter_all_status": "Tous les états"
+    },
+    "energy": {
+      "title": "Énergie",
+      "empty": "Aucun compteur d’énergie connecté sur ce portefeuille.",
+      "load_failed": "Les données énergie n’ont pas pu être chargées. Vérifiez la connexion au réseau.",
+      "reference_date": "Période de référence : {date}",
+      "consumption": "Consommation : {value} {unit}",
+      "previous_consumption": "Période précédente : {value} {unit}",
+      "no_data": "Aucune mesure disponible."
+    },
     "history": {
       "empty": "Aucune intervention envoyée pour le moment.",
       "load_failed": "L’historique n’a pas pu être chargé. Vérifiez la connexion au réseau.",

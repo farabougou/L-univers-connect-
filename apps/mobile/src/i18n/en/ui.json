@@ -137,6 +137,23 @@
       "kind_alarm": "Alarm",
       "kind_finding": "Finding"
     },
+    "assets": {
+      "title": "Assets",
+      "empty": "No equipment matches these filters.",
+      "load_failed": "Assets could not be loaded. Check the network connection.",
+      "search_placeholder": "Search a code or a name…",
+      "filter_all_sites": "All sites",
+      "filter_all_status": "All statuses"
+    },
+    "energy": {
+      "title": "Energy",
+      "empty": "No energy meter connected on this portfolio.",
+      "load_failed": "Energy data could not be loaded. Check the network connection.",
+      "reference_date": "Reference period: {date}",
+      "consumption": "Consumption: {value} {unit}",
+      "previous_consumption": "Previous period: {value} {unit}",
+      "no_data": "No measurement available."
+    },
     "history": {
       "empty": "No intervention sent yet.",
       "load_failed": "The history could not be loaded. Check the network connection.",

@@ -175,6 +175,46 @@ export async function fetchPassportByTag(
 }
 
 /**
+ * Même passeport que `fetchPassportByTag`, mais par identifiant direct
+ * (`GET /graph/nodes/{id}/passport`, même route que la fiche équipement
+ * web, apps/web/src/app/registre/[id]/page.tsx) — utilisé quand l'écran
+ * arrive déjà avec l'identifiant de l'équipement (liste Actifs, liste
+ * Alertes) plutôt qu'une étiquette scannée. Mêmes droits, même donnée,
+ * jamais une deuxième source du passeport.
+ */
+export async function fetchPassportById(
+  apiUrl: string,
+  accessToken: string,
+  nodeId: string,
+  language: string,
+): Promise<ScanResult> {
+  let response: Response;
+  try {
+    response = await fetch(`${apiUrl}/graph/nodes/${encodeURIComponent(nodeId)}/passport`, {
+      headers: { Authorization: `Bearer ${accessToken}`, "Accept-Language": language },
+    });
+  } catch {
+    return { ok: false, messageKey: "mobile.passport.offline" };
+  }
+  if (response.ok) {
+    return { ok: true, passport: (await response.json()) as Passport };
+  }
+  switch (response.status) {
+    case 404:
+      return { ok: false, messageKey: "mobile.passport.tag_unknown" };
+    case 401:
+    case 403:
+      return { ok: false, messageKey: "mobile.passport.forbidden" };
+    default:
+      return {
+        ok: false,
+        messageKey: "mobile.passport.server_error",
+        params: { status: response.status },
+      };
+  }
+}
+
+/**
  * Le point pilotable par une commande de test est celui visé par la
  * connexion Modbus active de type "simulated_relay" (jamais un vrai
  * appareil) — même règle que apps/web/src/app/registre/[id]/page.tsx :
