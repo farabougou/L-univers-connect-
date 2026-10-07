@@ -20,6 +20,7 @@ import {
   clearAlarm,
   confirmFinding,
   createBacnetDeviceMapping,
+  createCommandPolicy,
   createDeviceMapping,
   createDivergenceRule,
   createSimulatedRelayMapping,
@@ -565,5 +566,59 @@ describe("createWorkOrderForEquipment", () => {
       priority: "high",
       functional_location_id: "node-1",
     });
+  });
+});
+
+describe("createCommandPolicy", () => {
+  it("envoie les rôles cochés et les valeurs séparées par une virgule", async () => {
+    apiFetch.mockResolvedValueOnce(ok());
+    const data = new FormData();
+    data.set("node_id", "node-1");
+    data.set("point_id", "point-1");
+    data.append("allowed_roles", "technicien");
+    data.append("allowed_roles", "responsable_exploitation");
+    data.set("allowed_values", "0, 1");
+    data.set("reason", "Restreindre ce relais aux rôles terrain");
+
+    await createCommandPolicy(data);
+
+    expect(apiFetch).toHaveBeenCalledWith("/configs", "token-123", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        config_type: "command_point_policy",
+        subject_key: "point-1",
+        reason: "Restreindre ce relais aux rôles terrain",
+        content: {
+          allowed_roles: ["technicien", "responsable_exploitation"],
+          allowed_values: [0, 1],
+        },
+      }),
+    });
+    expect(revalidatePath).toHaveBeenCalledWith("/registre/node-1");
+  });
+
+  it("envoie null pour les rôles et les valeurs quand rien n'est choisi", async () => {
+    apiFetch.mockResolvedValueOnce(ok());
+    const data = new FormData();
+    data.set("node_id", "node-1");
+    data.set("point_id", "point-1");
+    data.set("reason", "Aucune restriction pour l'instant");
+
+    await createCommandPolicy(data);
+
+    const body = JSON.parse(apiFetch.mock.calls[0][2].body);
+    expect(body.content).toEqual({ allowed_roles: null, allowed_values: null });
+  });
+
+  it("redirige avec le code d'erreur en cas d'échec", async () => {
+    apiFetch.mockResolvedValueOnce(fail("COMMAND_POLICY_UNKNOWN_ROLE"));
+    const data = new FormData();
+    data.set("node_id", "node-1");
+    data.set("point_id", "point-1");
+    data.set("reason", "x");
+
+    const url = await redirected(createCommandPolicy(data));
+    expect(url).toBe("/registre/node-1?error=COMMAND_POLICY_UNKNOWN_ROLE");
   });
 });

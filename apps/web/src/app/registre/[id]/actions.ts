@@ -590,6 +590,49 @@ export async function createPointControlMode(formData: FormData) {
 }
 
 /**
+ * Policy de commande pour un point précis (V2, priorité « autorisation/
+ * policies », app/command_policies.py) : restreint, au-delà des rôles
+ * globaux, quels rôles et quelles valeurs une commande sur ce point peut
+ * utiliser. Naît en brouillon ; contrairement au mode du point et aux
+ * règles d'automatisation, elle ne demande qu'une seule personne pour
+ * s'activer (`activateRule`, même action générique) — une policy ne peut
+ * que restreindre davantage, jamais étendre une commande déjà autorisée
+ * (voir le docstring du module Python).
+ */
+export async function createCommandPolicy(formData: FormData) {
+  const accessToken = await requireAccessToken();
+  const nodeId = String(formData.get("node_id"));
+  const pointId = String(formData.get("point_id"));
+  const allowedRoles = formData.getAll("allowed_roles").map(String);
+  const rawValues = String(formData.get("allowed_values") ?? "").trim();
+  const allowedValues = rawValues
+    ? rawValues
+        .split(",")
+        .map((value) => value.trim())
+        .filter((value) => value.length > 0)
+        .map(Number)
+    : null;
+
+  const response = await apiFetch("/configs", accessToken, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      config_type: "command_point_policy",
+      subject_key: pointId,
+      reason: formData.get("reason"),
+      content: {
+        allowed_roles: allowedRoles.length > 0 ? allowedRoles : null,
+        allowed_values: allowedValues,
+      },
+    }),
+  });
+  if (!response.ok) {
+    await redirectOnFailure(nodeId, response);
+  }
+  revalidatePath(`/registre/${nodeId}`);
+}
+
+/**
  * Règle d'automatisation (règle → commande, V2, dernière priorité,
  * app/automation_rules.py) : naît en brouillon, approbation à deux
  * personnes obligatoire — l'auteur ne peut jamais être celui qui l'active.

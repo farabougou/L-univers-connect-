@@ -28,6 +28,7 @@ import {
   statusMessage,
 } from "@/lib/passport";
 import {
+  COMMAND_ROLES,
   type Me,
   canManage as computeCanManage,
   canSendCommand as computeCanSendCommand,
@@ -52,6 +53,7 @@ import {
   confirmFinding,
   createAutomationRule,
   createBacnetDeviceMapping,
+  createCommandPolicy,
   createCorrelationRule,
   createDeviceMapping,
   createDivergenceRule,
@@ -90,6 +92,13 @@ type PointControlModeVersion = {
   version: number;
   status: string;
   content: { mode: "manual" | "automatic" };
+};
+
+type CommandPointPolicyVersion = {
+  id: string;
+  version: number;
+  status: string;
+  content: { allowed_roles: string[] | null; allowed_values: number[] | null };
 };
 
 type AutomationRuleContent = {
@@ -514,6 +523,22 @@ export default async function EquipmentPage({
     automationRuleVersions = automationResponse.ok ? await automationResponse.json() : [];
   }
 
+  // Policy de commande (V2, priorité « autorisation/policies »,
+  // app.command_policies) : restreint, pour CE point précis, quels rôles et
+  // quelles valeurs sont acceptés — au-delà des rôles globaux déjà vérifiés
+  // par /commands. Le moteur existait déjà côté API depuis le 02/10/2026
+  // mais n'avait jamais eu d'écran : sans lui, une policy ne pouvait être
+  // posée que par un appel direct à l'API (trouvé lors de l'audit de
+  // fermeture V2 du 07/10/2026).
+  let commandPolicyVersions: CommandPointPolicyVersion[] = [];
+  if (relayPointId) {
+    const policyResponse = await apiFetch(
+      `/configs?config_type=command_point_policy&subject_key=${relayPointId}`,
+      accessToken,
+    );
+    commandPolicyVersions = policyResponse.ok ? await policyResponse.json() : [];
+  }
+
   // Découverte BACnet (BACnet V1, lecture seule) : mêmes principes que la
   // connexion Modbus ci-dessus, sujet = l'équipement (voir
   // app/bacnet_discovery.py). Un équipement introuvable côté API (nœud qui
@@ -859,6 +884,7 @@ export default async function EquipmentPage({
             activeControlMode={activeControlMode}
             controlModeVersions={controlModeVersions}
             automationRuleVersions={automationRuleVersions}
+            commandPolicyVersions={commandPolicyVersions}
             canSendCommand={canSendCommand}
             canManage={canManage}
             locale={locale}
@@ -2102,6 +2128,7 @@ function CommandBlock({
   activeControlMode,
   controlModeVersions,
   automationRuleVersions,
+  commandPolicyVersions,
   canSendCommand,
   canManage,
   locale,
@@ -2116,6 +2143,7 @@ function CommandBlock({
   activeControlMode: "manual" | "automatic";
   controlModeVersions: PointControlModeVersion[];
   automationRuleVersions: AutomationRuleVersion[];
+  commandPolicyVersions: CommandPointPolicyVersion[];
   canSendCommand: boolean;
   canManage: boolean;
   locale: Locale;
@@ -2386,6 +2414,122 @@ function CommandBlock({
           </details>
         )}
       </div>
+      <CommandPolicyBlock
+        nodeId={nodeId}
+        pointId={relayPointId}
+        versions={commandPolicyVersions}
+        canManage={canManage}
+        t={t}
+      />
+    </div>
+  );
+}
+
+/**
+ * Policy de commande (V2, priorité « autorisation/policies »,
+ * app.command_policies) : restreint, pour ce point précis, les rôles et les
+ * valeurs acceptés par une commande immédiate, planifiée ou automatisée —
+ * au-delà des rôles globaux déjà vérifiés par /commands. Même mécanisme
+ * de configuration versionnée que le mode du point et les règles
+ * d'automatisation ci-dessus, approbation à une seule personne (une policy
+ * ne peut que restreindre davantage, jamais étendre — voir
+ * app/command_policies.py).
+ */
+function CommandPolicyBlock({
+  nodeId,
+  pointId,
+  versions,
+  canManage,
+  t,
+}: {
+  nodeId: string;
+  pointId: string;
+  versions: CommandPointPolicyVersion[];
+  canManage: boolean;
+  t: (key: string, params?: Record<string, string>) => string;
+}) {
+  const activePolicy = versions.find((version) => version.status === "active") ?? null;
+  const draftPolicy = versions.find((version) => version.status === "draft") ?? null;
+
+  function describePolicy(content: CommandPointPolicyVersion["content"]): string {
+    const parts: string[] = [];
+    if (content.allowed_roles) {
+      parts.push(
+        t("web.registre.command_policy_roles_summary", {
+          roles: content.allowed_roles.map((role) => t(`role.${role}`)).join(", "),
+        }),
+      );
+    }
+    if (content.allowed_values) {
+      parts.push(
+        t("web.registre.command_policy_values_summary", {
+          values: content.allowed_values.join(", "),
+        }),
+      );
+    }
+    return parts.length > 0 ? parts.join(" — ") : t("web.registre.command_policy_none");
+  }
+
+  return (
+    <div style={{ marginTop: 12 }}>
+      <p style={{ ...mutedStyle, margin: 0, fontWeight: 600 }}>
+        {t("web.registre.command_policy_title")}
+      </p>
+      <p style={{ margin: 0 }}>
+        {activePolicy ? describePolicy(activePolicy.content) : t("web.registre.command_policy_none")}
+      </p>
+      {draftPolicy && (
+        <p style={{ margin: 0 }}>
+          {t("web.registre.command_policy_draft_pending", { summary: describePolicy(draftPolicy.content) })}
+          {canManage && (
+            <form action={activateRule} style={{ display: "inline", marginLeft: 8 }}>
+              <input type="hidden" name="version_id" value={draftPolicy.id} />
+              <input type="hidden" name="node_id" value={nodeId} />
+              <button type="submit">{t("web.registre.activate_rule")}</button>
+            </form>
+          )}
+        </p>
+      )}
+      {canManage && !draftPolicy && (
+        <details>
+          <summary>{t("web.registre.command_policy_propose")}</summary>
+          <form action={createCommandPolicy} style={{ maxWidth: 360 }}>
+            <input type="hidden" name="node_id" value={nodeId} />
+            <input type="hidden" name="point_id" value={pointId} />
+            <fieldset style={{ border: "none", padding: 0, marginTop: 12 }}>
+              <legend style={{ fontWeight: 600 }}>{t("web.registre.command_policy_roles_label")}</legend>
+              {COMMAND_ROLES.map((role) => (
+                <label key={role} style={{ display: "block" }}>
+                  <input type="checkbox" name="allowed_roles" value={role} /> {t(`role.${role}`)}
+                </label>
+              ))}
+            </fieldset>
+            <label style={labelStyle}>
+              {t("web.registre.command_policy_values_label")}
+              <input
+                name="allowed_values"
+                placeholder={t("web.registre.command_policy_values_placeholder")}
+                style={fieldStyle}
+              />
+            </label>
+            <label style={labelStyle}>
+              {t("web.registre.rule_reason")}
+              <input name="reason" required style={fieldStyle} />
+            </label>
+            <button type="submit" style={submitStyle}>
+              {t("web.registre.submit")}
+            </button>
+          </form>
+        </details>
+      )}
+      {activePolicy && canManage && (
+        <form action={retireRule} style={{ marginTop: 4, display: "inline-flex", gap: 4 }}>
+          <input type="hidden" name="version_id" value={activePolicy.id} />
+          <input type="hidden" name="node_id" value={nodeId} />
+          <input name="reason" required placeholder={t("web.registre.retire_reason")} />
+          <button type="submit">{t("web.registre.command_policy_remove")}</button>
+        </form>
+      )}
     </div>
   );
 }
