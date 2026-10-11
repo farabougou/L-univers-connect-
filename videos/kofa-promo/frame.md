@@ -11,13 +11,17 @@ unit: the frame — 1920×1080 primary; 9:16 and 1:1 documented
 principle: atoms are sacred · composition is free · numbers come from the script
 
 colors:
-  ink-black: "#0D0D0D"
-  ink-black-alt: "#1A1918"
-  fire-orange: "#D95926"
+  # KOFA secondary palette — functional signals only, never grounds or body text:
+  kofa-blue: "#2A78D6"    # logo K tile, live-tracking route line
+  kofa-green: "#1BAF7A"   # success / confirmed code / rider dot
+  kofa-yellow: "#EDA100"  # voice-note waveform highlight
+  kofa-violet: "#4A3AA7"  # sparing — diaspora arcs secondary
+  ink-black: "#0E0E10"
+  ink-black-alt: "#1A1A1D"
+  fire-orange: "#EB6834"
   cream: "#FFFFFF"
-  cream-muted: "#9A9A96"
-  kofa-blue: "#4C82DA"  # logo "K" tile only — never a text or ground color
-  cream-hint: "#504A48"
+  cream-muted: "#A1A1A6"
+  cream-hint: "#504D48"
   border-dark: "#282726"
   ink-on-orange-muted: "rgba(17,17,17,0.75)"
   ink-on-orange-hint: "rgba(17,17,17,0.55)"

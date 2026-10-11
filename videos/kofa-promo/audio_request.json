@@ -1,0 +1,38 @@
+{
+  "provider": "kokoro",
+  "speed": "0.9",
+  "lines": [
+    {
+      "id": "01",
+      "text": "Un bon repas ? Des courses ? Un colis à envoyer ? À Bamako, KOFA s'en occupe."
+    },
+    {
+      "id": "02",
+      "text": "KOFA, la livraison pensée pour Bamako : vos repas, vos courses et vos colis."
+    },
+    {
+      "id": "03",
+      "text": "Suivez votre livreur en direct, sur la carte, jusqu'à votre porte."
+    },
+    {
+      "id": "04",
+      "text": "Votre adresse est difficile à trouver ? Laissez une note vocale à votre livreur. Il saura où aller."
+    },
+    {
+      "id": "05",
+      "text": "À la réception, donnez votre code à quatre chiffres. Votre commande est remise à la bonne personne."
+    },
+    {
+      "id": "06",
+      "text": "Vous vivez à Paris, à New York ou à Dakar ? Commandez et payez à distance pour vos proches à Bamako."
+    },
+    {
+      "id": "07",
+      "text": "KOFA, bientôt disponible à Bamako. L'application est déjà sur le Play Store et l'App Store."
+    }
+  ],
+  "bgm": {
+    "mode": "none"
+  },
+  "voice": "ff_siwis"
+}

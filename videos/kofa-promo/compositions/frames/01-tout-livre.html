@@ -1,0 +1,84 @@
+<template>
+  <style>
+@font-face { font-family: "Inter"; font-weight: 400; src: url("assets/fonts/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; src: url("assets/fonts/inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 700; src: url("assets/fonts/inter-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 800; src: url("assets/fonts/inter-latin-800-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 900; src: url("assets/fonts/inter-latin-900-normal.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 500; src: url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Inter", sans-serif; color: #FFFFFF; }
+
+    #k01-bg { position: absolute; inset: 0; background: radial-gradient(120% 70% at 50% 38%, #1d1410 0%, #0E0E10 60%); }
+    #k01-kicker { position: absolute; top: 210px; left: 0; right: 0; text-align: center; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 30px; letter-spacing: 0.14em; color: #EB6834; }
+    #k01-slot { position: absolute; left: 0; right: 0; top: 520px; height: 560px; overflow: hidden; }
+    .k01-opt { position: absolute; left: 0; right: 0; top: 0; height: 560px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 48px; }
+    .k01-opt svg { width: 220px; height: 220px; display: block; }
+    .k01-opt span { display: block; font-weight: 900; font-size: 150px; letter-spacing: -0.04em; line-height: 1; color: #FFFFFF; white-space: nowrap; }
+    #k01-hero { position: absolute; left: 0; right: 0; top: 560px; display: flex; flex-direction: column; align-items: center; }
+    #k01-kofa { display: block; font-weight: 900; font-size: 250px; letter-spacing: -0.04em; line-height: 0.9; color: #EB6834; }
+    #k01-sub { display: block; margin-top: 30px; font-weight: 800; font-size: 104px; letter-spacing: -0.03em; color: #FFFFFF; }
+    #k01-flash { position: absolute; inset: 0; background: #EB6834; opacity: 0; }
+    #k01-dots { position: absolute; top: 1290px; left: 0; right: 0; display: flex; justify-content: center; gap: 22px; }
+    .k01-dot { width: 18px; height: 18px; border-radius: 9px; background: #2a2a2e; display: block; }
+
+  </style>
+  <div id="root" data-composition-id="01-tout-livre" data-start="0" data-duration="5.5" data-width="1080" data-height="1920">
+
+    <div id="k01-bg" class="clip" data-start="0" data-duration="5.5" data-track-index="0"></div>
+    <div id="k01-kicker">BAMAKO · MALI</div>
+    <div id="k01-slot">
+      <div class="k01-opt" id="k01-o1">
+        <svg viewBox="0 0 100 100"><circle cx="50" cy="52" r="34" fill="none" stroke="#EB6834" stroke-width="6"/><circle cx="50" cy="52" r="20" fill="none" stroke="#EB6834" stroke-width="3" opacity="0.6"/><path d="M8 20 v26 M14 20 v26 M8 46 h6 M11 46 v40" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" fill="none"/><path d="M90 20 c-8 4 -8 22 0 26 v40" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" fill="none"/></svg>
+        <span>un repas ?</span>
+      </div>
+      <div class="k01-opt" id="k01-o2">
+        <svg viewBox="0 0 100 100"><path d="M10 22 h12 l10 44 h48 l8 -32 h-60" fill="none" stroke="#1BAF7A" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="38" cy="80" r="6" fill="#FFFFFF"/><circle cx="74" cy="80" r="6" fill="#FFFFFF"/><path d="M40 44 h38 M42 54 h32" stroke="#1BAF7A" stroke-width="4" stroke-linecap="round" opacity="0.6"/></svg>
+        <span>des courses ?</span>
+      </div>
+      <div class="k01-opt" id="k01-o3">
+        <svg viewBox="0 0 100 100"><path d="M50 10 L88 28 V72 L50 90 L12 72 V28 Z" fill="none" stroke="#EDA100" stroke-width="6" stroke-linejoin="round"/><path d="M12 28 L50 46 L88 28 M50 46 V90" fill="none" stroke="#EDA100" stroke-width="5" stroke-linejoin="round"/><path d="M31 19 L69 37" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/></svg>
+        <span>un colis ?</span>
+      </div>
+    </div>
+    <div id="k01-hero"><span id="k01-kofa">KOFA</span><span id="k01-sub">s'en occupe.</span></div>
+    <div id="k01-dots"><span class="k01-dot"></span><span class="k01-dot"></span><span class="k01-dot"></span></div>
+    <div id="k01-flash"></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="01-tout-livre"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="01-tout-livre"] ' + s);
+
+      const opts = [R("#k01-o1"), R("#k01-o2"), R("#k01-o3")];
+      const dots = RA(".k01-dot");
+      gsap.set(opts.slice(1), { yPercent: 100, opacity: 0 });
+      gsap.set(R("#k01-hero"), { opacity: 0 });
+      tl.fromTo(R("#k01-kicker"), { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0);
+      tl.fromTo(opts[0], { yPercent: 60, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.45, ease: "power3.out" }, 0.05);
+      tl.fromTo(dots, { opacity: 0 }, { opacity: 1, duration: 0.3, stagger: 0.05 }, 0.1);
+      tl.to(dots[0], { backgroundColor: "#EB6834", duration: 0.2 }, 0.3);
+      const swaps = [0.82, 1.5];
+      swaps.forEach((t, i) => {
+        tl.to(opts[i], { yPercent: -100, opacity: 0, duration: 0.38, ease: "power3.in" }, t);
+        tl.fromTo(opts[i + 1], { yPercent: 100, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.42, ease: "power3.out" }, t + 0.12);
+        tl.to(dots[i], { backgroundColor: "#2a2a2e", duration: 0.2 }, t + 0.1);
+        tl.to(dots[i + 1], { backgroundColor: "#EB6834", duration: 0.2 }, t + 0.1);
+      });
+      // crash: the hero replaces the cycle
+      const C = 3.05;
+      tl.to(opts[2], { scale: 0.7, opacity: 0, filter: "blur(10px)", duration: 0.3, ease: "power2.in" }, C - 0.25);
+      tl.to(R("#k01-dots"), { opacity: 0, duration: 0.25 }, C - 0.2);
+      tl.fromTo(R("#k01-flash"), { opacity: 0 }, { opacity: 0.55, duration: 0.06 }, C);
+      tl.to(R("#k01-flash"), { opacity: 0, duration: 0.35, ease: "power2.out" }, C + 0.06);
+      tl.set(R("#k01-hero"), { opacity: 1 }, C);
+      tl.fromTo(R("#k01-kofa"), { scale: 1.5, opacity: 0, filter: "blur(16px)" }, { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.42, ease: "power4.out" }, C);
+      tl.fromTo(R("#k01-sub"), { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" }, C + 0.5);
+      tl.fromTo(R("#k01-kofa"), { scale: 1 }, { scale: 1.03, immediateRender: false, duration: 1.4, ease: "sine.out" }, C + 0.45);
+
+      window.__timelines["01-tout-livre"] = tl;
+    })();
+  </script>
+</template>

@@ -2,62 +2,55 @@
 
 **Voice:** ff_siwis (Kokoro, français)
 **Voice settings:** speed 1.0
-**Voice direction:** Chaleureuse, enjouée, proche — comme une amie de Bamako qui recommande un bon plan.
+**Voice direction:** Chaleureuse mais professionnelle, vouvoiement, claire et posée.
 
 ---
 
 ## Line 1 — Hook (Frame 1)
 
 **Time:** 0.0 – 5.0s
-**Delivery:** Rythmé, chaque question monte ; « tout » appuyé.
+**Delivery:** Rythmé, chaque question monte.
 
-    Un bon plat ? Des courses ? Un colis ? À Bamako, KOFA vous livre tout.
+    Un bon repas ? Des courses ? Un colis à envoyer ? À Bamako, KOFA s'en occupe.
 
-## Line 2 — Product intro (Frame 2)
+## Line 2 — Produit (Frame 2)
 
 **Time:** 5.0 – 10.0s
 **Delivery:** Posé, fier.
 
-    KOFA. Le goût de Bamako, livré chez vous.
+    KOFA, la livraison pensée pour Bamako : vos repas, vos courses et vos colis.
 
-## Line 3 — Commander (Frame 3)
+## Line 3 — Suivi en direct (Frame 3)
 
-**Time:** 10.0 – 17.0s
-**Delivery:** Simple, fluide.
-
-    Cherchez un plat ou un restaurant. Choisissez. Commandez. Un livreur KOFA vous l'apporte.
-
-## Line 4 — Avantages (Frame 4)
-
-**Time:** 17.0 – 24.0s
-**Delivery:** Souriant.
-
-    Parrainez un ami : moins cinq cents francs pour lui. Et toutes les cinq commandes, la suivante est moins chère.
-
-## Line 5 — Diaspora (Frame 5)
-
-**Time:** 24.0 – 32.0s
-**Delivery:** Plus doux, émouvant.
-
-    Vous êtes à Paris, New York, Dakar ou Dubaï ? Faites plaisir à votre famille à Bamako, où que vous soyez.
-
-## Line 6 — Trois étapes (Frame 6)
-
-**Time:** 32.0 – 39.0s
+**Time:** 10.0 – 16.0s
 **Delivery:** Clair, rassurant.
 
-    Dites-nous quoi offrir. On vous rappelle sur WhatsApp. Vous payez par Orange Money. Et KOFA livre.
+    Suivez votre livreur en direct, sur la carte, jusqu'à votre porte.
 
-## Line 7 — Rejoignez (Frame 7)
+## Line 4 — Note vocale (Frame 4)
 
-**Time:** 39.0 – 46.0s
-**Delivery:** Énergique.
+**Time:** 16.0 – 23.0s
+**Delivery:** Complice, on se reconnaît.
 
-    Restaurant, livreur, commerçant ? Rejoignez KOFA, et grandissez avec nous.
+    Votre adresse est difficile à trouver ? Laissez une note vocale à votre livreur. Il saura où aller.
 
-## Line 8 — CTA (Frame 8)
+## Line 5 — Code (Frame 5)
 
-**Time:** 46.0 – 52.0s
+**Time:** 23.0 – 30.0s
+**Delivery:** Sérieux, rassurant.
+
+    À la réception, donnez votre code à quatre chiffres. Votre commande est remise à la bonne personne.
+
+## Line 6 — Diaspora (Frame 6)
+
+**Time:** 30.0 – 38.0s
+**Delivery:** Plus doux, émouvant.
+
+    Vous vivez à Paris, à New York ou à Dakar ? Commandez et payez à distance pour vos proches à Bamako.
+
+## Line 7 — Bientôt (Frame 7)
+
+**Time:** 38.0 – 45.0s
 **Delivery:** Final, confiant.
 
-    KOFA. Le goût de Bamako, livré chez vous. Rendez-vous sur kofa point m l.
+    KOFA, bientôt disponible à Bamako. L'application est déjà sur le Play Store et l'App Store.

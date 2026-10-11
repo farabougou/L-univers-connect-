@@ -1,0 +1,68 @@
+<template>
+  <style>
+@font-face { font-family: "Inter"; font-weight: 400; src: url("assets/fonts/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; src: url("assets/fonts/inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 700; src: url("assets/fonts/inter-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 800; src: url("assets/fonts/inter-latin-800-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 900; src: url("assets/fonts/inter-latin-900-normal.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 500; src: url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Inter", sans-serif; color: #FFFFFF; }
+
+    #k02-bg { position: absolute; inset: 0; background: radial-gradient(90% 55% at 50% 36%, #10213a 0%, #0E0E10 62%); }
+    #k02-logo { position: absolute; left: 340px; top: 360px; width: 400px; height: 400px; }
+    .k02-sq { position: absolute; width: 200px; height: 200px; background: #2A78D6; display: block; }
+    #k02-tile { position: absolute; inset: 0; border-radius: 96px; background: #2A78D6; display: flex; align-items: center; justify-content: center; box-shadow: 0 30px 80px rgba(42,120,214,0.35); }
+    #k02-tile span { display: block; font-weight: 900; font-size: 250px; line-height: 1; color: #FFFFFF; letter-spacing: -0.04em; margin-top: -8px; }
+    #k02-word { position: absolute; left: 0; right: 0; top: 830px; display: flex; justify-content: center; gap: 4px; }
+    #k02-word span { display: block; font-weight: 900; font-size: 210px; letter-spacing: -0.03em; line-height: 1; color: #FFFFFF; }
+    #k02-pills { position: absolute; left: 70px; right: 70px; top: 1130px; display: flex; justify-content: center; gap: 24px; }
+    .k02-pill { display: flex; align-items: center; gap: 16px; padding: 22px 30px; border-radius: 100px; background: #1A1A1D; border: 2px solid #2b2b30; }
+    .k02-pill i { display: block; width: 22px; height: 22px; border-radius: 11px; }
+    .k02-pill b { display: block; font-weight: 700; font-size: 46px; color: #FFFFFF; letter-spacing: -0.01em; }
+    #k02-soon { position: absolute; left: 0; right: 0; top: 1330px; text-align: center; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 40px; letter-spacing: 0.14em; color: #EB6834; white-space: nowrap; }
+    #k02-soon em { font-style: normal; display: inline-block; opacity: 0; }
+
+  </style>
+  <div id="root" data-composition-id="02-kofa" data-start="0" data-duration="5.59" data-width="1080" data-height="1920">
+
+    <div id="k02-bg" class="clip" data-start="0" data-duration="5.59" data-track-index="0"></div>
+    <div id="k02-logo">
+      <span class="k02-sq" id="k02-s1" style="left:0;top:0;border-radius:96px 0 0 0"></span>
+      <span class="k02-sq" id="k02-s2" style="left:200px;top:0;border-radius:0 96px 0 0"></span>
+      <span class="k02-sq" id="k02-s3" style="left:0;top:200px;border-radius:0 0 0 96px"></span>
+      <span class="k02-sq" id="k02-s4" style="left:200px;top:200px;border-radius:0 0 96px 0"></span>
+      <div id="k02-tile"><span>K</span></div>
+    </div>
+    <div id="k02-word"><span>K</span><span>O</span><span>F</span><span>A</span></div>
+    <div id="k02-pills">
+      <div class="k02-pill" id="k02-p1"><i style="background:#EB6834"></i><b>repas</b></div>
+      <div class="k02-pill" id="k02-p2"><i style="background:#1BAF7A"></i><b>courses</b></div>
+      <div class="k02-pill" id="k02-p3"><i style="background:#EDA100"></i><b>colis</b></div>
+    </div>
+    <div id="k02-soon"></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="02-kofa"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="02-kofa"] ' + s);
+
+      const soon = R("#k02-soon");
+      "BIENTÔT À BAMAKO".split("").forEach((c) => { const e = document.createElement("em"); e.textContent = c === " " ? " " : c; soon.appendChild(e); });
+      const sq = [R("#k02-s1"), R("#k02-s2"), R("#k02-s3"), R("#k02-s4")];
+      const from = [[-420, -460], [420, -460], [-420, 460], [420, 460]];
+      sq.forEach((s, i) => tl.fromTo(s, { x: from[i][0], y: from[i][1], opacity: 0, rotation: (i % 2 ? 25 : -25) }, { x: 0, y: 0, opacity: 1, rotation: 0, duration: 0.7, ease: "power3.out" }, 0.0 + i * 0.05));
+      tl.fromTo(R("#k02-tile"), { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.6)" }, 0.75);
+      tl.to(sq, { opacity: 0, duration: 0.2 }, 0.9);
+      tl.fromTo(R("#k02-tile span"), { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" }, 0.8);
+      tl.fromTo(RA("#k02-word span"), { y: 80, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, stagger: 0.07, ease: "power3.out" }, 0.95);
+      [2.45, 2.98, 3.7].forEach((t, i) => tl.fromTo(R("#k02-p" + (i + 1)), { y: 50, opacity: 0, scale: 0.9 }, { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.4)" }, t));
+      tl.to(RA("#k02-soon em"), { opacity: 1, duration: 0.01, stagger: 0.022 }, 3.9);
+      tl.fromTo(R("#k02-logo"), { y: 0 }, { y: -10, duration: 4, ease: "sine.inOut" }, 1.0);
+
+      window.__timelines["02-kofa"] = tl;
+    })();
+  </script>
+</template>
