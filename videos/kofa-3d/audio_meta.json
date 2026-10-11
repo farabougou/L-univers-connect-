@@ -1,0 +1,388 @@
+{
+  "bgm": {
+    "path": "assets/music.wav",
+    "source": "host"
+  },
+  "bgm_pending": false,
+  "voices": [
+    {
+      "frame": 1,
+      "path": "assets/voice/01.wav",
+      "duration_s": 1.088,
+      "words": [
+        {
+          "text": "Vous",
+          "start": 0.04,
+          "end": 0.28
+        },
+        {
+          "text": "avez",
+          "start": 0.281,
+          "end": 0.699
+        },
+        {
+          "text": "faim ?",
+          "start": 0.7,
+          "end": 0.94
+        }
+      ]
+    },
+    {
+      "frame": 2,
+      "path": "assets/voice/02.wav",
+      "duration_s": 2.325,
+      "words": [
+        {
+          "text": "KOFA.",
+          "start": 0.04,
+          "end": 0.346
+        },
+        {
+          "text": "Le",
+          "start": 0.347,
+          "end": 0.522
+        },
+        {
+          "text": "goût",
+          "start": 0.523,
+          "end": 0.698
+        },
+        {
+          "text": "de",
+          "start": 0.699,
+          "end": 0.874
+        },
+        {
+          "text": "Bamako,",
+          "start": 1.17,
+          "end": 1.521
+        },
+        {
+          "text": "livré",
+          "start": 1.522,
+          "end": 1.828
+        },
+        {
+          "text": "chez",
+          "start": 1.828,
+          "end": 2.004
+        },
+        {
+          "text": "vous.",
+          "start": 2.004,
+          "end": 2.18
+        }
+      ]
+    },
+    {
+      "frame": 3,
+      "path": "assets/voice/03.wav",
+      "duration_s": 1.771,
+      "words": [
+        {
+          "text": "Repas,",
+          "start": 0.04,
+          "end": 0.399
+        },
+        {
+          "text": "courses,",
+          "start": 0.399,
+          "end": 0.758
+        },
+        {
+          "text": "colis,",
+          "start": 0.759,
+          "end": 1.118
+        },
+        {
+          "text": "grillades.",
+          "start": 1.118,
+          "end": 1.63
+        }
+      ]
+    },
+    {
+      "frame": 4,
+      "path": "assets/voice/04.wav",
+      "duration_s": 3.157,
+      "words": [
+        {
+          "text": "Vous",
+          "start": 0.04,
+          "end": 0.243
+        },
+        {
+          "text": "choisissez",
+          "start": 0.243,
+          "end": 0.747
+        },
+        {
+          "text": "en",
+          "start": 0.748,
+          "end": 0.951
+        },
+        {
+          "text": "quelques",
+          "start": 0.951,
+          "end": 1.304
+        },
+        {
+          "text": "gestes,",
+          "start": 1.305,
+          "end": 1.658
+        },
+        {
+          "text": "sur",
+          "start": 1.658,
+          "end": 2.031
+        },
+        {
+          "text": "votre",
+          "start": 2.032,
+          "end": 2.385
+        },
+        {
+          "text": "téléphone.",
+          "start": 2.385,
+          "end": 3.04
+        }
+      ]
+    },
+    {
+      "frame": 5,
+      "path": "assets/voice/05.wav",
+      "duration_s": 2.24,
+      "words": [
+        {
+          "text": "Et",
+          "start": 0.04,
+          "end": 0.228
+        },
+        {
+          "text": "vous",
+          "start": 0.228,
+          "end": 0.415
+        },
+        {
+          "text": "suivez",
+          "start": 0.415,
+          "end": 0.742
+        },
+        {
+          "text": "votre",
+          "start": 0.742,
+          "end": 1.069
+        },
+        {
+          "text": "livreur",
+          "start": 1.069,
+          "end": 1.395
+        },
+        {
+          "text": "en",
+          "start": 1.396,
+          "end": 1.583
+        },
+        {
+          "text": "direct.",
+          "start": 1.583,
+          "end": 2.09
+        }
+      ]
+    },
+    {
+      "frame": 6,
+      "path": "assets/voice/06.wav",
+      "duration_s": 2.901,
+      "words": [
+        {
+          "text": "Une",
+          "start": 0.04,
+          "end": 0.321
+        },
+        {
+          "text": "adresse",
+          "start": 0.322,
+          "end": 0.723
+        },
+        {
+          "text": "compliquée ?",
+          "start": 1.01,
+          "end": 1.414
+        },
+        {
+          "text": "Laissez-lui",
+          "start": 1.414,
+          "end": 1.815
+        },
+        {
+          "text": "une",
+          "start": 1.816,
+          "end": 2.097
+        },
+        {
+          "text": "note",
+          "start": 2.097,
+          "end": 2.379
+        },
+        {
+          "text": "vocale.",
+          "start": 2.379,
+          "end": 2.78
+        }
+      ]
+    },
+    {
+      "frame": 7,
+      "path": "assets/voice/07.wav",
+      "duration_s": 3.563,
+      "words": [
+        {
+          "text": "À",
+          "start": 0.04,
+          "end": 0.208
+        },
+        {
+          "text": "la",
+          "start": 0.209,
+          "end": 0.377
+        },
+        {
+          "text": "porte,",
+          "start": 0.377,
+          "end": 0.96
+        },
+        {
+          "text": "votre",
+          "start": 0.96,
+          "end": 1.253
+        },
+        {
+          "text": "code",
+          "start": 1.253,
+          "end": 1.546
+        },
+        {
+          "text": "à",
+          "start": 1.546,
+          "end": 1.715
+        },
+        {
+          "text": "quatre",
+          "start": 1.715,
+          "end": 2.008
+        },
+        {
+          "text": "chiffres",
+          "start": 2.008,
+          "end": 2.301
+        },
+        {
+          "text": "sécurise",
+          "start": 2.301,
+          "end": 2.844
+        },
+        {
+          "text": "la",
+          "start": 2.844,
+          "end": 3.012
+        },
+        {
+          "text": "remise.",
+          "start": 3.012,
+          "end": 3.43
+        }
+      ]
+    },
+    {
+      "frame": 8,
+      "path": "assets/voice/08.wav",
+      "duration_s": 3.477,
+      "words": [
+        {
+          "text": "Et",
+          "start": 0.04,
+          "end": 0.204
+        },
+        {
+          "text": "depuis",
+          "start": 0.204,
+          "end": 0.489
+        },
+        {
+          "text": "l'étranger,",
+          "start": 0.489,
+          "end": 0.895
+        },
+        {
+          "text": "faites",
+          "start": 0.895,
+          "end": 1.44
+        },
+        {
+          "text": "plaisir",
+          "start": 1.44,
+          "end": 1.835
+        },
+        {
+          "text": "à",
+          "start": 1.835,
+          "end": 1.999
+        },
+        {
+          "text": "votre",
+          "start": 1.999,
+          "end": 2.284
+        },
+        {
+          "text": "famille",
+          "start": 2.284,
+          "end": 2.69
+        },
+        {
+          "text": "à",
+          "start": 2.69,
+          "end": 2.854
+        },
+        {
+          "text": "Bamako.",
+          "start": 2.854,
+          "end": 3.35
+        }
+      ]
+    },
+    {
+      "frame": 9,
+      "path": "assets/voice/09.wav",
+      "duration_s": 2.133,
+      "words": [
+        {
+          "text": "KOFA,",
+          "start": 0.04,
+          "end": 0.354
+        },
+        {
+          "text": "bientôt",
+          "start": 0.355,
+          "end": 0.669
+        },
+        {
+          "text": "disponible",
+          "start": 0.669,
+          "end": 1.251
+        },
+        {
+          "text": "à",
+          "start": 1.251,
+          "end": 1.432
+        },
+        {
+          "text": "Bamako.",
+          "start": 1.432,
+          "end": 2.0
+        }
+      ]
+    }
+  ],
+  "sfx": []
+}

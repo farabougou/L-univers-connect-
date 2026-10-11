@@ -1,0 +1,235 @@
+<template id="captions-template" data-composition-id="captions" data-width="1080" data-height="1920">
+<script src="assets/vendor/gsap.min.js"></script>
+
+
+<style data-brand-tokens>
+      @font-face { font-family: 'Inter'; src: url('assets/fonts/Inter-400.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: block; }
+      @font-face { font-family: 'Inter'; src: url('assets/fonts/Inter-500.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: block; }
+      @font-face { font-family: 'Inter'; src: url('assets/fonts/Inter-600.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: block; }
+      @font-face { font-family: 'Inter'; src: url('assets/fonts/Inter-700.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: block; }
+      @font-face { font-family: 'Inter'; src: url('assets/fonts/Inter-800.woff2') format('woff2'); font-weight: 800; font-style: normal; font-display: block; }
+      @font-face { font-family: 'Inter'; src: url('assets/fonts/Inter-900.woff2') format('woff2'); font-weight: 900; font-style: normal; font-display: block; }
+      :root {
+      --kofa-blue: #2A78D6;
+      --kofa-green: #1BAF7A;
+      --kofa-yellow: #EDA100;
+      --kofa-violet: #4A3AA7;
+      --ink-black: #0E0E10;
+      --ink-black-alt: #1A1A1D;
+      --fire-orange: #EB6834;
+      --cream: #FFFFFF;
+      --cream-muted: #A1A1A6;
+      --cream-hint: #504D48;
+      --border-dark: #282726;
+      --ink-on-orange-muted: rgba(17,17,17,0.75);
+      --ink-on-orange-hint: rgba(17,17,17,0.55);
+      --ink-on-orange-faint: rgba(17,17,17,0.40);
+      --ink-on-orange-border: rgba(17,17,17,0.20);
+      --cap-ink: #0E0E10;
+      --cap-canvas: #FFFFFF;
+      --cap-accent: #EB6834;
+      --cap-accent-2: #EB6834;
+      --font-display: "Inter", system-ui, serif;
+      --font-body: "Inter", system-ui, sans-serif;
+      --cap-band-top: 1600px;
+      --cap-band-height: 320px;
+      }
+    </style>
+
+<style>
+  #captions-root {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .caption-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    pointer-events: none;
+  }
+  /* the keep-out band, from captionBand(H) — frame content stays above it */
+  .caption-stage {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: var(--cap-band-top, 900px);
+    height: var(--cap-band-height, 180px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .caption-group {
+    /* every group is absolutely stacked over the SAME band — exactly one shown at a
+       time via opacity. Must be absolute: in-flow groups would lay out side-by-side. */
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+  }
+
+  /* THE ink-black plate — single 1px fire-orange hairline (broadside's lone accent),
+     SHARP corners (0 radius), NO shadow (the plane is flat) */
+  .caption-pill {
+    max-width: 80%;
+    padding: 18px 44px 22px;
+    background: var(--cap-ink, #111111);
+    border: 1px solid var(--cap-accent, #e85d26);
+    border-radius: 0;
+  }
+  .caption-line {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.04em 0.3em;
+    font-family: "Inter", system-ui, sans-serif;
+    font-weight: 900;
+    font-size: clamp(38px, 4.2vw, 56px);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    text-transform: none;
+  }
+
+  /* upcoming — faint cream, no block (massive lowercase Barlow 900 as graphic primitive) */
+  .caption-word {
+    display: inline-block;
+    padding: 0 0.08em;
+    color: color-mix(in srgb, var(--cap-canvas, #f0ece5) 42%, var(--cap-ink, #111111));
+  }
+  /* current word — THE register flip: a hard flat fire-orange block (box-shadow spread =
+     a sharp rectangle w/o layout shift; no blur), ink reading on top — the lone accent */
+  .caption-word.is-active {
+    color: var(--cap-ink, #111111);
+    background: var(--cap-accent, #e85d26);
+    box-shadow: 0 0 0 0.06em var(--cap-accent, #e85d26);
+  }
+  /* already spoken — solid cream, the orange block cleared */
+  .caption-word.is-spoken {
+    color: var(--cap-canvas, #f0ece5);
+    background: transparent;
+    box-shadow: none;
+  }
+
+  /* optional per-word accents (dormant until a word-classer tags them) */
+  /* brand / key term — fire-orange ink, the cream-on-ink register's only inflection */
+  .caption-word.cap-brand {
+    color: var(--cap-accent, #e85d26);
+  }
+  /* numerals / data — the IBM Plex Mono chrome voice, uppercase + tracked, recessed */
+  .caption-word.cap-num {
+    font-family: "Inter", ui-monospace, monospace;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: color-mix(in srgb, var(--cap-canvas, #f0ece5) 72%, var(--cap-ink, #111111));
+  }
+  /* emphasis — a fire-orange hairline underline (no second hue; the lone accent again) */
+  .caption-word.cap-cta {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-decoration-color: var(--cap-accent-2, #e85d26);
+    text-underline-offset: 0.1em;
+  }
+
+  @media (max-aspect-ratio: 9/16) {
+    .caption-pill {
+      max-width: 92%;
+    }
+    .caption-line {
+      font-size: clamp(32px, 5.2vw, 46px);
+    }
+  }
+</style>
+
+<div
+  id="captions-root"
+  data-composition-id="captions"
+  data-timeline-locked
+  data-start="0"
+  data-duration="28.66"
+  data-fps="30"
+  data-width="1080"
+  data-height="1920"
+>
+  <div class="caption-layer" aria-hidden="true">
+    <div id="caption-stage" class="caption-stage"></div>
+  </div>
+</div>
+
+<script>
+  // captions.mjs injects the engine's scene-aware groups + real duration here.
+  var GROUPS = [{"id":"caption-group-0","frame":1,"start":0.04,"end":1.06,"text":"Vous avez faim ?","words":[{"id":"caption-word-0-0","text":"Vous","start":0.04,"end":0.28},{"id":"caption-word-0-1","text":"avez","start":0.281,"end":0.699},{"id":"caption-word-0-2","text":"faim ?","start":0.7,"end":0.94}]},{"id":"caption-group-1","frame":2,"start":2.03,"end":2.337,"text":"KOFA.","words":[{"id":"caption-word-1-0","text":"KOFA.","start":2.03,"end":2.336}]},{"id":"caption-group-2","frame":2,"start":2.337,"end":2.689,"text":"Le goût","words":[{"id":"caption-word-2-0","text":"Le","start":2.337,"end":2.512},{"id":"caption-word-2-1","text":"goût","start":2.513,"end":2.688}]},{"id":"caption-group-3","frame":2,"start":2.689,"end":2.984,"text":"de","words":[{"id":"caption-word-3-0","text":"de","start":2.689,"end":2.864}]},{"id":"caption-group-4","frame":2,"start":3.16,"end":3.512,"text":"Bamako,","words":[{"id":"caption-word-4-0","text":"Bamako,","start":3.16,"end":3.511}]},{"id":"caption-group-5","frame":2,"start":3.512,"end":4.29,"text":"livré chez vous.","words":[{"id":"caption-word-5-0","text":"livré","start":3.512,"end":3.818},{"id":"caption-word-5-1","text":"chez","start":3.818,"end":3.994},{"id":"caption-word-5-2","text":"vous.","start":3.994,"end":4.17}]},{"id":"caption-group-6","frame":3,"start":4.86,"end":5.219,"text":"Repas,","words":[{"id":"caption-word-6-0","text":"Repas,","start":4.86,"end":5.219}]},{"id":"caption-group-7","frame":3,"start":5.219,"end":5.579,"text":"courses,","words":[{"id":"caption-word-7-0","text":"courses,","start":5.219,"end":5.578}]},{"id":"caption-group-8","frame":3,"start":5.579,"end":5.938,"text":"colis,","words":[{"id":"caption-word-8-0","text":"colis,","start":5.579,"end":5.938}]},{"id":"caption-group-9","frame":3,"start":5.938,"end":6.57,"text":"grillades.","words":[{"id":"caption-word-9-0","text":"grillades.","start":5.938,"end":6.45}]},{"id":"caption-group-10","frame":4,"start":7.13,"end":7.838,"text":"Vous choisissez","words":[{"id":"caption-word-10-0","text":"Vous","start":7.13,"end":7.333},{"id":"caption-word-10-1","text":"choisissez","start":7.333,"end":7.837}]},{"id":"caption-group-11","frame":4,"start":7.838,"end":8.395,"text":"en quelques","words":[{"id":"caption-word-11-0","text":"en","start":7.838,"end":8.041},{"id":"caption-word-11-1","text":"quelques","start":8.041,"end":8.394}]},{"id":"caption-group-12","frame":4,"start":8.395,"end":8.748,"text":"gestes,","words":[{"id":"caption-word-12-0","text":"gestes,","start":8.395,"end":8.748}]},{"id":"caption-group-13","frame":4,"start":8.748,"end":10.25,"text":"sur votre téléphone.","words":[{"id":"caption-word-13-0","text":"sur","start":8.748,"end":9.121},{"id":"caption-word-13-1","text":"votre","start":9.122,"end":9.475},{"id":"caption-word-13-2","text":"téléphone.","start":9.475,"end":10.13}]},{"id":"caption-group-14","frame":5,"start":10.79,"end":11.165,"text":"Et vous","words":[{"id":"caption-word-14-0","text":"Et","start":10.79,"end":10.978},{"id":"caption-word-14-1","text":"vous","start":10.978,"end":11.165}]},{"id":"caption-group-15","frame":5,"start":11.165,"end":11.819,"text":"suivez votre","words":[{"id":"caption-word-15-0","text":"suivez","start":11.165,"end":11.492},{"id":"caption-word-15-1","text":"votre","start":11.492,"end":11.819}]},{"id":"caption-group-16","frame":5,"start":11.819,"end":12.96,"text":"livreur en direct.","words":[{"id":"caption-word-16-0","text":"livreur","start":11.819,"end":12.145},{"id":"caption-word-16-1","text":"en","start":12.146,"end":12.333},{"id":"caption-word-16-2","text":"direct.","start":12.333,"end":12.84}]},{"id":"caption-group-17","frame":6,"start":13.53,"end":14.333,"text":"Une adresse","words":[{"id":"caption-word-17-0","text":"Une","start":13.53,"end":13.811},{"id":"caption-word-17-1","text":"adresse","start":13.812,"end":14.213}]},{"id":"caption-group-18","frame":6,"start":14.5,"end":14.904,"text":"compliquée ?","words":[{"id":"caption-word-18-0","text":"compliquée ?","start":14.5,"end":14.904}]},{"id":"caption-group-19","frame":6,"start":14.904,"end":15.587,"text":"Laissez-lui une","words":[{"id":"caption-word-19-0","text":"Laissez-lui","start":14.904,"end":15.305},{"id":"caption-word-19-1","text":"une","start":15.306,"end":15.587}]},{"id":"caption-group-20","frame":6,"start":15.587,"end":16.39,"text":"note vocale.","words":[{"id":"caption-word-20-0","text":"note","start":15.587,"end":15.869},{"id":"caption-word-20-1","text":"vocale.","start":15.869,"end":16.27}]},{"id":"caption-group-21","frame":7,"start":16.93,"end":17.267,"text":"À la","words":[{"id":"caption-word-21-0","text":"À","start":16.93,"end":17.098},{"id":"caption-word-21-1","text":"la","start":17.099,"end":17.267}]},{"id":"caption-group-22","frame":7,"start":17.267,"end":17.85,"text":"porte,","words":[{"id":"caption-word-22-0","text":"porte,","start":17.267,"end":17.85}]},{"id":"caption-group-23","frame":7,"start":17.85,"end":18.436,"text":"votre code","words":[{"id":"caption-word-23-0","text":"votre","start":17.85,"end":18.143},{"id":"caption-word-23-1","text":"code","start":18.143,"end":18.436}]},{"id":"caption-group-24","frame":7,"start":18.436,"end":18.898,"text":"à quatre","words":[{"id":"caption-word-24-0","text":"à","start":18.436,"end":18.605},{"id":"caption-word-24-1","text":"quatre","start":18.605,"end":18.898}]},{"id":"caption-group-25","frame":7,"start":18.898,"end":19.902,"text":"chiffres sécurise la","words":[{"id":"caption-word-25-0","text":"chiffres","start":18.898,"end":19.191},{"id":"caption-word-25-1","text":"sécurise","start":19.191,"end":19.734},{"id":"caption-word-25-2","text":"la","start":19.734,"end":19.902}]},{"id":"caption-group-26","frame":7,"start":19.902,"end":20.44,"text":"remise.","words":[{"id":"caption-word-26-0","text":"remise.","start":19.902,"end":20.32}]},{"id":"caption-group-27","frame":8,"start":20.99,"end":21.439,"text":"Et depuis","words":[{"id":"caption-word-27-0","text":"Et","start":20.99,"end":21.154},{"id":"caption-word-27-1","text":"depuis","start":21.154,"end":21.439}]},{"id":"caption-group-28","frame":8,"start":21.439,"end":21.845,"text":"l'étranger,","words":[{"id":"caption-word-28-0","text":"l'étranger,","start":21.439,"end":21.845}]},{"id":"caption-group-29","frame":8,"start":21.845,"end":22.949,"text":"faites plaisir à","words":[{"id":"caption-word-29-0","text":"faites","start":21.845,"end":22.39},{"id":"caption-word-29-1","text":"plaisir","start":22.39,"end":22.785},{"id":"caption-word-29-2","text":"à","start":22.785,"end":22.949}]},{"id":"caption-group-30","frame":8,"start":22.949,"end":23.64,"text":"votre famille","words":[{"id":"caption-word-30-0","text":"votre","start":22.949,"end":23.234},{"id":"caption-word-30-1","text":"famille","start":23.234,"end":23.64}]},{"id":"caption-group-31","frame":8,"start":23.64,"end":24.42,"text":"à Bamako.","words":[{"id":"caption-word-31-0","text":"à","start":23.64,"end":23.804},{"id":"caption-word-31-1","text":"Bamako.","start":23.804,"end":24.3}]},{"id":"caption-group-32","frame":9,"start":24.97,"end":25.285,"text":"KOFA,","words":[{"id":"caption-word-32-0","text":"KOFA,","start":24.97,"end":25.284}]},{"id":"caption-group-33","frame":9,"start":25.285,"end":26.362,"text":"bientôt disponible à","words":[{"id":"caption-word-33-0","text":"bientôt","start":25.285,"end":25.599},{"id":"caption-word-33-1","text":"disponible","start":25.599,"end":26.181},{"id":"caption-word-33-2","text":"à","start":26.181,"end":26.362}]},{"id":"caption-group-34","frame":9,"start":26.362,"end":27.05,"text":"Bamako.","words":[{"id":"caption-word-34-0","text":"Bamako.","start":26.362,"end":26.93}]}];
+  var DURATION = 28.66;
+
+  (function () {
+    var stage = document.getElementById("caption-stage");
+
+    // build DOM: one .caption-group per group, .caption-word per word
+    GROUPS.forEach(function (group, g) {
+      var groupEl = document.createElement("div");
+      groupEl.className = "caption-group";
+      groupEl.id = "caption-group-" + g;
+      var pill = document.createElement("div");
+      pill.className = "caption-pill";
+      var line = document.createElement("div");
+      line.className = "caption-line";
+      (group.words || []).forEach(function (w, i) {
+        var span = document.createElement("span");
+        span.className = "caption-word";
+        span.id = "caption-word-" + g + "-" + i;
+        span.textContent = String(w.text);
+        line.appendChild(span);
+      });
+      pill.appendChild(line);
+      groupEl.appendChild(pill);
+      stage.appendChild(groupEl);
+    });
+
+    window.__timelines = window.__timelines || {};
+    var tl = gsap.timeline({ paused: true });
+
+    GROUPS.forEach(function (group, g) {
+      var groupEl = document.getElementById("caption-group-" + g);
+      var words = group.words || [];
+      var next = GROUPS[g + 1];
+      var isLast = g === GROUPS.length - 1;
+      var start = Math.max(0, Number(group.start));
+      var end = isLast ? DURATION : Math.min(Number(next.start), Number(group.end) + 0.3);
+      if (end <= start) end = start + 0.01;
+
+      // group on/off — exactly one group visible at a time
+      tl.set(groupEl, { opacity: 1 }, start);
+      tl.set(groupEl, { opacity: 0 }, end);
+
+      // 3-state karaoke via className SETS — seek-safe (gsap.set applies on the
+      // engine's frame-by-frame seek; .call callbacks would NOT fire).
+      words.forEach(function (w, i) {
+        var el = document.getElementById("caption-word-" + g + "-" + i);
+        var at = Math.max(start, Number(w.start));
+        tl.set(el, { className: "caption-word" }, start); // upcoming (also resets on reverse-seek)
+        tl.set(el, { className: "caption-word is-active" }, at); // current
+        tl.fromTo(el, { scale: 0.92 }, { scale: 1, duration: 0.1, ease: "power3.out" }, at);
+        if (i + 1 < words.length) {
+          var nextAt = Math.max(start, Number(words[i + 1].start));
+          tl.set(el, { className: "caption-word is-spoken" }, nextAt); // demote when next activates
+        }
+      });
+      if (words.length) {
+        var lastEl = document.getElementById("caption-word-" + g + "-" + (words.length - 1));
+        var lastSpoken = Math.min(end, Number(words[words.length - 1].end) + 0.1);
+        tl.set(lastEl, { className: "caption-word is-spoken" }, lastSpoken);
+      }
+    });
+
+    // full-span anchor so the sub-comp timeline spans the whole video
+    tl.to({}, { duration: DURATION }, 0);
+    window.__timelines["captions"] = tl;
+  })();
+</script>
+
+<style>
+  .caption-line { line-height: 1.1 !important; }
+</style>
+</template>
