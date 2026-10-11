@@ -1,0 +1,78 @@
+<template>
+  <style>
+@font-face { font-family: "Inter"; font-weight: 400; src: url("assets/fonts/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; src: url("assets/fonts/inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 700; src: url("assets/fonts/inter-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 800; src: url("assets/fonts/inter-latin-800-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 900; src: url("assets/fonts/inter-latin-900-normal.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 500; src: url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Inter", sans-serif; color: #FFFFFF; }
+
+    #k01-bg { position: absolute; inset: 0; background: radial-gradient(110% 60% at 50% 40%, #0c1a3a 0%, #050B1A 65%); }
+    .k01-kick { position: absolute; left: 0; right: 0; text-align: center; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 30px; letter-spacing: 0.16em; color: #38BDF8; }
+    .k01-h { position: absolute; left: 30px; right: 30px; text-align: center; font-weight: 900; letter-spacing: -0.04em; line-height: 1; color: #F8FAFC; white-space: nowrap; }
+    .k01-h em { font-style: normal; color: #38BDF8; }
+    .k01-card { position: absolute; border-radius: 40px; background: rgba(12,23,48,0.92); border: 2px solid #1E2A44; }
+    .k01-mono { font-family: "IBM Plex Mono", monospace; font-weight: 500; letter-spacing: 0.12em; }
+
+    #k01-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; display: block; }
+    .k01-pin { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+    .k01-pin > div { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); }
+
+
+    .k01-tag { display: flex; align-items: center; gap: 12px; padding: 14px 24px; border-radius: 30px; background: rgba(12,23,48,0.9); border: 2px solid #1E2A44; white-space: nowrap; }
+    .k01-tag b { display: block; font-weight: 700; font-size: 32px; color: #F8FAFC; }
+    .k01-tag s { display: block; text-decoration: none; font-weight: 700; font-size: 32px; color: #EA580C; }
+    .k01-tag i { display: block; width: 16px; height: 16px; border-radius: 8px; background: #38BDF8; }
+    .k01-badge { position: absolute; left: 0; right: 0; display: flex; justify-content: center; }
+    .k01-badge div { display: flex; align-items: center; gap: 14px; padding: 18px 34px; border-radius: 40px; font-weight: 900; font-size: 44px; letter-spacing: 0.02em; color: #fff; }
+    .k01-sh { text-shadow: 0 8px 30px rgba(5,11,26,0.9); }
+    .k01-stack { position: absolute; left: 70px; right: 70px; display: flex; flex-direction: column; gap: 22px; }
+    .k01-row { display: flex; align-items: center; gap: 20px; padding: 24px 30px; border-radius: 30px; background: rgba(12,23,48,0.92); border: 2px solid #1E2A44; }
+    .k01-row i { display: flex; flex: none; width: 56px; height: 56px; border-radius: 28px; align-items: center; justify-content: center; font-style: normal; font-weight: 900; font-size: 30px; color: #fff; }
+    .k01-row b { display: block; font-weight: 800; font-size: 40px; color: #F8FAFC; }
+
+
+    #k01-k { top: 140px; }
+    #k01-h1 { top: 195px; font-size: 104px; }
+    #k01-h2 { top: 305px; font-size: 104px; }
+    #k01-h2 em { color: #EA580C; }
+    #k01-cut { top: 470px; }
+    #k01-cut div { background: #dc2626; box-shadow: 0 14px 40px rgba(220,38,38,0.45); }
+
+  </style>
+  <div id="root" data-composition-id="01-cout" data-start="0" data-duration="7.54" data-width="1080" data-height="1920">
+
+    <div id="k01-bg" class="clip" data-start="0" data-duration="7.54" data-track-index="0"></div>
+    <canvas id="k01-cv" width="1080" height="1920"></canvas>
+    <div class="k01-kick" id="k01-k">AU MALI</div>
+    <div class="k01-h k01-sh" id="k01-h1">l'électricité</div>
+    <div class="k01-h k01-sh" id="k01-h2">coûte <em>cher</em></div>
+    <div class="k01-badge" id="k01-cut"><div>COUPURE DE COURANT</div></div>
+    <div class="k01-pin" id="k01-g"><div><div class="k01-tag"><b>Groupe électrogène</b><s>· gasoil</s></div></div></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="01-cout"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="01-cout"] ' + s);
+
+      const L = [R("#k01-g")];
+      const __r3 = ENX3D.blackout(R("#k01-cv"), L);
+      const __s3 = { t: 0 };
+      tl.fromTo(__s3, { t: 0 }, { t: 7.14, duration: 7.14, ease: "none", onUpdate: () => __r3(__s3.t) }, 0);
+      __r3(0);
+      tl.fromTo(R("#k01-k"), { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0);
+      tl.fromTo(R("#k01-h1"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.55);
+      tl.fromTo(R("#k01-h2"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 1.35);
+      tl.fromTo(R("#k01-cut div"), { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.7)" }, 3.2);
+      tl.fromTo(R("#k01-cut div"), { x: -8 }, { x: 8, duration: 0.05, repeat: 5, yoyo: true, immediateRender: false }, 3.3);
+      tl.fromTo(R("#k01-g .k01-tag"), { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.7)" }, 4.4);
+      tl.fromTo(R("#k01-g s"), { opacity: 0 }, { opacity: 1, duration: 0.3 }, 5.5);
+
+      window.__timelines["01-cout"] = tl;
+    })();
+  </script>
+</template>
