@@ -1,0 +1,38 @@
+{
+  "provider": "kokoro",
+  "speed": "0.9",
+  "lines": [
+    {
+      "id": "01",
+      "text": "Vous êtes à Paris, à Dakar ou en voyage. Mais votre bâtiment, lui, est à Bamako."
+    },
+    {
+      "id": "02",
+      "text": "Avec Enoryx, vous gardez le contrôle de vos installations, partout dans le monde."
+    },
+    {
+      "id": "03",
+      "text": "Sur votre téléphone, vous suivez la consommation de chaque bâtiment, en direct."
+    },
+    {
+      "id": "04",
+      "text": "Vous voyez l'état de vos équipements : climatiseurs, groupe électrogène, chambre froide."
+    },
+    {
+      "id": "05",
+      "text": "Si quelque chose dérive, l'alerte s'affiche aussitôt, même à l'autre bout du monde."
+    },
+    {
+      "id": "06",
+      "text": "Et vous envoyez votre technicien sur place, au bon moment."
+    },
+    {
+      "id": "07",
+      "text": "Enoryx. Vos installations, sous contrôle, partout."
+    }
+  ],
+  "bgm": {
+    "mode": "none"
+  },
+  "voice": "ff_siwis"
+}

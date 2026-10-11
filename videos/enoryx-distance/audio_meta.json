@@ -1,0 +1,464 @@
+{
+  "bgm": {
+    "path": "assets/music.wav",
+    "source": "host"
+  },
+  "bgm_pending": false,
+  "voices": [
+    {
+      "frame": 1,
+      "path": "assets/voice/01.wav",
+      "duration_s": 5.056,
+      "words": [
+        {
+          "text": "Vous",
+          "start": 0.06,
+          "end": 0.246
+        },
+        {
+          "text": "êtes",
+          "start": 0.246,
+          "end": 0.569
+        },
+        {
+          "text": "à",
+          "start": 0.569,
+          "end": 0.755
+        },
+        {
+          "text": "Paris,",
+          "start": 0.755,
+          "end": 1.248
+        },
+        {
+          "text": "à",
+          "start": 1.248,
+          "end": 1.434
+        },
+        {
+          "text": "Dakar",
+          "start": 1.434,
+          "end": 1.757
+        },
+        {
+          "text": "ou",
+          "start": 1.757,
+          "end": 1.943
+        },
+        {
+          "text": "en",
+          "start": 1.943,
+          "end": 2.129
+        },
+        {
+          "text": "voyage.",
+          "start": 2.129,
+          "end": 2.452
+        },
+        {
+          "text": "Mais",
+          "start": 2.452,
+          "end": 2.978
+        },
+        {
+          "text": "votre",
+          "start": 2.978,
+          "end": 3.301
+        },
+        {
+          "text": "bâtiment,",
+          "start": 3.301,
+          "end": 3.762
+        },
+        {
+          "text": "lui,",
+          "start": 3.762,
+          "end": 3.948
+        },
+        {
+          "text": "est",
+          "start": 3.948,
+          "end": 4.133
+        },
+        {
+          "text": "à",
+          "start": 4.133,
+          "end": 4.319
+        },
+        {
+          "text": "Bamako.",
+          "start": 4.319,
+          "end": 4.9
+        }
+      ]
+    },
+    {
+      "frame": 2,
+      "path": "assets/voice/02.wav",
+      "duration_s": 4.971,
+      "words": [
+        {
+          "text": "Avec",
+          "start": 0.04,
+          "end": 0.397
+        },
+        {
+          "text": "Enoryx,",
+          "start": 0.397,
+          "end": 0.906
+        },
+        {
+          "text": "vous",
+          "start": 0.907,
+          "end": 1.112
+        },
+        {
+          "text": "gardez",
+          "start": 1.39,
+          "end": 1.729
+        },
+        {
+          "text": "le",
+          "start": 1.729,
+          "end": 1.934
+        },
+        {
+          "text": "contrôle",
+          "start": 1.934,
+          "end": 2.443
+        },
+        {
+          "text": "de",
+          "start": 2.443,
+          "end": 2.649
+        },
+        {
+          "text": "vos",
+          "start": 2.649,
+          "end": 2.854
+        },
+        {
+          "text": "installations,",
+          "start": 2.854,
+          "end": 3.515
+        },
+        {
+          "text": "partout",
+          "start": 3.79,
+          "end": 4.082
+        },
+        {
+          "text": "dans",
+          "start": 4.082,
+          "end": 4.287
+        },
+        {
+          "text": "le",
+          "start": 4.288,
+          "end": 4.493
+        },
+        {
+          "text": "monde.",
+          "start": 4.493,
+          "end": 4.85
+        }
+      ]
+    },
+    {
+      "frame": 3,
+      "path": "assets/voice/03.wav",
+      "duration_s": 4.843,
+      "words": [
+        {
+          "text": "Sur",
+          "start": 0.04,
+          "end": 0.237
+        },
+        {
+          "text": "votre",
+          "start": 0.237,
+          "end": 0.58
+        },
+        {
+          "text": "téléphone,",
+          "start": 0.581,
+          "end": 1.216
+        },
+        {
+          "text": "vous",
+          "start": 1.216,
+          "end": 1.413
+        },
+        {
+          "text": "suivez",
+          "start": 1.69,
+          "end": 2.017
+        },
+        {
+          "text": "la",
+          "start": 2.017,
+          "end": 2.214
+        },
+        {
+          "text": "consommation",
+          "start": 2.214,
+          "end": 2.849
+        },
+        {
+          "text": "de",
+          "start": 2.85,
+          "end": 3.047
+        },
+        {
+          "text": "chaque",
+          "start": 3.047,
+          "end": 3.39
+        },
+        {
+          "text": "bâtiment,",
+          "start": 3.39,
+          "end": 3.979
+        },
+        {
+          "text": "en",
+          "start": 3.98,
+          "end": 4.177
+        },
+        {
+          "text": "direct.",
+          "start": 4.177,
+          "end": 4.71
+        }
+      ]
+    },
+    {
+      "frame": 4,
+      "path": "assets/voice/04.wav",
+      "duration_s": 5.184,
+      "words": [
+        {
+          "text": "Vous",
+          "start": 0.04,
+          "end": 0.247
+        },
+        {
+          "text": "voyez",
+          "start": 0.247,
+          "end": 0.454
+        },
+        {
+          "text": "l'état",
+          "start": 0.454,
+          "end": 0.814
+        },
+        {
+          "text": "de",
+          "start": 0.814,
+          "end": 1.02
+        },
+        {
+          "text": "vos",
+          "start": 1.021,
+          "end": 1.227
+        },
+        {
+          "text": "équipements :",
+          "start": 1.55,
+          "end": 2.314
+        },
+        {
+          "text": "climatiseurs,",
+          "start": 2.314,
+          "end": 3.16
+        },
+        {
+          "text": "groupe",
+          "start": 3.16,
+          "end": 3.52
+        },
+        {
+          "text": "électrogène,",
+          "start": 3.52,
+          "end": 4.34
+        },
+        {
+          "text": "chambre",
+          "start": 4.34,
+          "end": 4.7
+        },
+        {
+          "text": "froide.",
+          "start": 4.7,
+          "end": 5.06
+        }
+      ]
+    },
+    {
+      "frame": 5,
+      "path": "assets/voice/05.wav",
+      "duration_s": 4.736,
+      "words": [
+        {
+          "text": "Si",
+          "start": 0.04,
+          "end": 0.22
+        },
+        {
+          "text": "quelque",
+          "start": 0.22,
+          "end": 0.533
+        },
+        {
+          "text": "chose",
+          "start": 0.533,
+          "end": 0.846
+        },
+        {
+          "text": "dérive,",
+          "start": 0.846,
+          "end": 1.292
+        },
+        {
+          "text": "l'alerte",
+          "start": 1.292,
+          "end": 2.009
+        },
+        {
+          "text": "s'affiche",
+          "start": 2.009,
+          "end": 2.455
+        },
+        {
+          "text": "aussitôt,",
+          "start": 2.455,
+          "end": 2.991
+        },
+        {
+          "text": "même",
+          "start": 2.991,
+          "end": 3.444
+        },
+        {
+          "text": "à",
+          "start": 3.444,
+          "end": 3.624
+        },
+        {
+          "text": "l'autre",
+          "start": 3.624,
+          "end": 3.937
+        },
+        {
+          "text": "bout",
+          "start": 3.937,
+          "end": 4.117
+        },
+        {
+          "text": "du",
+          "start": 4.117,
+          "end": 4.297
+        },
+        {
+          "text": "monde.",
+          "start": 4.297,
+          "end": 4.61
+        }
+      ]
+    },
+    {
+      "frame": 6,
+      "path": "assets/voice/06.wav",
+      "duration_s": 3.456,
+      "words": [
+        {
+          "text": "Et",
+          "start": 0.02,
+          "end": 0.232
+        },
+        {
+          "text": "vous",
+          "start": 0.232,
+          "end": 0.444
+        },
+        {
+          "text": "envoyez",
+          "start": 0.444,
+          "end": 0.812
+        },
+        {
+          "text": "votre",
+          "start": 0.813,
+          "end": 1.181
+        },
+        {
+          "text": "technicien",
+          "start": 1.181,
+          "end": 1.707
+        },
+        {
+          "text": "sur",
+          "start": 1.707,
+          "end": 1.919
+        },
+        {
+          "text": "place,",
+          "start": 1.919,
+          "end": 2.287
+        },
+        {
+          "text": "au",
+          "start": 2.288,
+          "end": 2.719
+        },
+        {
+          "text": "bon",
+          "start": 2.719,
+          "end": 2.931
+        },
+        {
+          "text": "moment.",
+          "start": 2.931,
+          "end": 3.3
+        }
+      ]
+    },
+    {
+      "frame": 7,
+      "path": "assets/voice/07.wav",
+      "duration_s": 3.029,
+      "words": [
+        {
+          "text": "Enoryx.",
+          "start": 0.02,
+          "end": 0.575
+        },
+        {
+          "text": "Vos",
+          "start": 0.576,
+          "end": 0.799
+        },
+        {
+          "text": "installations,",
+          "start": 0.8,
+          "end": 1.521
+        },
+        {
+          "text": "sous",
+          "start": 1.521,
+          "end": 1.865
+        },
+        {
+          "text": "contrôle,",
+          "start": 1.865,
+          "end": 2.42
+        },
+        {
+          "text": "partout.",
+          "start": 2.42,
+          "end": 2.9
+        }
+      ]
+    }
+  ],
+  "sfx": []
+}
