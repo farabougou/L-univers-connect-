@@ -1,0 +1,34 @@
+{
+  "provider": "kokoro",
+  "speed": "0.92",
+  "lines": [
+    {
+      "id": "01",
+      "text": "La nuit, le chauffage tourne encore. Le gaspillage d'énergie est souvent invisible."
+    },
+    {
+      "id": "02",
+      "text": "Le décret tertiaire impose moins quarante pour cent d'ici 2030."
+    },
+    {
+      "id": "03",
+      "text": "Enoryx connecte vos équipements et les surveille en continu."
+    },
+    {
+      "id": "04",
+      "text": "Il compare chaque consommation à la météo et détecte les dérives."
+    },
+    {
+      "id": "05",
+      "text": "Puis il déclenche l'intervention, avant que la facture ne s'envole."
+    },
+    {
+      "id": "06",
+      "text": "Enoryx. Chaque kilowattheure compte."
+    }
+  ],
+  "bgm": {
+    "mode": "none"
+  },
+  "voice": "ff_siwis"
+}

@@ -1,0 +1,91 @@
+<template>
+  <style>
+@font-face { font-family: "Inter"; font-weight: 400; src: url("assets/fonts/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; src: url("assets/fonts/inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 700; src: url("assets/fonts/inter-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 800; src: url("assets/fonts/inter-latin-800-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 900; src: url("assets/fonts/inter-latin-900-normal.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 500; src: url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Inter", sans-serif; color: #FFFFFF; }
+
+    #k03-bg { position: absolute; inset: 0; background: radial-gradient(110% 60% at 50% 40%, #0c1a3a 0%, #050B1A 65%); }
+    .k03-kick { position: absolute; left: 0; right: 0; text-align: center; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 30px; letter-spacing: 0.16em; color: #38BDF8; }
+    .k03-h { position: absolute; left: 30px; right: 30px; text-align: center; font-weight: 900; letter-spacing: -0.04em; line-height: 1; color: #F8FAFC; white-space: nowrap; }
+    .k03-h em { font-style: normal; color: #38BDF8; }
+    .k03-card { position: absolute; border-radius: 40px; background: rgba(12,23,48,0.92); border: 2px solid #1E2A44; }
+    .k03-mono { font-family: "IBM Plex Mono", monospace; font-weight: 500; letter-spacing: 0.12em; }
+
+    #k03-word { top: 150px; font-size: 150px; letter-spacing: 0.02em; }
+    #k03-k { top: 330px; color: #94A3B8; }
+    #k03-mark { position: absolute; left: 330px; top: 640px; width: 420px; height: 420px; overflow: visible; }
+    #k03-net { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; overflow: visible; }
+    .k03-node { position: absolute; width: 230px; height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+    .k03-node b { display: block; font-weight: 700; font-size: 32px; color: #F8FAFC; }
+    .k03-node i { display: block; width: 18px; height: 18px; border-radius: 9px; background: #16A34A; }
+    #k03-protos { position: absolute; left: 60px; right: 60px; top: 1420px; display: flex; justify-content: center; gap: 18px; }
+    .k03-chip { display: block; padding: 16px 24px; border-radius: 40px; border: 2px solid #1E2A44; background: #0C1730; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 26px; letter-spacing: 0.1em; color: #38BDF8; }
+
+  </style>
+  <div id="root" data-composition-id="03-enoryx" data-start="0" data-duration="4.96" data-width="1080" data-height="1920">
+
+    <div id="k03-bg" class="clip" data-start="0" data-duration="4.96" data-track-index="0"></div>
+    <div class="k03-h" id="k03-word">ENORYX</div>
+    <div class="k03-kick" id="k03-k">SUPERVISION CONTINUE</div>
+    <svg id="k03-net" viewBox="0 0 1080 1920"></svg>
+    <svg viewBox="0 0 200 200" id="k03-mark">
+  <defs>
+    <radialGradient id="k03-core" cx="35%" cy="32%" r="70%"><stop offset="0%" stop-color="#eaf6ff"/><stop offset="40%" stop-color="#7dd3fc"/><stop offset="100%" stop-color="#1d4ed8"/></radialGradient>
+    <linearGradient id="k03-ring" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#67e8f9"/><stop offset="100%" stop-color="#1e40af"/></linearGradient>
+    <filter id="k03-glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <g id="k03-rings" fill="none" stroke="url(#k03-ring)" stroke-width="3.5" filter="url(#k03-glow)">
+    <ellipse class="k03-ring" cx="100" cy="100" rx="88" ry="40"/>
+    <ellipse class="k03-ring" cx="100" cy="100" rx="88" ry="40" transform="rotate(60 100 100)"/>
+    <ellipse class="k03-ring" cx="100" cy="100" rx="88" ry="40" transform="rotate(120 100 100)"/>
+  </g>
+  <circle id="k03-corec" cx="100" cy="100" r="23" fill="url(#k03-core)" filter="url(#k03-glow)"/>
+  <g filter="url(#k03-glow)"><circle class="k03-sat" cx="100" cy="12" r="7" fill="#7dd3fc"/><circle class="k03-sat" cx="176" cy="144" r="6.5" fill="#38bdf8"/><circle class="k03-sat" cx="24" cy="144" r="6.5" fill="#38bdf8"/></g>
+</svg>
+
+    <div class="k03-card k03-node" id="k03-n0" style="left:70px;top:480px"><b>Chaudière</b><i></i></div>
+    <div class="k03-card k03-node" id="k03-n1" style="left:780px;top:480px"><b>Climatisation</b><i></i></div>
+    <div class="k03-card k03-node" id="k03-n2" style="left:70px;top:1110px"><b>Ventilation</b><i></i></div>
+    <div class="k03-card k03-node" id="k03-n3" style="left:780px;top:1110px"><b>Compteurs</b><i></i></div>
+    <div id="k03-protos"><span class="k03-chip">BACNET</span><span class="k03-chip">MODBUS</span><span class="k03-chip">OPC UA</span><span class="k03-chip">MQTT</span></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="03-enoryx"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="03-enoryx"] ' + s);
+
+      const NS = "http://www.w3.org/2000/svg", net = R("#k03-net");
+      const C = [540, 850];
+      const ends = [[185, 630], [895, 630], [185, 1110], [895, 1110]];
+      const lines = ends.map(([x, y]) => { const p = document.createElementNS(NS, "path"); p.setAttribute("d", `M${x} ${y} L${C[0]} ${C[1]}`); p.setAttribute("stroke", "#38BDF8"); p.setAttribute("stroke-width", "4"); p.setAttribute("opacity", "0.7"); p.setAttribute("stroke-dasharray", "10 10"); net.appendChild(p); return p; });
+      const pulses = ends.map(() => { const c = document.createElementNS(NS, "circle"); c.setAttribute("r", "11"); c.setAttribute("fill", "#7dd3fc"); c.setAttribute("opacity", "0"); net.appendChild(c); return c; });
+      // mark assembles
+      tl.fromTo(RA(".k03-ring"), { opacity: 0, scale: 0.3, transformOrigin: "100px 100px" }, { opacity: 1, scale: 1, duration: 0.8, stagger: 0.08, ease: "power3.out" }, 0);
+      tl.fromTo(R("#k03-corec"), { scale: 0, transformOrigin: "100px 100px" }, { scale: 1, duration: 0.5, ease: "back.out(2.4)" }, 0.15);
+      tl.fromTo(RA(".k03-sat"), { opacity: 0 }, { opacity: 1, duration: 0.3, stagger: 0.06 }, 0.5);
+      tl.fromTo(R("#k03-word"), { opacity: 0, y: 30, scale: 1.25 }, { opacity: 1, y: 0, scale: 1, duration: 0.8, ease: "power3.out" }, 0.05);
+      tl.fromTo(R("#k03-rings"), { rotation: 0, transformOrigin: "100px 100px" }, { rotation: 40, duration: 4.4, ease: "none" }, 0);
+      // equipment connects
+      [0, 1, 2, 3].forEach((i) => {
+        tl.fromTo(R("#k03-n" + i), { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.6)" }, 0.95 + i * 0.12);
+        tl.fromTo(lines[i], { opacity: 0 }, { opacity: 0.7, duration: 0.4 }, 1.15 + i * 0.12);
+      });
+      tl.fromTo(R("#k03-k"), { opacity: 0 }, { opacity: 1, duration: 0.4 }, 2.2);
+      // continuous monitoring: data pulses travel to the core
+      pulses.forEach((p, i) => {
+        const [x, y] = ends[i]; const o = { t: 0 };
+        tl.fromTo(o, { t: 0 }, { t: 1, duration: 0.8, repeat: 2, ease: "power1.in", onUpdate: () => { p.setAttribute("cx", x + (C[0] - x) * o.t); p.setAttribute("cy", y + (C[1] - y) * o.t); p.setAttribute("opacity", String(Math.sin(o.t * Math.PI))); } }, 2.25 + i * 0.15);
+      });
+      tl.fromTo(RA(".k03-chip"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.35, stagger: 0.08, ease: "power3.out" }, 2.7);
+
+      window.__timelines["03-enoryx"] = tl;
+    })();
+  </script>
+</template>
