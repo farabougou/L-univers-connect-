@@ -16,29 +16,33 @@
     .k02-card { position: absolute; border-radius: 40px; background: rgba(12,23,48,0.92); border: 2px solid #1E2A44; }
     .k02-mono { font-family: "IBM Plex Mono", monospace; font-weight: 500; letter-spacing: 0.12em; }
 
+    #k02-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; display: block; }
+    .k02-pin { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+    .k02-pin > div { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); }
+
     #k02-k { top: 150px; }
     #k02-hero { top: 210px; font-size: 250px; color: #38BDF8; font-variant-numeric: tabular-nums; }
     #k02-hero small { font-size: 150px; }
     #k02-sub { top: 480px; font-size: 64px; font-weight: 800; }
-    #k02-chart { position: absolute; left: 90px; right: 90px; top: 640px; height: 860px; border-bottom: 3px solid #1E2A44; display: flex; align-items: flex-end; justify-content: space-between; }
-    .k02-col { position: relative; width: 190px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
-    .k02-bar { width: 100%; border-radius: 22px 22px 0 0; transform-origin: 50% 100%; }
-    .k02-val { display: block; margin-bottom: 14px; font-weight: 900; font-size: 50px; color: #F8FAFC; }
-    .k02-yr { position: absolute; bottom: -62px; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 30px; letter-spacing: 0.1em; color: #94A3B8; }
+    .k02-v { display: block; font-weight: 900; font-size: 54px; color: #F8FAFC; white-space: nowrap; text-shadow: 0 6px 24px rgba(5,11,26,0.9); }
+    .k02-y { display: block; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 30px; letter-spacing: 0.1em; color: #94A3B8; white-space: nowrap; }
 
   </style>
   <div id="root" data-composition-id="02-enjeu" data-start="0" data-duration="5.9" data-width="1080" data-height="1920">
 
     <div id="k02-bg" class="clip" data-start="0" data-duration="5.9" data-track-index="0"></div>
+    <canvas id="k02-cv" width="1080" height="1920"></canvas>
     <div class="k02-kick" id="k02-k">DÉCRET TERTIAIRE</div>
     <div class="k02-h" id="k02-hero">-<span id="k02-n">0</span><small> %</small></div>
     <div class="k02-h" id="k02-sub">d'ici <em>2030</em></div>
-    <div id="k02-chart">
-      <div class="k02-col" id="k02-c0"><span class="k02-val">100</span><div class="k02-bar" style="height:640px;background:#334155"></div><span class="k02-yr">RÉF.</span></div>
-      <div class="k02-col" id="k02-c1"><span class="k02-val">-40 %</span><div class="k02-bar" style="height:384px;background:#38BDF8"></div><span class="k02-yr">2030</span></div>
-      <div class="k02-col" id="k02-c2"><span class="k02-val">-50 %</span><div class="k02-bar" style="height:320px;background:#1D4ED8"></div><span class="k02-yr">2040</span></div>
-      <div class="k02-col" id="k02-c3"><span class="k02-val">-60 %</span><div class="k02-bar" style="height:256px;background:#1D4ED8;opacity:0.75"></div><span class="k02-yr">2050</span></div>
-    </div>
+    <div class="k02-pin" id="k02-v0"><div><span class="k02-v">100</span></div></div>
+    <div class="k02-pin" id="k02-v1"><div><span class="k02-v">-40 %</span></div></div>
+    <div class="k02-pin" id="k02-v2"><div><span class="k02-v">-50 %</span></div></div>
+    <div class="k02-pin" id="k02-v3"><div><span class="k02-v">-60 %</span></div></div>
+    <div class="k02-pin" id="k02-y0"><div><span class="k02-y">RÉF.</span></div></div>
+    <div class="k02-pin" id="k02-y1"><div><span class="k02-y">2030</span></div></div>
+    <div class="k02-pin" id="k02-y2"><div><span class="k02-y">2040</span></div></div>
+    <div class="k02-pin" id="k02-y3"><div><span class="k02-y">2050</span></div></div>
 
   </div>
   <script>
@@ -47,18 +51,20 @@
       const R = (s) => document.querySelector('[data-composition-id="02-enjeu"] ' + s);
       const RA = (s) => document.querySelectorAll('[data-composition-id="02-enjeu"] ' + s);
 
-      const cols = [0,1,2,3].map((i) => R("#k02-c" + i));
+      const L = [0, 1, 2, 3].map((i) => ({ v: R("#k02-v" + i), y: R("#k02-y" + i) }));
+      const __r3 = ENX3D.bars(R("#k02-cv"), L);
+      const __s3 = { t: 0 };
+      tl.fromTo(__s3, { t: 0 }, { t: 5.5, duration: 5.5, ease: "none", onUpdate: () => __r3(__s3.t) }, 0);
+      __r3(0);
       const at = [0.4, 1.95, 3.9, 4.2];
-      tl.fromTo(R("#k02-k"), { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 0);
-      tl.fromTo(R("#k02-chart"), { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.2);
-      cols.forEach((c, i) => {
-        tl.fromTo(c.querySelector(".k02-bar"), { scaleY: 0 }, { scaleY: 1, duration: 0.7, ease: "power3.out" }, at[i]);
-        tl.fromTo(c.querySelector(".k02-val"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, at[i] + 0.35);
-        tl.fromTo(c.querySelector(".k02-yr"), { opacity: 0 }, { opacity: 1, duration: 0.3 }, at[i] + 0.1);
+      L.forEach((l, i) => {
+        tl.fromTo(l.v.querySelector("span"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, at[i] + 0.5);
+        tl.fromTo(l.y.querySelector("span"), { opacity: 0 }, { opacity: 1, duration: 0.3 }, at[i] + 0.1);
       });
+      tl.fromTo(R("#k02-k"), { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 0);
       tl.fromTo(R("#k02-hero"), { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.6)" }, 1.9);
       const n = { v: 0 };
-      tl.fromTo(n, { v: 0 }, { v: 40, duration: 1.0, ease: "power2.out", onUpdate: () => { R("#k02-n").textContent = Math.round(n.v); } }, 1.95);
+      tl.fromTo(n, { v: 0 }, { v: 40, duration: 1.0, ease: "power2.out", immediateRender: false, onUpdate: () => { R("#k02-n").textContent = Math.round(n.v); } }, 1.95);
       tl.fromTo(R("#k02-sub"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 3.55);
 
       window.__timelines["02-enjeu"] = tl;

@@ -16,9 +16,15 @@
     .k04-card { position: absolute; border-radius: 40px; background: rgba(12,23,48,0.92); border: 2px solid #1E2A44; }
     .k04-mono { font-family: "IBM Plex Mono", monospace; font-weight: 500; letter-spacing: 0.12em; }
 
+    #k04-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; display: block; }
+    .k04-pin { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+    .k04-pin > div { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); }
+
+    .k04-alert { position: static; }
+
     #k04-k { top: 150px; }
     #k04-hero { top: 205px; font-size: 140px; }
-    #k04-card { left: 60px; right: 60px; top: 420px; height: 900px; }
+    #k04-card { left: 60px; right: 60px; top: 420px; height: 110px; background: rgba(12,23,48,0.7); }
     #k04-svg { position: absolute; left: 30px; top: 110px; width: 900px; height: 700px; overflow: visible; }
     #k04-leg { position: absolute; left: 44px; top: 36px; display: flex; gap: 34px; }
     #k04-leg span { display: flex; align-items: center; gap: 12px; font-family: "IBM Plex Mono", monospace; font-size: 24px; letter-spacing: 0.08em; color: #94A3B8; }
@@ -33,15 +39,15 @@
   <div id="root" data-composition-id="04-detecter" data-start="0" data-duration="5.36" data-width="1080" data-height="1920">
 
     <div id="k04-bg" class="clip" data-start="0" data-duration="5.36" data-track-index="0"></div>
+    <canvas id="k04-cv" width="1080" height="1920"></canvas>
     <div class="k04-kick" id="k04-k">DÉTECTION AUTOMATIQUE</div>
     <div class="k04-h" id="k04-hero">les <em>dérives</em></div>
     <div class="k04-card" id="k04-card">
       <div id="k04-leg"><span><i style="background:#38BDF8"></i>RÉFÉRENCE</span><span><i style="background:#F8FAFC"></i>RÉEL</span></div>
       <div id="k04-meteo"><svg width="22" height="40" viewBox="0 0 22 40"><rect x="7" y="2" width="8" height="26" rx="4" fill="none" stroke="#38BDF8" stroke-width="3"/><circle cx="11" cy="31" r="7" fill="#38BDF8"/></svg><b>CORRIGÉ MÉTÉO</b></div>
-      <svg id="k04-svg" viewBox="0 0 900 700"></svg>
     </div>
-    <div class="k04-alert" id="k04-a1" style="left:290px;top:610px"><i>!</i><b>Écart à la consigne</b></div>
-    <div class="k04-alert" id="k04-a2" style="left:420px;top:740px"><i>!</i><b>Cycles courts</b></div>
+    <div class="k04-pin" id="k04-p1"><div><div class="k04-alert" id="k04-a1"><i>!</i><b>Écart à la consigne</b></div></div></div>
+    <div class="k04-pin" id="k04-p2"><div style="transform: translate(-50%, 0)"><div class="k04-alert" id="k04-a2"><i>!</i><b>Cycles courts</b></div></div></div>
 
   </div>
   <script>
@@ -50,37 +56,15 @@
       const R = (s) => document.querySelector('[data-composition-id="04-detecter"] ' + s);
       const RA = (s) => document.querySelectorAll('[data-composition-id="04-detecter"] ' + s);
 
-      const NS = "http://www.w3.org/2000/svg", svg = R("#k04-svg");
-      const mk = (tag, a) => { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); svg.appendChild(e); return e; };
-      for (let i = 0; i <= 4; i++) mk("line", { x1: 20, x2: 880, y1: 80 + i * 140, y2: 80 + i * 140, stroke: "#14223f", "stroke-width": 2 });
-      const N = 24, X = (i) => 20 + i * (860 / (N - 1));
-      const ref = [], real = [];
-      for (let i = 0; i < N; i++) {
-        const base = 430 - 120 * Math.sin(i / (N - 1) * Math.PI * 1.2) ;
-        ref.push(base);
-        const bump = i >= 12 && i <= 19 ? Math.sin((i - 12) / 7 * Math.PI) * 260 : 0;
-        const jit = [6, -8, 4, -5, 9, -3, 5, -7][i % 8];
-        real.push(base + jit - bump);
-      }
-      const path = (arr) => arr.map((y, i) => (i ? "L" : "M") + X(i).toFixed(1) + " " + y.toFixed(1)).join(" ");
-      const area = "M" + X(12) + " " + ref[12] + " " + real.slice(12, 20).map((y, k) => "L" + X(12 + k).toFixed(1) + " " + y.toFixed(1)).join(" ") + " " + ref.slice(12, 20).map((y, k) => [X(12 + k), y]).reverse().map(([x, y]) => "L" + x.toFixed(1) + " " + y.toFixed(1)).join(" ") + " Z";
-      const fill = mk("path", { d: area, fill: "#EA580C", opacity: 0 });
-      const pr = mk("path", { d: path(ref), fill: "none", stroke: "#38BDF8", "stroke-width": 6, "stroke-dasharray": "14 10", "stroke-linecap": "round" });
-      const pa = mk("path", { d: path(real.slice(0, 13)), fill: "none", stroke: "#F8FAFC", "stroke-width": 7, "stroke-linecap": "round", "stroke-linejoin": "round" });
-      const pb = mk("path", { d: "M" + X(12) + " " + real[12] + " " + real.slice(13).map((y, k) => "L" + X(13 + k).toFixed(1) + " " + y.toFixed(1)).join(" "), fill: "none", stroke: "#EA580C", "stroke-width": 8, "stroke-linecap": "round", "stroke-linejoin": "round" });
-      const dot = mk("circle", { cx: X(16), cy: real[16], r: 14, fill: "#EA580C", stroke: "#fff", "stroke-width": 5, opacity: 0 });
-      const L = (p) => p.getTotalLength();
-      const Lr = L(pr), La = L(pa), Lb = L(pb);
-      // the dashed reference is revealed by a mask-free wipe on its opacity + clip via dashoffset on a solid copy is overkill: fade + scaleX wipe
+      const P = [R("#k04-p1"), R("#k04-p2")];
+      const __r3 = ENX3D.detect(R("#k04-cv"), P);
+      const __s3 = { t: 0 };
+      tl.fromTo(__s3, { t: 0 }, { t: 4.86, duration: 4.86, ease: "none", onUpdate: () => __r3(__s3.t) }, 0);
+      __r3(0);
       tl.fromTo(R("#k04-k"), { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 0);
-      tl.fromTo(R("#k04-card"), { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.05);
-      tl.fromTo(pr, { opacity: 0, scaleX: 0, transformOrigin: "20px 0px" }, { opacity: 1, scaleX: 1, duration: 0.9, ease: "power2.inOut" }, 0.25);
-      tl.fromTo(pa, { strokeDasharray: La, strokeDashoffset: La }, { strokeDashoffset: 0, duration: 0.9, ease: "power1.inOut" }, 1.05);
+      tl.fromTo(R("#k04-card"), { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.05);
       tl.fromTo(R("#k04-meteo"), { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, 1.95);
-      tl.fromTo(pb, { strokeDasharray: Lb, strokeDashoffset: Lb }, { strokeDashoffset: 0, duration: 0.8, ease: "power1.inOut" }, 2.1);
-      tl.fromTo(fill, { opacity: 0 }, { opacity: 0.3, duration: 0.5 }, 2.6);
       tl.fromTo(R("#k04-hero"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 2.6);
-      tl.fromTo(dot, { opacity: 0, attr: { r: 0 } }, { opacity: 1, attr: { r: 14 }, duration: 0.35, ease: "back.out(3)" }, 2.75);
       tl.fromTo(R("#k04-a1"), { opacity: 0, y: 20, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "back.out(1.7)" }, 2.9);
       tl.fromTo(R("#k04-a2"), { opacity: 0, y: 20, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "back.out(1.7)" }, 3.35);
 

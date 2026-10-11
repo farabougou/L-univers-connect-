@@ -16,6 +16,10 @@
     .k06-card { position: absolute; border-radius: 40px; background: rgba(12,23,48,0.92); border: 2px solid #1E2A44; }
     .k06-mono { font-family: "IBM Plex Mono", monospace; font-weight: 500; letter-spacing: 0.12em; }
 
+    #k06-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; display: block; }
+    .k06-pin { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+    .k06-pin > div { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); }
+
     #k06-mark { position: absolute; left: 290px; top: 420px; width: 500px; height: 500px; overflow: visible; }
     #k06-word { top: 1000px; font-size: 170px; letter-spacing: 0.04em; }
     #k06-tag { top: 1210px; font-size: 64px; font-weight: 800; }
@@ -27,20 +31,7 @@
   <div id="root" data-composition-id="06-signature" data-start="0" data-duration="4.33" data-width="1080" data-height="1920">
 
     <div id="k06-bg" class="clip" data-start="0" data-duration="4.33" data-track-index="0"></div>
-    <svg viewBox="0 0 200 200" id="k06-mark">
-  <defs>
-    <radialGradient id="k06-core" cx="35%" cy="32%" r="70%"><stop offset="0%" stop-color="#eaf6ff"/><stop offset="40%" stop-color="#7dd3fc"/><stop offset="100%" stop-color="#1d4ed8"/></radialGradient>
-    <linearGradient id="k06-ring" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#67e8f9"/><stop offset="100%" stop-color="#1e40af"/></linearGradient>
-    <filter id="k06-glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-  </defs>
-  <g id="k06-rings" fill="none" stroke="url(#k06-ring)" stroke-width="3.5" filter="url(#k06-glow)">
-    <ellipse class="k06-ring" cx="100" cy="100" rx="88" ry="40"/>
-    <ellipse class="k06-ring" cx="100" cy="100" rx="88" ry="40" transform="rotate(60 100 100)"/>
-    <ellipse class="k06-ring" cx="100" cy="100" rx="88" ry="40" transform="rotate(120 100 100)"/>
-  </g>
-  <circle id="k06-corec" cx="100" cy="100" r="23" fill="url(#k06-core)" filter="url(#k06-glow)"/>
-  <g filter="url(#k06-glow)"><circle class="k06-sat" cx="100" cy="12" r="7" fill="#7dd3fc"/><circle class="k06-sat" cx="176" cy="144" r="6.5" fill="#38bdf8"/><circle class="k06-sat" cx="24" cy="144" r="6.5" fill="#38bdf8"/></g>
-</svg>
+    <canvas id="k06-cv" width="1080" height="1920"></canvas>
 
     <div class="k06-h" id="k06-word">ENORYX</div>
     <div class="k06-h" id="k06-tag">chaque <em>kilowattheure</em> compte.</div>
@@ -54,10 +45,10 @@
       const R = (s) => document.querySelector('[data-composition-id="06-signature"] ' + s);
       const RA = (s) => document.querySelectorAll('[data-composition-id="06-signature"] ' + s);
 
-      tl.fromTo(RA(".k06-ring"), { opacity: 0, scale: 1.8, transformOrigin: "100px 100px" }, { opacity: 1, scale: 1, duration: 0.9, stagger: 0.07, ease: "power3.out" }, 0);
-      tl.fromTo(R("#k06-corec"), { scale: 0, transformOrigin: "100px 100px" }, { scale: 1, duration: 0.5, ease: "back.out(2.4)" }, 0.25);
-      tl.fromTo(RA(".k06-sat"), { opacity: 0 }, { opacity: 1, duration: 0.3, stagger: 0.06 }, 0.6);
-      tl.fromTo(R("#k06-rings"), { rotation: 0, transformOrigin: "100px 100px" }, { rotation: 30, duration: 4.3, ease: "none" }, 0);
+      const __r3 = ENX3D.signature(R("#k06-cv"));
+      const __s3 = { t: 0 };
+      tl.fromTo(__s3, { t: 0 }, { t: 4.33, duration: 4.33, ease: "none", onUpdate: () => __r3(__s3.t) }, 0);
+      __r3(0);
       tl.fromTo(R("#k06-word"), { opacity: 0, y: 30, scale: 1.25 }, { opacity: 1, y: 0, scale: 1, duration: 0.8, ease: "power3.out" }, 0.05);
       tl.fromTo(R("#k06-tag"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.5);
       tl.fromTo(R("#k06-k"), { opacity: 0 }, { opacity: 1, duration: 0.5 }, 1.8);
