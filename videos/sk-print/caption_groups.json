@@ -1,0 +1,577 @@
+{
+  "total_duration_s": 30.64,
+  "width": 1080,
+  "height": 1920,
+  "groups": [
+    {
+      "id": "caption-group-0",
+      "frame": 1,
+      "start": 0.03,
+      "end": 0.493,
+      "text": "Vous avez",
+      "words": [
+        {
+          "id": "caption-word-0-0",
+          "text": "Vous",
+          "start": 0.03,
+          "end": 0.199
+        },
+        {
+          "id": "caption-word-0-1",
+          "text": "avez",
+          "start": 0.199,
+          "end": 0.492
+        }
+      ]
+    },
+    {
+      "id": "caption-group-1",
+      "frame": 1,
+      "start": 0.493,
+      "end": 1.2,
+      "text": "une idée ?",
+      "words": [
+        {
+          "id": "caption-word-1-0",
+          "text": "une",
+          "start": 0.493,
+          "end": 0.786
+        },
+        {
+          "id": "caption-word-1-1",
+          "text": "idée ?",
+          "start": 0.786,
+          "end": 1.08
+        }
+      ]
+    },
+    {
+      "id": "caption-group-2",
+      "frame": 2,
+      "start": 2.17,
+      "end": 2.651,
+      "text": "SK Print",
+      "words": [
+        {
+          "id": "caption-word-2-0",
+          "text": "SK",
+          "start": 2.17,
+          "end": 2.41
+        },
+        {
+          "id": "caption-word-2-1",
+          "text": "Print",
+          "start": 2.41,
+          "end": 2.651
+        }
+      ]
+    },
+    {
+      "id": "caption-group-3",
+      "frame": 2,
+      "start": 2.651,
+      "end": 3.67,
+      "text": "lui donne vie.",
+      "words": [
+        {
+          "id": "caption-word-3-0",
+          "text": "lui",
+          "start": 2.651,
+          "end": 2.891
+        },
+        {
+          "id": "caption-word-3-1",
+          "text": "donne",
+          "start": 2.891,
+          "end": 3.31
+        },
+        {
+          "id": "caption-word-3-2",
+          "text": "vie.",
+          "start": 3.31,
+          "end": 3.55
+        }
+      ]
+    },
+    {
+      "id": "caption-group-4",
+      "frame": 3,
+      "start": 4.34,
+      "end": 4.596,
+      "text": "T-shirts,",
+      "words": [
+        {
+          "id": "caption-word-4-0",
+          "text": "T-shirts,",
+          "start": 4.34,
+          "end": 4.596
+        }
+      ]
+    },
+    {
+      "id": "caption-group-5",
+      "frame": 3,
+      "start": 4.596,
+      "end": 5.042,
+      "text": "maillots,",
+      "words": [
+        {
+          "id": "caption-word-5-0",
+          "text": "maillots,",
+          "start": 4.596,
+          "end": 5.042
+        }
+      ]
+    },
+    {
+      "id": "caption-group-6",
+      "frame": 3,
+      "start": 5.042,
+      "end": 5.677,
+      "text": "casquettes :",
+      "words": [
+        {
+          "id": "caption-word-6-0",
+          "text": "casquettes :",
+          "start": 5.042,
+          "end": 5.677
+        }
+      ]
+    },
+    {
+      "id": "caption-group-7",
+      "frame": 3,
+      "start": 5.677,
+      "end": 6.053,
+      "text": "nous",
+      "words": [
+        {
+          "id": "caption-word-7-0",
+          "text": "nous",
+          "start": 5.677,
+          "end": 5.933
+        }
+      ]
+    },
+    {
+      "id": "caption-group-8",
+      "frame": 3,
+      "start": 6.56,
+      "end": 8.3,
+      "text": "personnalisons vos textiles.",
+      "words": [
+        {
+          "id": "caption-word-8-0",
+          "text": "personnalisons",
+          "start": 6.56,
+          "end": 7.288
+        },
+        {
+          "id": "caption-word-8-1",
+          "text": "vos",
+          "start": 7.289,
+          "end": 7.544
+        },
+        {
+          "id": "caption-word-8-2",
+          "text": "textiles.",
+          "start": 7.545,
+          "end": 8.18
+        }
+      ]
+    },
+    {
+      "id": "caption-group-9",
+      "frame": 4,
+      "start": 8.97,
+      "end": 9.198,
+      "text": "Flyers,",
+      "words": [
+        {
+          "id": "caption-word-9-0",
+          "text": "Flyers,",
+          "start": 8.97,
+          "end": 9.198
+        }
+      ]
+    },
+    {
+      "id": "caption-group-10",
+      "frame": 4,
+      "start": 9.198,
+      "end": 10.387,
+      "text": "cartes de visite,",
+      "words": [
+        {
+          "id": "caption-word-10-0",
+          "text": "cartes",
+          "start": 9.198,
+          "end": 9.594
+        },
+        {
+          "id": "caption-word-10-1",
+          "text": "de",
+          "start": 9.594,
+          "end": 9.822
+        },
+        {
+          "id": "caption-word-10-2",
+          "text": "visite,",
+          "start": 9.822,
+          "end": 10.387
+        }
+      ]
+    },
+    {
+      "id": "caption-group-11",
+      "frame": 4,
+      "start": 10.387,
+      "end": 11.102,
+      "text": "affiches,",
+      "words": [
+        {
+          "id": "caption-word-11-0",
+          "text": "affiches,",
+          "start": 10.387,
+          "end": 11.102
+        }
+      ]
+    },
+    {
+      "id": "caption-group-12",
+      "frame": 4,
+      "start": 11.102,
+      "end": 12.58,
+      "text": "bâches et autocollants.",
+      "words": [
+        {
+          "id": "caption-word-12-0",
+          "text": "bâches",
+          "start": 11.102,
+          "end": 11.498
+        },
+        {
+          "id": "caption-word-12-1",
+          "text": "et",
+          "start": 11.499,
+          "end": 11.726
+        },
+        {
+          "id": "caption-word-12-2",
+          "text": "autocollants.",
+          "start": 11.726,
+          "end": 12.46
+        }
+      ]
+    },
+    {
+      "id": "caption-group-13",
+      "frame": 5,
+      "start": 13.24,
+      "end": 14.629,
+      "text": "Des couleurs éclatantes,",
+      "words": [
+        {
+          "id": "caption-word-13-0",
+          "text": "Des",
+          "start": 13.24,
+          "end": 13.432
+        },
+        {
+          "id": "caption-word-13-1",
+          "text": "couleurs",
+          "start": 13.433,
+          "end": 13.768
+        },
+        {
+          "id": "caption-word-13-2",
+          "text": "éclatantes,",
+          "start": 13.768,
+          "end": 14.628
+        }
+      ]
+    },
+    {
+      "id": "caption-group-14",
+      "frame": 5,
+      "start": 14.629,
+      "end": 15.156,
+      "text": "un travail",
+      "words": [
+        {
+          "id": "caption-word-14-0",
+          "text": "un",
+          "start": 14.629,
+          "end": 14.821
+        },
+        {
+          "id": "caption-word-14-1",
+          "text": "travail",
+          "start": 14.821,
+          "end": 15.156
+        }
+      ]
+    },
+    {
+      "id": "caption-group-15",
+      "frame": 5,
+      "start": 15.156,
+      "end": 15.492,
+      "text": "soigné,",
+      "words": [
+        {
+          "id": "caption-word-15-0",
+          "text": "soigné,",
+          "start": 15.156,
+          "end": 15.491
+        }
+      ]
+    },
+    {
+      "id": "caption-group-16",
+      "frame": 5,
+      "start": 15.492,
+      "end": 16.282,
+      "text": "un service",
+      "words": [
+        {
+          "id": "caption-word-16-0",
+          "text": "un",
+          "start": 15.492,
+          "end": 15.684
+        },
+        {
+          "id": "caption-word-16-1",
+          "text": "service",
+          "start": 15.684,
+          "end": 16.162
+        }
+      ]
+    },
+    {
+      "id": "caption-group-17",
+      "frame": 5,
+      "start": 16.37,
+      "end": 16.86,
+      "text": "rapide.",
+      "words": [
+        {
+          "id": "caption-word-17-0",
+          "text": "rapide.",
+          "start": 16.37,
+          "end": 16.74
+        }
+      ]
+    },
+    {
+      "id": "caption-group-18",
+      "frame": 6,
+      "start": 17.52,
+      "end": 18.756,
+      "text": "Pour les particuliers,",
+      "words": [
+        {
+          "id": "caption-word-18-0",
+          "text": "Pour",
+          "start": 17.52,
+          "end": 17.716
+        },
+        {
+          "id": "caption-word-18-1",
+          "text": "les",
+          "start": 17.716,
+          "end": 17.913
+        },
+        {
+          "id": "caption-word-18-2",
+          "text": "particuliers,",
+          "start": 17.913,
+          "end": 18.755
+        }
+      ]
+    },
+    {
+      "id": "caption-group-19",
+      "frame": 6,
+      "start": 18.756,
+      "end": 19.781,
+      "text": "les entreprises et",
+      "words": [
+        {
+          "id": "caption-word-19-0",
+          "text": "les",
+          "start": 18.756,
+          "end": 18.952
+        },
+        {
+          "id": "caption-word-19-1",
+          "text": "entreprises",
+          "start": 18.952,
+          "end": 19.584
+        },
+        {
+          "id": "caption-word-19-2",
+          "text": "et",
+          "start": 19.585,
+          "end": 19.781
+        }
+      ]
+    },
+    {
+      "id": "caption-group-20",
+      "frame": 6,
+      "start": 19.781,
+      "end": 20.73,
+      "text": "les associations.",
+      "words": [
+        {
+          "id": "caption-word-20-0",
+          "text": "les",
+          "start": 19.781,
+          "end": 19.977
+        },
+        {
+          "id": "caption-word-20-1",
+          "text": "associations.",
+          "start": 19.977,
+          "end": 20.61
+        }
+      ]
+    },
+    {
+      "id": "caption-group-21",
+      "frame": 7,
+      "start": 21.41,
+      "end": 21.892,
+      "text": "SK Print,",
+      "words": [
+        {
+          "id": "caption-word-21-0",
+          "text": "SK",
+          "start": 21.41,
+          "end": 21.651
+        },
+        {
+          "id": "caption-word-21-1",
+          "text": "Print,",
+          "start": 21.651,
+          "end": 21.892
+        }
+      ]
+    },
+    {
+      "id": "caption-group-22",
+      "frame": 7,
+      "start": 21.892,
+      "end": 22.253,
+      "text": "nous",
+      "words": [
+        {
+          "id": "caption-word-22-0",
+          "text": "nous",
+          "start": 21.892,
+          "end": 22.133
+        }
+      ]
+    },
+    {
+      "id": "caption-group-23",
+      "frame": 7,
+      "start": 22.32,
+      "end": 23.613,
+      "text": "imprimons vos idées.",
+      "words": [
+        {
+          "id": "caption-word-23-0",
+          "text": "imprimons",
+          "start": 22.32,
+          "end": 22.832
+        },
+        {
+          "id": "caption-word-23-1",
+          "text": "vos",
+          "start": 22.832,
+          "end": 23.073
+        },
+        {
+          "id": "caption-word-23-2",
+          "text": "idées.",
+          "start": 23.073,
+          "end": 23.493
+        }
+      ]
+    },
+    {
+      "id": "caption-group-24",
+      "frame": 7,
+      "start": 23.91,
+      "end": 25.439,
+      "text": "Appelez le quatre-vingt-trois,",
+      "words": [
+        {
+          "id": "caption-word-24-0",
+          "text": "Appelez",
+          "start": 23.91,
+          "end": 24.421
+        },
+        {
+          "id": "caption-word-24-1",
+          "text": "le",
+          "start": 24.421,
+          "end": 24.662
+        },
+        {
+          "id": "caption-word-24-2",
+          "text": "quatre-vingt-trois,",
+          "start": 24.662,
+          "end": 25.439
+        }
+      ]
+    },
+    {
+      "id": "caption-group-25",
+      "frame": 7,
+      "start": 25.439,
+      "end": 26.216,
+      "text": "soixante-cinq,",
+      "words": [
+        {
+          "id": "caption-word-25-0",
+          "text": "soixante-cinq,",
+          "start": 25.439,
+          "end": 26.216
+        }
+      ]
+    },
+    {
+      "id": "caption-group-26",
+      "frame": 7,
+      "start": 26.216,
+      "end": 26.815,
+      "text": "quatorze,",
+      "words": [
+        {
+          "id": "caption-word-26-0",
+          "text": "quatorze,",
+          "start": 26.216,
+          "end": 26.814
+        }
+      ]
+    },
+    {
+      "id": "caption-group-27",
+      "frame": 7,
+      "start": 26.815,
+      "end": 28.03,
+      "text": "soixante-dix-huit.",
+      "words": [
+        {
+          "id": "caption-word-27-0",
+          "text": "soixante-dix-huit.",
+          "start": 26.815,
+          "end": 27.91
+        }
+      ]
+    }
+  ]
+}
