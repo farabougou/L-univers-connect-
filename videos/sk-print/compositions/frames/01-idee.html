@@ -27,9 +27,9 @@
     #k01-h { top: 250px; font-size: 120px; }
 
   </style>
-  <div id="root" data-composition-id="01-idee" data-start="0" data-duration="2.54" data-width="1080" data-height="1920">
+  <div id="root" data-composition-id="01-idee" data-start="0" data-duration="1.65" data-width="1080" data-height="1920">
 
-    <div id="k01-bg" class="clip" data-start="0" data-duration="2.54" data-track-index="0"></div>
+    <div id="k01-bg" class="clip" data-start="0" data-duration="1.65" data-track-index="0"></div>
     <canvas id="k01-cv" width="1080" height="1920"></canvas>
     <div class="k01-h" id="k01-h">une <em>idée</em> ?</div>
 
@@ -42,7 +42,7 @@
 
       const __r3 = SK3D.idea(R("#k01-cv"));
       const __s3 = { t: 0 };
-      tl.fromTo(__s3, { t: 0 }, { t: 2.14, duration: 2.14, ease: "none", onUpdate: () => __r3(__s3.t) }, 0);
+      tl.fromTo(__s3, { t: 0 }, { t: 1.25, duration: 1.25, ease: "none", onUpdate: () => __r3(__s3.t) }, 0);
       __r3(0);
       tl.fromTo(R("#k01-h"), { opacity: 0, scale: 1.5 }, { opacity: 1, scale: 1, duration: 0.28, ease: "power4.out" }, 0.5);
 

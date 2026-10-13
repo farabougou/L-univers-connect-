@@ -13,7 +13,7 @@ language: fr
 
 - scene: 3D
 - voiceover: "Vous avez une idée ?"
-- duration: 2.14s
+- duration: 1.25s
 - transition_in: cut
 - status: animated
 - src: compositions/frames/01-idee.html
@@ -24,7 +24,7 @@ language: fr
 
 - scene: 3D
 - voiceover: "SK Print lui donne vie."
-- duration: 2.16s
+- duration: 2.1s
 - transition_in: zoom-through
 - status: animated
 - src: compositions/frames/02-logo.html
@@ -35,7 +35,7 @@ language: fr
 
 - scene: 3D
 - voiceover: "T-shirts, maillots, casquettes : nous personnalisons vos textiles."
-- duration: 4.63s
+- duration: 4.1s
 - transition_in: push-slide LEFT
 - status: animated
 - src: compositions/frames/03-textile.html
@@ -46,7 +46,7 @@ language: fr
 
 - scene: 3D
 - voiceover: "Flyers, cartes de visite, affiches, bâches et autocollants."
-- duration: 4.27s
+- duration: 4.18s
 - transition_in: push-slide LEFT
 - status: animated
 - src: compositions/frames/04-papier.html
@@ -57,7 +57,7 @@ language: fr
 
 - scene: 3D
 - voiceover: "Des couleurs éclatantes, un travail soigné, un service rapide."
-- duration: 4.27s
+- duration: 4.17s
 - transition_in: zoom-through
 - status: animated
 - src: compositions/frames/05-qualite.html
@@ -68,7 +68,7 @@ language: fr
 
 - scene: 3D
 - voiceover: "Pour les particuliers, les entreprises et les associations."
-- duration: 3.89s
+- duration: 3.55s
 - transition_in: push-slide LEFT
 - status: animated
 - src: compositions/frames/06-pour-qui.html
@@ -78,8 +78,8 @@ language: fr
 ## Frame 7 — CTA
 
 - scene: 3D
-- voiceover: "SK Print, nous imprimons vos idées. Appelez le quatre-vingt-trois, soixante-cinq, quatorze, soixante-dix-huit."
-- duration: 9.28s
+- voiceover: "SK Print, nous imprimons vos idées. Appelez le quatre-vingt-trois, soixante-cinq, quatorze, soixante-dix-huit. Ou le quatre-vingt-quatorze, soixante-dix-sept, quarante-sept, seize."
+- duration: 11.37s
 - transition_in: blur-crossfade
 - status: animated
 - src: compositions/frames/07-contact.html

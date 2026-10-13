@@ -34,9 +34,9 @@
     #k07-black { position: absolute; inset: 0; background: #000; opacity: 0; }
 
   </style>
-  <div id="root" data-composition-id="07-contact" data-start="0" data-duration="9.28" data-width="1080" data-height="1920">
+  <div id="root" data-composition-id="07-contact" data-start="0" data-duration="11.37" data-width="1080" data-height="1920">
 
-    <div id="k07-bg" class="clip" data-start="0" data-duration="9.28" data-track-index="0" style="background: radial-gradient(90% 60% at 50% 35%, #ffffff 0%, #eef0f8 60%, #d9dcef 100%)"></div>
+    <div id="k07-bg" class="clip" data-start="0" data-duration="11.37" data-track-index="0" style="background: radial-gradient(90% 60% at 50% 35%, #ffffff 0%, #eef0f8 60%, #d9dcef 100%)"></div>
     <canvas id="k07-cv" width="1080" height="1920"></canvas>
     <div class="k07-h" id="k07-s1">nous imprimons</div>
     <div class="k07-h" id="k07-s2">vos idées.</div>
@@ -56,15 +56,15 @@
 
       const __r3 = SK3D.logoScene(R("#k07-cv"), { y: 4.3, t0: 0, z: 31, look: 0.2 });
       const __s3 = { t: 0 };
-      tl.fromTo(__s3, { t: 0 }, { t: 9.28, duration: 9.28, ease: "none", onUpdate: () => __r3(__s3.t) }, 0);
+      tl.fromTo(__s3, { t: 0 }, { t: 11.37, duration: 11.37, ease: "none", onUpdate: () => __r3(__s3.t) }, 0);
       __r3(0);
       tl.fromTo(R("#k07-s1"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 0.5);
       tl.fromTo(R("#k07-s2"), { opacity: 0, scale: 1.5 }, { opacity: 1, scale: 1, duration: 0.28, ease: "power4.out" }, 1.65);
       tl.fromTo(R("#k07-band"), { opacity: 0, scaleY: 0 }, { opacity: 1, scaleY: 1, duration: 0.45, ease: "power3.out" }, 2.45);
       tl.fromTo(R("#k07-wa"), { opacity: 0 }, { opacity: 1, duration: 0.3 }, 2.7);
       tl.fromTo(R("#k07-n1"), { opacity: 0, x: -80 }, { opacity: 1, x: 0, duration: 0.45, ease: "power3.out" }, 3.2);
-      tl.fromTo(R("#k07-n2"), { opacity: 0, x: 80 }, { opacity: 1, x: 0, duration: 0.45, ease: "power3.out" }, 5.9);
-      tl.fromTo(R("#k07-black"), { opacity: 0 }, { opacity: 1, duration: 0.45, ease: "power1.in" }, 8.8);
+      tl.fromTo(R("#k07-n2"), { opacity: 0, x: 80 }, { opacity: 1, x: 0, duration: 0.45, ease: "power3.out" }, 7.55);
+      tl.fromTo(R("#k07-black"), { opacity: 0 }, { opacity: 1, duration: 0.45, ease: "power1.in" }, 10.9);
 
       window.__timelines["07-contact"] = tl;
     })();

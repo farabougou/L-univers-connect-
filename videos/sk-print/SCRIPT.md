@@ -1,6 +1,6 @@
 # SCRIPT — sk-print
 
-**Voice:** ff_siwis (Kokoro, français)
+**Voice:** voix fournie par le client (skprint_orion_feminine_stretched.mp3)
 **Voice settings:** speed 0.95
 **Voice direction:** Énergique, chaleureuse, professionnelle, vouvoiement.
 
@@ -53,4 +53,4 @@
 **Time:** -
 **Delivery:** Final, chaleureux.
 
-    SK Print, nous imprimons vos idées. Appelez le quatre-vingt-trois, soixante-cinq, quatorze, soixante-dix-huit.
+    SK Print, nous imprimons vos idées. Appelez le quatre-vingt-trois, soixante-cinq, quatorze, soixante-dix-huit. Ou le quatre-vingt-quatorze, soixante-dix-sept, quarante-sept, seize.

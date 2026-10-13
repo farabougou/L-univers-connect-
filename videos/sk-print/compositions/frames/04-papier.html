@@ -29,9 +29,9 @@
     .k04-lab { background: #2E2E8E; }
 
   </style>
-  <div id="root" data-composition-id="04-papier" data-start="0" data-duration="4.67" data-width="1080" data-height="1920">
+  <div id="root" data-composition-id="04-papier" data-start="0" data-duration="4.58" data-width="1080" data-height="1920">
 
-    <div id="k04-bg" class="clip" data-start="0" data-duration="4.67" data-track-index="0"></div>
+    <div id="k04-bg" class="clip" data-start="0" data-duration="4.58" data-track-index="0"></div>
     <canvas id="k04-cv" width="1080" height="1920"></canvas>
     <div class="k04-pin" id="k04-p0"><div><div class="k04-lab"><b>Cartes de visite</b></div></div></div>
     <div class="k04-pin" id="k04-p1"><div><div class="k04-lab"><b>Flyers</b></div></div></div>
@@ -49,7 +49,7 @@
       const P = [0, 1, 2, 3, 4].map((i) => R("#k04-p" + i));
       const __r3 = SK3D.paper(R("#k04-cv"), P, [0.25, 0.0, 1.4, 2.1, 2.7]);
       const __s3 = { t: 0 };
-      tl.fromTo(__s3, { t: 0 }, { t: 4.27, duration: 4.27, ease: "none", onUpdate: () => __r3(__s3.t) }, 0);
+      tl.fromTo(__s3, { t: 0 }, { t: 4.18, duration: 4.18, ease: "none", onUpdate: () => __r3(__s3.t) }, 0);
       __r3(0);
       [0.85, 0.6, 2.0, 2.7, 3.3].forEach((t, i) => tl.fromTo(P[i].querySelector(".k04-lab"), { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.8)" }, t));
 

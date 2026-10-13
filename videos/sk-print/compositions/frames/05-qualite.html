@@ -28,9 +28,9 @@
     #k05-row .k05-chip b { font-size: 44px; }
 
   </style>
-  <div id="root" data-composition-id="05-qualite" data-start="0" data-duration="4.77" data-width="1080" data-height="1920">
+  <div id="root" data-composition-id="05-qualite" data-start="0" data-duration="4.67" data-width="1080" data-height="1920">
 
-    <div id="k05-bg" class="clip" data-start="0" data-duration="4.77" data-track-index="0"></div>
+    <div id="k05-bg" class="clip" data-start="0" data-duration="4.67" data-track-index="0"></div>
     <canvas id="k05-cv" width="1080" height="1920"></canvas>
     <div id="k05-row">
       <div class="k05-chip" id="k05-c0"><u style="background:#00A0E3"></u><b>couleurs éclatantes</b></div>
@@ -47,7 +47,7 @@
 
       const __r3 = SK3D.quality(R("#k05-cv"));
       const __s3 = { t: 0 };
-      tl.fromTo(__s3, { t: 0 }, { t: 4.27, duration: 4.27, ease: "none", onUpdate: () => __r3(__s3.t) }, 0);
+      tl.fromTo(__s3, { t: 0 }, { t: 4.17, duration: 4.17, ease: "none", onUpdate: () => __r3(__s3.t) }, 0);
       __r3(0);
       [0.55, 1.95, 3.15].forEach((t, i) => tl.fromTo(R("#k05-c" + i), { opacity: 0, x: -60 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" }, t));
 
