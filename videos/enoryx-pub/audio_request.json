@@ -1,0 +1,38 @@
+{
+  "provider": "kokoro",
+  "speed": "0.95",
+  "lines": [
+    {
+      "id": "01",
+      "text": "Votre facture d'électricité grimpe chaque mois ?"
+    },
+    {
+      "id": "02",
+      "text": "Climatiseurs allumés la nuit, groupe électrogène qui tourne pour rien. Vous payez pour du vide."
+    },
+    {
+      "id": "03",
+      "text": "Découvrez Enoryx."
+    },
+    {
+      "id": "04",
+      "text": "Tous vos équipements, surveillés en temps réel, sur votre téléphone."
+    },
+    {
+      "id": "05",
+      "text": "Une dérive ? Enoryx la repère et vous alerte, avant la panne."
+    },
+    {
+      "id": "06",
+      "text": "Moins de gaspillage. Moins de pannes. Plus d'économies."
+    },
+    {
+      "id": "07",
+      "text": "Enoryx. Chaque kilowattheure compte."
+    }
+  ],
+  "bgm": {
+    "mode": "none"
+  },
+  "voice": "ff_siwis"
+}

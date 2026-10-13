@@ -1,0 +1,54 @@
+<template>
+  <style>
+@font-face { font-family: "Inter"; font-weight: 400; src: url("assets/fonts/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; src: url("assets/fonts/inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 700; src: url("assets/fonts/inter-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 800; src: url("assets/fonts/inter-latin-800-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 900; src: url("assets/fonts/inter-latin-900-normal.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 500; src: url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Inter", sans-serif; color: #FFFFFF; }
+
+    #k07-bg { position: absolute; inset: 0; background: radial-gradient(110% 60% at 50% 40%, #0c1a3a 0%, #050B1A 65%); }
+    .k07-kick { position: absolute; left: 0; right: 0; text-align: center; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 30px; letter-spacing: 0.16em; color: #38BDF8; }
+    .k07-h { position: absolute; left: 30px; right: 30px; text-align: center; font-weight: 900; letter-spacing: -0.04em; line-height: 1; color: #F8FAFC; white-space: nowrap; }
+    .k07-h em { font-style: normal; color: #38BDF8; }
+    .k07-card { position: absolute; border-radius: 40px; background: rgba(12,23,48,0.92); border: 2px solid #1E2A44; }
+    .k07-mono { font-family: "IBM Plex Mono", monospace; font-weight: 500; letter-spacing: 0.12em; }
+
+    #k07-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; display: block; }
+    .k07-pin { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+    .k07-pin > div { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); }
+
+
+    #k07-tag { position: absolute; left: 0; right: 0; top: 1300px; text-align: center; font-weight: 900; font-size: 64px; letter-spacing: -0.02em; color: #F8FAFC; white-space: nowrap; }
+    #k07-tag em { font-style: normal; color: #38BDF8; }
+    #k07-black { position: absolute; inset: 0; background: #000; opacity: 0; }
+
+  </style>
+  <div id="root" data-composition-id="07-signature" data-start="0" data-duration="4.69" data-width="1080" data-height="1920">
+
+    <div id="k07-bg" class="clip" data-start="0" data-duration="4.69" data-track-index="0"></div>
+    <canvas id="k07-cv" width="1080" height="1920"></canvas>
+    <div id="k07-tag">chaque <em>kilowattheure</em> compte.</div>
+    <div id="k07-black"></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="07-signature"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="07-signature"] ' + s);
+
+      const __r0 = ENX3D.brand(R("#k07-cv"), { t0: 0.0, end: true });
+      const __r3 = (t) => __r0(t + 0);
+      const __s3 = { t: 0 };
+      tl.fromTo(__s3, { t: 0 }, { t: 4.69, duration: 4.69, ease: "none", onUpdate: () => __r3(__s3.t) }, 0);
+      __r3(0);
+      tl.fromTo(R("#k07-tag"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 0.5);
+      tl.fromTo(R("#k07-black"), { opacity: 0 }, { opacity: 1, duration: 0.45, ease: "power1.in" }, 4.2);
+
+      window.__timelines["07-signature"] = tl;
+    })();
+  </script>
+</template>
