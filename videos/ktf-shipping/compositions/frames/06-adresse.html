@@ -1,0 +1,116 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Oswald"; font-weight: 400; src: url("assets/fonts/oswald-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 500; src: url("assets/fonts/oswald-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 600; src: url("assets/fonts/oswald-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 700; src: url("assets/fonts/oswald-latin-700-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Roboto"; font-weight: 400; src: url("assets/fonts/roboto-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Roboto"; font-weight: 500; src: url("assets/fonts/roboto-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Roboto"; font-weight: 700; src: url("assets/fonts/roboto-latin-700-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Roboto", sans-serif; color: #FFFFFF; }
+
+    .k06-abs { position: absolute; }
+    .k06-bgd { position: absolute; inset: 0; background: radial-gradient(90% 80% at 70% 40%, #0b1f36 0%, #06111F 70%); }
+    .k06-bgl { position: absolute; inset: 0; background: #F4F8FC; }
+    .k06-bgw { position: absolute; inset: 0; background: #FFFFFF; }
+    .k06-kick { display: flex; align-items: center; gap: 18px; font-family: "Roboto"; font-weight: 500; font-size: 24px; letter-spacing: 0.24em; color: #1EAAE2; white-space: nowrap; }
+    .k06-kick i { display: block; width: 56px; height: 3px; background: #1EAAE2; }
+    .k06-st { font-family: "Oswald"; font-weight: 600; font-size: 88px; line-height: 1.08; text-transform: uppercase; color: #FFFFFF; white-space: nowrap; }
+    .k06-st em { font-style: normal; color: #1EAAE2; }
+    .k06-st.dk { color: #152235; }
+    .k06-fil { display: flex; align-items: center; gap: 14px; }
+    .k06-fil i { display: block; width: 110px; height: 4px; border-radius: 2px; background: #1EAAE2; }
+    .k06-fil u { display: block; width: 14px; height: 14px; border-radius: 7px; background: #1EAAE2; }
+    .k06-fil u.o { background: #F07828; }
+    .k06-ex { font-family: "Roboto"; font-weight: 400; font-size: 34px; line-height: 1.45; color: #9FB3C8; }
+    .k06-ex.dk { color: #46586E; }
+    /* site components */
+    .k06-site { position: absolute; left: 0; top: 0; width: 1440px; background: #06111F; overflow: hidden; transform-origin: 0 0; }
+    .k06-hd { height: 96px; background: #FFFFFF; display: flex; align-items: center; padding: 0 56px; gap: 40px; }
+    .k06-hd img { display: block; height: 66px; }
+    .k06-hd nav { display: flex; gap: 34px; margin-left: auto; font-family: "Roboto"; font-weight: 500; font-size: 17px; letter-spacing: 0.08em; color: #152235; }
+    .k06-btn { display: inline-flex; align-items: center; gap: 12px; padding: 16px 28px; border-radius: 3px; font-family: "Roboto"; font-weight: 700; font-size: 17px; letter-spacing: 0.12em; text-transform: uppercase; color: #FFFFFF; background: #1EAAE2; white-space: nowrap; }
+    .k06-btn.ol { background: transparent; border: 2px solid #8a96a3; }
+    .k06-btn svg { display: block; }
+    .k06-bar { height: 6px; background: linear-gradient(90deg, #1EAAE2 0 33%, #D93A2B 33% 66%, #F07828 66% 100%); }
+    .k06-hero { position: relative; height: 700px; padding: 150px 80px 0; background:
+        radial-gradient(40% 55% at 82% 70%, rgba(240,120,40,0.22), rgba(240,120,40,0) 70%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0 2px, rgba(255,255,255,0) 2px 180px),
+        linear-gradient(180deg, #0a1a2c 0%, #06111F 100%); }
+    .k06-hk { display: flex; align-items: center; gap: 22px; font-family: "Roboto"; font-weight: 700; font-size: 20px; letter-spacing: 0.3em; color: #1EAAE2; }
+    .k06-hk i { display: block; width: 64px; height: 3px; background: #1EAAE2; }
+    .k06-ht { margin-top: 34px; font-family: "Oswald"; font-weight: 600; font-size: 84px; line-height: 1.08; color: #FFFFFF; white-space: nowrap; }
+    .k06-ht em { font-style: italic; color: #1EAAE2; }
+    .k06-hp { margin-top: 26px; font-family: "Roboto"; font-weight: 400; font-size: 24px; line-height: 1.6; color: #C9D3DE; }
+    .k06-hb { margin-top: 38px; display: flex; gap: 20px; }
+    /* browser chrome */
+    .k06-br { position: absolute; border-radius: 18px; overflow: hidden; background: #FFFFFF; box-shadow: 0 40px 90px rgba(0,0,0,0.45); }
+    .k06-brt { height: 44px; background: #EEF2F6; display: flex; align-items: center; gap: 10px; padding: 0 18px; }
+    .k06-brt u { display: block; width: 13px; height: 13px; border-radius: 7px; background: #c7d0da; }
+    .k06-brt b { display: block; margin-left: 24px; padding: 6px 22px; border-radius: 14px; background: #FFFFFF; font-family: "Roboto"; font-weight: 500; font-size: 17px; color: #46586E; }
+    .k06-brv { position: relative; overflow: hidden; }
+    /* cards */
+    .k06-card { position: absolute; border-radius: 18px; background: #FFFFFF; box-shadow: 0 24px 60px rgba(21,34,53,0.14); border: 1px solid #E3EAF2; }
+    .k06-ic { display: flex; width: 96px; height: 96px; border-radius: 18px; align-items: center; justify-content: center; background: #E6F5FC; }
+    .k06-ct { font-family: "Oswald"; font-weight: 600; font-size: 44px; color: #152235; text-transform: uppercase; white-space: nowrap; }
+    .k06-cp { font-family: "Roboto"; font-weight: 400; font-size: 26px; line-height: 1.45; color: #46586E; }
+    .k06-cl { display: flex; align-items: center; gap: 10px; font-family: "Roboto"; font-weight: 700; font-size: 20px; letter-spacing: 0.14em; color: #1EAAE2; }
+    .k06-cur { position: absolute; left: 0; top: 0; width: 40px; height: 40px; }
+
+
+    #k06-big { left: 210px; top: 90px; width: 1500px; height: 860px; }
+    #k06-pg6 { position: absolute; left: 0; top: 0; }
+    .k06-svc { background: #FFFFFF; padding: 90px 80px 120px; text-align: center; }
+    .k06-svc .k06-st { font-size: 76px; color: #152235; }
+    .k06-svc .k06-cr { display: flex; gap: 34px; margin-top: 60px; }
+    .k06-svc .k06-cr div.k { flex: 1; height: 300px; border-radius: 18px; background: #F4F8FC; border: 1px solid #E3EAF2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; }
+    #k06-white { position: absolute; inset: 0; background: #FFFFFF; }
+    #k06-lg { position: absolute; left: 50%; top: 50%; width: 1060px; height: 353px; margin: -176px 0 0 -530px; }
+    #k06-lg img { display: block; width: 100%; }
+    #k06-url { position: absolute; left: 0; right: 0; top: 440px; text-align: center; font-family: "Oswald"; font-weight: 600; font-size: 132px; letter-spacing: 0.01em; color: #152235; }
+    #k06-url em { font-style: normal; color: #1EAAE2; }
+    #k06-uf { position: absolute; left: 0; right: 0; top: 640px; display: flex; justify-content: center; }
+
+  </style>
+  <div id="root" data-composition-id="06-adresse" data-start="0" data-duration="10" data-width="1920" data-height="1080">
+    <div id="k06-bgclip" class="clip" data-start="0" data-duration="10" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="k06-bgd"></div>
+    <div class="k06-br" id="k06-big"><div class="k06-brt"><u></u><u></u><u></u><b>ktf-shipping.com</b></div>
+      <div class="k06-brv" style="height:816px"><div id="k06-pg6"><div class="k06-site" style="position:relative; transform: scale(1.0417)"><div class="k06-hd"><img src="assets/images/ktf-logo.png" alt="KTF"><nav><span>SERVICES</span><span>DÉPARTS</span><span>SUIVI</span><span>À PROPOS</span><span>CONTACT</span></nav><div class="k06-btn" id="k06-hdbtn">Demander un devis</div></div>
+        <div class="k06-bar"></div>
+        <div class="k06-hero">
+          <div class="k06-hk" id="k06-hk"><i></i>SOLUTIONS LOGISTIQUES — EUROPE &amp; AFRIQUE</div>
+          <div class="k06-ht" id="k06-ht"><em>TRANSPORT</em> AÉRIEN, MARITIME<br>&amp; ROUTIER</div>
+          <div class="k06-fil" style="margin-top:30px" id="k06-hf"><i></i><u></u></div>
+          <div class="k06-hp" id="k06-hp">KTF Shipping, votre partenaire de confiance entre l'Europe<br>et toute l'Afrique de l'Ouest.</div>
+          <div class="k06-hb" id="k06-hb"><div class="k06-btn"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M3 10 H16 M11 5 L16 10 L11 15" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Nos services</div><div class="k06-btn ol"><svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="6.5" stroke="#fff" stroke-width="2.2" fill="none"/><circle cx="11" cy="11" r="2.4" fill="#fff"/><path d="M11 1 V4 M11 18 V21 M1 11 H4 M18 11 H21" stroke="#fff" stroke-width="2.2"/></svg>Suivre mon envoi</div></div>
+        </div>
+        <div class="k06-svc"><div class="k06-kick" style="justify-content:center"><i></i>CE QUE NOUS FAISONS</div><div class="k06-st" style="margin-top:18px">Nos <em>services</em> logistiques</div>
+          <div class="k06-cr"><div class="k"><div class="k06-ic"><svg width="58" height="58" viewBox="0 0 64 64"><path d="M6 34 L26 30 L38 8 L45 8 L39 30 L56 28 C61 28 61 35 56 35 L39 36 L45 56 L38 56 L26 38 L6 36 Z" fill="#1EAAE2"/></svg></div><div class="k06-ct" style="font-size:34px">Transport aérien</div></div><div class="k"><div class="k06-ic"><svg width="58" height="58" viewBox="0 0 64 64"><path d="M20 22 H42 V36 H20 Z M30 12 H37 V22 H30 Z" fill="#1EAAE2"/><path d="M6 36 H58 L50 50 H14 Z" fill="#1EAAE2"/><path d="M4 56 Q12 52 20 56 T36 56 T52 56 T60 56" stroke="#1EAAE2" stroke-width="3" fill="none"/></svg></div><div class="k06-ct" style="font-size:34px">Transport maritime</div></div><div class="k"><div class="k06-ic"><svg width="58" height="58" viewBox="0 0 64 64"><path d="M4 18 H38 V46 H4 Z M38 26 H50 L60 36 V46 H38 Z" fill="#1EAAE2"/><circle cx="14" cy="48" r="6" fill="#152235"/><circle cx="48" cy="48" r="6" fill="#152235"/><circle cx="14" cy="48" r="2.5" fill="#fff"/><circle cx="48" cy="48" r="2.5" fill="#fff"/></svg></div><div class="k06-ct" style="font-size:34px">Transport routier</div></div></div></div>
+      </div></div></div></div>
+    <div id="k06-white"></div>
+    <div id="k06-lg"><img src="assets/images/ktf-logo.png" alt="KTF Shipping"></div>
+    <div id="k06-url">ktf-shipping<em>.com</em></div>
+    <div id="k06-uf"><div class="k06-fil"><i style="width:160px"></i><u class="o"></u></div></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="06-adresse"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="06-adresse"] ' + s);
+      tl.fromTo(R("#k06-big"), { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.6, ease: "power2.out" }, 0.0);
+      tl.to(R("#k06-pg6"), { y: -620, duration: 2.6, ease: "power1.inOut" }, 0.6);
+      tl.fromTo(R("#k06-white"), { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power2.inOut" }, 3.4);
+      tl.fromTo(R("#k06-lg"), { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, duration: 0.7, ease: "power2.out" }, 3.8);
+      tl.to(R("#k06-lg"), { opacity: 0, duration: 0.45, ease: "power2.in" }, 5.4);
+      tl.fromTo(R("#k06-url"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 5.85);
+      tl.fromTo(R("#k06-uf"), { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.5, ease: "power2.out" }, 6.1);
+
+      tl.to({}, { duration: 10 }, 0);
+      window.__timelines["06-adresse"] = tl;
+    })();
+  </script>
+</template>
