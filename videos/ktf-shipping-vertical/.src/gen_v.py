@@ -205,7 +205,7 @@ F['03-offre'] = ('''
 # ── 04 · Une information à portée de clic (27–38) ────────────────────────
 deps = ''.join(f'''<div class="X-dr"><div class="X-ic" style="width:72px;height:72px;border-radius:12px">{ICON[k].replace('width="58" height="58"', 'width="42" height="42"')}</div><div><b>{t}</b><span>Europe — Afrique de l'Ouest</span></div><div class="X-dv">Consulter</div></div>''' for k, t in CARDS)
 F['04-information'] = ('''
-    #X-vp { left: 80px; top: 760px; width: 920px; height: 840px; }
+    #X-vp { left: 80px; top: 760px; width: 920px; height: 800px; }
     #X-pg { position: absolute; left: 0; top: 0; width: 920px; }
     .X-sec { padding: 54px 56px; }
     .X-sh { font-family: "Oswald"; font-weight: 600; font-size: 52px; color: #152235; text-transform: uppercase; }
@@ -230,7 +230,7 @@ F['04-information'] = ('''
       <div class="X-sp" id="X-p2"><u></u>Suivi</div>
     </div>
     <div class="X-br" id="X-vp"><div class="X-brt"><u></u><u></u><u></u><b>ktf-shipping.com</b></div>
-      <div class="X-brv" style="height:796px"><div id="X-pg">
+      <div class="X-brv" style="height:756px"><div id="X-pg">
         <div class="X-sec" id="X-dep">
           <div class="X-kick"><i></i>CONSULTER</div>
           <div class="X-sh" style="margin-top:14px">Nos <em>départs</em></div>
@@ -271,8 +271,8 @@ F['05-action'] = ('''
     .X-lb { position: absolute; left: 170px; font-family: "Oswald"; font-weight: 500; font-size: 48px; color: #152235; text-transform: uppercase; white-space: nowrap; }
     #X-cta { position: absolute; left: 170px; top: 1090px; }
     #X-cta .X-btn { font-size: 28px; padding: 26px 44px; }
-    #X-dsk { left: 80px; top: 480px; width: 920px; height: 600px; }
-    #X-ph { position: absolute; left: 390px; top: 1130px; width: 300px; height: 640px; border-radius: 40px; border: 10px solid #152235; background: #06111F; overflow: hidden; box-shadow: 0 40px 90px rgba(21,34,53,0.35); }
+    #X-dsk { left: 80px; top: 440px; width: 920px; height: 600px; }
+    #X-ph { position: absolute; left: 390px; top: 1080px; width: 300px; height: 640px; border-radius: 40px; border: 10px solid #152235; background: #06111F; overflow: hidden; box-shadow: 0 40px 90px rgba(21,34,53,0.35); }
     #X-ph .X-site { width: 280px; }
     #X-ph .X-hd { height: 76px; padding: 0 18px; }
     #X-ph .X-hd img { height: 48px; }

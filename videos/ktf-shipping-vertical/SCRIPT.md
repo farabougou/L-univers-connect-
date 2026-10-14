@@ -1,6 +1,6 @@
 # SCRIPT — KTF Shipping « Un trajet clair, dès le premier clic »
 
-Voix : Orion (masculine) — à générer par le client, puis synchronisée sur les 6 séquences.
+Voix : ElevenLabs « Nicolas Petit » (fichier fourni par le client), calée sur les 6 séquences.
 Texte : voix off proposée dans le brief (p. 6), découpée par séquence.
 
 1. (0–7 s)   Un trajet clair commence par de bons repères. Sur le site de KTF Shipping, le design organise la découverte.
