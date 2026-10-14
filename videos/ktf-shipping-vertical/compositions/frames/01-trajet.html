@@ -1,0 +1,117 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Oswald"; font-weight: 400; src: url("assets/fonts/oswald-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 500; src: url("assets/fonts/oswald-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 600; src: url("assets/fonts/oswald-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 700; src: url("assets/fonts/oswald-latin-700-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Roboto"; font-weight: 400; src: url("assets/fonts/roboto-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Roboto"; font-weight: 500; src: url("assets/fonts/roboto-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Roboto"; font-weight: 700; src: url("assets/fonts/roboto-latin-700-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Roboto", sans-serif; color: #FFFFFF; }
+
+    .k01-abs { position: absolute; }
+    .k01-bgd { position: absolute; inset: 0; background: radial-gradient(90% 80% at 70% 40%, #0b1f36 0%, #06111F 70%); }
+    .k01-bgl { position: absolute; inset: 0; background: #F4F8FC; }
+    .k01-bgw { position: absolute; inset: 0; background: #FFFFFF; }
+    .k01-kick { display: flex; align-items: center; gap: 18px; font-family: "Roboto"; font-weight: 500; font-size: 24px; letter-spacing: 0.24em; color: #1EAAE2; white-space: nowrap; }
+    .k01-kick i { display: block; width: 56px; height: 3px; background: #1EAAE2; }
+    .k01-st { font-family: "Oswald"; font-weight: 600; font-size: 88px; line-height: 1.08; text-transform: uppercase; color: #FFFFFF; white-space: nowrap; }
+    .k01-st em { font-style: normal; color: #1EAAE2; }
+    .k01-st.dk { color: #152235; }
+    .k01-fil { display: flex; align-items: center; gap: 14px; }
+    .k01-fil i { display: block; width: 110px; height: 4px; border-radius: 2px; background: #1EAAE2; }
+    .k01-fil u { display: block; width: 14px; height: 14px; border-radius: 7px; background: #1EAAE2; }
+    .k01-fil u.o { background: #F07828; }
+    .k01-ex { font-family: "Roboto"; font-weight: 400; font-size: 34px; line-height: 1.45; color: #9FB3C8; }
+    .k01-ex.dk { color: #46586E; }
+    /* site components */
+    .k01-site { position: absolute; left: 0; top: 0; width: 1440px; background: #06111F; overflow: hidden; transform-origin: 0 0; }
+    .k01-hd { height: 96px; background: #FFFFFF; display: flex; align-items: center; padding: 0 56px; gap: 40px; }
+    .k01-hd img { display: block; height: 66px; }
+    .k01-hd nav { display: flex; gap: 34px; margin-left: auto; font-family: "Roboto"; font-weight: 500; font-size: 17px; letter-spacing: 0.08em; color: #152235; }
+    .k01-btn { display: inline-flex; align-items: center; gap: 12px; padding: 16px 28px; border-radius: 3px; font-family: "Roboto"; font-weight: 700; font-size: 17px; letter-spacing: 0.12em; text-transform: uppercase; color: #FFFFFF; background: #1EAAE2; white-space: nowrap; }
+    .k01-btn.ol { background: transparent; border: 2px solid #8a96a3; }
+    .k01-btn svg { display: block; }
+    .k01-bar { height: 6px; background: linear-gradient(90deg, #1EAAE2 0 33%, #D93A2B 33% 66%, #F07828 66% 100%); }
+    .k01-hero { position: relative; height: 700px; padding: 150px 80px 0; background:
+        radial-gradient(40% 55% at 82% 70%, rgba(240,120,40,0.22), rgba(240,120,40,0) 70%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0 2px, rgba(255,255,255,0) 2px 180px),
+        linear-gradient(180deg, #0a1a2c 0%, #06111F 100%); }
+    .k01-hk { display: flex; align-items: center; gap: 22px; font-family: "Roboto"; font-weight: 700; font-size: 20px; letter-spacing: 0.3em; color: #1EAAE2; }
+    .k01-hk i { display: block; width: 64px; height: 3px; background: #1EAAE2; }
+    .k01-ht { margin-top: 34px; font-family: "Oswald"; font-weight: 600; font-size: 84px; line-height: 1.08; color: #FFFFFF; white-space: nowrap; }
+    .k01-ht em { font-style: italic; color: #1EAAE2; }
+    .k01-hp { margin-top: 26px; font-family: "Roboto"; font-weight: 400; font-size: 24px; line-height: 1.6; color: #C9D3DE; }
+    .k01-hb { margin-top: 38px; display: flex; gap: 20px; }
+    /* browser chrome */
+    .k01-br { position: absolute; border-radius: 18px; overflow: hidden; background: #FFFFFF; box-shadow: 0 40px 90px rgba(0,0,0,0.45); }
+    .k01-brt { height: 44px; background: #EEF2F6; display: flex; align-items: center; gap: 10px; padding: 0 18px; }
+    .k01-brt u { display: block; width: 13px; height: 13px; border-radius: 7px; background: #c7d0da; }
+    .k01-brt b { display: block; margin-left: 24px; padding: 6px 22px; border-radius: 14px; background: #FFFFFF; font-family: "Roboto"; font-weight: 500; font-size: 17px; color: #46586E; }
+    .k01-brv { position: relative; overflow: hidden; }
+    /* cards */
+    .k01-card { position: absolute; border-radius: 18px; background: #FFFFFF; box-shadow: 0 24px 60px rgba(21,34,53,0.14); border: 1px solid #E3EAF2; }
+    .k01-ic { display: flex; width: 96px; height: 96px; border-radius: 18px; align-items: center; justify-content: center; background: #E6F5FC; }
+    .k01-ct { font-family: "Oswald"; font-weight: 600; font-size: 44px; color: #152235; text-transform: uppercase; white-space: nowrap; }
+    .k01-cp { font-family: "Roboto"; font-weight: 400; font-size: 26px; line-height: 1.45; color: #46586E; }
+    .k01-cl { display: flex; align-items: center; gap: 10px; font-family: "Roboto"; font-weight: 700; font-size: 20px; letter-spacing: 0.14em; color: #1EAAE2; }
+    .k01-cur { position: absolute; left: 0; top: 0; width: 40px; height: 40px; }
+
+
+    #k01-logo { position: absolute; left: 50%; top: 50%; width: 860px; height: 286px; margin: -143px 0 0 -430px; }
+    #k01-logo img { display: block; width: 100%; }
+    #k01-dark { position: absolute; inset: 0; background: radial-gradient(90% 80% at 70% 40%, #0b1f36 0%, #06111F 70%); }
+    #k01-brw { left: 60px; top: 760px; width: 960px; height: 620px; }
+    #k01-line { position: absolute; left: 0; top: 0; }
+
+  </style>
+  <div id="root" data-composition-id="01-trajet" data-start="0" data-duration="7.5" data-width="1080" data-height="1920">
+    <div id="k01-bgclip" class="clip" data-start="0" data-duration="7.5" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="k01-bgw"></div>
+    <div id="k01-dark"></div>
+    <div id="k01-logo"><img src="assets/images/ktf-logo.png" alt="KTF Shipping"></div>
+    <div class="k01-br" id="k01-brw"><div class="k01-brt"><u></u><u></u><u></u><b>ktf-shipping.com</b></div>
+      <div class="k01-brv" style="height:576px"><div class="k01-site" id="k01-site" style="transform: scale(0.6667)"><div class="k01-hd"><img src="assets/images/ktf-logo.png" alt="KTF"><nav><span>SERVICES</span><span>DÉPARTS</span><span>SUIVI</span><span>À PROPOS</span><span>CONTACT</span></nav><div class="k01-btn" id="k01-hdbtn">Demander un devis</div></div>
+        <div class="k01-bar"></div>
+        <div class="k01-hero">
+          <div class="k01-hk" id="k01-hk"><i></i>SOLUTIONS LOGISTIQUES — EUROPE &amp; AFRIQUE</div>
+          <div class="k01-ht" id="k01-ht"><em>TRANSPORT</em> AÉRIEN, MARITIME<br>&amp; ROUTIER</div>
+          <div class="k01-fil" style="margin-top:30px" id="k01-hf"><i></i><u></u></div>
+          <div class="k01-hp" id="k01-hp">KTF Shipping, votre partenaire de confiance entre l'Europe<br>et toute l'Afrique de l'Ouest.</div>
+          <div class="k01-hb" id="k01-hb"><div class="k01-btn"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M3 10 H16 M11 5 L16 10 L11 15" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Nos services</div><div class="k01-btn ol"><svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="6.5" stroke="#fff" stroke-width="2.2" fill="none"/><circle cx="11" cy="11" r="2.4" fill="#fff"/><path d="M11 1 V4 M11 18 V21 M1 11 H4 M18 11 H21" stroke="#fff" stroke-width="2.2"/></svg>Suivre mon envoi</div></div>
+        </div></div></div></div>
+    <svg id="k01-line" width="1080" height="1920" viewBox="0 0 1080 1920"><path id="k01-lp" d="M 1100 1640 C 820 1640 700 1520 520 1500 S 230 1470 160 1470" stroke="#1EAAE2" stroke-width="5" fill="none" stroke-linecap="round"/><circle id="k01-ld" cx="160" cy="1470" r="11" fill="#1EAAE2"/></svg>
+    <div class="k01-abs" id="k01-sk" style="left:80px; top:330px"><div class="k01-kick"><i></i>KTF SHIPPING</div></div>
+    <div class="k01-abs k01-st" id="k01-s1" style="left:80px; top:382px">Un trajet clair,</div>
+    <div class="k01-abs k01-st" id="k01-s2" style="left:80px; top:477px"><em>dès le premier clic.</em></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="01-trajet"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="01-trajet"] ' + s);
+      const lp = R("#k01-lp"), L = lp.getTotalLength();
+      tl.fromTo(R("#k01-logo"), { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, duration: 0.7, ease: "power2.out" }, 0.2);
+      tl.to(R("#k01-logo"), { opacity: 0, scale: 1.04, duration: 0.5, ease: "power2.in" }, 2.0);
+      tl.fromTo(R("#k01-dark"), { clipPath: "inset(100% 0% 0% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.7, ease: "power3.inOut" }, 2.3);
+      tl.fromTo(R("#k01-brw"), { opacity: 0, y: 80, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: "power3.out" }, 2.75);
+      tl.fromTo(R("#k01-hk"), { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.45, ease: "power2.out" }, 3.2);
+      tl.fromTo(R("#k01-ht"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 3.3);
+      tl.fromTo(R("#k01-hf"), { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, transformOrigin: "0 50%", duration: 0.45, ease: "power2.out" }, 3.45);
+      tl.fromTo(R("#k01-hp"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 3.55);
+      tl.fromTo(R("#k01-hb"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 3.65);
+      tl.fromTo(lp, { attr: { "stroke-dasharray": L, "stroke-dashoffset": L } }, { attr: { "stroke-dashoffset": 0 }, duration: 1.1, ease: "power2.inOut" }, 4.0);
+      tl.fromTo(R("#k01-ld"), { opacity: 0, scale: 0, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 5.05);
+      tl.fromTo(R("#k01-sk"), { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, 4.3);
+      tl.fromTo(R("#k01-s1"), { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 4.3999999999999995);
+      tl.fromTo(R("#k01-s2"), { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 4.6499999999999995);
+      tl.to(R("#k01-site"), { scale: 0.8, x: -40, y: -30, duration: 2.2, ease: "power1.inOut" }, 4.7);
+
+      tl.to({}, { duration: 7.5 }, 0);
+      window.__timelines["01-trajet"] = tl;
+    })();
+  </script>
+</template>

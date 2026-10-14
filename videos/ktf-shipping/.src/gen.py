@@ -273,7 +273,7 @@ F['05-action'] = ('''
     #X-cta .X-btn { font-size: 28px; padding: 26px 44px; }
     #X-dsk { left: 790px; top: 190px; width: 760px; height: 520px; }
     #X-ph { position: absolute; left: 1600px; top: 130px; width: 300px; height: 640px; border-radius: 40px; border: 10px solid #152235; background: #06111F; overflow: hidden; box-shadow: 0 40px 90px rgba(21,34,53,0.35); }
-    #X-ph .X-site { width: 390px; }
+    #X-ph .X-site { width: 280px; }
     #X-ph .X-hd { height: 76px; padding: 0 18px; }
     #X-ph .X-hd img { height: 48px; }
     #X-ph .X-hero { height: 760px; padding: 60px 22px 0; }

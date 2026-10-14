@@ -1,0 +1,124 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Oswald"; font-weight: 400; src: url("assets/fonts/oswald-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 500; src: url("assets/fonts/oswald-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 600; src: url("assets/fonts/oswald-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 700; src: url("assets/fonts/oswald-latin-700-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Roboto"; font-weight: 400; src: url("assets/fonts/roboto-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Roboto"; font-weight: 500; src: url("assets/fonts/roboto-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Roboto"; font-weight: 700; src: url("assets/fonts/roboto-latin-700-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Roboto", sans-serif; color: #FFFFFF; }
+
+    .k03-abs { position: absolute; }
+    .k03-bgd { position: absolute; inset: 0; background: radial-gradient(90% 80% at 70% 40%, #0b1f36 0%, #06111F 70%); }
+    .k03-bgl { position: absolute; inset: 0; background: #F4F8FC; }
+    .k03-bgw { position: absolute; inset: 0; background: #FFFFFF; }
+    .k03-kick { display: flex; align-items: center; gap: 18px; font-family: "Roboto"; font-weight: 500; font-size: 24px; letter-spacing: 0.24em; color: #1EAAE2; white-space: nowrap; }
+    .k03-kick i { display: block; width: 56px; height: 3px; background: #1EAAE2; }
+    .k03-st { font-family: "Oswald"; font-weight: 600; font-size: 88px; line-height: 1.08; text-transform: uppercase; color: #FFFFFF; white-space: nowrap; }
+    .k03-st em { font-style: normal; color: #1EAAE2; }
+    .k03-st.dk { color: #152235; }
+    .k03-fil { display: flex; align-items: center; gap: 14px; }
+    .k03-fil i { display: block; width: 110px; height: 4px; border-radius: 2px; background: #1EAAE2; }
+    .k03-fil u { display: block; width: 14px; height: 14px; border-radius: 7px; background: #1EAAE2; }
+    .k03-fil u.o { background: #F07828; }
+    .k03-ex { font-family: "Roboto"; font-weight: 400; font-size: 34px; line-height: 1.45; color: #9FB3C8; }
+    .k03-ex.dk { color: #46586E; }
+    /* site components */
+    .k03-site { position: absolute; left: 0; top: 0; width: 1440px; background: #06111F; overflow: hidden; transform-origin: 0 0; }
+    .k03-hd { height: 96px; background: #FFFFFF; display: flex; align-items: center; padding: 0 56px; gap: 40px; }
+    .k03-hd img { display: block; height: 66px; }
+    .k03-hd nav { display: flex; gap: 34px; margin-left: auto; font-family: "Roboto"; font-weight: 500; font-size: 17px; letter-spacing: 0.08em; color: #152235; }
+    .k03-btn { display: inline-flex; align-items: center; gap: 12px; padding: 16px 28px; border-radius: 3px; font-family: "Roboto"; font-weight: 700; font-size: 17px; letter-spacing: 0.12em; text-transform: uppercase; color: #FFFFFF; background: #1EAAE2; white-space: nowrap; }
+    .k03-btn.ol { background: transparent; border: 2px solid #8a96a3; }
+    .k03-btn svg { display: block; }
+    .k03-bar { height: 6px; background: linear-gradient(90deg, #1EAAE2 0 33%, #D93A2B 33% 66%, #F07828 66% 100%); }
+    .k03-hero { position: relative; height: 700px; padding: 150px 80px 0; background:
+        radial-gradient(40% 55% at 82% 70%, rgba(240,120,40,0.22), rgba(240,120,40,0) 70%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0 2px, rgba(255,255,255,0) 2px 180px),
+        linear-gradient(180deg, #0a1a2c 0%, #06111F 100%); }
+    .k03-hk { display: flex; align-items: center; gap: 22px; font-family: "Roboto"; font-weight: 700; font-size: 20px; letter-spacing: 0.3em; color: #1EAAE2; }
+    .k03-hk i { display: block; width: 64px; height: 3px; background: #1EAAE2; }
+    .k03-ht { margin-top: 34px; font-family: "Oswald"; font-weight: 600; font-size: 84px; line-height: 1.08; color: #FFFFFF; white-space: nowrap; }
+    .k03-ht em { font-style: italic; color: #1EAAE2; }
+    .k03-hp { margin-top: 26px; font-family: "Roboto"; font-weight: 400; font-size: 24px; line-height: 1.6; color: #C9D3DE; }
+    .k03-hb { margin-top: 38px; display: flex; gap: 20px; }
+    /* browser chrome */
+    .k03-br { position: absolute; border-radius: 18px; overflow: hidden; background: #FFFFFF; box-shadow: 0 40px 90px rgba(0,0,0,0.45); }
+    .k03-brt { height: 44px; background: #EEF2F6; display: flex; align-items: center; gap: 10px; padding: 0 18px; }
+    .k03-brt u { display: block; width: 13px; height: 13px; border-radius: 7px; background: #c7d0da; }
+    .k03-brt b { display: block; margin-left: 24px; padding: 6px 22px; border-radius: 14px; background: #FFFFFF; font-family: "Roboto"; font-weight: 500; font-size: 17px; color: #46586E; }
+    .k03-brv { position: relative; overflow: hidden; }
+    /* cards */
+    .k03-card { position: absolute; border-radius: 18px; background: #FFFFFF; box-shadow: 0 24px 60px rgba(21,34,53,0.14); border: 1px solid #E3EAF2; }
+    .k03-ic { display: flex; width: 96px; height: 96px; border-radius: 18px; align-items: center; justify-content: center; background: #E6F5FC; }
+    .k03-ct { font-family: "Oswald"; font-weight: 600; font-size: 44px; color: #152235; text-transform: uppercase; white-space: nowrap; }
+    .k03-cp { font-family: "Roboto"; font-weight: 400; font-size: 26px; line-height: 1.45; color: #46586E; }
+    .k03-cl { display: flex; align-items: center; gap: 10px; font-family: "Roboto"; font-weight: 700; font-size: 20px; letter-spacing: 0.14em; color: #1EAAE2; }
+    .k03-cur { position: absolute; left: 0; top: 0; width: 40px; height: 40px; }
+
+
+    #k03-rail { position: absolute; left: 0; top: 0; }
+
+  </style>
+  <div id="root" data-composition-id="03-offre" data-start="0" data-duration="11.5" data-width="1080" data-height="1920">
+    <div id="k03-bgclip" class="clip" data-start="0" data-duration="11.5" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="k03-bgl"></div>
+    <div class="k03-abs" id="k03-sk" style="left:80px; top:190px"><div class="k03-kick"><i></i>03 — MODULES</div></div>
+    <div class="k03-abs k03-st dk" id="k03-s1" style="left:80px; top:242px">Une offre</div>
+    <div class="k03-abs k03-st dk" id="k03-s2" style="left:80px; top:337px"><em>organisée.</em></div>
+    <div class="k03-card" id="k03-c0" style="left:130px; top:560px; width:870px; height:280px">
+      <div style="padding:44px 44px; display:flex; gap:36px; align-items:flex-start">
+        <div class="k03-ic" style="flex:none"><svg width="58" height="58" viewBox="0 0 64 64"><path d="M6 34 L26 30 L38 8 L45 8 L39 30 L56 28 C61 28 61 35 56 35 L39 36 L45 56 L38 56 L26 38 L6 36 Z" fill="#1EAAE2"/></svg></div>
+        <div><div class="k03-ct">Transport aérien</div>
+        <div class="k03-cp" style="margin-top:8px">Europe — Afrique de l'Ouest</div>
+        <div class="k03-cl" style="margin-top:22px">EN SAVOIR PLUS <svg width="20" height="20" viewBox="0 0 20 20"><path d="M3 10 H16 M11 5 L16 10 L11 15" stroke="#1EAAE2" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+      </div>
+    </div>
+    <div class="k03-card" id="k03-c1" style="left:130px; top:890px; width:870px; height:280px">
+      <div style="padding:44px 44px; display:flex; gap:36px; align-items:flex-start">
+        <div class="k03-ic" style="flex:none"><svg width="58" height="58" viewBox="0 0 64 64"><path d="M20 22 H42 V36 H20 Z M30 12 H37 V22 H30 Z" fill="#1EAAE2"/><path d="M6 36 H58 L50 50 H14 Z" fill="#1EAAE2"/><path d="M4 56 Q12 52 20 56 T36 56 T52 56 T60 56" stroke="#1EAAE2" stroke-width="3" fill="none"/></svg></div>
+        <div><div class="k03-ct">Transport maritime</div>
+        <div class="k03-cp" style="margin-top:8px">Europe — Afrique de l'Ouest</div>
+        <div class="k03-cl" style="margin-top:22px">EN SAVOIR PLUS <svg width="20" height="20" viewBox="0 0 20 20"><path d="M3 10 H16 M11 5 L16 10 L11 15" stroke="#1EAAE2" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+      </div>
+    </div>
+    <div class="k03-card" id="k03-c2" style="left:130px; top:1220px; width:870px; height:280px">
+      <div style="padding:44px 44px; display:flex; gap:36px; align-items:flex-start">
+        <div class="k03-ic" style="flex:none"><svg width="58" height="58" viewBox="0 0 64 64"><path d="M4 18 H38 V46 H4 Z M38 26 H50 L60 36 V46 H38 Z" fill="#1EAAE2"/><circle cx="14" cy="48" r="6" fill="#152235"/><circle cx="48" cy="48" r="6" fill="#152235"/><circle cx="14" cy="48" r="2.5" fill="#fff"/><circle cx="48" cy="48" r="2.5" fill="#fff"/></svg></div>
+        <div><div class="k03-ct">Transport routier</div>
+        <div class="k03-cp" style="margin-top:8px">Europe — Afrique de l'Ouest</div>
+        <div class="k03-cl" style="margin-top:22px">EN SAVOIR PLUS <svg width="20" height="20" viewBox="0 0 20 20"><path d="M3 10 H16 M11 5 L16 10 L11 15" stroke="#1EAAE2" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+      </div>
+    </div>
+    <svg id="k03-rail" width="1080" height="1920" viewBox="0 0 1080 1920"><path id="k03-rp" d="M 80 540 V 1480" stroke="#1EAAE2" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <circle id="k03-r0" cx="80" cy="700" r="11" fill="#1EAAE2"/><circle id="k03-r1" cx="80" cy="1030" r="11" fill="#1EAAE2"/><circle id="k03-r2" cx="80" cy="1360" r="11" fill="#1EAAE2"/></svg>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="03-offre"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="03-offre"] ' + s);
+      tl.fromTo(R("#k03-sk"), { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, 0.3);
+      tl.fromTo(R("#k03-s1"), { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.4);
+      tl.fromTo(R("#k03-s2"), { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.6499999999999999);
+      // each card is isolated in the centre, then placed in the row
+      const C = [0, 1, 2].map((i) => R("#k03-c" + i)), dy = [330, 0, -330];
+      C.forEach((c, i) => {
+        const t0 = 1.3 + i * 1.7;
+        tl.fromTo(c, { opacity: 0, x: 0, y: dy[i] + 40, scale: 1.08 }, { opacity: 1, y: dy[i], scale: 1.08, duration: 0.55, ease: "power3.out" }, t0);
+        tl.to(c, { y: 0, scale: 1, duration: 0.7, ease: "power3.inOut" }, t0 + 1.1);
+      });
+      const rp = R("#k03-rp"), RL = rp.getTotalLength();
+      tl.fromTo(rp, { attr: { "stroke-dasharray": RL, "stroke-dashoffset": RL } }, { attr: { "stroke-dashoffset": 0 }, duration: 1.4, ease: "power2.inOut" }, 6.6);
+      [0, 1, 2].forEach((i) => tl.fromTo(R("#k03-r" + i), { opacity: 0, scale: 0, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 6.85 + i * 0.4));
+      C.forEach((c, i) => tl.to(c, { x: 14, duration: 0.4, ease: "power2.out", yoyo: true, repeat: 1 }, 6.9 + i * 0.4));
+
+      tl.to({}, { duration: 11.5 }, 0);
+      window.__timelines["03-offre"] = tl;
+    })();
+  </script>
+</template>
