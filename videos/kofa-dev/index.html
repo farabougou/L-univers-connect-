@@ -5,60 +5,25 @@
     <meta name="viewport" content="width=1080, height=1920" />
     <script src="assets/vendor/gsap.min.js"></script>
     <style>
-      @font-face { font-family: "Inter"; font-weight: 400; src: url("assets/fonts/inter-latin-400-normal.woff2") format("woff2"); }
-      @font-face { font-family: "Inter"; font-weight: 600; src: url("assets/fonts/inter-latin-600-normal.woff2") format("woff2"); }
       @font-face { font-family: "Inter"; font-weight: 800; src: url("assets/fonts/inter-latin-800-normal.woff2") format("woff2"); }
       @font-face { font-family: "Inter"; font-weight: 900; src: url("assets/fonts/inter-latin-900-normal.woff2") format("woff2"); }
       @font-face { font-family: "Plex Mono"; font-weight: 500; src: url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
       * { margin: 0; padding: 0; box-sizing: border-box; }
       html, body { width: 1080px; height: 1920px; overflow: hidden; background: #000; }
       #root { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: #000; font-family: "Inter", sans-serif; }
+      #film { position: absolute; inset: 0; }
       #cam { position: absolute; left: 0; top: 0; width: 1440px; height: 1920px; transform-origin: 0 0; }
       #photo { position: absolute; left: 0; top: 0; width: 1440px; height: 1920px; filter: brightness(0.5) contrast(1.12) saturate(0.55) sepia(0.15); }
-      #scr { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; transform: matrix3d(0.851932021,-0.0365556322,0,-3.06773063e-05,0.267650984,1.11969274,0,0.000313900083,0,0,1,0,-38.4,-4.8,0,1); background: #0b0b0d; overflow: hidden; }
+      .scr { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; transform: matrix3d(0.851932021,-0.0365556322,0,-3.06773063e-05,0.267650984,1.11969274,0,0.000313900083,0,0,1,0,-38.4,-4.8,0,1); object-fit: fill; }
       #glow { position: absolute; left: 0; top: 760px; width: 1440px; height: 1160px; background: radial-gradient(60% 45% at 50% 18%, rgba(110,140,255,0.22), rgba(235,104,52,0.06) 55%, rgba(0,0,0,0) 80%); mix-blend-mode: screen; }
-      #vig { position: absolute; inset: 0; background: radial-gradient(75% 60% at 50% 42%, rgba(0,0,0,0) 45%, rgba(0,0,0,0.75) 100%); pointer-events: none; }
+      #vig { position: absolute; inset: 0; background: radial-gradient(75% 60% at 50% 42%, rgba(0,0,0,0) 45%, rgba(0,0,0,0.75) 100%); }
       #grain { position: absolute; left: -200px; top: -200px; width: 1480px; height: 2320px; background: url(assets/images/grain.png); opacity: 0.07; mix-blend-mode: overlay; }
-      /* ── the virtual Windows screen ── */
-      .tb { position: absolute; left: 0; bottom: 0; width: 1920px; height: 48px; background: #1c1c1f; border-top: 1px solid #2c2c30; display: flex; justify-content: center; align-items: center; gap: 14px; }
-      .tb i { display: block; width: 26px; height: 26px; border-radius: 6px; opacity: 0.9; }
-      .tray { position: absolute; right: 22px; bottom: 9px; font: 500 15px "Inter"; color: #ddd; text-align: right; line-height: 15px; }
-      .title { position: absolute; left: 0; top: 0; width: 1920px; height: 34px; background: #1f1f23; color: #b9b9c0; font: 400 15px/34px "Inter"; text-align: center; }
-      .act { position: absolute; left: 0; top: 34px; width: 48px; bottom: 48px; background: #18181b; border-right: 1px solid #26262a; }
-      .act i { display: block; width: 24px; height: 24px; margin: 18px auto 0; border: 2px solid #6b6b74; border-radius: 6px; }
-      .act i.on { border-color: #e8e8ee; }
-      .pane { position: absolute; left: 48px; top: 34px; width: 652px; bottom: 48px; background: #101012; border-right: 1px solid #26262a; }
-      .pane h6 { height: 40px; padding-left: 18px; font: 500 15px/40px "Plex Mono"; color: #9aa0aa; border-bottom: 1px solid #222226; }
-      .pane h6 b { color: #e8e8ee; font-weight: 500; }
-      .pane h6 em { font-style: normal; color: #1BAF7A; float: right; margin-right: 18px; }
-      #phone { position: absolute; left: 116px; top: 66px; width: 420px; height: 910px; border-radius: 66px; background: #0a0a0a; border: 4px solid #8c8780; box-shadow: 0 0 0 2px #3a3835, 0 30px 80px rgba(0,0,0,0.6); }
-      #disp { position: absolute; left: 10px; top: 10px; width: 392px; height: 882px; border-radius: 54px; overflow: hidden; background: #000; }
-      #isl { position: absolute; left: 50%; top: 14px; width: 118px; height: 34px; margin-left: -59px; border-radius: 17px; background: #000; z-index: 5; }
-      .pv { position: absolute; left: 0; top: 0; width: 392px; height: 850px; }
-      #splash { position: absolute; inset: 0; background: #EB6834; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 18px; }
-      .klogo { width: 96px; height: 96px; border-radius: 26px; background: #2A78D6; color: #fff; font: 900 64px/96px "Inter"; text-align: center; }
-      #splash b { font: 900 44px "Inter"; color: #fff; letter-spacing: -0.02em; }
-      .tap { position: absolute; width: 44px; height: 44px; border-radius: 22px; background: rgba(255,255,255,0.75); opacity: 0; z-index: 6; }
-      .tabs { position: absolute; left: 700px; top: 34px; right: 0; height: 40px; background: #161619; border-bottom: 1px solid #26262a; }
-      .tab { position: absolute; top: 0; height: 40px; padding: 0 22px; font: 500 15px/40px "Plex Mono"; color: #8c8c96; border-right: 1px solid #26262a; }
-      .tab.on { background: #0d0d10; color: #f0f0f5; border-top: 2px solid #EB6834; }
-      .crumb { position: absolute; left: 720px; top: 80px; font: 500 14px "Plex Mono"; color: #777780; }
-      .code { position: absolute; left: 700px; top: 108px; right: 0; bottom: 48px; background: #0d0d10; padding-top: 6px; }
-      .ln { position: relative; height: 30px; font: 500 21px/30px "Plex Mono"; color: #d4d4d8; white-space: pre; opacity: 0; }
-      .ln i { display: inline-block; width: 70px; padding-right: 22px; text-align: right; font-style: normal; color: #4b4b55; }
-      .ln b { font-weight: 500; display: inline-block; }
-      .kw { color: #c586c0; } .st { color: #ce9178; } .tg { color: #4ec9b0; } .cn { color: #4fc1ff; } .fn { color: #dcdcaa; } .br { color: #ffd700; } .cm { color: #6a9955; }
-      #curw { position: absolute; left: 770px; top: 114px; }
-      #cur { position: absolute; left: 0; top: 3px; width: 3px; height: 24px; background: #f0f0f5; }
-      .status { position: absolute; left: 0; right: 0; bottom: 48px; height: 26px; background: #EB6834; font: 500 14px/26px "Plex Mono"; color: #1a0d07; padding-left: 60px; }
-      #off { position: absolute; inset: 0; background: #000; }
-      /* ── overlays ── */
       #cap { position: absolute; left: 0; right: 0; top: 230px; text-align: center; }
       #cap span { display: inline-block; padding: 18px 34px; border-radius: 18px; background: rgba(10,10,12,0.72); font: 800 46px/1.2 "Inter"; color: #fff; letter-spacing: -0.01em; }
       #cap em { font-style: normal; color: #EB6834; }
       #end { position: absolute; inset: 0; background: rgba(8,8,10,0.86); opacity: 0; }
+      .klogo { width: 150px; height: 150px; border-radius: 40px; background: #2A78D6; color: #fff; font: 900 100px/150px "Inter"; text-align: center; }
       #endk { position: absolute; left: 0; right: 0; top: 700px; display: flex; justify-content: center; align-items: center; gap: 28px; }
-      #endk .klogo { width: 150px; height: 150px; border-radius: 40px; font-size: 100px; line-height: 150px; }
       #endk b { font: 900 150px/1 "Inter"; color: #fff; letter-spacing: -0.04em; }
       #e1 { top: 930px; font: 800 58px/1.15 "Inter"; color: #fff; letter-spacing: -0.02em; }
       #e1 em { font-style: normal; color: #EB6834; }
@@ -68,81 +33,13 @@
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="main" data-start="0" data-duration="25" data-width="1080" data-height="1920" data-fps="25">
-      <div id="film" class="clip" data-start="0" data-duration="25" data-track-index="0" style="position:absolute; inset:0">
+    <div id="root" data-composition-id="main" data-start="0" data-duration="31" data-width="1080" data-height="1920" data-fps="25">
+      <div id="film">
         <div id="cam">
-          <img id="photo" src="assets/images/bureau.jpg" alt="">
-          <div data-layout-allow-occlusion data-layout-allow-overlap id="scr" data-layout-allow-occlusion data-layout-allow-overlap data-layout-allow-overflow>
-            <div data-layout-allow-occlusion data-layout-allow-overlap class="title">HomeScreen.tsx — kofa-app — Visual Studio Code</div>
-            <div data-layout-allow-occlusion data-layout-allow-overlap class="act"><i data-layout-allow-occlusion data-layout-allow-overlap class="on"></i><i data-layout-allow-occlusion data-layout-allow-overlap></i><i data-layout-allow-occlusion data-layout-allow-overlap></i><i data-layout-allow-occlusion data-layout-allow-overlap></i><i data-layout-allow-occlusion data-layout-allow-overlap></i></div>
-            <div data-layout-allow-occlusion data-layout-allow-overlap class="pane">
-              <h6 data-layout-allow-occlusion data-layout-allow-overlap><b data-layout-allow-occlusion data-layout-allow-overlap>iPhone 15 Pro Max</b> · iOS 18 · Expo <em data-layout-allow-occlusion data-layout-allow-overlap>● en direct</em></h6>
-              <div data-layout-allow-occlusion data-layout-allow-overlap id="phone"><div data-layout-allow-occlusion data-layout-allow-overlap id="disp"><div data-layout-allow-occlusion data-layout-allow-overlap id="isl"></div>
-            <div data-layout-allow-occlusion data-layout-allow-overlap id="splash"><div data-layout-allow-occlusion data-layout-allow-overlap class="klogo">K</div><b data-layout-allow-occlusion data-layout-allow-overlap>KOFA</b></div>
-            <img class="pv" id="pv-accueil" src="assets/images/accueil.jpg" alt="">
-            <img class="pv" id="pv-diaspora" src="assets/images/diaspora.jpg" alt="">
-            <img class="pv" id="pv-resto" src="assets/images/restaurant-onboarding.jpg" alt="">
-            <img class="pv" id="pv-compte" src="assets/images/compte.jpg" alt="">
-            <div data-layout-allow-occlusion data-layout-allow-overlap class="tap" id="tap0" style="left:174px; top:578px"></div>
-            <div data-layout-allow-occlusion data-layout-allow-overlap class="tap" id="tap1" style="left:308px; top:790px"></div>
-              </div></div>
-            </div>
-            <div data-layout-allow-occlusion data-layout-allow-overlap class="tabs"><div data-layout-allow-occlusion data-layout-allow-overlap class="tab on" id="tab1" style="left:0">HomeScreen.tsx</div><div data-layout-allow-occlusion data-layout-allow-overlap class="tab" id="tab2" style="left:200px">DiasporaScreen.tsx</div></div>
-            <div data-layout-allow-occlusion data-layout-allow-overlap class="crumb" id="crumb">kofa-app › src › screens › <span data-layout-allow-occlusion data-layout-allow-overlap id="crf">HomeScreen.tsx</span></div>
-            <div data-layout-allow-occlusion data-layout-allow-overlap class="code" id="code1">
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="ha0" style="opacity:1"><i data-layout-allow-occlusion data-layout-allow-overlap>1</i><b data-layout-allow-occlusion data-layout-allow-overlap><span data-layout-allow-occlusion data-layout-allow-overlap class="kw">import</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span> ScrollView, Text, View <span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="kw">from</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="st">&#x27;react-native&#x27;</span>;</b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="ha1" style="opacity:1"><i data-layout-allow-occlusion data-layout-allow-overlap>2</i><b data-layout-allow-occlusion data-layout-allow-overlap><span data-layout-allow-occlusion data-layout-allow-overlap class="kw">import</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span> CategoryChip, SearchBar, RestaurantList <span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="kw">from</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="st">&#x27;../components&#x27;</span>;</b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="ha2" style="opacity:1"><i data-layout-allow-occlusion data-layout-allow-overlap>3</i><b data-layout-allow-occlusion data-layout-allow-overlap><span data-layout-allow-occlusion data-layout-allow-overlap class="kw">import</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span> colors <span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="kw">from</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="st">&#x27;../theme&#x27;</span>;</b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="ha3" style="opacity:1"><i data-layout-allow-occlusion data-layout-allow-overlap>4</i><b data-layout-allow-occlusion data-layout-allow-overlap>&nbsp;</b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="ha4" style="opacity:1"><i data-layout-allow-occlusion data-layout-allow-overlap>5</i><b data-layout-allow-occlusion data-layout-allow-overlap><span data-layout-allow-occlusion data-layout-allow-overlap class="kw">const</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="cn">CATEGORIES</span> = <span data-layout-allow-occlusion data-layout-allow-overlap class="br">[</span><span data-layout-allow-occlusion data-layout-allow-overlap class="st">&#x27;Repas&#x27;</span>, <span data-layout-allow-occlusion data-layout-allow-overlap class="st">&#x27;Courses&#x27;</span>, <span data-layout-allow-occlusion data-layout-allow-overlap class="st">&#x27;Colis&#x27;</span>, <span data-layout-allow-occlusion data-layout-allow-overlap class="st">&#x27;Grillades&#x27;</span><span data-layout-allow-occlusion data-layout-allow-overlap class="br">]</span>;</b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="ha5" style="opacity:1"><i data-layout-allow-occlusion data-layout-allow-overlap>6</i><b data-layout-allow-occlusion data-layout-allow-overlap>&nbsp;</b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="ha6" style="opacity:1"><i data-layout-allow-occlusion data-layout-allow-overlap>7</i><b data-layout-allow-occlusion data-layout-allow-overlap><span data-layout-allow-occlusion data-layout-allow-overlap class="kw">export</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="kw">default</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="kw">function</span> HomeScreen<span data-layout-allow-occlusion data-layout-allow-overlap class="br">(</span><span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span> navigation <span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span><span data-layout-allow-occlusion data-layout-allow-overlap class="br">)</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="ha7" style="opacity:1"><i data-layout-allow-occlusion data-layout-allow-overlap>8</i><b data-layout-allow-occlusion data-layout-allow-overlap>  <span data-layout-allow-occlusion data-layout-allow-overlap class="kw">const</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span> user, city <span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span> = <span data-layout-allow-occlusion data-layout-allow-overlap class="fn">useSession</span><span data-layout-allow-occlusion data-layout-allow-overlap class="br">(</span><span data-layout-allow-occlusion data-layout-allow-overlap class="br">)</span>; <span data-layout-allow-occlusion data-layout-allow-overlap class="cm">// Bamako, Mali</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="ha8" style="opacity:1"><i data-layout-allow-occlusion data-layout-allow-overlap>9</i><b data-layout-allow-occlusion data-layout-allow-overlap>&nbsp;</b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="ha9"><i data-layout-allow-occlusion data-layout-allow-overlap>10</i><b data-layout-allow-occlusion data-layout-allow-overlap>  <span data-layout-allow-occlusion data-layout-allow-overlap class="kw">return</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="br">(</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="ha10"><i data-layout-allow-occlusion data-layout-allow-overlap>11</i><b data-layout-allow-occlusion data-layout-allow-overlap>    <span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&lt;ScrollView</span> style=<span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span>styles.screen<span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span><span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&gt;</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="ha11"><i data-layout-allow-occlusion data-layout-allow-overlap>12</i><b data-layout-allow-occlusion data-layout-allow-overlap>      <span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&lt;Text</span> style=<span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span>styles.hello<span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span><span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&gt;</span>Bonjour <span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span>user.firstName<span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span><span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&lt;/Text</span><span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&gt;</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="ha12"><i data-layout-allow-occlusion data-layout-allow-overlap>13</i><b data-layout-allow-occlusion data-layout-allow-overlap>      <span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&lt;Text</span> style=<span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span>styles.title<span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span><span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&gt;</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="ha13"><i data-layout-allow-occlusion data-layout-allow-overlap>14</i><b data-layout-allow-occlusion data-layout-allow-overlap>        Le goût de Bamako,<span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span><span data-layout-allow-occlusion data-layout-allow-overlap class="st">&#x27;\n&#x27;</span><span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="ha14"><i data-layout-allow-occlusion data-layout-allow-overlap>15</i><b data-layout-allow-occlusion data-layout-allow-overlap>        <span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&lt;Text</span> style=<span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span><span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span> color: colors.orange <span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span><span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span><span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&gt;</span>livré chez vous.<span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&lt;/Text</span><span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&gt;</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="ha15"><i data-layout-allow-occlusion data-layout-allow-overlap>16</i><b data-layout-allow-occlusion data-layout-allow-overlap>      <span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&lt;/Text</span><span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&gt;</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="ha16"><i data-layout-allow-occlusion data-layout-allow-overlap>17</i><b data-layout-allow-occlusion data-layout-allow-overlap>      <span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&lt;SearchBar</span> placeholder=<span data-layout-allow-occlusion data-layout-allow-overlap class="st">&quot;Un plat, un restaurant...&quot;</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="tg">/&gt;</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="ha17"><i data-layout-allow-occlusion data-layout-allow-overlap>18</i><b data-layout-allow-occlusion data-layout-allow-overlap>      <span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&lt;View</span> style=<span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span>styles.row<span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span><span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&gt;</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="ha18"><i data-layout-allow-occlusion data-layout-allow-overlap>19</i><b data-layout-allow-occlusion data-layout-allow-overlap>        <span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span><span data-layout-allow-occlusion data-layout-allow-overlap class="cn">CATEGORIES</span>.<span data-layout-allow-occlusion data-layout-allow-overlap class="fn">map</span><span data-layout-allow-occlusion data-layout-allow-overlap class="br">(</span><span data-layout-allow-occlusion data-layout-allow-overlap class="br">(</span>c<span data-layout-allow-occlusion data-layout-allow-overlap class="br">)</span> =<span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&gt;</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="br">(</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="ha19"><i data-layout-allow-occlusion data-layout-allow-overlap>20</i><b data-layout-allow-occlusion data-layout-allow-overlap>          <span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&lt;CategoryChip</span> key=<span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span>c<span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span> label=<span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span>c<span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span> onPress=<span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span><span data-layout-allow-occlusion data-layout-allow-overlap class="br">(</span><span data-layout-allow-occlusion data-layout-allow-overlap class="br">)</span> =<span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&gt;</span> navigation.<span data-layout-allow-occlusion data-layout-allow-overlap class="fn">navigate</span><span data-layout-allow-occlusion data-layout-allow-overlap class="br">(</span>c<span data-layout-allow-occlusion data-layout-allow-overlap class="br">)</span><span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="tg">/&gt;</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="ha20"><i data-layout-allow-occlusion data-layout-allow-overlap>21</i><b data-layout-allow-occlusion data-layout-allow-overlap>        <span data-layout-allow-occlusion data-layout-allow-overlap class="br">)</span><span data-layout-allow-occlusion data-layout-allow-overlap class="br">)</span><span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="ha21"><i data-layout-allow-occlusion data-layout-allow-overlap>22</i><b data-layout-allow-occlusion data-layout-allow-overlap>      <span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&lt;/View</span><span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&gt;</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="ha22"><i data-layout-allow-occlusion data-layout-allow-overlap>23</i><b data-layout-allow-occlusion data-layout-allow-overlap>      <span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&lt;RestaurantList</span> city=<span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span>city<span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="tg">/&gt;</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="ha23"><i data-layout-allow-occlusion data-layout-allow-overlap>24</i><b data-layout-allow-occlusion data-layout-allow-overlap>    <span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&lt;/ScrollView</span><span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&gt;</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="ha24"><i data-layout-allow-occlusion data-layout-allow-overlap>25</i><b data-layout-allow-occlusion data-layout-allow-overlap>  <span data-layout-allow-occlusion data-layout-allow-overlap class="br">)</span>;</b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="ha25"><i data-layout-allow-occlusion data-layout-allow-overlap>26</i><b data-layout-allow-occlusion data-layout-allow-overlap><span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span></b></div>
-            </div>
-            <div data-layout-allow-occlusion data-layout-allow-overlap class="code" id="code2" style="opacity:0">
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="da0" style="opacity:1"><i data-layout-allow-occlusion data-layout-allow-overlap>1</i><b data-layout-allow-occlusion data-layout-allow-overlap><span data-layout-allow-occlusion data-layout-allow-overlap class="kw">import</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span> Screen, CountryFlags, Steps, Step <span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="kw">from</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="st">&#x27;../components&#x27;</span>;</b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="da1" style="opacity:1"><i data-layout-allow-occlusion data-layout-allow-overlap>2</i><b data-layout-allow-occlusion data-layout-allow-overlap><span data-layout-allow-occlusion data-layout-allow-overlap class="kw">import</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="cn">DIASPORA_COUNTRIES</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="kw">from</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="st">&#x27;../data/countries&#x27;</span>;</b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="da2" style="opacity:1"><i data-layout-allow-occlusion data-layout-allow-overlap>3</i><b data-layout-allow-occlusion data-layout-allow-overlap>&nbsp;</b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="da3" style="opacity:1"><i data-layout-allow-occlusion data-layout-allow-overlap>4</i><b data-layout-allow-occlusion data-layout-allow-overlap><span data-layout-allow-occlusion data-layout-allow-overlap class="cm">// Commander depuis l&#x27;étranger pour un proche à Bamako</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="da4"><i data-layout-allow-occlusion data-layout-allow-overlap>5</i><b data-layout-allow-occlusion data-layout-allow-overlap><span data-layout-allow-occlusion data-layout-allow-overlap class="kw">export</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="kw">default</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="kw">function</span> DiasporaScreen<span data-layout-allow-occlusion data-layout-allow-overlap class="br">(</span><span data-layout-allow-occlusion data-layout-allow-overlap class="br">)</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="da5"><i data-layout-allow-occlusion data-layout-allow-overlap>6</i><b data-layout-allow-occlusion data-layout-allow-overlap>  <span data-layout-allow-occlusion data-layout-allow-overlap class="kw">return</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="br">(</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="da6"><i data-layout-allow-occlusion data-layout-allow-overlap>7</i><b data-layout-allow-occlusion data-layout-allow-overlap>    <span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&lt;Screen</span> title=<span data-layout-allow-occlusion data-layout-allow-overlap class="st">&quot;Faites plaisir à votre famille à Bamako&quot;</span><span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&gt;</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="da7"><i data-layout-allow-occlusion data-layout-allow-overlap>8</i><b data-layout-allow-occlusion data-layout-allow-overlap>      <span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&lt;CountryFlags</span> origins=<span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span><span data-layout-allow-occlusion data-layout-allow-overlap class="cn">DIASPORA_COUNTRIES</span><span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span> destination=<span data-layout-allow-occlusion data-layout-allow-overlap class="st">&quot;Bamako&quot;</span> <span data-layout-allow-occlusion data-layout-allow-overlap class="tg">/&gt;</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="da8"><i data-layout-allow-occlusion data-layout-allow-overlap>9</i><b data-layout-allow-occlusion data-layout-allow-overlap>      <span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&lt;Steps</span> title=<span data-layout-allow-occlusion data-layout-allow-overlap class="st">&quot;Comment ça marche&quot;</span><span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&gt;</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="da9"><i data-layout-allow-occlusion data-layout-allow-overlap>10</i><b data-layout-allow-occlusion data-layout-allow-overlap>        <span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&lt;Step</span> n=<span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span>1<span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span><span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&gt;</span>Vous remplissez le formulaire<span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&lt;/Step</span><span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&gt;</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="da10"><i data-layout-allow-occlusion data-layout-allow-overlap>11</i><b data-layout-allow-occlusion data-layout-allow-overlap>        <span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&lt;Step</span> n=<span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span>2<span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span><span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&gt;</span>L&#x27;équipe <span data-layout-allow-occlusion data-layout-allow-overlap class="cn">KOFA</span> vous recontacte<span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&lt;/Step</span><span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&gt;</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="da11"><i data-layout-allow-occlusion data-layout-allow-overlap>12</i><b data-layout-allow-occlusion data-layout-allow-overlap>        <span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&lt;Step</span> n=<span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span>3<span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span><span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&gt;</span>Vous envoyez le montant<span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&lt;/Step</span><span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&gt;</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="da12"><i data-layout-allow-occlusion data-layout-allow-overlap>13</i><b data-layout-allow-occlusion data-layout-allow-overlap>      <span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&lt;/Steps</span><span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&gt;</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="da13"><i data-layout-allow-occlusion data-layout-allow-overlap>14</i><b data-layout-allow-occlusion data-layout-allow-overlap>      <span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&lt;Button</span> color=<span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span>colors.orange<span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span> onPress=<span data-layout-allow-occlusion data-layout-allow-overlap class="br">{</span>sendRequest<span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span><span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&gt;</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="da14"><i data-layout-allow-occlusion data-layout-allow-overlap>15</i><b data-layout-allow-occlusion data-layout-allow-overlap>        Envoyer ma demande</b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="da15"><i data-layout-allow-occlusion data-layout-allow-overlap>16</i><b data-layout-allow-occlusion data-layout-allow-overlap>      <span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&lt;/Button</span><span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&gt;</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="da16"><i data-layout-allow-occlusion data-layout-allow-overlap>17</i><b data-layout-allow-occlusion data-layout-allow-overlap>    <span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&lt;/Screen</span><span data-layout-allow-occlusion data-layout-allow-overlap class="tg">&gt;</span></b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="da17"><i data-layout-allow-occlusion data-layout-allow-overlap>18</i><b data-layout-allow-occlusion data-layout-allow-overlap>  <span data-layout-allow-occlusion data-layout-allow-overlap class="br">)</span>;</b></div>
-      <div data-layout-allow-occlusion data-layout-allow-overlap class="ln" id="da18"><i data-layout-allow-occlusion data-layout-allow-overlap>19</i><b data-layout-allow-occlusion data-layout-allow-overlap><span data-layout-allow-occlusion data-layout-allow-overlap class="br">}</span></b></div>
-            </div>
-            <div data-layout-allow-occlusion data-layout-allow-overlap id="curw"><div data-layout-allow-occlusion data-layout-allow-overlap id="cur"></div></div>
-            <div data-layout-allow-occlusion data-layout-allow-overlap class="status">⎇ main   ✓ 0 erreur   Expo : connecté à l'iPhone 15 Pro Max   TypeScript React</div>
-            <div data-layout-allow-occlusion data-layout-allow-overlap class="tb"><i data-layout-allow-occlusion data-layout-allow-overlap style="background:#3b82f6"></i><i data-layout-allow-occlusion data-layout-allow-overlap style="background:#2b2b2b"></i><i data-layout-allow-occlusion data-layout-allow-overlap style="background:#f59e0b"></i><i data-layout-allow-occlusion data-layout-allow-overlap style="background:#0ea5e9"></i><i data-layout-allow-occlusion data-layout-allow-overlap style="background:#22c55e"></i><i data-layout-allow-occlusion data-layout-allow-overlap style="background:#EB6834"></i><i data-layout-allow-occlusion data-layout-allow-overlap style="background:#a855f7"></i><i data-layout-allow-occlusion data-layout-allow-overlap style="background:#2b2b2b"></i><div data-layout-allow-occlusion data-layout-allow-overlap class="tray">FRA&nbsp;&nbsp;13:20<br><span data-layout-allow-occlusion data-layout-allow-overlap style="font-size:12px">15/10/2026</span></div></div>
-            <div data-layout-allow-occlusion data-layout-allow-overlap id="off"></div>
-          </div>
+          <img id="photo" class="clip" data-start="0" data-duration="31" data-track-index="0" src="assets/images/bureau.jpg" alt="">
+          <video id="scr0" class="clip scr" src="assets/clips/ecran.mp4" data-start="0.0" data-duration="8.6" data-media-start="28.6" data-track-index="1" muted playsinline></video>
+          <video id="scr1" class="clip scr" src="assets/clips/ecran.mp4" data-start="8.6" data-duration="10.4" data-media-start="44.6" data-track-index="2" muted playsinline></video>
+          <video id="scr2" class="clip scr" src="assets/clips/ecran.mp4" data-start="19.0" data-duration="7.6" data-media-start="61.4" data-track-index="3" muted playsinline></video>
           <div id="glow"></div>
         </div>
         <div id="vig" data-layout-allow-occlusion></div>
@@ -154,155 +51,36 @@
         <div id="e2">Bientôt disponible à Bamako</div>
         <div class="c" id="e3">kofa.ml</div>
       </div>
-      <audio id="el-bgm" src="assets/music.wav" data-start="0" data-duration="25" data-track-index="5" data-volume="0.8"></audio>
+      <audio id="el-bgm" src="assets/music.wav" data-start="0" data-duration="31" data-track-index="9" data-volume="0.8"></audio>
     </div>
     <script>
       window.__timelines = window.__timelines || {};
       const tl = gsap.timeline({ paused: true });
       window.__timelines["main"] = tl;
-      // camera
       gsap.set("#cam", {"x": -60.0, "y": 0.0, "scale": 1.0});
-      tl.fromTo("#cam", {"x": -60.0, "y": 0.0, "scale": 1.0}, { ...{"x": -102.0, "y": -37.2, "scale": 1.07}, duration: 3.6, ease: "none", immediateRender: false }, 0.0);
-      tl.fromTo("#cam", {"x": -102.0, "y": -37.2, "scale": 1.07}, { ...{"x": -203.6, "y": -85.3, "scale": 2.05}, duration: 1.4, ease: "power2.inOut", immediateRender: false }, 3.6);
-      tl.fromTo("#cam", {"x": -203.6, "y": -85.3, "scale": 2.05}, { ...{"x": -258.0, "y": -177.4, "scale": 2.2}, duration: 3.2, ease: "none", immediateRender: false }, 5.0);
-      tl.fromTo("#cam", {"x": -258.0, "y": -177.4, "scale": 2.2}, { ...{"x": -1180.6, "y": 146.8, "scale": 1.75}, duration: 1.2, ease: "power2.inOut", immediateRender: false }, 8.2);
-      tl.fromTo("#cam", {"x": -1180.6, "y": 146.8, "scale": 1.75}, { ...{"x": -1278.9, "y": 103.8, "scale": 1.85}, duration: 1.8, ease: "none", immediateRender: false }, 9.4);
-      tl.fromTo("#cam", {"x": -1278.9, "y": 103.8, "scale": 1.85}, { ...{"x": -120.0, "y": -76.0, "scale": 1.1}, duration: 1.2, ease: "power2.inOut", immediateRender: false }, 11.2);
-      tl.fromTo("#cam", {"x": -120.0, "y": -76.0, "scale": 1.1}, { ...{"x": -132.0, "y": -95.2, "scale": 1.12}, duration: 2.2, ease: "none", immediateRender: false }, 12.4);
-      tl.fromTo("#cam", {"x": -132.0, "y": -95.2, "scale": 1.12}, { ...{"x": -221.8, "y": -109.4, "scale": 2.1}, duration: 1.0, ease: "power2.inOut", immediateRender: false }, 14.6);
-      tl.fromTo("#cam", {"x": -221.8, "y": -109.4, "scale": 2.1}, { ...{"x": -276.2, "y": -201.5, "scale": 2.25}, duration: 3.0, ease: "none", immediateRender: false }, 15.6);
-      tl.fromTo("#cam", {"x": -276.2, "y": -201.5, "scale": 2.25}, { ...{"x": -60.0, "y": 0.0, "scale": 1.0}, duration: 1.2, ease: "power2.inOut", immediateRender: false }, 18.6);
-      tl.fromTo("#cam", {"x": -60.0, "y": 0.0, "scale": 1.0}, { ...{"x": -84.0, "y": -38.4, "scale": 1.04}, duration: 5.2, ease: "none", immediateRender: false }, 19.8);
-      // dark room fades in, then the screen wakes up
-      tl.fromTo("#photo", { opacity: 0 }, { opacity: 1, duration: 1.0, ease: "power1.out" }, 0);
-      tl.fromTo("#off", { opacity: 1 }, { opacity: 0, duration: 0.35, ease: "power2.out" }, 1.1);
-      tl.fromTo("#glow", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 1.1);
-      tl.fromTo("#grain", { x: 0, y: 0 }, { x: -180, y: -140, duration: 25, ease: "steps(625)" }, 0);
-      // caption
-      tl.fromTo("#cap span", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.6);
-      tl.to("#cap span", { opacity: 0, y: -16, duration: 0.4, ease: "power2.in" }, 4.4);
-      // phone: splash then real KOFA screens
-      tl.fromTo("#splash .klogo", { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: "back.out(2)" }, 1.6);
-      tl.fromTo("#splash b", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.4 }, 1.9);
-      tl.fromTo("#pv-accueil", { opacity: 0, scale: 1.04 }, { opacity: 1, scale: 1, duration: 0.45, ease: "power2.out" }, 2.9);
-      tl.fromTo("#pv-diaspora", { xPercent: 100 }, { xPercent: 0, duration: 0.45, ease: "power3.inOut" }, 11.4);
-      tl.to("#pv-accueil", { xPercent: -30, filter: "brightness(0.6)", duration: 0.45, ease: "power3.inOut" }, 11.4);
-      tl.fromTo("#pv-resto", { xPercent: 100 }, { xPercent: 0, duration: 0.45, ease: "power3.inOut" }, 15.2);
-      tl.to("#pv-diaspora", { xPercent: -30, filter: "brightness(0.6)", duration: 0.45, ease: "power3.inOut" }, 15.2);
-      tl.fromTo("#pv-compte", { xPercent: 100 }, { xPercent: 0, duration: 0.45, ease: "power3.inOut" }, 17.6);
-      tl.to("#pv-resto", { xPercent: -30, filter: "brightness(0.6)", duration: 0.45, ease: "power3.inOut" }, 17.6);
-      tl.fromTo("#tap0", { opacity: 0.85, scale: 0.4 }, { opacity: 0, scale: 1.6, duration: 0.45, ease: "power2.out" }, 11.05);
-      tl.fromTo("#tap1", { opacity: 0.85, scale: 0.4 }, { opacity: 0, scale: 1.6, duration: 0.45, ease: "power2.out" }, 17.25);
-      // code typing: HomeScreen, then DiasporaScreen
-      tl.fromTo("#ha9 b", { clipPath: "inset(0 100% 0 25px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.11, ease: "steps(8)" }, 1.90);
-      tl.set("#ha9", { opacity: 1 }, 1.90);
-      tl.fromTo("#cur", { x: 25, y: 270 }, { x: 126, y: 270, duration: 0.11, ease: "steps(8)", immediateRender: false }, 1.90);
-      tl.fromTo("#ha10 b", { clipPath: "inset(0 100% 0 50px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.47, ease: "steps(34)" }, 2.07);
-      tl.set("#ha10", { opacity: 1 }, 2.07);
-      tl.fromTo("#cur", { x: 50, y: 300 }, { x: 479, y: 300, duration: 0.47, ease: "steps(34)", immediateRender: false }, 2.07);
-      tl.fromTo("#ha11 b", { clipPath: "inset(0 100% 0 76px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.81, ease: "steps(58)" }, 2.60);
-      tl.set("#ha11", { opacity: 1 }, 2.60);
-      tl.fromTo("#cur", { x: 76, y: 330 }, { x: 806, y: 330, duration: 0.81, ease: "steps(58)", immediateRender: false }, 2.60);
-      tl.fromTo("#ha12 b", { clipPath: "inset(0 100% 0 76px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.38, ease: "steps(27)" }, 3.47);
-      tl.set("#ha12", { opacity: 1 }, 3.47);
-      tl.fromTo("#cur", { x: 76, y: 360 }, { x: 416, y: 360, duration: 0.38, ease: "steps(27)", immediateRender: false }, 3.47);
-      tl.fromTo("#ha13 b", { clipPath: "inset(0 100% 0 101px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.33, ease: "steps(24)" }, 3.91);
-      tl.set("#ha13", { opacity: 1 }, 3.91);
-      tl.fromTo("#cur", { x: 101, y: 390 }, { x: 403, y: 390, duration: 0.33, ease: "steps(24)", immediateRender: false }, 3.91);
-      tl.fromTo("#ha14 b", { clipPath: "inset(0 100% 0 101px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.86, ease: "steps(62)" }, 4.30);
-      tl.set("#ha14", { opacity: 1 }, 4.30);
-      tl.fromTo("#cur", { x: 101, y: 420 }, { x: 882, y: 420, duration: 0.86, ease: "steps(62)", immediateRender: false }, 4.30);
-      tl.fromTo("#ha15 b", { clipPath: "inset(0 100% 0 76px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.1, ease: "steps(7)" }, 5.22);
-      tl.set("#ha15", { opacity: 1 }, 5.22);
-      tl.fromTo("#cur", { x: 76, y: 450 }, { x: 164, y: 450, duration: 0.1, ease: "steps(7)", immediateRender: false }, 5.22);
-      tl.fromTo("#ha16 b", { clipPath: "inset(0 100% 0 76px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.74, ease: "steps(53)" }, 5.38);
-      tl.set("#ha16", { opacity: 1 }, 5.38);
-      tl.fromTo("#cur", { x: 76, y: 480 }, { x: 743, y: 480, duration: 0.74, ease: "steps(53)", immediateRender: false }, 5.38);
-      tl.fromTo("#ha17 b", { clipPath: "inset(0 100% 0 76px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.35, ease: "steps(25)" }, 6.18);
-      tl.set("#ha17", { opacity: 1 }, 6.18);
-      tl.fromTo("#cur", { x: 76, y: 510 }, { x: 391, y: 510, duration: 0.35, ease: "steps(25)", immediateRender: false }, 6.18);
-      tl.fromTo("#ha18 b", { clipPath: "inset(0 100% 0 101px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.33, ease: "steps(24)" }, 6.59);
-      tl.set("#ha18", { opacity: 1 }, 6.59);
-      tl.fromTo("#cur", { x: 101, y: 540 }, { x: 403, y: 540, duration: 0.33, ease: "steps(24)", immediateRender: false }, 6.59);
-      tl.fromTo("#ha19 b", { clipPath: "inset(0 100% 0 126px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 1.01, ease: "steps(73)" }, 6.98);
-      tl.set("#ha19", { opacity: 1 }, 6.98);
-      tl.fromTo("#cur", { x: 126, y: 570 }, { x: 1046, y: 570, duration: 1.01, ease: "steps(73)", immediateRender: false }, 6.98);
-      tl.fromTo("#ha20 b", { clipPath: "inset(0 100% 0 101px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.04, ease: "steps(3)" }, 8.05);
-      tl.set("#ha20", { opacity: 1 }, 8.05);
-      tl.fromTo("#cur", { x: 101, y: 600 }, { x: 139, y: 600, duration: 0.04, ease: "steps(3)", immediateRender: false }, 8.05);
-      tl.fromTo("#ha21 b", { clipPath: "inset(0 100% 0 76px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.1, ease: "steps(7)" }, 8.15);
-      tl.set("#ha21", { opacity: 1 }, 8.15);
-      tl.fromTo("#cur", { x: 76, y: 630 }, { x: 164, y: 630, duration: 0.1, ease: "steps(7)", immediateRender: false }, 8.15);
-      tl.fromTo("#ha22 b", { clipPath: "inset(0 100% 0 76px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.42, ease: "steps(30)" }, 8.31);
-      tl.set("#ha22", { opacity: 1 }, 8.31);
-      tl.fromTo("#cur", { x: 76, y: 660 }, { x: 454, y: 660, duration: 0.42, ease: "steps(30)", immediateRender: false }, 8.31);
-      tl.fromTo("#ha23 b", { clipPath: "inset(0 100% 0 50px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.18, ease: "steps(13)" }, 8.79);
-      tl.set("#ha23", { opacity: 1 }, 8.79);
-      tl.fromTo("#cur", { x: 50, y: 690 }, { x: 214, y: 690, duration: 0.18, ease: "steps(13)", immediateRender: false }, 8.79);
-      tl.fromTo("#ha24 b", { clipPath: "inset(0 100% 0 25px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.03, ease: "steps(2)" }, 9.03);
-      tl.set("#ha24", { opacity: 1 }, 9.03);
-      tl.fromTo("#cur", { x: 25, y: 720 }, { x: 50, y: 720, duration: 0.03, ease: "steps(2)", immediateRender: false }, 9.03);
-      tl.fromTo("#ha25 b", { clipPath: "inset(0 100% 0 0px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.01, ease: "steps(1)" }, 9.12);
-      tl.set("#ha25", { opacity: 1 }, 9.12);
-      tl.fromTo("#cur", { x: 0, y: 750 }, { x: 13, y: 750, duration: 0.01, ease: "steps(1)", immediateRender: false }, 9.12);
-      tl.set("#code1", { opacity: 0 }, 11.3);
-      tl.set("#code2", { opacity: 1 }, 11.3);
-      tl.set("#tab1", { className: "tab" }, 11.3);
-      tl.set("#tab2", { className: "tab on" }, 11.3);
-      tl.set("#crf", { textContent: "DiasporaScreen.tsx" }, 11.3);
-      tl.fromTo("#da4 b", { clipPath: "inset(0 100% 0 0px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.58, ease: "steps(42)" }, 11.60);
-      tl.set("#da4", { opacity: 1 }, 11.60);
-      tl.fromTo("#cur", { x: 0, y: 120 }, { x: 529, y: 120, duration: 0.58, ease: "steps(42)", immediateRender: false }, 11.60);
-      tl.fromTo("#da5 b", { clipPath: "inset(0 100% 0 25px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.11, ease: "steps(8)" }, 12.24);
-      tl.set("#da5", { opacity: 1 }, 12.24);
-      tl.fromTo("#cur", { x: 25, y: 150 }, { x: 126, y: 150, duration: 0.11, ease: "steps(8)", immediateRender: false }, 12.24);
-      tl.fromTo("#da6 b", { clipPath: "inset(0 100% 0 50px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.78, ease: "steps(56)" }, 12.41);
-      tl.set("#da6", { opacity: 1 }, 12.41);
-      tl.fromTo("#cur", { x: 50, y: 180 }, { x: 756, y: 180, duration: 0.78, ease: "steps(56)", immediateRender: false }, 12.41);
-      tl.fromTo("#da7 b", { clipPath: "inset(0 100% 0 76px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.92, ease: "steps(66)" }, 13.25);
-      tl.set("#da7", { opacity: 1 }, 13.25);
-      tl.fromTo("#cur", { x: 76, y: 210 }, { x: 907, y: 210, duration: 0.92, ease: "steps(66)", immediateRender: false }, 13.25);
-      tl.fromTo("#da8 b", { clipPath: "inset(0 100% 0 76px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.46, ease: "steps(33)" }, 14.23);
-      tl.set("#da8", { opacity: 1 }, 14.23);
-      tl.fromTo("#cur", { x: 76, y: 240 }, { x: 491, y: 240, duration: 0.46, ease: "steps(33)", immediateRender: false }, 14.23);
-      tl.fromTo("#da9 b", { clipPath: "inset(0 100% 0 101px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.67, ease: "steps(48)" }, 14.75);
-      tl.set("#da9", { opacity: 1 }, 14.75);
-      tl.fromTo("#cur", { x: 101, y: 270 }, { x: 706, y: 270, duration: 0.67, ease: "steps(48)", immediateRender: false }, 14.75);
-      tl.fromTo("#da10 b", { clipPath: "inset(0 100% 0 101px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.67, ease: "steps(48)" }, 15.48);
-      tl.set("#da10", { opacity: 1 }, 15.48);
-      tl.fromTo("#cur", { x: 101, y: 300 }, { x: 706, y: 300, duration: 0.67, ease: "steps(48)", immediateRender: false }, 15.48);
-      tl.fromTo("#da11 b", { clipPath: "inset(0 100% 0 101px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.58, ease: "steps(42)" }, 16.21);
-      tl.set("#da11", { opacity: 1 }, 16.21);
-      tl.fromTo("#cur", { x: 101, y: 330 }, { x: 630, y: 330, duration: 0.58, ease: "steps(42)", immediateRender: false }, 16.21);
-      tl.fromTo("#da12 b", { clipPath: "inset(0 100% 0 76px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.11, ease: "steps(8)" }, 16.85);
-      tl.set("#da12", { opacity: 1 }, 16.85);
-      tl.fromTo("#cur", { x: 76, y: 360 }, { x: 176, y: 360, duration: 0.11, ease: "steps(8)", immediateRender: false }, 16.85);
-      tl.fromTo("#da13 b", { clipPath: "inset(0 100% 0 76px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.72, ease: "steps(52)" }, 17.02);
-      tl.set("#da13", { opacity: 1 }, 17.02);
-      tl.fromTo("#cur", { x: 76, y: 390 }, { x: 731, y: 390, duration: 0.72, ease: "steps(52)", immediateRender: false }, 17.02);
-      tl.fromTo("#da14 b", { clipPath: "inset(0 100% 0 101px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.25, ease: "steps(18)" }, 17.80);
-      tl.set("#da14", { opacity: 1 }, 17.80);
-      tl.fromTo("#cur", { x: 101, y: 420 }, { x: 328, y: 420, duration: 0.25, ease: "steps(18)", immediateRender: false }, 17.80);
-      tl.fromTo("#da15 b", { clipPath: "inset(0 100% 0 76px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.12, ease: "steps(9)" }, 18.11);
-      tl.set("#da15", { opacity: 1 }, 18.11);
-      tl.fromTo("#cur", { x: 76, y: 450 }, { x: 189, y: 450, duration: 0.12, ease: "steps(9)", immediateRender: false }, 18.11);
-      tl.fromTo("#da16 b", { clipPath: "inset(0 100% 0 50px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.12, ease: "steps(9)" }, 18.29);
-      tl.set("#da16", { opacity: 1 }, 18.29);
-      tl.fromTo("#cur", { x: 50, y: 480 }, { x: 164, y: 480, duration: 0.12, ease: "steps(9)", immediateRender: false }, 18.29);
-      tl.fromTo("#da17 b", { clipPath: "inset(0 100% 0 25px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.03, ease: "steps(2)" }, 18.47);
-      tl.set("#da17", { opacity: 1 }, 18.47);
-      tl.fromTo("#cur", { x: 25, y: 510 }, { x: 50, y: 510, duration: 0.03, ease: "steps(2)", immediateRender: false }, 18.47);
-      tl.fromTo("#da18 b", { clipPath: "inset(0 100% 0 0px)" }, { clipPath: "inset(0 0% 0 0px)", duration: 0.01, ease: "steps(1)" }, 18.56);
-      tl.set("#da18", { opacity: 1 }, 18.56);
-      tl.fromTo("#cur", { x: 0, y: 540 }, { x: 13, y: 540, duration: 0.01, ease: "steps(1)", immediateRender: false }, 18.56);
-      tl.fromTo("#cur", { opacity: 1 }, { opacity: 0, duration: 0.5, ease: "steps(1)", repeat: 49, yoyo: true }, 0);
-      // end card
-      tl.fromTo("#end", { opacity: 0 }, { opacity: 1, duration: 0.7, ease: "power2.out" }, 20.2);
-      tl.fromTo("#endk", { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.6, ease: "back.out(1.6)" }, 20.6);
-      tl.fromTo("#e1", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 21.1);
-      tl.fromTo("#e2", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.8)" }, 21.7);
-      tl.fromTo("#e3", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 22.2);
-      tl.set({}, {}, 25);
+      tl.fromTo("#cam", {"x": -60.0, "y": 0.0, "scale": 1.0}, { ...{"x": -96.0, "y": -37.6, "scale": 1.06}, duration: 3.0, ease: "none", immediateRender: false }, 0.0);
+      tl.fromTo("#cam", {"x": -96.0, "y": -37.6, "scale": 1.06}, { ...{"x": -1432.1, "y": -228.3, "scale": 1.9}, duration: 1.2, ease: "power2.inOut", immediateRender: false }, 3.0);
+      tl.fromTo("#cam", {"x": -1432.1, "y": -228.3, "scale": 1.9}, { ...{"x": -1587.8, "y": -314.3, "scale": 2.05}, duration: 4.4, ease: "none", immediateRender: false }, 4.2);
+      tl.set("#cam", {"x": -252.6, "y": -152.2, "scale": 2.15}, 8.6);
+      tl.fromTo("#cam", {"x": -252.6, "y": -152.2, "scale": 2.15}, { ...{"x": -307.9, "y": -245.6, "scale": 2.3}, duration: 4.9, ease: "none", immediateRender: false }, 8.6);
+      tl.fromTo("#cam", {"x": -307.9, "y": -245.6, "scale": 2.3}, { ...{"x": -1380.2, "y": -179.7, "scale": 1.85}, duration: 1.1, ease: "power2.inOut", immediateRender: false }, 13.5);
+      tl.fromTo("#cam", {"x": -1380.2, "y": -179.7, "scale": 1.85}, { ...{"x": -1484.0, "y": -237.0, "scale": 1.95}, duration: 4.4, ease: "none", immediateRender: false }, 14.6);
+      tl.set("#cam", {"x": -160.4, "y": -29.8, "scale": 1.9}, 19.0);
+      tl.fromTo("#cam", {"x": -160.4, "y": -29.8, "scale": 1.9}, { ...{"x": -234.1, "y": -137.7, "scale": 2.1}, duration: 4.6, ease: "none", immediateRender: false }, 19.0);
+      tl.fromTo("#cam", {"x": -234.1, "y": -137.7, "scale": 2.1}, { ...{"x": -60.0, "y": 0.0, "scale": 1.0}, duration: 1.2, ease: "power2.inOut", immediateRender: false }, 23.6);
+      tl.fromTo("#cam", {"x": -60.0, "y": 0.0, "scale": 1.0}, { ...{"x": -84.0, "y": -38.4, "scale": 1.04}, duration: 6.2, ease: "none", immediateRender: false }, 24.8);
+      tl.fromTo("#cam", { filter: "blur(10px)" }, { filter: "blur(0px)", duration: 0.22, ease: "power2.out", immediateRender: false }, 8.6);
+      tl.fromTo("#cam", { filter: "blur(10px)" }, { filter: "blur(0px)", duration: 0.22, ease: "power2.out", immediateRender: false }, 19.0);
+      tl.fromTo("#photo", { opacity: 0 }, { opacity: 1, duration: 0.8, ease: "power1.out" }, 0);
+      tl.fromTo("#grain", { x: 0, y: 0 }, { x: -180, y: -140, duration: 31, ease: "steps(775)" }, 0);
+      tl.fromTo("#cap span", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.4);
+      tl.to("#cap span", { opacity: 0, y: -16, duration: 0.4, ease: "power2.in" }, 3.6);
+      tl.fromTo("#end", { opacity: 0 }, { opacity: 1, duration: 0.7, ease: "power2.out" }, 26.2);
+      tl.fromTo("#endk", { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.6, ease: "back.out(1.6)" }, 26.599999999999998);
+      tl.fromTo("#e1", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 27.099999999999998);
+      tl.fromTo("#e2", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.8)" }, 27.7);
+      tl.fromTo("#e3", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 28.2);
+      tl.set({}, {}, 31);
     </script>
   </body>
 </html>
