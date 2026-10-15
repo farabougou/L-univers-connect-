@@ -1,0 +1,55 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Cinzel"; font-weight: 600; src: url("assets/fonts/cinzel-600.woff2") format("woff2"); }
+    @font-face { font-family: "Playfair Display"; font-weight: 600; src: url("assets/fonts/playfair-display-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Playfair Display"; font-weight: 700; src: url("assets/fonts/playfair-display-latin-700-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 500; src: url("assets/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 600; src: url("assets/fonts/montserrat-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Great Vibes"; font-weight: 400; src: url("assets/fonts/greatvibes-400.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Montserrat", sans-serif; color: #FBEFE3; background: transparent; }
+
+    .g05-a { position: absolute; }
+    .g05-c { left: 0; right: 0; text-align: center; }
+    .g05-wine { position: absolute; inset: 0; background: radial-gradient(85% 60% at 50% 45%, #8C1A21 0%, #6E0F14 45%, #3A070B 100%); }
+    .g05-kick { font-family: "Montserrat"; font-weight: 600; font-size: 26px; letter-spacing: 0.32em; color: #E3B34C; white-space: nowrap; }
+    .g05-t1 { font-family: "Playfair Display"; font-weight: 700; font-size: 96px; line-height: 1.05; color: #FBEFE3; white-space: nowrap; }
+    .g05-t2 { font-family: "Playfair Display"; font-weight: 600; font-size: 64px; line-height: 1.1; color: #E3B34C; white-space: nowrap; }
+    .g05-sc { font-family: "Great Vibes"; color: #F08BC4; white-space: nowrap; line-height: 1; }
+    .g05-logo { font-family: "Cinzel"; font-weight: 600; color: #E3B34C; letter-spacing: 0.06em; white-space: nowrap; line-height: 1; }
+    .g05-cm { font-family: "Montserrat"; font-weight: 500; color: #F08BC4; letter-spacing: 0.42em; white-space: nowrap; }
+    .g05-mk { position: absolute; overflow: hidden; }
+    .g05-mk > span { display: inline-block; }
+    .g05-band { position: absolute; left: 0; width: 1080px; }
+    .g05-band svg { display: block; }
+
+
+    #g05-frame { position: absolute; left: 160px; top: 400px; width: 760px; height: 1320px; border: 3px solid #E3B34C; border-radius: 40px; }
+
+  </style>
+  <div id="root" data-composition-id="05-acc" data-start="0" data-duration="4.1" data-width="1080" data-height="1920">
+    <div id="g05-clip" class="clip" data-start="0" data-duration="4.1" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div id="g05-frame"></div>
+    <div class="g05-a g05-kick g05-c" id="g05-k" style="top:140px">POUR COMPLÉTER LE LOOK</div>
+    <div class="g05-a g05-c g05-mk" style="top:190px; height:110px"><span class="g05-t1" id="g05-s1" style="font-size:84px">Casquettes</span></div>
+    <div class="g05-a g05-c g05-mk" style="top:290px; height:90px"><span class="g05-t2" id="g05-s2">&amp; sacs en Bogolan</span></div>
+    <div class="g05-a g05-c g05-sc" id="g05-s3" style="top:1745px; font-size:76px">assortis à vos tenues</div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="05-acc"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="05-acc"] ' + s);
+      tl.fromTo(R("#g05-k"), { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.2);
+      tl.fromTo(R("#g05-s1"), { yPercent: 110 }, { yPercent: 0, duration: 0.6, ease: "power3.out" }, 0.3);
+      tl.fromTo(R("#g05-s2"), { yPercent: 110 }, { yPercent: 0, duration: 0.6, ease: "power3.out" }, 0.55);
+      tl.fromTo(R("#g05-frame"), { opacity: 0, scale: 1.06 }, { opacity: 1, scale: 1, duration: 0.7, ease: "power3.out" }, 0.35);
+      tl.fromTo(R("#g05-s3"), { opacity: 0, clipPath: "inset(0% 100% 0% 0%)" }, { opacity: 1, clipPath: "inset(0% 0% 0% 0%)", duration: 0.9, ease: "power2.inOut" }, 1.2);
+
+      tl.to({}, { duration: 4.1 }, 0);
+      window.__timelines["05-acc"] = tl;
+    })();
+  </script>
+</template>
