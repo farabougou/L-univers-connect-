@@ -1,0 +1,96 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Playfair Display"; font-weight: 400; src: url("assets/fonts/playfair-display-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Playfair Display"; font-weight: 600; src: url("assets/fonts/playfair-display-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Playfair Display"; font-weight: 700; src: url("assets/fonts/playfair-display-latin-700-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 400; src: url("assets/fonts/montserrat-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 500; src: url("assets/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 600; src: url("assets/fonts/montserrat-latin-600-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Montserrat", sans-serif; color: #FFFFFF; background: #000; }
+
+    .s03-a { position: absolute; }
+    .s03-full { position: absolute; inset: 0; }
+    .s03-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+    .s03-kick { font-family: "Montserrat"; font-weight: 500; font-size: 24px; letter-spacing: 0.26em; color: #E9C221; white-space: nowrap; }
+    .s03-l1, .s03-l2 { position: absolute; left: 120px; font-family: "Playfair Display"; font-weight: 600; font-size: 76px; line-height: 1.1; color: #FFFFFF; white-space: nowrap; }
+    .s03-l2 { color: #E9C221; }
+    /* ── site reconstruction (mobile home, 800 px wide) ── */
+    .s03-home { position: absolute; left: 0; top: 0; width: 800px; height: 1130px; background: #000; overflow: hidden; }
+    .s03-hd { height: 112px; display: flex; align-items: center; padding: 0 36px; background: #000; border-bottom: 1px solid #1d1d1d; }
+    .s03-hd img { display: block; height: 72px; }
+    .s03-bg { margin-left: auto; display: flex; flex-direction: column; gap: 9px; }
+    .s03-bg i { display: block; width: 40px; height: 3px; background: #FFFFFF; }
+    .s03-img { position: relative; height: 500px; overflow: hidden; background: radial-gradient(70% 70% at 62% 38%, #4a3712 0%, #1a1308 45%, #070605 100%); }
+    .s03-txtb { padding: 52px 48px 0; }
+    .s03-ttl { font-family: "Playfair Display"; font-weight: 600; font-size: 70px; line-height: 1.08; color: #FFFFFF; margin-top: 18px; }
+    .s03-ttl em { font-style: normal; color: #E9C221; }
+    .s03-p { font-family: "Montserrat"; font-weight: 400; font-size: 27px; line-height: 1.55; color: #C9C9C9; margin-top: 22px; }
+    .s03-btns { display: flex; flex-direction: column; gap: 18px; margin-top: 38px; }
+    .s03-btn { display: flex; align-items: center; justify-content: center; height: 78px; font-family: "Montserrat"; font-weight: 600; font-size: 22px; letter-spacing: 0.14em; color: #000; background: #E9C221; white-space: nowrap; }
+    .s03-btn.ol { color: #E9C221; background: transparent; border: 2px solid #E9C221; }
+    /* arch windows */
+    .s03-arch { position: absolute; left: 180px; top: 470px; width: 720px; height: 1120px; border-radius: 360px 360px 28px 28px; overflow: hidden; border: 2px solid rgba(233,194,33,0.55); }
+    .s03-in { position: absolute; inset: 0; }
+    .s03-arch svg.ic { position: absolute; left: 110px; top: 250px; width: 500px; height: 500px; }
+    .s03-al { position: absolute; left: 50px; right: 50px; bottom: 70px; text-align: center; }
+    .s03-al span { display: block; font-family: "Montserrat"; font-weight: 500; font-size: 24px; letter-spacing: 0.26em; color: #E9C221; }
+    .s03-al b { display: block; margin-top: 16px; font-family: "Playfair Display"; font-weight: 600; font-size: 58px; line-height: 1.12; color: #FFFFFF; }
+
+
+  </style>
+  <div id="root" data-composition-id="03-univers" data-start="0" data-duration="8.6" data-width="1080" data-height="1920">
+    <div id="s03-clip" class="clip" data-start="0" data-duration="8.6" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="s03-full" style="background:radial-gradient(90% 60% at 50% 55%, #1a1a1a 0%, #121212 50%, #000 100%)"></div>
+    <div class="s03-l1" id="s03-s1" style="top:200px">Des univers</div>
+    <div class="s03-l2" id="s03-s2" style="top:286px">à explorer.</div>
+    <div class="s03-arch" id="s03-w0"><div class="s03-in" id="s03-wi0" style="background:radial-gradient(80% 60% at 50% 32%, #4d3812 0%, #150f06 60%, #070605 100%)">
+      <canvas id="s03-wm0" width="720" height="1120" style="position:absolute;left:0;top:0"></canvas>
+      <svg class="ic" viewBox="0 0 500 500"><g id="s03-ic0" stroke="#E9C221" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M 70 330 H 430 M 50 352 H 450 M 100 320 A 150 150 0 0 1 400 320 M 236 168 H 264 M 250 168 V 146 M 170 250 A 100 100 0 0 1 220 200"/></g></svg>
+      <div class="s03-al" id="s03-wl0"><span>01 / 04</span><b>Hôtel, Lobby,<br>Réception</b></div>
+    </div></div>
+    <div class="s03-arch" id="s03-w1"><div class="s03-in" id="s03-wi1" style="background:radial-gradient(80% 60% at 50% 32%, #2a2d33 0%, #0e0f11 60%, #050506 100%)">
+      <canvas id="s03-wm1" width="720" height="1120" style="position:absolute;left:0;top:0"></canvas>
+      <svg class="ic" viewBox="0 0 500 500"><g id="s03-ic1" stroke="#E9C221" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M 70 170 L 250 80 L 430 170 Z M 85 192 H 415 M 120 210 V 330 M 200 210 V 330 M 300 210 V 330 M 380 210 V 330 M 75 345 H 425 M 55 368 H 445"/></g></svg>
+      <div class="s03-al" id="s03-wl1"><span>02 / 04</span><b>Banque, Bureau,<br>Entreprise</b></div>
+    </div></div>
+    <div class="s03-arch" id="s03-w2"><div class="s03-in" id="s03-wi2" style="background:radial-gradient(80% 60% at 50% 32%, #3b2a1a 0%, #120c08 60%, #060504 100%)">
+      <canvas id="s03-wm2" width="720" height="1120" style="position:absolute;left:0;top:0"></canvas>
+      <svg class="ic" viewBox="0 0 500 500"><g id="s03-ic2" stroke="#E9C221" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M 80 220 L 250 90 L 420 220 M 115 195 V 370 H 385 V 195 M 220 370 V 290 H 280 V 370 M 145 250 H 195 V 300 H 145 Z M 305 250 H 355 V 300 H 305 Z"/></g></svg>
+      <div class="s03-al" id="s03-wl2"><span>03 / 04</span><b>Home</b></div>
+    </div></div>
+    <div class="s03-arch" id="s03-w3"><div class="s03-in" id="s03-wi3" style="background:radial-gradient(80% 60% at 50% 32%, #262626 0%, #0c0c0c 60%, #030303 100%)">
+      <canvas id="s03-wm3" width="720" height="1120" style="position:absolute;left:0;top:0"></canvas>
+      <svg class="ic" viewBox="0 0 500 500"><g id="s03-ic3" stroke="#E9C221" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M 50 320 H 85 A 40 40 0 0 1 165 320 H 335 A 40 40 0 0 1 415 320 H 455 V 280 Q 452 258 420 252 L 360 242 L 300 190 Q 286 178 262 178 H 160 Q 140 178 126 192 L 88 238 Q 52 246 50 270 Z M 125 320 m -28 0 a 28 28 0 1 0 56 0 a 28 28 0 1 0 -56 0 M 375 320 m -28 0 a 28 28 0 1 0 56 0 a 28 28 0 1 0 -56 0 M 120 242 L 160 200 H 228 V 242 Z M 248 242 V 200 H 285 L 330 242 Z"/></g></svg>
+      <div class="s03-al" id="s03-wl3"><span>04 / 04</span><b>Voitures</b></div>
+    </div></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="03-univers"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="03-univers"] ' + s);
+      tl.fromTo(R("#s03-s1"), { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 0.2);
+      tl.fromTo(R("#s03-s2"), { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 0.45);
+      const AT = [0.45, 2.15, 3.85, 5.55], GRID = [[360, 760], [720, 760], [360, 1300], [720, 1300]];
+      const M = [0, 1, 2, 3].map((i) => SX.mist(R("#s03-wm" + i), { x: 360, y: 760, spread: 140, rise: 620, size: 70, alpha: 0.1, n: 30, seed: 11 + i }));
+      const ms = { t: 0 };
+      tl.fromTo(ms, { t: 0 }, { t: 8.6, duration: 8.6, ease: "none", onUpdate: () => M.forEach((m, i) => m(ms.t, ms.t > AT[i] ? 1 : 0)) }, 0);
+      M.forEach((m) => m(0, 0));
+      [0, 1, 2, 3].forEach((i) => {
+        const t0 = AT[i], g = R("#s03-ic" + i);
+        tl.fromTo(R("#s03-w" + i), { clipPath: "inset(100% 0% 0% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.8, ease: "power3.inOut" }, t0);
+        tl.fromTo(R("#s03-wi" + i), { scale: 1.14 }, { scale: 1, duration: 1.7, ease: "power2.out" }, t0);
+        g.querySelectorAll("path").forEach((p) => { const L = p.getTotalLength(); tl.fromTo(p, { attr: { "stroke-dasharray": L, "stroke-dashoffset": L } }, { attr: { "stroke-dashoffset": 0 }, duration: 1.1, ease: "power2.inOut" }, t0 + 0.3); });
+        tl.fromTo(R("#s03-wl" + i), { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, t0 + 0.55);
+      });
+      // the four windows gather into one page
+      [0, 1, 2, 3].forEach((i) => tl.to(R("#s03-w" + i), { x: GRID[i][0] - 540, y: GRID[i][1] - 1030, scale: 0.46, duration: 0.9, ease: "power3.inOut" }, 7.2 + i * 0.05));
+
+      tl.to({}, { duration: 8.6 }, 0);
+      window.__timelines["03-univers"] = tl;
+    })();
+  </script>
+</template>

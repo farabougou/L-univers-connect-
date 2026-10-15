@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="assets/vendor/gsap.min.js"></script>
+    <script src="assets/vendor/three.min.js"></script>
+    <script src="assets/vendor/sx.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+      #root { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+      .scene { position: absolute; inset: 0; width: 100%; height: 100%; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="42" data-width="1080" data-height="1920" data-fps="25">
+      <div id="el-01-signature" class="scene" data-composition-id="01-signature" data-composition-src="compositions/frames/01-signature.html" data-start="0" data-duration="5.6" data-track-index="0"></div>
+      <div id="el-02-sens" class="scene" data-composition-id="02-sens" data-composition-src="compositions/frames/02-sens.html" data-start="5" data-duration="7.6" data-track-index="1"></div>
+      <div id="el-03-univers" class="scene" data-composition-id="03-univers" data-composition-src="compositions/frames/03-univers.html" data-start="12" data-duration="8.6" data-track-index="0"></div>
+      <div id="el-04-solutions" class="scene" data-composition-id="04-solutions" data-composition-src="compositions/frames/04-solutions.html" data-start="20" data-duration="8.6" data-track-index="1"></div>
+      <div id="el-05-echange" class="scene" data-composition-id="05-echange" data-composition-src="compositions/frames/05-echange.html" data-start="28" data-duration="8.6" data-track-index="0"></div>
+      <div id="el-06-adresse" class="scene" data-composition-id="06-adresse" data-composition-src="compositions/frames/06-adresse.html" data-start="36" data-duration="6" data-track-index="1"></div>
+
+      <audio id="el-bgm" src="assets/music.wav" data-start="0" data-duration="42" data-track-index="11" data-volume="0.6"></audio>
+      <audio id="el-breath0" src="assets/breath.wav" data-start="4.55" data-duration="1.1" data-track-index="12" data-volume="0.35"></audio>
+      <audio id="el-breath1" src="assets/breath.wav" data-start="19.55" data-duration="1.1" data-track-index="13" data-volume="0.35"></audio>
+      <audio id="el-breath2" src="assets/breath.wav" data-start="35.55" data-duration="1.1" data-track-index="14" data-volume="0.35"></audio>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+      (function () { var tl = window.__timelines["main"];
+        tl.fromTo("#el-02-sens", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power2.inOut" }, 5);
+        tl.fromTo("#el-03-univers", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power2.inOut" }, 12);
+        tl.fromTo("#el-04-solutions", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power2.inOut" }, 20);
+        tl.fromTo("#el-05-echange", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power2.inOut" }, 28);
+        tl.fromTo("#el-06-adresse", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power2.inOut" }, 36);
+        tl.to({}, { duration: 42 }, 0);
+      })();
+    </script>
+  </body>
+</html>
