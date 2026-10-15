@@ -59,8 +59,9 @@
       tl.fromTo(R("#p06-s2"), { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 0.45);
       [0, 1, 2, 3].forEach((i) => {
         const el = R("#p06-i" + i);
-        tl.fromTo(el, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 0.9 + i * 0.22);
-        el.querySelectorAll("path").forEach((p) => { const L = p.getTotalLength(); tl.fromTo(p, { attr: { "stroke-dasharray": L, "stroke-dashoffset": L } }, { attr: { "stroke-dashoffset": 0 }, duration: 1.0, ease: "power2.inOut" }, 0.95 + i * 0.22); });
+        const IT = [0.72, 1.48, 2.16, 2.78];
+        tl.fromTo(el, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, IT[i]);
+        el.querySelectorAll("path").forEach((p) => { const L = p.getTotalLength(); tl.fromTo(p, { attr: { "stroke-dasharray": L, "stroke-dashoffset": L } }, { attr: { "stroke-dashoffset": 0 }, duration: 0.8, ease: "power2.inOut" }, IT[i] + 0.05); });
       });
 
       tl.to({}, { duration: 4.6 }, 0);

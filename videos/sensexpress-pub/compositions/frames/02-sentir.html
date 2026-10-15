@@ -31,7 +31,7 @@
   <div id="root" data-composition-id="02-sentir" data-start="0" data-duration="6.1" data-width="1080" data-height="1920">
     <div id="p02-clip" class="clip" data-start="0" data-duration="6.1" data-track-index="0" style="position:absolute; inset:0"></div>
     <div class="p02-full" style="background:linear-gradient(180deg,#000 0%,#0d0a06 100%)"></div>
-    <div id="p02-p">Ne vous contentez plus de faire parler<br>des produits de votre entreprise,</div>
+    <div id="p02-p">Ne vous contentez plus de faire parler<br>de vos produits :</div>
     <div class="p02-l1" id="p02-s1" style="top:345px">faites sentir</div>
     <div class="p02-l2" id="p02-s2" style="top:435px">votre marque.</div>
     <div class="p02-ph" id="p02-w0" style="left:120px; top:690px; width:195px; height:850px; border-radius:98px 98px 18px 18px"><img class="cv" id="p02-w0i" src="assets/images/lavande.jpg" alt="" style="object-position:center"><div class="p02-ln" style="border-radius:98px 98px 18px 18px"></div></div>
@@ -45,9 +45,9 @@
       const tl = gsap.timeline({ paused: true });
       const R = (s) => document.querySelector('[data-composition-id="02-sentir"] ' + s);
       const RA = (s) => document.querySelectorAll('[data-composition-id="02-sentir"] ' + s);
-      tl.fromTo(R("#p02-p"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 0.2);
-      tl.fromTo(R("#p02-s1"), { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 1.0);
-      tl.fromTo(R("#p02-s2"), { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 1.25);
+      tl.fromTo(R("#p02-p"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 0.45);
+      tl.fromTo(R("#p02-s1"), { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 2.85);
+      tl.fromTo(R("#p02-s2"), { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 3.1);
       [0, 1, 2, 3].forEach((i) => {
         tl.fromTo(R("#p02-w" + i), { clipPath: "inset(100% 0% 0% 0%)", y: 60 }, { clipPath: "inset(0% 0% 0% 0%)", y: 0, duration: 0.9, ease: "power3.out" }, 0.45 + i * 0.18);
         tl.fromTo(R("#p02-w" + i + "i"), { scale: 1.25 }, { scale: 1.02, duration: 5.6, ease: "power1.out" }, 0.45 + i * 0.18);

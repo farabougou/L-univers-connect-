@@ -77,16 +77,16 @@ arches = ''.join('    ' + photo(f'X-w{i}', f'{m}.jpg', 120 + i * 215, 690 + (70 
 F['02-sentir'] = ('''
     #X-p { position: absolute; left: 120px; right: 120px; top: 225px; font-family: "Montserrat"; font-weight: 400; font-size: 32px; line-height: 1.45; color: #BDBDBD; }
 ''', '''    <div class="X-full" style="background:linear-gradient(180deg,#000 0%,#0d0a06 100%)"></div>
-    <div id="X-p">Ne vous contentez plus de faire parler<br>des produits de votre entreprise,</div>
-''' + statement('faites sentir', 'votre marque.', 345) + arches, '''      tl.fromTo(R("#X-p"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 0.2);
-''' + st_in(1.0) + '''      [0, 1, 2, 3].forEach((i) => {
+    <div id="X-p">Ne vous contentez plus de faire parler<br>de vos produits :</div>
+''' + statement('faites sentir', 'votre marque.', 345) + arches, '''      tl.fromTo(R("#X-p"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 0.45);
+''' + st_in(2.85) + '''      [0, 1, 2, 3].forEach((i) => {
         tl.fromTo(R("#X-w" + i), { clipPath: "inset(100% 0% 0% 0%)", y: 60 }, { clipPath: "inset(0% 0% 0% 0%)", y: 0, duration: 0.9, ease: "power3.out" }, 0.45 + i * 0.18);
         tl.fromTo(R("#X-w" + i + "i"), { scale: 1.25 }, { scale: 1.02, duration: 5.6, ease: "power1.out" }, 0.45 + i * 0.18);
         tl.to(R("#X-w" + i), { y: i % 2 ? -50 : -20, duration: 5.0, ease: "none" }, 1.1);
       });
 ''')
 # ── 03 · 10–16 s · L'Héritier, hero ──────────────────────────────────────
-FEAT = ["Détection de mouvement", "Rechargeable en 1 heure", "Jusqu'à 3 semaines d'autonomie"]
+FEAT = ["Détection de mouvement", "Au bon moment, sans gaspillage", "Jusqu'à 3 semaines d'autonomie"]
 feat = ''.join(f'    <div class="X-a X-c X-ft" id="X-f{i}"><i></i>{f}</div>\n' for i, f in enumerate(FEAT))
 F['03-heritier'] = ('''
     .X-ft { top: 1455px; display: flex; justify-content: center; align-items: center; gap: 16px; font-family: "Montserrat"; font-weight: 500; font-size: 36px; color: #FFFFFF; opacity: 0; }
@@ -103,35 +103,42 @@ F['03-heritier'] = ('''
       tl.fromTo(R("#X-hero"), { clipPath: "inset(100% 0% 0% 0% round 380px 380px 28px 28px)" }, { clipPath: "inset(0% 0% 0% 0% round 380px 380px 28px 28px)", duration: 1.0, ease: "power3.inOut" }, 0.2);
       tl.fromTo(R("#X-heroi"), { scale: 1.18 }, { scale: 1.0, duration: 6.4, ease: "power1.out" }, 0.2);
       [0, 1, 2].forEach((i) => {
-        tl.fromTo(R("#X-f" + i), { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 1.4 + i * 1.6);
-        if (i < 2) tl.to(R("#X-f" + i), { opacity: 0, y: -20, duration: 0.35, ease: "power2.in" }, 2.75 + i * 1.6);
+        const FT = [1.3, 3.2, 4.9];
+        tl.fromTo(R("#X-f" + i), { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, FT[i]);
+        if (i < 2) tl.to(R("#X-f" + i), { opacity: 0, y: -20, duration: 0.35, ease: "power2.in" }, FT[i + 1] - 0.4);
       });
 ''')
-# ── 04 · 16–24 s · the collection, product carousel ──────────────────────
-PROD = [('princesse.jpg', 'La Princesse', 'Sans fil · télécommande ou Bluetooth'),
-        ('duchesse.jpg', 'La Duchesse', 'Silencieuse · jusqu\'à 300 m³'),
-        ('prince.jpg', 'Le Prince', 'Automatique · Bluetooth, wifi et 4G'),
-        ('reine.jpg', 'La Reine', 'Jusqu\'à 5 000 m³ · grands espaces')]
-cards = ''.join('    ' + photo(f'X-c{i}', img, 120, 520, 840, 800, '36px', 'ct') + '\n' for i, (img, n, l) in enumerate(PROD))
-names = ''.join(f'    <div class="X-a X-c X-pn" id="X-n{i}"><b>{n}</b><span>{l}</span></div>\n' for i, (img, n, l) in enumerate(PROD))
-F['04-collection'] = ('''
-    .X-pn { top: 1355px; opacity: 0; }
-    .X-pn b { display: block; font-family: "Playfair Display"; font-weight: 600; font-size: 76px; color: #E9C221; }
-    .X-pn span { display: block; margin-top: 8px; font-family: "Montserrat"; font-weight: 500; font-size: 32px; color: #E6E6E6; }
-    #X-cnt { left: 0; right: 0; top: 470px; text-align: center; }
-''', '''    <div class="X-bgd"></div>
-''' + statement('Une collection', 'pour chaque volume.', 200, 'LA COLLECTION') + cards + names, st_in(0.25, kick=True) + '''      const AT = [0.45, 2.4, 4.35, 6.3];
+# ── 04 · 16–24 s · the collection: one card per spoken name, then the line-up ──
+PROD = [('princesse.jpg', 'La Princesse'), ('duchesse.jpg', 'La Duchesse'), ('prince.jpg', 'Le Prince'), ('reine.jpg', 'La Reine')]
+cards = ''.join('    ' + photo(f'X-c{i}', img, 120, 520, 840, 800, '36px', 'ct') + '\n' for i, (img, n) in enumerate(PROD))
+names = ''.join(f'    <div class="X-a X-c X-pn" id="X-n{i}"><b>{n}</b></div>\n' for i, (img, n) in enumerate(PROD))
+# voice: names at 16.95 / 17.65 / 18.51 / 19.01, then « une collection pour chaque volume » at 20.3
+AT4 = [0.9, 1.6, 2.46, 2.96]
+CELL = [(330, 760), (750, 760), (330, 1165), (750, 1165)]
+S4CSS = """
+    .X-pn { top: 1360px; opacity: 0; }
+    .X-pn b { display: block; font-family: "Playfair Display"; font-weight: 600; font-size: 84px; color: #E9C221; }
+    #X-all { top: 1395px; font-family: "Montserrat"; font-weight: 500; font-size: 27px; letter-spacing: 0.08em; color: #E9C221; opacity: 0; }
+"""
+S4HTML = '    <div class="X-bgd"></div>\n' + statement('Une collection', 'pour chaque volume.', 200, 'LA COLLECTION') + cards + names + '    <div class="X-a X-c" id="X-all">La Princesse · La Duchesse · Le Prince · La Reine</div>\n'
+S4JS = """      tl.fromTo(R("#X-k"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 0.2);
+      const AT = """ + json.dumps(AT4) + """, CELL = """ + json.dumps(CELL) + """;
       [0, 1, 2, 3].forEach((i) => {
         const c = R("#X-c" + i), n = R("#X-n" + i), t0 = AT[i];
-        tl.fromTo(c, { x: 1100, rotation: 4 }, { x: 0, rotation: 0, duration: 0.75, ease: "power3.inOut" }, t0);
-        tl.fromTo(R("#X-c" + i + "i"), { scale: 1.12 }, { scale: 1.0, duration: 2.4, ease: "power2.out" }, t0);
-        tl.fromTo(n, { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, t0 + 0.4);
+        tl.fromTo(c, { x: 1100, rotation: 3 }, { x: 0, rotation: 0, duration: 0.42, ease: "power3.out" }, t0 - 0.12);
+        tl.fromTo(R("#X-c" + i + "i"), { scale: 1.1 }, { scale: 1.0, duration: 1.4, ease: "power2.out" }, t0 - 0.12);
+        tl.fromTo(n, { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.28, ease: "power2.out" }, t0);
         if (i < 3) {
-          tl.to(c, { x: -1100, rotation: -4, duration: 0.75, ease: "power3.inOut" }, AT[i + 1]);
-          tl.to(n, { opacity: 0, y: -20, duration: 0.3, ease: "power2.in" }, AT[i + 1]);
+          tl.to(c, { x: -1100, rotation: -3, duration: 0.42, ease: "power3.in" }, AT[i + 1] - 0.12);
+          tl.to(n, { opacity: 0, duration: 0.18 }, AT[i + 1] - 0.12);
         }
       });
-''')
+      // the line-up on « une collection pour chaque volume »
+      tl.to(R("#X-n3"), { opacity: 0, duration: 0.25 }, 3.95);
+      [0, 1, 2, 3].forEach((i) => tl.fromTo(R("#X-c" + i), { x: i < 3 ? -1100 : 0, y: 0, scale: 1, rotation: 0 }, { x: CELL[i][0] - 540, y: CELL[i][1] - 920, scale: 0.476, rotation: 0, duration: 0.7, ease: "power3.inOut", immediateRender: false }, 4.0 + (i < 3 ? i * 0.07 : 0)));
+""" + st_in(4.25) + """      tl.fromTo(R("#X-all"), { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 4.8);
+"""
+F['04-collection'] = (S4CSS, S4HTML, S4JS)
 # ── 05 · 24–30 s · the fragrances ─────────────────────────────────────────
 PARF = ['Anissa', 'Son Altesse', 'Prestige des rois', 'Vanille bourbon', 'Tropical paradise', 'Signature Royale']
 slot = ''.join(f'    <div class="X-a X-c X-sn" id="X-sn{i}">{p}</div>\n' for i, p in enumerate(PARF))
@@ -165,8 +172,9 @@ F['06-espaces'] = ('''
 ''' + CANV + statement('Un parfum', 'pour chaque espace.', 690, 'HÔTELS · BUREAUX · MAISON · VOITURE', center=True) + icons,
  fx(4.6, '{ x: 540, y: 1750, spread: 340, rise: 1100, size: 100, alpha: 0.06, n: 36, seed: 13 }') + st_in(0.2, kick=True) + '''      [0, 1, 2, 3].forEach((i) => {
         const el = R("#X-i" + i);
-        tl.fromTo(el, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 0.9 + i * 0.22);
-        el.querySelectorAll("path").forEach((p) => { const L = p.getTotalLength(); tl.fromTo(p, { attr: { "stroke-dasharray": L, "stroke-dashoffset": L } }, { attr: { "stroke-dashoffset": 0 }, duration: 1.0, ease: "power2.inOut" }, 0.95 + i * 0.22); });
+        const IT = [0.72, 1.48, 2.16, 2.78];
+        tl.fromTo(el, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, IT[i]);
+        el.querySelectorAll("path").forEach((p) => { const L = p.getTotalLength(); tl.fromTo(p, { attr: { "stroke-dasharray": L, "stroke-dashoffset": L } }, { attr: { "stroke-dashoffset": 0 }, duration: 0.8, ease: "power2.inOut" }, IT[i] + 0.05); });
       });
 ''')
 # ── 07 · 34–40 s · logo and contact ───────────────────────────────────────
