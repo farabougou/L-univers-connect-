@@ -1,9 +1,9 @@
-# Cassia Dressing — pub collection Bogolan, 34 s, vertical 1080×1920, 25 i/s. Photos réelles de la marque (Instagram + envois client).
+# Cassia Dressing — pub collection Bogolan, 37 s, vertical 1080×1920, 25 i/s. Photos réelles de la marque (Instagram + envois client).
 import os
 P = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-W, H, TOTAL, OV = 1080, 1920, 34, 0.5
+W, H, TOTAL, OV = 1080, 1920, 37, 0.5
 SC = [('01-intro', 0, 4.6), ('02-heritage', 4.6, 4.8), ('03-chemises', 9.4, 6.2), ('04-vestes', 15.6, 4.8),
-      ('05-robe', 20.4, 5.0), ('06-mosaique', 25.4, 3.8), ('07-contact', 29.2, 4.8)]
+      ('05-robe', 20.4, 5.0), ('06-mosaique', 25.4, 3.8), ('07-contact', 29.2, 7.8)]
 EARTH, CREAM, OCHRE, INK, RED = '#2A1A10', '#F1E6D2', '#C9923F', '#140D08', '#A3242B'
 
 FONTS = '''
@@ -104,8 +104,8 @@ F['02-heritage'] = (f'''
 ''' + mask_up('#X-s1', 0.35) + mask_up('#X-s2', 0.6) + '''      tl.fromTo(R("#X-arc"), { clipPath: "inset(100% 0% 0% 0% round 350px 350px 16px 16px)" }, { clipPath: "inset(0% 0% 0% 0% round 350px 350px 16px 16px)", duration: 1.1, ease: "power3.inOut" }, 0.5);
       tl.fromTo(R("#X-arci"), { scale: 1.22 }, { scale: 1.02, duration: 4.8, ease: "power1.out" }, 0.5);
       tl.fromTo(R("#X-arcl"), { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.9, ease: "power2.out" }, 1.1);
-      tl.fromTo(R("#X-rv"), { opacity: 0, clipPath: "inset(0% 100% 0% 0%)" }, { opacity: 1, clipPath: "inset(0% 0% 0% 0%)", duration: 0.9, ease: "power2.inOut" }, 2.3);
-      tl.fromTo(R("#X-ul"), { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: "power2.inOut" }, 2.9);
+      tl.fromTo(R("#X-rv"), { opacity: 0, clipPath: "inset(0% 100% 0% 0%)" }, { opacity: 1, clipPath: "inset(0% 0% 0% 0%)", duration: 0.9, ease: "power2.inOut" }, 2.5);
+      tl.fromTo(R("#X-ul"), { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: "power2.inOut" }, 3.1);
 ''')
 
 # ── 03 · chemises: three looks, one word each ────────────────────────────────
@@ -218,13 +218,13 @@ F['07-contact'] = (f'''
     <div class="X-a X-c" id="X-ig">@cassia_dress</div>
     <div class="X-a X-kick X-c" id="X-city">BAMAKO · COMMANDEZ MAINTENANT</div>
 ''', '''      tl.fromTo([R("#X-b1"), R("#X-b2")], { clipPath: "inset(0% 50% 0% 50%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.9, ease: "power2.inOut" }, 0);
-      tl.fromTo(R("#X-b1 svg"), { x: 0 }, { x: -200, duration: 5.3, ease: "none" }, 0);
-      tl.fromTo(R("#X-b2 svg"), { x: -200 }, { x: 0, duration: 5.3, ease: "none" }, 0);
+      tl.fromTo(R("#X-b1 svg"), { x: 0 }, { x: -200, duration: 7.8, ease: "none" }, 0);
+      tl.fromTo(R("#X-b2 svg"), { x: -200 }, { x: 0, duration: 7.8, ease: "none" }, 0);
       tl.fromTo(R("#X-name"), { opacity: 0, clipPath: "inset(0% 100% 0% 0%)" }, { opacity: 1, clipPath: "inset(0% 0% 0% 0%)", duration: 1.0, ease: "power2.inOut" }, 0.15);
       tl.fromTo(R("#X-dr"), { opacity: 0, clipPath: "inset(0% 100% 0% 0%)" }, { opacity: 1, clipPath: "inset(0% 0% 0% 0%)", duration: 0.7, ease: "power2.inOut" }, 0.7);
       tl.fromTo(R("#X-fil"), { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "power2.inOut" }, 1.0);
-''' + up('#X-cta', 1.1) + '''      tl.fromTo(R("#X-pill"), { opacity: 0, scaleX: 0.6 }, { opacity: 1, scaleX: 1, duration: 0.6, ease: "power3.out" }, 2.0);
-''' + up('#X-wa', 2.15, 0.6, 20) + up('#X-ig', 2.6, 0.5, 14) + up('#X-city', 2.8, 0.5, 14) + '''      tl.to(R("#X-pill"), { boxShadow: "0 0 50px rgba(201,146,63,0.55)", duration: 0.6, ease: "sine.inOut", yoyo: true, repeat: 2 }, 3.0);
+''' + up('#X-cta', 1.1) + '''      tl.fromTo(R("#X-pill"), { opacity: 0, scaleX: 0.6 }, { opacity: 1, scaleX: 1, duration: 0.6, ease: "power3.out" }, 3.0);
+''' + up('#X-wa', 3.15, 0.6, 20) + up('#X-ig', 3.6, 0.5, 14) + up('#X-city', 3.8, 0.5, 14) + '''      tl.to(R("#X-pill"), { boxShadow: "0 0 50px rgba(201,146,63,0.55)", duration: 0.6, ease: "sine.inOut", yoyo: true, repeat: 4 }, 4.4);
 ''')
 
 def frame(fid, dur, css, html, js):
@@ -293,5 +293,9 @@ idx = f'''<!doctype html>
   </body>
 </html>
 '''
+if VOICE:
+    import json
+    vo = ''.join(f'      <audio id="el-vo{i + 1}" src="{src}" data-start="{at}" data-duration="{d}" data-track-index="{20 + i}" data-volume="1"></audio>\n' for i, (src, at, d) in enumerate(json.load(open(f'{P}/assets/voice/voice.json'))))
+    idx = idx.replace('<!--VO-->\n', vo)
 open(f'{P}/index.html', 'w').write(idx)
 print('ok')

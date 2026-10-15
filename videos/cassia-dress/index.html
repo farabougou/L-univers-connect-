@@ -12,17 +12,24 @@
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="main" data-start="0" data-duration="34" data-width="1080" data-height="1920" data-fps="25">
+    <div id="root" data-composition-id="main" data-start="0" data-duration="37" data-width="1080" data-height="1920" data-fps="25">
       <div id="el-01-intro" class="scene" data-composition-id="01-intro" data-composition-src="compositions/frames/01-intro.html" data-start="0" data-duration="5.1" data-track-index="0"></div>
       <div id="el-02-heritage" class="scene" data-composition-id="02-heritage" data-composition-src="compositions/frames/02-heritage.html" data-start="4.6" data-duration="5.3" data-track-index="1"></div>
       <div id="el-03-chemises" class="scene" data-composition-id="03-chemises" data-composition-src="compositions/frames/03-chemises.html" data-start="9.4" data-duration="6.7" data-track-index="0"></div>
       <div id="el-04-vestes" class="scene" data-composition-id="04-vestes" data-composition-src="compositions/frames/04-vestes.html" data-start="15.6" data-duration="5.3" data-track-index="1"></div>
       <div id="el-05-robe" class="scene" data-composition-id="05-robe" data-composition-src="compositions/frames/05-robe.html" data-start="20.4" data-duration="5.5" data-track-index="0"></div>
       <div id="el-06-mosaique" class="scene" data-composition-id="06-mosaique" data-composition-src="compositions/frames/06-mosaique.html" data-start="25.4" data-duration="4.3" data-track-index="1"></div>
-      <div id="el-07-contact" class="scene" data-composition-id="07-contact" data-composition-src="compositions/frames/07-contact.html" data-start="29.2" data-duration="4.8" data-track-index="0"></div>
+      <div id="el-07-contact" class="scene" data-composition-id="07-contact" data-composition-src="compositions/frames/07-contact.html" data-start="29.2" data-duration="7.8" data-track-index="0"></div>
 
-      <audio id="el-bgm" src="assets/music.wav" data-start="0" data-duration="34" data-track-index="11" data-volume="0.75"></audio>
-<!--VO-->
+      <audio id="el-bgm" src="assets/music.wav" data-start="0" data-duration="37" data-track-index="11" data-volume="0.22"></audio>
+      <audio id="el-vo1" src="assets/voice/01.wav" data-start="0.6" data-duration="2.38" data-track-index="20" data-volume="1"></audio>
+      <audio id="el-vo2" src="assets/voice/02.wav" data-start="4.9" data-duration="3.8" data-track-index="21" data-volume="1"></audio>
+      <audio id="el-vo3" src="assets/voice/03.wav" data-start="9.7" data-duration="3.62" data-track-index="22" data-volume="1"></audio>
+      <audio id="el-vo4" src="assets/voice/04.wav" data-start="15.9" data-duration="2.52" data-track-index="23" data-volume="1"></audio>
+      <audio id="el-vo5" src="assets/voice/05.wav" data-start="20.75" data-duration="3.68" data-track-index="24" data-volume="1"></audio>
+      <audio id="el-vo6" src="assets/voice/06.wav" data-start="25.6" data-duration="3.16" data-track-index="25" data-volume="1"></audio>
+      <audio id="el-vo7" src="assets/voice/07.wav" data-start="29.4" data-duration="2.53" data-track-index="26" data-volume="1"></audio>
+      <audio id="el-vo8" src="assets/voice/08.wav" data-start="32.1" data-duration="4.76" data-track-index="27" data-volume="1"></audio>
     </div>
     <script>
       window.__timelines = window.__timelines || {};
@@ -34,7 +41,7 @@
         tl.fromTo("#el-05-robe", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.inOut" }, 20.4);
         tl.fromTo("#el-06-mosaique", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.inOut" }, 25.4);
         tl.fromTo("#el-07-contact", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.inOut" }, 29.2);
-        tl.to({}, { duration: 34 }, 0);
+        tl.to({}, { duration: 37 }, 0);
       })();
     </script>
   </body>
