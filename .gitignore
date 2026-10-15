@@ -1,0 +1,4 @@
+
+# secrets (API keys) must never be committed
+.env
+.env.*
