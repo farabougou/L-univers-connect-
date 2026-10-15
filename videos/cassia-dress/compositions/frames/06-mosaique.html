@@ -1,0 +1,64 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Playfair Display"; font-weight: 600; src: url("assets/fonts/playfair-display-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Playfair Display"; font-weight: 700; src: url("assets/fonts/playfair-display-latin-700-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 500; src: url("assets/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 600; src: url("assets/fonts/montserrat-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Great Vibes"; font-weight: 400; src: url("assets/fonts/greatvibes-400.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Montserrat", sans-serif; color: #F1E6D2; background: #140D08; }
+
+    .c06-a { position: absolute; }
+    .c06-c { left: 0; right: 0; text-align: center; }
+    .c06-bg { position: absolute; inset: 0; background: radial-gradient(90% 60% at 50% 45%, #3a2416 0%, #2A1A10 55%, #140D08 100%); }
+    .c06-kick { font-family: "Montserrat"; font-weight: 600; font-size: 26px; letter-spacing: 0.3em; color: #C9923F; white-space: nowrap; }
+    .c06-t1 { font-family: "Playfair Display"; font-weight: 700; font-size: 92px; line-height: 1.05; color: #F1E6D2; white-space: nowrap; }
+    .c06-t2 { font-family: "Playfair Display"; font-weight: 600; font-size: 80px; line-height: 1.05; color: #C9923F; white-space: nowrap; }
+    .c06-sc { font-family: "Great Vibes"; font-weight: 400; color: #F1E6D2; white-space: nowrap; line-height: 1; }
+    .c06-ph { position: absolute; overflow: hidden; }
+    .c06-ph img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
+    .c06-band { position: absolute; left: 0; width: 1080px; height: 90px; }
+    .c06-band svg { display: block; }
+
+
+    #c06-dim { position: absolute; inset: 0; background: rgba(20,13,8,0.62); }
+    #c06-amp { top: 860px; font-size: 150px; color: #C9923F; }
+
+  </style>
+  <div id="root" data-composition-id="06-mosaique" data-start="0" data-duration="4.3" data-width="1080" data-height="1920">
+    <div id="c06-clip" class="clip" data-start="0" data-duration="4.3" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="c06-bg"></div>
+    <div class="c06-ph" id="c06-t0" style="left:30px; top:140px; width:500px; height:540px; border-radius:18px; "><img id="c06-t0i" src="assets/images/post6.jpg" alt="" style="object-position:50% 25%"></div>
+    <div class="c06-ph" id="c06-t1" style="left:550px; top:140px; width:500px; height:540px; border-radius:18px; background:#F1E6D2"><img id="c06-t1i" src="assets/images/veste2.png" alt="" style="object-position:center"></div>
+    <div class="c06-ph" id="c06-t2" style="left:30px; top:700px; width:500px; height:540px; border-radius:18px; "><img id="c06-t2i" src="assets/images/robe-diaz.jpg" alt="" style="object-position:60% 45%"></div>
+    <div class="c06-ph" id="c06-t3" style="left:550px; top:700px; width:500px; height:540px; border-radius:18px; "><img id="c06-t3i" src="assets/images/post4.jpg" alt="" style="object-position:50% 30%"></div>
+    <div class="c06-ph" id="c06-t4" style="left:30px; top:1260px; width:500px; height:540px; border-radius:18px; background:#F1E6D2"><img id="c06-t4i" src="assets/images/veste1.png" alt="" style="object-position:center"></div>
+    <div class="c06-ph" id="c06-t5" style="left:550px; top:1260px; width:500px; height:540px; border-radius:18px; "><img id="c06-t5i" src="assets/images/post2.jpg" alt="" style="object-position:50% 30%"></div>
+    <div id="c06-dim"></div>
+    <div class="c06-a c06-c" style="top:740px; overflow:hidden; height:120px"><span class="c06-t1" id="c06-s1" style="display:inline-block; font-size:100px">Modernité</span></div>
+    <div class="c06-a c06-c c06-sc" id="c06-amp">&amp;</div>
+    <div class="c06-a c06-c" style="top:1020px; overflow:hidden; height:120px"><span class="c06-t1" id="c06-s2" style="display:inline-block; font-size:100px">authenticité</span></div>
+    <div class="c06-a c06-kick c06-c" id="c06-k" style="top:1170px; color:#FFFFFF">POUR TOUTES VOS OCCASIONS</div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="06-mosaique"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="06-mosaique"] ' + s);
+      [0, 1, 2, 3, 4, 5].forEach((i) => {
+        tl.fromTo(R("#c06-t" + i), { opacity: 0, scale: 0.86 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.6)" }, 0.05 + i * 0.12);
+        tl.fromTo(R("#c06-t" + i + "i"), { scale: 1.15 }, { scale: 1.0, duration: 3.8, ease: "power1.out" }, 0.05 + i * 0.12);
+      });
+      tl.fromTo(R("#c06-dim"), { opacity: 0 }, { opacity: 1, duration: 0.5 }, 1.0);
+      tl.fromTo(R("#c06-s1"), { yPercent: 110 }, { yPercent: 0, duration: 0.8, ease: "power3.out" }, 1.15);
+      tl.fromTo(R("#c06-amp"), { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(2)" }, 1.4);
+      tl.fromTo(R("#c06-s2"), { yPercent: 110 }, { yPercent: 0, duration: 0.8, ease: "power3.out" }, 1.55);
+      tl.fromTo(R("#c06-k"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 2.0);
+
+      tl.to({}, { duration: 4.3 }, 0);
+      window.__timelines["06-mosaique"] = tl;
+    })();
+  </script>
+</template>

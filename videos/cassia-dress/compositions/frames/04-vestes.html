@@ -1,0 +1,71 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Playfair Display"; font-weight: 600; src: url("assets/fonts/playfair-display-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Playfair Display"; font-weight: 700; src: url("assets/fonts/playfair-display-latin-700-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 500; src: url("assets/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 600; src: url("assets/fonts/montserrat-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Great Vibes"; font-weight: 400; src: url("assets/fonts/greatvibes-400.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Montserrat", sans-serif; color: #F1E6D2; background: #140D08; }
+
+    .c04-a { position: absolute; }
+    .c04-c { left: 0; right: 0; text-align: center; }
+    .c04-bg { position: absolute; inset: 0; background: radial-gradient(90% 60% at 50% 45%, #3a2416 0%, #2A1A10 55%, #140D08 100%); }
+    .c04-kick { font-family: "Montserrat"; font-weight: 600; font-size: 26px; letter-spacing: 0.3em; color: #C9923F; white-space: nowrap; }
+    .c04-t1 { font-family: "Playfair Display"; font-weight: 700; font-size: 92px; line-height: 1.05; color: #F1E6D2; white-space: nowrap; }
+    .c04-t2 { font-family: "Playfair Display"; font-weight: 600; font-size: 80px; line-height: 1.05; color: #C9923F; white-space: nowrap; }
+    .c04-sc { font-family: "Great Vibes"; font-weight: 400; color: #F1E6D2; white-space: nowrap; line-height: 1; }
+    .c04-ph { position: absolute; overflow: hidden; }
+    .c04-ph img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
+    .c04-band { position: absolute; left: 0; width: 1080px; height: 90px; }
+    .c04-band svg { display: block; }
+
+
+    .c04-jk { position: absolute; left: 240px; top: 640px; width: 600px; height: 690px; }
+    .c04-jk img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 18px 30px rgba(60,35,15,0.25)); }
+    .c04-jk i { position: absolute; left: 90px; right: 90px; bottom: -26px; height: 50px; border-radius: 50%; background: radial-gradient(closest-side, rgba(60,35,15,0.35), rgba(60,35,15,0)); }
+    #c04-cream { position: absolute; inset: 0; background: radial-gradient(80% 55% at 50% 52%, #FBF5EA 0%, #F1E6D2 60%, #E2D2B5 100%); }
+    .c04-dk { color: #2A1A10; }
+    #c04-sig { top: 1440px; font-size: 104px; color: #A3242B; }
+
+  </style>
+  <div id="root" data-composition-id="04-vestes" data-start="0" data-duration="5.3" data-width="1080" data-height="1920">
+    <div id="c04-clip" class="clip" data-start="0" data-duration="5.3" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div id="c04-cream"></div>
+    <div class="c04-band" id="c04-b1" style="top:0px; height:80px"><svg width="1080" height="80"><defs><pattern id="c04-b1p" width="200" height="200" patternUnits="userSpaceOnUse"><rect width="200" height="200" fill="#F1E6D2"/><g fill="#2A1A10"><circle cx="22" cy="22" r="6"/><circle cx="22" cy="50" r="6"/><circle cx="22" cy="78" r="6"/><circle cx="50" cy="22" r="6"/><circle cx="50" cy="50" r="6"/><circle cx="50" cy="78" r="6"/><circle cx="78" cy="22" r="6"/><circle cx="78" cy="50" r="6"/><circle cx="78" cy="78" r="6"/><rect x="116" y="12" width="8" height="76" rx="4"/><rect x="136" y="12" width="8" height="76" rx="4"/><rect x="156" y="12" width="8" height="76" rx="4"/><rect x="176" y="12" width="8" height="76" rx="4"/><rect x="0" y="94" width="200" height="10" rx="4"/><rect x="94" y="0" width="10" height="200" rx="4"/><circle cx="116" cy="116" r="5"/><circle cx="180" cy="116" r="5"/><circle cx="116" cy="180" r="5"/><circle cx="180" cy="180" r="5"/></g><g stroke="#2A1A10" stroke-width="9" stroke-linecap="round" fill="none"><path d="M 14 130 L 80 190 M 80 130 L 14 190"/><path d="M 112 140 L 128 124 L 144 140 L 160 124 L 176 140 L 192 124 M 112 168 L 128 152 L 144 168 L 160 152 L 176 168 L 192 152"/></g></pattern></defs><rect width="1080" height="80" fill="url(#c04-b1p)" transform="scale(1)"/></svg></div>
+    <div class="c04-band" id="c04-b2" style="top:1840px; height:80px"><svg width="1080" height="80"><defs><pattern id="c04-b2p" width="200" height="200" patternUnits="userSpaceOnUse"><rect width="200" height="200" fill="#F1E6D2"/><g fill="#2A1A10"><circle cx="22" cy="22" r="6"/><circle cx="22" cy="50" r="6"/><circle cx="22" cy="78" r="6"/><circle cx="50" cy="22" r="6"/><circle cx="50" cy="50" r="6"/><circle cx="50" cy="78" r="6"/><circle cx="78" cy="22" r="6"/><circle cx="78" cy="50" r="6"/><circle cx="78" cy="78" r="6"/><rect x="116" y="12" width="8" height="76" rx="4"/><rect x="136" y="12" width="8" height="76" rx="4"/><rect x="156" y="12" width="8" height="76" rx="4"/><rect x="176" y="12" width="8" height="76" rx="4"/><rect x="0" y="94" width="200" height="10" rx="4"/><rect x="94" y="0" width="10" height="200" rx="4"/><circle cx="116" cy="116" r="5"/><circle cx="180" cy="116" r="5"/><circle cx="116" cy="180" r="5"/><circle cx="180" cy="180" r="5"/></g><g stroke="#2A1A10" stroke-width="9" stroke-linecap="round" fill="none"><path d="M 14 130 L 80 190 M 80 130 L 14 190"/><path d="M 112 140 L 128 124 L 144 140 L 160 124 L 176 140 L 192 124 M 112 168 L 128 152 L 144 168 L 160 152 L 176 168 L 192 152"/></g></pattern></defs><rect width="1080" height="80" fill="url(#c04-b2p)" transform="scale(1)"/></svg></div>
+    <div class="c04-a c04-kick c04-c" id="c04-k" style="top:260px; color:#A3242B">NOUVEAU · VESTES BOGOLAN</div>
+    <div class="c04-a c04-c" style="top:315px; overflow:hidden; height:110px"><span class="c04-t1 c04-dk" id="c04-s1" style="display:inline-block">Des vestes</span></div>
+    <div class="c04-a c04-c" style="top:420px; overflow:hidden; height:100px"><span class="c04-t2" id="c04-s2" style="display:inline-block; color:#8A5A22">au style urbain</span></div>
+    <div class="c04-jk" id="c04-j0"><i></i><img src="assets/images/veste1.png" alt=""></div>
+    <div class="c04-jk" id="c04-j1"><i></i><img src="assets/images/veste2.png" alt=""></div>
+    <div class="c04-jk" id="c04-j2"><i></i><img src="assets/images/veste3.png" alt=""></div>
+    <div class="c04-a c04-c c04-sc" id="c04-sig">signées Cassia</div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="04-vestes"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="04-vestes"] ' + s);
+      tl.fromTo([R("#c04-b1"), R("#c04-b2")], { opacity: 0 }, { opacity: 1, duration: 0.6 }, 0);
+      tl.fromTo(R("#c04-k"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 0.15);
+      tl.fromTo(R("#c04-s1"), { yPercent: 110 }, { yPercent: 0, duration: 0.8, ease: "power3.out" }, 0.25);
+      tl.fromTo(R("#c04-s2"), { yPercent: 110 }, { yPercent: 0, duration: 0.8, ease: "power3.out" }, 0.5);
+      // each jacket lands centre-stage, then steps aside for the next
+      const J = [R("#c04-j0"), R("#c04-j1"), R("#c04-j2")];
+      gsap.set(J, { zIndex: (i) => i + 1 });
+      tl.fromTo(J[0], { y: 900, rotation: -8 }, { y: 0, rotation: 0, duration: 0.7, ease: "power3.out" }, 0.3);
+      tl.to(J[0], { x: -300, scale: 0.6, rotation: -6, duration: 0.6, ease: "power3.inOut" }, 1.4);
+      tl.fromTo(J[1], { y: 900, rotation: 8 }, { y: 0, rotation: 0, duration: 0.7, ease: "power3.out" }, 1.4);
+      tl.to(J[1], { x: 300, scale: 0.6, rotation: 6, duration: 0.6, ease: "power3.inOut" }, 2.5);
+      tl.fromTo(J[2], { y: 900, scale: 1 }, { y: 0, duration: 0.7, ease: "power3.out" }, 2.5);
+      tl.to(J[2], { scale: 1.05, duration: 2.0, ease: "none" }, 3.2);
+      tl.fromTo(R("#c04-sig"), { opacity: 0, clipPath: "inset(0% 100% 0% 0%)" }, { opacity: 1, clipPath: "inset(0% 0% 0% 0%)", duration: 0.9, ease: "power2.inOut" }, 3.0);
+
+      tl.to({}, { duration: 5.3 }, 0);
+      window.__timelines["04-vestes"] = tl;
+    })();
+  </script>
+</template>
