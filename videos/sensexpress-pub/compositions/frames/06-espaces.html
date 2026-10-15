@@ -1,0 +1,70 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Playfair Display"; font-weight: 400; src: url("assets/fonts/playfair-display-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Playfair Display"; font-weight: 600; src: url("assets/fonts/playfair-display-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 400; src: url("assets/fonts/montserrat-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 500; src: url("assets/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 600; src: url("assets/fonts/montserrat-latin-600-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Montserrat", sans-serif; color: #FFFFFF; background: #000; }
+
+    .p06-a { position: absolute; }
+    .p06-full { position: absolute; inset: 0; }
+    .p06-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+    .p06-bgd { position: absolute; inset: 0; background: radial-gradient(90% 60% at 50% 45%, #1d160a 0%, #0b0907 55%, #000 100%); }
+    .p06-kick { font-family: "Montserrat"; font-weight: 500; font-size: 24px; letter-spacing: 0.28em; color: #E9C221; white-space: nowrap; }
+    .p06-l1, .p06-l2 { position: absolute; left: 120px; font-family: "Playfair Display"; font-weight: 600; font-size: 80px; line-height: 1.1; color: #FFFFFF; white-space: nowrap; }
+    .p06-l2 { color: #E9C221; }
+    .p06-c { left: 0; right: 0; text-align: center; }
+    .p06-ph { position: absolute; overflow: hidden; }
+    .p06-ph .b { position: absolute; inset: -50px; background-size: cover; background-position: center; filter: blur(30px) brightness(0.55) saturate(1.1); }
+    .p06-ph img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; }
+    .p06-ph img.ct { object-fit: contain; }
+    .p06-ph img.cv { object-fit: cover; }
+    .p06-ln { position: absolute; inset: 0; pointer-events: none; border: 2px solid rgba(233,194,33,0.6); }
+
+
+    .p06-ic { top: 960px; width: 190px; text-align: center; }
+    .p06-ic svg { display: block; }
+    .p06-ic span { display: block; margin-top: 10px; font-family: "Montserrat"; font-weight: 500; font-size: 28px; letter-spacing: 0.12em; color: #FFFFFF; }
+
+  </style>
+  <div id="root" data-composition-id="06-espaces" data-start="0" data-duration="4.6" data-width="1080" data-height="1920">
+    <div id="p06-clip" class="clip" data-start="0" data-duration="4.6" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="p06-bgd"></div>
+    <canvas class="p06-cv" id="p06-mist" width="1080" height="1920"></canvas>
+    <canvas class="p06-cv" id="p06-dust" width="1080" height="1920"></canvas>
+    <div class="p06-a p06-kick p06-c" id="p06-k" style="top:638px">HÔTELS · BUREAUX · MAISON · VOITURE</div>
+    <div class="p06-l1 p06-c" id="p06-s1" style="top:690px">Un parfum</div>
+    <div class="p06-l2 p06-c" id="p06-s2" style="top:780px">pour chaque espace.</div>
+    <div class="p06-a p06-ic" id="p06-i0" style="left:130px"><svg width="190" height="190" viewBox="0 0 500 500"><g stroke="#E9C221" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M 70 330 H 430 M 50 352 H 450 M 100 320 A 150 150 0 0 1 400 320 M 236 168 H 264 M 250 168 V 146 M 170 250 A 100 100 0 0 1 220 200"/></g></svg><span>Hôtels</span></div>
+    <div class="p06-a p06-ic" id="p06-i1" style="left:340px"><svg width="190" height="190" viewBox="0 0 500 500"><g stroke="#E9C221" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M 70 170 L 250 80 L 430 170 Z M 85 192 H 415 M 120 210 V 330 M 200 210 V 330 M 300 210 V 330 M 380 210 V 330 M 75 345 H 425 M 55 368 H 445"/></g></svg><span>Bureaux</span></div>
+    <div class="p06-a p06-ic" id="p06-i2" style="left:550px"><svg width="190" height="190" viewBox="0 0 500 500"><g stroke="#E9C221" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M 80 220 L 250 90 L 420 220 M 115 195 V 370 H 385 V 195 M 220 370 V 290 H 280 V 370 M 145 250 H 195 V 300 H 145 Z M 305 250 H 355 V 300 H 305 Z"/></g></svg><span>Maison</span></div>
+    <div class="p06-a p06-ic" id="p06-i3" style="left:760px"><svg width="190" height="190" viewBox="0 0 500 500"><g stroke="#E9C221" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M 50 320 H 85 A 40 40 0 0 1 165 320 H 335 A 40 40 0 0 1 415 320 H 455 V 280 Q 452 258 420 252 L 360 242 L 300 190 Q 286 178 262 178 H 160 Q 140 178 126 192 L 88 238 Q 52 246 50 270 Z M 125 320 m -28 0 a 28 28 0 1 0 56 0 a 28 28 0 1 0 -56 0 M 375 320 m -28 0 a 28 28 0 1 0 56 0 a 28 28 0 1 0 -56 0 M 120 242 L 160 200 H 228 V 242 Z M 248 242 V 200 H 285 L 330 242 Z"/></g></svg><span>Voiture</span></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="06-espaces"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="06-espaces"] ' + s);
+      const __d = SX.dust(R("#p06-dust"), { n: 80, alpha: 0.7, seed: 5 });
+      const __m = SX.mist(R("#p06-mist"), { x: 540, y: 1750, spread: 340, rise: 1100, size: 100, alpha: 0.06, n: 36, seed: 13 });
+      const __fs = { t: 0 };
+      tl.fromTo(__fs, { t: 0 }, { t: 4.6, duration: 4.6, ease: "none", onUpdate: () => { __d(__fs.t); __m(__fs.t); } }, 0);
+      __d(__fs.t); __m(__fs.t); 
+      tl.fromTo(R("#p06-k"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 0.05);
+      tl.fromTo(R("#p06-s1"), { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 0.2);
+      tl.fromTo(R("#p06-s2"), { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 0.45);
+      [0, 1, 2, 3].forEach((i) => {
+        const el = R("#p06-i" + i);
+        tl.fromTo(el, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 0.9 + i * 0.22);
+        el.querySelectorAll("path").forEach((p) => { const L = p.getTotalLength(); tl.fromTo(p, { attr: { "stroke-dasharray": L, "stroke-dashoffset": L } }, { attr: { "stroke-dashoffset": 0 }, duration: 1.0, ease: "power2.inOut" }, 0.95 + i * 0.22); });
+      });
+
+      tl.to({}, { duration: 4.6 }, 0);
+      window.__timelines["06-espaces"] = tl;
+    })();
+  </script>
+</template>

@@ -1,0 +1,71 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Playfair Display"; font-weight: 400; src: url("assets/fonts/playfair-display-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Playfair Display"; font-weight: 600; src: url("assets/fonts/playfair-display-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 400; src: url("assets/fonts/montserrat-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 500; src: url("assets/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 600; src: url("assets/fonts/montserrat-latin-600-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Montserrat", sans-serif; color: #FFFFFF; background: #000; }
+
+    .p03-a { position: absolute; }
+    .p03-full { position: absolute; inset: 0; }
+    .p03-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+    .p03-bgd { position: absolute; inset: 0; background: radial-gradient(90% 60% at 50% 45%, #1d160a 0%, #0b0907 55%, #000 100%); }
+    .p03-kick { font-family: "Montserrat"; font-weight: 500; font-size: 24px; letter-spacing: 0.28em; color: #E9C221; white-space: nowrap; }
+    .p03-l1, .p03-l2 { position: absolute; left: 120px; font-family: "Playfair Display"; font-weight: 600; font-size: 80px; line-height: 1.1; color: #FFFFFF; white-space: nowrap; }
+    .p03-l2 { color: #E9C221; }
+    .p03-c { left: 0; right: 0; text-align: center; }
+    .p03-ph { position: absolute; overflow: hidden; }
+    .p03-ph .b { position: absolute; inset: -50px; background-size: cover; background-position: center; filter: blur(30px) brightness(0.55) saturate(1.1); }
+    .p03-ph img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; }
+    .p03-ph img.ct { object-fit: contain; }
+    .p03-ph img.cv { object-fit: cover; }
+    .p03-ln { position: absolute; inset: 0; pointer-events: none; border: 2px solid rgba(233,194,33,0.6); }
+
+
+    .p03-ft { top: 1455px; display: flex; justify-content: center; align-items: center; gap: 16px; font-family: "Montserrat"; font-weight: 500; font-size: 36px; color: #FFFFFF; opacity: 0; }
+    .p03-ft i { display: block; width: 12px; height: 12px; border-radius: 6px; background: #E9C221; }
+    #p03-hm { position: absolute; left: 160px; top: 390px; }
+
+  </style>
+  <div id="root" data-composition-id="03-heritier" data-start="0" data-duration="6.6" data-width="1080" data-height="1920">
+    <div id="p03-clip" class="clip" data-start="0" data-duration="6.6" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="p03-bgd"></div>
+    <canvas class="p03-cv" id="p03-dust" width="1080" height="1920"></canvas>
+    <div class="p03-a p03-kick p03-c" id="p03-k" style="top:178px">DIFFUSEUR INTELLIGENT</div>
+    <div class="p03-l1 p03-c" id="p03-s1" style="top:230px">L'Héritier</div>
+    <div class="p03-l2 p03-c" id="p03-s2" style="top:320px"></div>
+    <div class="p03-ph" id="p03-hero" style="left:160px; top:390px; width:760px; height:1010px; border-radius:380px 380px 28px 28px"><img class="cv" id="p03-heroi" src="assets/images/heritier-brume.jpg" alt="" style="left:-40px; top:-235px; width:800px; height:1275px; object-fit:fill"><div class="p03-ln" style="border-radius:380px 380px 28px 28px"></div></div>
+    <canvas id="p03-hm" width="760" height="1010"></canvas>
+    <div class="p03-a p03-c p03-ft" id="p03-f0"><i></i>Détection de mouvement</div>
+    <div class="p03-a p03-c p03-ft" id="p03-f1"><i></i>Rechargeable en 1 heure</div>
+    <div class="p03-a p03-c p03-ft" id="p03-f2"><i></i>Jusqu'à 3 semaines d'autonomie</div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="03-heritier"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="03-heritier"] ' + s);
+      const __d = SX.dust(R("#p03-dust"), { n: 80, alpha: 0.7, seed: 5 });
+      const __fs = { t: 0 };
+      tl.fromTo(__fs, { t: 0 }, { t: 6.6, duration: 6.6, ease: "none", onUpdate: () => { __d(__fs.t); } }, 0);
+      __d(__fs.t); 
+      const hm = SX.mist(R("#p03-hm"), { x: 474, y: 177, spread: 70, rise: 260, size: 40, alpha: 0.06, n: 24, seed: 4, gold: 0 });
+      const hs = { t: 0 }; tl.fromTo(hs, { t: 0 }, { t: 6.6, duration: 6.6, ease: "none", onUpdate: () => hm(hs.t) }, 0); hm(0);
+      tl.fromTo(R("#p03-k"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 0.3);
+      tl.fromTo(R("#p03-s1"), { opacity: 0, y: 34, scale: 1.04 }, { opacity: 1, y: 0, scale: 1, duration: 0.9, ease: "power3.out" }, 0.45);
+      tl.fromTo(R("#p03-hero"), { clipPath: "inset(100% 0% 0% 0% round 380px 380px 28px 28px)" }, { clipPath: "inset(0% 0% 0% 0% round 380px 380px 28px 28px)", duration: 1.0, ease: "power3.inOut" }, 0.2);
+      tl.fromTo(R("#p03-heroi"), { scale: 1.18 }, { scale: 1.0, duration: 6.4, ease: "power1.out" }, 0.2);
+      [0, 1, 2].forEach((i) => {
+        tl.fromTo(R("#p03-f" + i), { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 1.4 + i * 1.6);
+        if (i < 2) tl.to(R("#p03-f" + i), { opacity: 0, y: -20, duration: 0.35, ease: "power2.in" }, 2.75 + i * 1.6);
+      });
+
+      tl.to({}, { duration: 6.6 }, 0);
+      window.__timelines["03-heritier"] = tl;
+    })();
+  </script>
+</template>

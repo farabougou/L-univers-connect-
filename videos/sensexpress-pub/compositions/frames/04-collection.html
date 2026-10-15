@@ -1,0 +1,74 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Playfair Display"; font-weight: 400; src: url("assets/fonts/playfair-display-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Playfair Display"; font-weight: 600; src: url("assets/fonts/playfair-display-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 400; src: url("assets/fonts/montserrat-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 500; src: url("assets/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 600; src: url("assets/fonts/montserrat-latin-600-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Montserrat", sans-serif; color: #FFFFFF; background: #000; }
+
+    .p04-a { position: absolute; }
+    .p04-full { position: absolute; inset: 0; }
+    .p04-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+    .p04-bgd { position: absolute; inset: 0; background: radial-gradient(90% 60% at 50% 45%, #1d160a 0%, #0b0907 55%, #000 100%); }
+    .p04-kick { font-family: "Montserrat"; font-weight: 500; font-size: 24px; letter-spacing: 0.28em; color: #E9C221; white-space: nowrap; }
+    .p04-l1, .p04-l2 { position: absolute; left: 120px; font-family: "Playfair Display"; font-weight: 600; font-size: 80px; line-height: 1.1; color: #FFFFFF; white-space: nowrap; }
+    .p04-l2 { color: #E9C221; }
+    .p04-c { left: 0; right: 0; text-align: center; }
+    .p04-ph { position: absolute; overflow: hidden; }
+    .p04-ph .b { position: absolute; inset: -50px; background-size: cover; background-position: center; filter: blur(30px) brightness(0.55) saturate(1.1); }
+    .p04-ph img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; }
+    .p04-ph img.ct { object-fit: contain; }
+    .p04-ph img.cv { object-fit: cover; }
+    .p04-ln { position: absolute; inset: 0; pointer-events: none; border: 2px solid rgba(233,194,33,0.6); }
+
+
+    .p04-pn { top: 1355px; opacity: 0; }
+    .p04-pn b { display: block; font-family: "Playfair Display"; font-weight: 600; font-size: 76px; color: #E9C221; }
+    .p04-pn span { display: block; margin-top: 8px; font-family: "Montserrat"; font-weight: 500; font-size: 32px; color: #E6E6E6; }
+    #p04-cnt { left: 0; right: 0; top: 470px; text-align: center; }
+
+  </style>
+  <div id="root" data-composition-id="04-collection" data-start="0" data-duration="8.6" data-width="1080" data-height="1920">
+    <div id="p04-clip" class="clip" data-start="0" data-duration="8.6" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="p04-bgd"></div>
+    <div class="p04-a p04-kick" id="p04-k" style="left:120px; top:148px">LA COLLECTION</div>
+    <div class="p04-l1" id="p04-s1" style="top:200px">Une collection</div>
+    <div class="p04-l2" id="p04-s2" style="top:290px">pour chaque volume.</div>
+    <div class="p04-ph" id="p04-c0" style="left:120px; top:520px; width:840px; height:800px; border-radius:36px"><div class="b" style="background-image:url(assets/images/princesse.jpg)"></div><img class="ct" id="p04-c0i" src="assets/images/princesse.jpg" alt="" style="object-position:center"><div class="p04-ln" style="border-radius:36px"></div></div>
+    <div class="p04-ph" id="p04-c1" style="left:120px; top:520px; width:840px; height:800px; border-radius:36px"><div class="b" style="background-image:url(assets/images/duchesse.jpg)"></div><img class="ct" id="p04-c1i" src="assets/images/duchesse.jpg" alt="" style="object-position:center"><div class="p04-ln" style="border-radius:36px"></div></div>
+    <div class="p04-ph" id="p04-c2" style="left:120px; top:520px; width:840px; height:800px; border-radius:36px"><div class="b" style="background-image:url(assets/images/prince.jpg)"></div><img class="ct" id="p04-c2i" src="assets/images/prince.jpg" alt="" style="object-position:center"><div class="p04-ln" style="border-radius:36px"></div></div>
+    <div class="p04-ph" id="p04-c3" style="left:120px; top:520px; width:840px; height:800px; border-radius:36px"><div class="b" style="background-image:url(assets/images/reine.jpg)"></div><img class="ct" id="p04-c3i" src="assets/images/reine.jpg" alt="" style="object-position:center"><div class="p04-ln" style="border-radius:36px"></div></div>
+    <div class="p04-a p04-c p04-pn" id="p04-n0"><b>La Princesse</b><span>Sans fil · télécommande ou Bluetooth</span></div>
+    <div class="p04-a p04-c p04-pn" id="p04-n1"><b>La Duchesse</b><span>Silencieuse · jusqu'à 300 m³</span></div>
+    <div class="p04-a p04-c p04-pn" id="p04-n2"><b>Le Prince</b><span>Automatique · Bluetooth, wifi et 4G</span></div>
+    <div class="p04-a p04-c p04-pn" id="p04-n3"><b>La Reine</b><span>Jusqu'à 5 000 m³ · grands espaces</span></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="04-collection"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="04-collection"] ' + s);
+      tl.fromTo(R("#p04-k"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 0.1);
+      tl.fromTo(R("#p04-s1"), { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 0.25);
+      tl.fromTo(R("#p04-s2"), { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 0.5);
+      const AT = [0.45, 2.4, 4.35, 6.3];
+      [0, 1, 2, 3].forEach((i) => {
+        const c = R("#p04-c" + i), n = R("#p04-n" + i), t0 = AT[i];
+        tl.fromTo(c, { x: 1100, rotation: 4 }, { x: 0, rotation: 0, duration: 0.75, ease: "power3.inOut" }, t0);
+        tl.fromTo(R("#p04-c" + i + "i"), { scale: 1.12 }, { scale: 1.0, duration: 2.4, ease: "power2.out" }, t0);
+        tl.fromTo(n, { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, t0 + 0.4);
+        if (i < 3) {
+          tl.to(c, { x: -1100, rotation: -4, duration: 0.75, ease: "power3.inOut" }, AT[i + 1]);
+          tl.to(n, { opacity: 0, y: -20, duration: 0.3, ease: "power2.in" }, AT[i + 1]);
+        }
+      });
+
+      tl.to({}, { duration: 8.6 }, 0);
+      window.__timelines["04-collection"] = tl;
+    })();
+  </script>
+</template>
