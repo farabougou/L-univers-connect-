@@ -236,7 +236,7 @@ F['05-echange'] = ('''
     #X-mon .scr { position: relative; width: 900px; height: 530px; border: 14px solid #1b1b1b; border-radius: 18px; overflow: hidden; background: #000; box-shadow: 0 40px 90px rgba(0,0,0,0.6); }
     #X-mon .neck { width: 120px; height: 90px; margin: 0 auto; background: linear-gradient(#202020, #121212); }
     #X-mon .foot { width: 320px; height: 16px; margin: 0 auto; border-radius: 8px; background: #1e1e1e; }
-    #X-ph { position: absolute; left: 600px; top: 900px; width: 380px; height: 760px; border-radius: 52px; border: 12px solid #1b1b1b; background: #000; overflow: hidden; box-shadow: 0 40px 90px rgba(0,0,0,0.7); }
+    #X-ph { position: absolute; left: 600px; top: 850px; width: 370px; height: 740px; border-radius: 52px; border: 12px solid #1b1b1b; background: #000; overflow: hidden; box-shadow: 0 40px 90px rgba(0,0,0,0.7); }
     #X-ph .X-home { transform: scale(0.445); transform-origin: 0 0; }
 ''', '''    <div class="X-full" style="background:linear-gradient(180deg,#000 0%,#0d0d0d 100%)"></div>
 ''' + statement('Un projet commence', 'par un échange.', 200) + '''    <div id="X-card"><div class="X-kick">CONTACT</div><b>Parlons de votre projet</b><p>Un conseiller vous accompagne dans le choix de vos diffuseurs et de vos fragrances.</p>

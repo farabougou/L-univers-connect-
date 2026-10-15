@@ -1,6 +1,6 @@
 # SCRIPT — SensExpress « Une signature qui se voit » (42 s, vertical)
 
-Voix off proposée par le brief (p. 6) — à enregistrer (Orion, Aurora ou ElevenLabs), puis calée sur les séquences.
+Voix : ElevenLabs « Anna » (fichier fourni par le client), calée phrase par phrase sur les séquences (voir .src/vo.py).
 Lecture visée : 36 à 38 s, la musique accompagne la fermeture.
 
 1. (0–5 s)   Une marque se reconnaît aussi à ce qu'elle fait ressentir.
