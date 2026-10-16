@@ -1,0 +1,19 @@
+{
+  "reasons": {
+    "BACNET_UNITS_TEMPERATURE": "Unité BACnet de température reconnue.",
+    "BACNET_UNITS_TEMPERATURE_SETPOINT": "Unité BACnet de température reconnue, sur une sortie ou un nom de consigne.",
+    "BACNET_UNITS_PRESSURE": "Unité BACnet de pression reconnue.",
+    "BACNET_UNITS_HUMIDITY": "Unité BACnet d’humidité relative reconnue.",
+    "BACNET_UNITS_CONCENTRATION": "Unité BACnet de concentration (ppm) reconnue.",
+    "BACNET_UNITS_POWER": "Unité BACnet de puissance électrique reconnue.",
+    "BACNET_UNITS_ENERGY": "Unité BACnet d’énergie reconnue.",
+    "NAME_KEYWORD_TEMPERATURE": "Mot-clé de température repéré dans le nom, sans unité BACnet exploitable.",
+    "NAME_KEYWORD_PRESSURE": "Mot-clé de pression repéré dans le nom, sans unité BACnet exploitable.",
+    "NAME_KEYWORD_FAULT": "Mot-clé de défaut repéré dans le nom.",
+    "NAME_KEYWORD_RUN": "Mot-clé de marche/fonctionnement repéré dans le nom.",
+    "NAME_KEYWORD_ENABLE": "Mot-clé d’autorisation repéré dans le nom.",
+    "NAME_KEYWORD_COMMAND": "Sortie binaire nommée comme une commande de marche.",
+    "NO_RELIABLE_SIGNAL": "Aucune unité ni mot-clé suffisamment fiable : à revoir par une personne.",
+    "MULTISTATE_NOT_YET_MAPPED": "Aucune classe de point multi-état générique dans le référentiel : à revoir par une personne."
+  }
+}

@@ -1,0 +1,191 @@
+"""Aides de test pour contourner les protections append-only d'audit_log.
+
+Ces protections sont volontaires (voir app/audit.py et la migration
+5929036bce23) : même le nettoyage des données de test doit passer par un
+accès administrateur explicite, jamais par un simple DELETE applicatif.
+"""
+
+from urllib.parse import urlsplit, urlunsplit
+
+from sqlalchemy import create_engine, text
+
+from app.config import settings
+
+# Compte administrateur PostgreSQL local (voir infra/init-db/01-create-app-role.sql).
+# Jamais utilisé par l'API elle-même, uniquement ici pour nettoyer les
+# entrées d'audit créées par les tests. Dérivé de la base réellement testée
+# (app.config.settings.database_url) plutôt que codé en dur sur le nom
+# "paios" : un nom figé nettoyait silencieusement la mauvaise base dès que
+# les tests tournaient contre une autre base (CI avec un autre nom, pilote),
+# laissant les lignes protégées en place et faisant échouer la suppression
+# du tenant en fin de test, sans rapport avec un vrai défaut de migration.
+_app_url = urlsplit(settings.database_url)
+ADMIN_DATABASE_URL = urlunsplit(
+    (
+        _app_url.scheme,
+        f"postgres:postgres_admin_dev_password@{_app_url.hostname}:{_app_url.port or 5432}",
+        _app_url.path,
+        _app_url.query,
+        _app_url.fragment,
+    )
+)
+
+
+def purge_relations_for_tenant(tenant_id) -> None:
+    """Même principe pour les relations, protégées contre toute suppression
+    (voir la migration 706eca882498)."""
+    admin_engine = create_engine(ADMIN_DATABASE_URL)
+    try:
+        with admin_engine.begin() as connection:
+            connection.execute(
+                text("ALTER TABLE relations DISABLE TRIGGER relations_protect_history")
+            )
+            connection.execute(
+                text("DELETE FROM relations WHERE tenant_id = :id"), {"id": tenant_id}
+            )
+            connection.execute(
+                text("ALTER TABLE relations ENABLE TRIGGER relations_protect_history")
+            )
+    finally:
+        admin_engine.dispose()
+
+
+def purge_config_versions_for_tenant(tenant_id) -> None:
+    """Les versions de configuration sont protégées contre toute suppression
+    (voir la migration 1403c6bbaa32). Les constats qui les référencent
+    doivent être supprimés avant."""
+    admin_engine = create_engine(ADMIN_DATABASE_URL)
+    try:
+        with admin_engine.begin() as connection:
+            connection.execute(
+                text("ALTER TABLE config_versions DISABLE TRIGGER config_versions_no_delete")
+            )
+            connection.execute(
+                text("DELETE FROM config_versions WHERE tenant_id = :id"), {"id": tenant_id}
+            )
+            connection.execute(
+                text("ALTER TABLE config_versions ENABLE TRIGGER config_versions_no_delete")
+            )
+    finally:
+        admin_engine.dispose()
+
+
+def purge_audit_log_for_tenant(tenant_id) -> None:
+    admin_engine = create_engine(ADMIN_DATABASE_URL)
+    try:
+        with admin_engine.begin() as connection:
+            connection.execute(text("ALTER TABLE audit_log DISABLE TRIGGER audit_log_no_delete"))
+            connection.execute(
+                text("DELETE FROM audit_log WHERE tenant_id = :id"), {"id": tenant_id}
+            )
+            connection.execute(text("ALTER TABLE audit_log ENABLE TRIGGER audit_log_no_delete"))
+    finally:
+        admin_engine.dispose()
+
+
+def purge_floor_plans_for_tenant(tenant_id) -> None:
+    """Un plan n'est jamais supprimé (migration f65006c6d8c7)."""
+    admin_engine = create_engine(ADMIN_DATABASE_URL)
+    try:
+        with admin_engine.begin() as connection:
+            connection.execute(
+                text("ALTER TABLE floor_plans DISABLE TRIGGER floor_plans_no_delete")
+            )
+            connection.execute(
+                text("DELETE FROM floor_plans WHERE tenant_id = :id"), {"id": tenant_id}
+            )
+            connection.execute(text("ALTER TABLE floor_plans ENABLE TRIGGER floor_plans_no_delete"))
+    finally:
+        admin_engine.dispose()
+
+
+def purge_documents_for_tenant(tenant_id) -> None:
+    """Un document n'est jamais supprimé (migration b1d4f2a9c7e3)."""
+    admin_engine = create_engine(ADMIN_DATABASE_URL)
+    try:
+        with admin_engine.begin() as connection:
+            connection.execute(text("ALTER TABLE documents DISABLE TRIGGER documents_no_delete"))
+            connection.execute(
+                text("DELETE FROM documents WHERE tenant_id = :id"), {"id": tenant_id}
+            )
+            connection.execute(text("ALTER TABLE documents ENABLE TRIGGER documents_no_delete"))
+    finally:
+        admin_engine.dispose()
+
+
+def purge_fgas_records_for_tenant(tenant_id) -> None:
+    """Les fiches d'intervention F-Gas sont des preuves légales, protégées
+    contre toute suppression (voir la migration adce8b5d46b8)."""
+    admin_engine = create_engine(ADMIN_DATABASE_URL)
+    try:
+        with admin_engine.begin() as connection:
+            connection.execute(
+                text(
+                    "ALTER TABLE fgas_intervention_records "
+                    "DISABLE TRIGGER fgas_intervention_records_no_delete"
+                )
+            )
+            connection.execute(
+                text("DELETE FROM fgas_intervention_records WHERE tenant_id = :id"),
+                {"id": tenant_id},
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE fgas_intervention_records "
+                    "ENABLE TRIGGER fgas_intervention_records_no_delete"
+                )
+            )
+    finally:
+        admin_engine.dispose()
+
+
+def purge_operat_declarations_for_tenant(tenant_id) -> None:
+    """Une déclaration OPERAT transmise est gelée (voir la migration
+    ada08b67a28c) ; un brouillon ou une déclaration prête reste supprimable
+    par l'application, mais le nettoyage de test passe par le même accès
+    administrateur pour couvrir les trois états en une fois."""
+    admin_engine = create_engine(ADMIN_DATABASE_URL)
+    try:
+        with admin_engine.begin() as connection:
+            connection.execute(
+                text(
+                    "ALTER TABLE operat_declarations "
+                    "DISABLE TRIGGER operat_declarations_protect_delete"
+                )
+            )
+            connection.execute(
+                text("DELETE FROM operat_declarations WHERE tenant_id = :id"), {"id": tenant_id}
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE operat_declarations "
+                    "ENABLE TRIGGER operat_declarations_protect_delete"
+                )
+            )
+    finally:
+        admin_engine.dispose()
+
+
+def purge_intervention_closures_for_tenant(tenant_id) -> None:
+    """Les clôtures d'intervention sont des preuves, protégées contre toute
+    suppression (voir la migration a4a1fa8a4cfa)."""
+    admin_engine = create_engine(ADMIN_DATABASE_URL)
+    try:
+        with admin_engine.begin() as connection:
+            connection.execute(
+                text(
+                    "ALTER TABLE intervention_closures "
+                    "DISABLE TRIGGER intervention_closures_no_delete"
+                )
+            )
+            connection.execute(
+                text("DELETE FROM intervention_closures WHERE tenant_id = :id"), {"id": tenant_id}
+            )
+            connection.execute(
+                text(
+                    "ALTER TABLE intervention_closures "
+                    "ENABLE TRIGGER intervention_closures_no_delete"
+                )
+            )
+    finally:
+        admin_engine.dispose()

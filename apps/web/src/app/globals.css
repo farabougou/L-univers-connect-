@@ -1,0 +1,150 @@
+/* Palette sombre/navy forcée (directive de Mohamed, 02/10/2026 : centre de
+   contrôle professionnel, pas un thème qui dépend des préférences système)
+   — reprend les jetons de apps/web/src/lib/formStyles.ts, seule source. */
+:root {
+  --background: #050b1a;
+  --foreground: #f8fafc;
+  color-scheme: dark;
+}
+
+html {
+  height: 100%;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Un identifiant technique (UUID, jeton) ne contient pas d'espace : sans
+     ceci, un seul de ces identifiants peut forcer toute la page à dépasser
+     la largeur de l'écran, et le texte en trop devient invisible (silencieux
+     à cause de overflow-x: hidden ci-dessus, jamais un scroll visible).
+     `break-word`, pas `anywhere` : les deux empêchent un token sans espace
+     de dépasser la largeur de l'écran, mais seul `anywhere` modifie aussi la
+     largeur minimale calculée par un conteneur flex (`min-content`) — un
+     vrai bug trouvé le 03/10/2026 (capture d'écran mobile de Mohamed) :
+     toute rangée flex à deux éléments (étiquette + valeur, ex. l'activité
+     récente ou un tableau responsive) se réduisait au premier caractère de
+     la valeur plutôt que de passer à la ligne par mot entier, dès que les
+     deux éléments ne tenaient plus côte à côte sur un téléphone étroit. */
+  overflow-wrap: break-word;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+/* `display` déplacé ici depuis le style en ligne de Sidebar.tsx (07/10/2026) :
+   un style en ligne l'emporte toujours sur une règle de feuille de style,
+   donc le `display: none` sous 900px ci-dessous ne pouvait jamais s'appliquer
+   tant que `display: flex` restait fixé en ligne sur le même élément — la
+   sidebar restait visible sur téléphone malgré ce correctif, vrai bug resté
+   caché derrière le correctif de viewport du 03/10/2026 (réel mais
+   insuffisant à lui seul). */
+.app-sidebar {
+  display: flex;
+}
+
+/* Sous 900px, la console web cède la place à l'application mobile dédiée
+   pour l'usage terrain (voir Sidebar.tsx) : jamais une sidebar tassée. */
+@media (max-width: 900px) {
+  .app-sidebar {
+    display: none;
+  }
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/*
+ * Un tableau à plusieurs colonnes (ex. une ligne par site) ne tient pas sur
+ * un écran de téléphone, quelle que soit la largeur des colonnes : le
+ * défilement horizontal existe mais reste facile à manquer. En dessous de
+ * cette largeur, chaque ligne devient une petite fiche empilée (étiquette
+ * à côté de sa valeur, via data-label sur chaque cellule) plutôt qu'un
+ * tableau à faire défiler. Opt-in (classe .responsive-table) : ne change
+ * aucun tableau existant qui n'a pas ce problème.
+ */
+@media (max-width: 680px) {
+  .responsive-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  .responsive-table,
+  .responsive-table tbody,
+  .responsive-table tr,
+  .responsive-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .responsive-table tr {
+    border-bottom: 1px solid #1e293b;
+    padding: 10px 0;
+  }
+
+  .responsive-table tr:last-child {
+    border-bottom: none;
+  }
+
+  .responsive-table td {
+    border: none;
+    padding: 4px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    text-align: right;
+  }
+
+  .responsive-table td[data-label]::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--foreground);
+    flex-shrink: 0;
+    text-align: left;
+  }
+
+  /* Une cellule sans étiquette (ex. le lien « Voir ») reste visible, juste
+     sans texte en gras devant — rien à nommer pour un lien déjà explicite. */
+  .responsive-table td:not([data-label]) {
+    justify-content: flex-end;
+  }
+}
+
+/* État de chargement par segment (loading.tsx, audit UX du 02/10/2026) :
+   jusqu'ici rien ne s'affichait le temps d'une requête serveur lente, sur
+   les 13 écrans — ni squelette ni indicateur, un écran qui semblait figé. */
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 3px solid rgba(148, 163, 184, 0.25);
+  border-top-color: #94a3b8;
+  animation: loading-spin 0.8s linear infinite;
+}
+
+@keyframes loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

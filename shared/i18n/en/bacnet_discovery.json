@@ -1,0 +1,19 @@
+{
+  "reasons": {
+    "BACNET_UNITS_TEMPERATURE": "Recognized BACnet temperature unit.",
+    "BACNET_UNITS_TEMPERATURE_SETPOINT": "Recognized BACnet temperature unit, on an output or a setpoint-like name.",
+    "BACNET_UNITS_PRESSURE": "Recognized BACnet pressure unit.",
+    "BACNET_UNITS_HUMIDITY": "Recognized BACnet relative humidity unit.",
+    "BACNET_UNITS_CONCENTRATION": "Recognized BACnet concentration unit (ppm).",
+    "BACNET_UNITS_POWER": "Recognized BACnet electrical power unit.",
+    "BACNET_UNITS_ENERGY": "Recognized BACnet energy unit.",
+    "NAME_KEYWORD_TEMPERATURE": "Temperature keyword found in the name, with no usable BACnet unit.",
+    "NAME_KEYWORD_PRESSURE": "Pressure keyword found in the name, with no usable BACnet unit.",
+    "NAME_KEYWORD_FAULT": "Fault keyword found in the name.",
+    "NAME_KEYWORD_RUN": "Run/status keyword found in the name.",
+    "NAME_KEYWORD_ENABLE": "Enable keyword found in the name.",
+    "NAME_KEYWORD_COMMAND": "Binary output named like a run command.",
+    "NO_RELIABLE_SIGNAL": "No unit or keyword reliable enough: needs review by a person.",
+    "MULTISTATE_NOT_YET_MAPPED": "No generic multi-state point class in the vocabulary yet: needs review by a person."
+  }
+}

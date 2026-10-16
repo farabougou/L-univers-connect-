@@ -1,0 +1,18 @@
+{
+  "nature_of_intervention": {
+    "assembly": "Assemblage de l’équipement",
+    "commissioning": "Mise en service de l’équipement",
+    "modification": "Modification de l’équipement",
+    "maintenance": "Maintenance de l’équipement",
+    "leak_check_periodic": "Contrôle d’étanchéité périodique",
+    "leak_check_non_periodic": "Contrôle d’étanchéité non périodique",
+    "decommissioning": "Démantèlement",
+    "other": "Autre"
+  },
+  "waste_classification": {
+    "un1078_non_flammable": "UN 1078, déchet gaz frigorifique NSA, non inflammable",
+    "other_non_flammable": "Autre fluide frigorigène non inflammable",
+    "un3161_flammable": "UN 3161, déchet gaz liquéfié inflammable NSA",
+    "other_flammable": "Autre fluide frigorigène inflammable"
+  }
+}
