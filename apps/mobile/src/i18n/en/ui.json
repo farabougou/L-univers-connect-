@@ -38,6 +38,7 @@
   },
   "command_failure_reason": {
     "ACTUAL_STATE_MISMATCH": "The actual state does not match the requested value.",
+    "COMMAND_EXPIRED": "This command stayed pending too long before being received by the device. It is no longer executed.",
     "COMMAND_POINT_NOT_CONTROLLABLE": "This point is no longer controlled by a simulated device.",
     "COMMAND_POINT_NOT_IN_CONFIG": "The target point is no longer in the active configuration.",
     "COMMAND_POLICY_ROLE_NOT_ALLOWED": "The role of the person who scheduled this command is no longer allowed by this point's active policy.",

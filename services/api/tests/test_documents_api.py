@@ -279,3 +279,40 @@ def test_isolation_un_tenant_ne_voit_jamais_le_document_d_un_autre() -> None:
     finally:
         _cleanup(tenant_a)
         _cleanup(tenant_b)
+
+
+def test_reclamer_la_cle_de_stockage_d_un_autre_tenant_est_refuse() -> None:
+    """Audit de sécurité du 16/10/2026 (pistes Siemens SSA-832641, CWE-35) :
+    connaître — ou deviner — la clé d'un fichier déjà envoyé par un autre
+    client ne doit jamais suffire à se l'approprier comme son propre
+    document, même avec un rôle de gestion valide chez soi."""
+    tenant_a = _create_tenant("ClientDocsCleA")
+    tenant_b = _create_tenant("ClientDocsCleB")
+    try:
+        headers_a = _auth_headers(tenant_a["tenant_id"], ["admin_tenant"])
+        with patch("app.auth.fetch_jwks", return_value=JWKS):
+            upload_url_response = client.post(
+                f"/functional-locations/{tenant_a['functional_location_id']}/documents/upload-url",
+                json={"filename": "confidentiel.pdf", "content_type": "application/pdf"},
+                headers=headers_a,
+            )
+        victim_object_key = upload_url_response.json()["object_key"]
+
+        headers_b = _auth_headers(tenant_b["tenant_id"], ["admin_tenant"])
+        with patch("app.auth.fetch_jwks", return_value=JWKS):
+            create_response = client.post(
+                f"/functional-locations/{tenant_b['functional_location_id']}/documents",
+                json={
+                    "category": "manual",
+                    "object_key": victim_object_key,
+                    "filename": "confidentiel.pdf",
+                    "content_type": "application/pdf",
+                    "sha256": _FAKE_SHA256,
+                },
+                headers=headers_b,
+            )
+        assert create_response.status_code == 422
+        assert create_response.json()["code"] == "DOCUMENT_STORAGE_KEY_FOREIGN"
+    finally:
+        _cleanup(tenant_a)
+        _cleanup(tenant_b)

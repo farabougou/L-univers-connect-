@@ -269,9 +269,18 @@ def compare_normalized_results_route(
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
 ) -> ComparisonOut:
     """Mise en regard pure de deux résultats déjà calculés — aucun nouveau
-    calcul, aucune écriture (voir app/energy/comparison.py)."""
+    calcul, aucune écriture (voir app/energy/comparison.py).
+
+    Les deux résultats doivent porter sur le même point (audit sécurité du
+    16/10/2026 : « capacités et limites restent propres à chaque site ») —
+    sans ce contrôle, rien n'empêchait de comparer la consommation d'un
+    équipement d'un site à celle d'un équipement sans rapport sur un autre
+    site, avec un pourcentage d'écart arithmétiquement valide mais sans
+    aucun sens (capacités, usages et climats différents)."""
     reference = _require_result(connection, reference_result_id)
     analyzed = _require_result(connection, analyzed_result_id)
+    if reference["point_id"] != analyzed["point_id"]:
+        raise ApiError(422, "ENERGY_COMPARISON_CROSS_EQUIPMENT")
     return ComparisonOut(**compare_results(reference, analyzed))
 
 

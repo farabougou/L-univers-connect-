@@ -1830,6 +1830,124 @@ build` propres ; 121/121 tests mobile (vitest), `tsc --noEmit` propre.
 **Après V4** : évolution continue du produit, sans V5 automatique — une V5
 sera décidée explicitement si et quand elle se justifie.
 
+## Audit sécurité et résilience — 16/10/2026
+
+Demande explicite de Mohamed : vérifier quatre pistes issues de la veille
+sécurité (avis Siemens SSA-832641 et SSA-333035, cités comme déclencheurs
+de la vérification, jamais comme des failles déjà constatées chez nous) et
+ne corriger que les lacunes confirmées dans notre périmètre V1-V4. Aucune
+simulation présentée comme une validation terrain.
+
+**Priorité 1 — Fichiers et isolation (CWE-35, path traversal)** : déjà
+conforme. `app/storage.py` (les quatre paires `build_*`/`*_key_belongs_to`
+— documents, plans, imports IFC, photos) refuse par construction toute clé
+dont la partie nom contient le moindre « / », donc immunisé structurellement
+contre une séquence de traversée imbriquée (« ..../...//ETC », motif cité
+par l'avis Siemens) sans avoir besoin d'une liste noire à contourner ;
+jamais testé directement jusqu'ici, seulement couvert indirectement côté
+API. Nouveau fichier `tests/test_storage.py` (8 tests) : clé légitime
+acceptée, clé d'un autre tenant refusée, clé d'une autre ressource du même
+tenant refusée, trois variantes de traversée imbriquée refusées, clé égale
+au dossier seul refusée, nom de fichier `.`/`..` refusé, séparateur dans le
+nom toujours refusé, `build_*` assainit bien le nom fourni. Isolation
+cross-tenant à la soumission d'une clé (`POST /documents`) : déjà refusée
+par construction (le préfixe attendu vient du tenant authentifié, jamais
+d'une entrée cliente) — nouveau test d'intégration API
+`test_reclamer_la_cle_de_stockage_d_un_autre_tenant_est_refuse`
+(`tests/test_documents_api.py`, 422 `DOCUMENT_STORAGE_KEY_FOREIGN`). Import
+CSV (`app/replay_import.py`, `scripts/replay_import.py`) et tampons hors
+ligne des démons Edge : chemins toujours contrôlés par l'opérateur en CLI,
+jamais par une entrée réseau — aucune surface d'attaque.
+
+**Priorité 2 — Connecteur et commande (indisponibilité automate, rejeu,
+interverrouillages)** : les quatre connecteurs terrain (Modbus, BACnet,
+OPC UA, MQTT) ont déjà un délai de connexion/lecture borné (3 à 5 s) —
+aucun blocage indéfini sur un automate indisponible, et un processus par
+équipement empêche structurellement qu'un automate en panne bloque les
+autres. **Lacune confirmée et corrigée** : `claim_pending_commands`
+(`app/commands.py`) ne revérifiait la commandabilité et la policy qu'à la
+création, jamais au moment où le démon la relève — contrairement au moteur
+jumeau des commandes planifiées (`scheduled_commands.py`), qui revérifie
+déjà les deux à la création **et** à la relève. Un automate hors ligne
+pendant la fenêtre entre création et retour pouvait donc exécuter un ordre
+devenu invalide (policy durcie, point retiré de la commandabilité) sans
+nouveau contrôle. Corrigé par symétrie avec le moteur déjà existant :
+colonne `requester_roles` (migration
+`b7c43d1f8e70_add_commands_requester_roles.py`, même forme que
+`scheduled_commands`), revérification de `_assert_point_is_commandable` et
+de `enforce_policy` à la relève, transitions par mise à jour atomique
+gardée (`WHERE status = 'pending'`) pour éviter toute course entre démons
+concurrents. **Deuxième lacune confirmée** : aucune notion de péremption
+pour un ordre en attente — un automate indisponible arbitrairement
+longtemps aurait permis l'exécution inconditionnelle d'un ordre ancien au
+retour (le rejeu qu'interroge l'avis Siemens). Corrigé par
+`PENDING_EXPIRY` (5 minutes, même tolérance que `UNCONFIRMED_AFTER`) et un
+nouvel état terminal `COMMAND_EXPIRED` (i18n fr/en ajouté). 5 nouveaux
+tests contre une vraie base (`tests/test_commands.py`) : péremption refuse
+la relève, relève normale avant péremption, policy durcie entre création et
+relève refusée, point devenu non commandable entre création et relève
+refusé, péremption d'un équipement sans effet sur la relève normale d'un
+autre équipement (non-interférence). **19/19 tests** de ce fichier passés.
+Rien de ceci ne touche la règle non négociable 1 : strictement le chemin
+`simulated_relay`, jamais un équipement réel.
+
+**Optimisation énergie — capacités/limites propres à chaque site** : la
+référence énergétique (`app/energy/baseline.py`) est par construction
+propre à un point donc à un équipement, et la météo
+(`app/energy/weather.py`) est déjà strictement scopée par `site_id` — le
+calcul de performance normalisée résout le site depuis l'équipement lui-même
+avant d'aller chercher sa météo, jamais de mélange constaté dans le calcul.
+**Lacune confirmée et corrigée** : `GET /energy/comparison` ne vérifiait
+jamais que les deux résultats mis en regard portaient sur le même
+équipement — rien n'empêchait de comparer la consommation d'un équipement
+d'un site à celle d'un équipement sans rapport sur un autre site, avec un
+pourcentage d'écart arithmétiquement valide mais sans aucun sens
+(capacités, usages et climats différents). Corrigé par un contrôle du
+`point_id` des deux résultats dans `app/routers/energy.py`, nouvelle erreur
+`ENERGY_COMPARISON_CROSS_EQUIPMENT` (422, i18n fr/en ajouté sous `codes`).
+2 nouveaux tests API (`tests/test_energy_api.py`) : comparaison de deux
+résultats du même équipement toujours acceptée, comparaison de deux
+équipements différents désormais refusée. **35/35 tests** énergie
+(`test_energy.py` + `test_energy_api.py`) passés, aucune régression.
+Aucun nouveau moteur de calcul construit, conformément à la demande.
+
+**HVACSim (mitre/hvac-sim) — DEFER, pas d'intégration.** Processus
+d'évaluation en 6 étapes appliqué : (1) nous n'avons pas de simulateur
+physique thermodynamique — notre BACnet Lab (`tests/bacnet_lab.py`) expose
+un vrai appareil BACnet/IP avec des valeurs statiques par profil (six
+catégories CVC/froid/électrogène/VRV-DRV/réseaux thermiques/comptage),
+et notre Virtual Protocol Adapter (`app/connectors/virtual_telemetry.py`)
+génère une télémétrie dynamique réaliste (cycle diurne, bruit borné,
+compteur cumulatif) mais en dehors de tout protocole réseau réel — aucun
+des deux ne simule la physique d'un bâtiment. (2) n'existant pas, cette
+étape ne s'applique pas. (3) la valeur réelle serait limitée à notre
+périmètre actuel : le produit reste en lecture seule (C0, règle non
+négociable 1), sans commande réelle avant la fin de V4 ; un moteur
+physique complet type EnergyPlus ne comble aucun manque pour la découverte,
+la relève ou la sémantique BACnet, déjà validées (`SIMULATOR_TESTED`)
+contre un vrai appareil `bacpypes3`. Le seul manque théorique — un appareil
+BACnet dont les valeurs évoluent dans le temps plutôt que rester statiques
+pour la durée d'un test — est marginal et, s'il devenait réel, se couvrirait
+en étendant notre propre BACnet Lab (une tâche qui met à jour
+`presentValue` périodiquement), pas en importait un simulateur de physique
+du bâtiment entier. (4) n'étant pas pertinent aujourd'hui, pas d'ajout à la
+roadmap. (5) notre approche (deux outils simples et déjà prouvés, plutôt
+qu'un simulateur physique complet et sa dépendance) reste volontairement
+différente et suffisante pour la portée actuelle (lecture seule, V1-V4).
+(6) HVACSim n'est pas ajouté : l'ajouter sans manque réel aurait justement
+été gonfler les outils sans valeur, ce que la demande de Mohamed excluait
+explicitement. **Décision : DEFER** — à reconsidérer seulement si un besoin
+réel et précis apparaît (ex. simulation de dynamique thermique pour une
+future capacité de contrôle, hors périmètre des 12 prochains mois). Ne
+remplace pas et ne doit jamais remplacer le BACnet Lab existant, et ne
+devient pas une dépendance de production.
+
+**Suite complète exécutée** : `pytest -q` (services/api, 1017 tests),
+`ruff check .` (services/api) — voir le rapport de lot livré à Mohamed pour
+le détail. Catalogues i18n fr/en synchronisés vers `apps/web/src/i18n` et
+`apps/mobile/src/i18n` (`node shared/i18n/sync.mjs`) ; aucun fichier
+`.ts`/`.tsx` touché par cet audit.
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente

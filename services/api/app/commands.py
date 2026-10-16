@@ -53,6 +53,7 @@ POST /commands?dry_run=true côté routeur) : un essai à blanc ne saute
 jamais une vérification que la création réelle ferait.
 """
 
+import json
 import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -60,20 +61,33 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
-from app.command_policies import enforce_policy, get_active_policy
+from app.command_policies import PolicyViolation, enforce_policy, get_active_policy
 from app.connectors.device_mapping import SIMULATED_DEVICE_TYPES, get_active_mapping
 from app.errors import DomainError
 from app.events import record_event
 
 _COLUMNS = (
     "id, tenant_id, point_id, requested_value, requested_by, status, actual_value, "
-    "failure_reason, created_at, sent_at, acknowledged_at, verified_at, edge_device_id"
+    "failure_reason, created_at, sent_at, acknowledged_at, verified_at, edge_device_id, "
+    "requester_roles"
 )
 
 # Au-delà de ce délai sans accusé de réception, une commande envoyée est
 # considérée non confirmée plutôt que silencieusement "en cours" pour
 # toujours : l'Edge a pu ne jamais la recevoir.
 UNCONFIRMED_AFTER = timedelta(minutes=5)
+
+# Au-delà de ce délai sans avoir été réclamée par l'Edge (jamais envoyée),
+# une commande en attente n'est plus exécutée telle quelle (audit sécurité
+# du 16/10/2026, pistes Siemens SSA-333035) : l'intention qu'elle portait
+# peut ne plus être pertinente après une coupure prolongée de l'automate,
+# et la policy active du point a pu changer entre-temps sans que cette
+# commande déjà créée en tienne compte. Même tolérance que UNCONFIRMED_AFTER
+# (mesurée depuis la création plutôt que l'envoi, puisqu'ici rien n'a
+# encore été envoyé) — deux constantes distinctes malgré la même valeur :
+# elles répondent à deux questions différentes (« trop vieille pour partir »
+# vs « trop vieille pour rester sans réponse »).
+PENDING_EXPIRY = timedelta(minutes=5)
 
 
 class CommandNotAllowed(DomainError, ValueError):
@@ -148,8 +162,10 @@ def create_command(
     new_id = uuid.uuid4()
     connection.execute(
         text(
-            "INSERT INTO commands (id, tenant_id, point_id, requested_value, requested_by) "
-            "VALUES (:id, :tenant_id, :point_id, :requested_value, :requested_by)"
+            "INSERT INTO commands "
+            "(id, tenant_id, point_id, requested_value, requested_by, requester_roles) "
+            "VALUES (:id, :tenant_id, :point_id, :requested_value, :requested_by, "
+            "CAST(:requester_roles AS JSONB))"
         ),
         {
             "id": new_id,
@@ -157,6 +173,7 @@ def create_command(
             "point_id": point_id,
             "requested_value": requested_value,
             "requested_by": requested_by,
+            "requester_roles": json.dumps(requester_roles),
         },
     )
     record_event(
@@ -197,26 +214,115 @@ def list_commands_for_point(
     ]
 
 
+def _expire_stale_pending_commands(
+    connection: Connection, *, equipment_id: uuid.UUID, at: datetime
+) -> None:
+    """Fait transiter vers « failed » (COMMAND_EXPIRED) toute commande encore
+    « pending » pour cet équipement depuis plus de PENDING_EXPIRY, avant
+    toute tentative de réclamation : une commande expirée n'est jamais
+    envoyée à l'appareil, jamais rejouée après une coupure prolongée. Une
+    seule requête UPDATE ... RETURNING, même garantie d'unicité que
+    claim_pending_commands : une commande expirée ne peut pas aussi être
+    réclamée par le même appel."""
+    rows = connection.execute(
+        text(
+            """
+            UPDATE commands SET status = 'failed', failure_reason = 'COMMAND_EXPIRED'
+            WHERE status = 'pending' AND created_at <= :deadline AND point_id IN (
+                SELECT id FROM points WHERE functional_location_id = :equipment_id
+            )
+            RETURNING id, tenant_id
+            """
+        ),
+        {"deadline": at - PENDING_EXPIRY, "equipment_id": equipment_id},
+    ).mappings()
+    for row in rows:
+        record_event(
+            connection,
+            tenant_id=row["tenant_id"],
+            event_type="COMMAND_FAILED",
+            subject_type="command",
+            subject_id=row["id"],
+            payload={"failure_reason": "COMMAND_EXPIRED"},
+            occurred_at=at,
+        )
+
+
 def claim_pending_commands(
     connection: Connection, *, equipment_id: uuid.UUID, edge_device_id: uuid.UUID, at: datetime
 ) -> list[dict[str, Any]]:
-    """Marque « sent » toutes les commandes en attente pour les points de cet
-    équipement, et les renvoie. Une seule requête UPDATE ... RETURNING :
-    aucune commande ne peut être récupérée deux fois."""
-    rows = connection.execute(
+    """Marque « sent » les commandes en attente pour les points de cet
+    équipement, et les renvoie — après avoir expiré les plus anciennes
+    (voir _expire_stale_pending_commands) et revérifié, pour chacune des
+    restantes, la commandabilité du point et sa policy active : ni l'une ni
+    l'autre ne sont supposées inchangées depuis la création de la commande
+    (audit sécurité du 16/10/2026, pistes Siemens SSA-333035 — même
+    discipline que app.scheduled_commands.dispatch_due_scheduled_commands,
+    jusqu'ici absente de ce chemin-ci). Une commande qui échoue cette
+    revérification devient « failed », jamais silencieusement oubliée ni
+    envoyée malgré l'échec.
+
+    Chaque transition (vers « sent » ou vers « failed ») est une requête
+    UPDATE ... RETURNING gardée par `WHERE status = 'pending'` : si une
+    autre réclamation concurrente a déjà transitionné la même ligne entre
+    temps, celle-ci n'affecte aucune ligne et est simplement ignorée —
+    aucune commande ne peut être récupérée, ni échouée, deux fois."""
+    _expire_stale_pending_commands(connection, equipment_id=equipment_id, at=at)
+
+    candidates = connection.execute(
         text(
             f"""
-            UPDATE commands SET status = 'sent', sent_at = :at, edge_device_id = :edge_device_id
+            SELECT {_COLUMNS} FROM commands
             WHERE status = 'pending' AND point_id IN (
                 SELECT id FROM points WHERE functional_location_id = :equipment_id
             )
-            RETURNING {_COLUMNS}
             """
         ),
-        {"at": at, "edge_device_id": edge_device_id, "equipment_id": equipment_id},
+        {"equipment_id": equipment_id},
     ).mappings()
-    claimed = [dict(row) for row in rows]
-    for command in claimed:
+
+    claimed: list[dict[str, Any]] = []
+    for candidate in candidates:
+        try:
+            _assert_point_is_commandable(connection, candidate["point_id"])
+            policy = get_active_policy(connection, candidate["point_id"])
+            enforce_policy(
+                policy,
+                requested_value=candidate["requested_value"],
+                roles=candidate["requester_roles"],
+            )
+        except (CommandNotAllowed, PolicyViolation) as exc:
+            failed_id = connection.execute(
+                text(
+                    "UPDATE commands SET status = 'failed', failure_reason = :reason "
+                    "WHERE id = :id AND status = 'pending' RETURNING id"
+                ),
+                {"reason": exc.code, "id": candidate["id"]},
+            ).scalar()
+            if failed_id is None:
+                continue
+            record_event(
+                connection,
+                tenant_id=candidate["tenant_id"],
+                event_type="COMMAND_FAILED",
+                subject_type="command",
+                subject_id=candidate["id"],
+                payload={"failure_reason": exc.code},
+                occurred_at=at,
+            )
+            continue
+
+        sent_id = connection.execute(
+            text(
+                "UPDATE commands SET status = 'sent', sent_at = :at, "
+                "edge_device_id = :edge_device_id "
+                "WHERE id = :id AND status = 'pending' RETURNING id"
+            ),
+            {"at": at, "edge_device_id": edge_device_id, "id": candidate["id"]},
+        ).scalar()
+        if sent_id is None:
+            continue
+        command = get_command(connection, candidate["id"])
         record_event(
             connection,
             tenant_id=command["tenant_id"],
@@ -226,6 +332,7 @@ def claim_pending_commands(
             payload={"edge_device_id": str(edge_device_id)},
             occurred_at=at,
         )
+        claimed.append(command)
     return claimed
 
 

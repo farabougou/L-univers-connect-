@@ -9,8 +9,9 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from sqlalchemy import text
 
-from app.command_policies import COMMAND_ROLES
+from app.command_policies import COMMAND_POINT_POLICY, COMMAND_ROLES
 from app.commands import (
+    PENDING_EXPIRY,
     UNCONFIRMED_AFTER,
     CommandConflict,
     CommandNotAllowed,
@@ -23,6 +24,7 @@ from app.commands import (
     list_commands_for_point,
     mark_command_timed_out,
 )
+from app.config_versions import activate_version, create_version
 from app.db import engine
 from app.devices import provision_device
 from app.events import list_events_for_subject
@@ -345,6 +347,271 @@ def test_statut_effectif_devient_unconfirmed_apres_le_delai():
 def test_statut_effectif_ne_change_pas_les_statuts_terminaux():
     verified_command = {"status": "verified", "sent_at": T0}
     assert effective_status(verified_command, now=T0 + timedelta(days=1)) == "verified"
+
+
+# --- Audit sécurité du 16/10/2026 (pistes Siemens SSA-333035) : une
+# commande restée en attente pendant une coupure prolongée de l'automate
+# ne doit ni être rejouée telle quelle, ni contourner une policy devenue
+# entre-temps plus stricte — voir claim_pending_commands. ----------------
+
+
+def _backdate_created_at(connection, command_id: uuid.UUID, created_at: datetime) -> None:
+    """`commands.created_at` vient du serveur (`server_default=now()`),
+    jamais du paramètre `at` de create_command — seul moyen réaliste de
+    tester l'expiration sans dépendre de l'horloge réelle de la machine
+    qui exécute les tests."""
+    connection.execute(
+        text("UPDATE commands SET created_at = :created_at WHERE id = :id"),
+        {"created_at": created_at, "id": command_id},
+    )
+
+
+def test_une_commande_trop_longtemps_en_attente_expire_sans_etre_reclamee(commandable):
+    with engine.begin() as connection:
+        set_tenant_context(connection, commandable["tenant_id"])
+        device_id, _ = provision_device(
+            connection,
+            tenant_id=commandable["tenant_id"],
+            device_id="relais-test",
+            created_by="test",
+        )
+        command_id = create_command(
+            connection,
+            tenant_id=commandable["tenant_id"],
+            point_id=commandable["point_id"],
+            requested_value=1.0,
+            requested_by="mohamed",
+            requester_roles=list(COMMAND_ROLES),
+        )
+        _backdate_created_at(connection, command_id, T0)
+
+        # L'automate revient trop tard : la commande est restée "pending"
+        # plus longtemps que PENDING_EXPIRY, jamais réclamée avant.
+        claimed = claim_pending_commands(
+            connection,
+            equipment_id=commandable["location_id"],
+            edge_device_id=device_id,
+            at=T0 + PENDING_EXPIRY + timedelta(seconds=1),
+        )
+        command = get_command(connection, command_id)
+        events = list_events_for_subject(connection, subject_type="command", subject_id=command_id)
+
+    assert claimed == []
+    assert command["status"] == "failed"
+    assert command["failure_reason"] == "COMMAND_EXPIRED"
+    assert any(event["event_type"] == "COMMAND_FAILED" for event in events)
+
+
+def test_une_commande_pas_encore_expiree_est_reclamee_normalement(commandable):
+    with engine.begin() as connection:
+        set_tenant_context(connection, commandable["tenant_id"])
+        device_id, _ = provision_device(
+            connection,
+            tenant_id=commandable["tenant_id"],
+            device_id="relais-test",
+            created_by="test",
+        )
+        command_id = create_command(
+            connection,
+            tenant_id=commandable["tenant_id"],
+            point_id=commandable["point_id"],
+            requested_value=1.0,
+            requested_by="mohamed",
+            requester_roles=list(COMMAND_ROLES),
+        )
+        _backdate_created_at(connection, command_id, T0)
+
+        claimed = claim_pending_commands(
+            connection,
+            equipment_id=commandable["location_id"],
+            edge_device_id=device_id,
+            at=T0 + PENDING_EXPIRY - timedelta(seconds=1),
+        )
+
+    assert len(claimed) == 1
+    assert claimed[0]["status"] == "sent"
+
+
+def test_reclamation_revalide_la_policy_et_refuse_si_elle_s_est_durcie_entre_temps(commandable):
+    """La commande est créée quand seul « technicien » est autorisé par la
+    policy active. Avant que l'Edge ne la réclame, la policy est resserrée
+    à « admin_tenant » seul (ex. un incident ailleurs a motivé une
+    restriction) : la réclamation doit refuser, jamais exécuter une
+    commande dont le rôle n'est plus habilité au moment où elle part
+    réellement vers l'appareil."""
+    with engine.begin() as connection:
+        set_tenant_context(connection, commandable["tenant_id"])
+        device_id, _ = provision_device(
+            connection,
+            tenant_id=commandable["tenant_id"],
+            device_id="relais-test",
+            created_by="test",
+        )
+        version_id = create_version(
+            connection,
+            tenant_id=commandable["tenant_id"],
+            config_type=COMMAND_POINT_POLICY,
+            subject_key=str(commandable["point_id"]),
+            content={"allowed_roles": ["technicien"]},
+            author="responsable",
+            reason="test",
+        )
+        activate_version(
+            connection, version_id=version_id, activated_by="responsable", activated_at=T0
+        )
+
+        command_id = create_command(
+            connection,
+            tenant_id=commandable["tenant_id"],
+            point_id=commandable["point_id"],
+            requested_value=1.0,
+            requested_by="technicien-dupont",
+            requester_roles=["technicien"],
+        )
+
+        # La policy se durcit avant que l'Edge ne réclame la commande.
+        stricter_version_id = create_version(
+            connection,
+            tenant_id=commandable["tenant_id"],
+            config_type=COMMAND_POINT_POLICY,
+            subject_key=str(commandable["point_id"]),
+            content={"allowed_roles": ["admin_tenant"]},
+            author="responsable",
+            reason="test",
+        )
+        activate_version(
+            connection, version_id=stricter_version_id, activated_by="responsable", activated_at=T0
+        )
+
+        claimed = claim_pending_commands(
+            connection, equipment_id=commandable["location_id"], edge_device_id=device_id, at=T0
+        )
+        command = get_command(connection, command_id)
+
+    assert claimed == []
+    assert command["status"] == "failed"
+    assert command["failure_reason"] == "COMMAND_POLICY_ROLE_NOT_ALLOWED"
+
+
+def test_reclamation_revalide_la_commandabilite_et_refuse_si_le_point_a_cesse_de_l_etre(
+    commandable,
+):
+    """Entre la création de la commande et la réclamation, l'équipement
+    bascule vers une configuration non simulée (ex. un vrai sdm120
+    installé à la place) : la commande ne doit jamais partir vers un
+    appareil réel sous couvert d'une vérification faite avant ce
+    changement — règle non négociable 1."""
+    with engine.begin() as connection:
+        set_tenant_context(connection, commandable["tenant_id"])
+        device_id, _ = provision_device(
+            connection,
+            tenant_id=commandable["tenant_id"],
+            device_id="relais-test",
+            created_by="test",
+        )
+        command_id = create_command(
+            connection,
+            tenant_id=commandable["tenant_id"],
+            point_id=commandable["point_id"],
+            requested_value=1.0,
+            requested_by="mohamed",
+            requester_roles=list(COMMAND_ROLES),
+        )
+
+    # Le point n'est plus servi par un appareil simulé (nouvelle config active).
+    activate_device_mapping(
+        tenant_id=commandable["tenant_id"],
+        equipment_id=commandable["location_id"],
+        host="127.0.0.1",
+        port=5020,
+        device_type="sdm120",
+        points=[{"point_id": str(commandable["point_id"]), "register_name": "total_active_energy"}],
+    )
+
+    with engine.begin() as connection:
+        set_tenant_context(connection, commandable["tenant_id"])
+        claimed = claim_pending_commands(
+            connection, equipment_id=commandable["location_id"], edge_device_id=device_id, at=T0
+        )
+        command = get_command(connection, command_id)
+
+    assert claimed == []
+    assert command["status"] == "failed"
+    assert command["failure_reason"] == "COMMAND_POINT_NOT_CONTROLLABLE"
+
+
+def test_reclamation_d_un_equipement_n_affecte_pas_les_commandes_d_un_autre(commandable):
+    """Expirer/refuser une commande au moment de la réclamation ne doit
+    jamais déborder sur un autre équipement : la coupure (ou la policy
+    durcie) d'un automate ne bloque jamais la commande d'un autre."""
+    second = create_tenant_with_energy_point("ClientCommandesSecond")
+    activate_device_mapping(
+        tenant_id=second["tenant_id"],
+        equipment_id=second["location_id"],
+        host="127.0.0.1",
+        port=5922,
+        device_type="simulated_relay",
+        points=[{"point_id": str(second["point_id"]), "register_name": "relay_state"}],
+    )
+    try:
+        with engine.begin() as connection:
+            set_tenant_context(connection, commandable["tenant_id"])
+            device_id, _ = provision_device(
+                connection,
+                tenant_id=commandable["tenant_id"],
+                device_id="relais-expire",
+                created_by="test",
+            )
+            expiring_command_id = create_command(
+                connection,
+                tenant_id=commandable["tenant_id"],
+                point_id=commandable["point_id"],
+                requested_value=1.0,
+                requested_by="mohamed",
+                requester_roles=list(COMMAND_ROLES),
+            )
+            _backdate_created_at(connection, expiring_command_id, T0)
+
+        with engine.begin() as connection:
+            set_tenant_context(connection, second["tenant_id"])
+            second_device_id, _ = provision_device(
+                connection,
+                tenant_id=second["tenant_id"],
+                device_id="relais-frais",
+                created_by="test",
+            )
+            create_command(
+                connection,
+                tenant_id=second["tenant_id"],
+                point_id=second["point_id"],
+                requested_value=1.0,
+                requested_by="mohamed",
+                requester_roles=list(COMMAND_ROLES),
+            )
+
+        at = T0 + PENDING_EXPIRY + timedelta(seconds=1)
+        with engine.begin() as connection:
+            set_tenant_context(connection, commandable["tenant_id"])
+            expired_claim = claim_pending_commands(
+                connection,
+                equipment_id=commandable["location_id"],
+                edge_device_id=device_id,
+                at=at,
+            )
+        with engine.begin() as connection:
+            set_tenant_context(connection, second["tenant_id"])
+            fresh_claim = claim_pending_commands(
+                connection,
+                equipment_id=second["location_id"],
+                edge_device_id=second_device_id,
+                at=at,
+            )
+    finally:
+        cleanup_tenant(second)
+
+    assert expired_claim == []
+    assert len(fresh_claim) == 1
+    assert fresh_claim[0]["status"] == "sent"
 
 
 def test_chaque_etape_produit_un_evenement(commandable):
