@@ -1,0 +1,83 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Anton"; src: url("assets/fonts/anton-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Black Ops One"; src: url("assets/fonts/black-ops-one-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Permanent Marker"; src: url("assets/fonts/permanent-marker-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 500; src: url("assets/fonts/oswald-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 700; src: url("assets/fonts/oswald-latin-700-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: #0B0908; }
+
+    .f03-a { position: absolute; }
+    .f03-c { left: 0; right: 0; text-align: center; }
+    .f03-full { position: absolute; inset: 0; }
+    .f03-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+    .f03-h { font-family: "Anton"; color: #F4E9D8; text-transform: uppercase; line-height: 0.92; white-space: nowrap; letter-spacing: 0.005em; }
+    .f03-st { font-family: "Black Ops One"; color: #F4E9D8; line-height: 1; white-space: nowrap; }
+    .f03-gr { padding: 0.22em 0.04em; margin-top: -0.22em; -webkit-mask-image: url(assets/images/grunge.png); -webkit-mask-size: 640px 640px; mask-image: url(assets/images/grunge.png); mask-size: 640px 640px; }
+    .f03-mk { font-family: "Permanent Marker"; color: #F4E9D8; white-space: nowrap; }
+    .f03-in { font-family: "Oswald"; font-weight: 500; color: #F4E9D8; white-space: nowrap; letter-spacing: 0.04em; }
+    .f03-kick { font-family: "Oswald"; font-weight: 700; font-size: 32px; letter-spacing: 0.34em; color: #FFB627; white-space: nowrap; text-transform: uppercase; }
+    .f03-coal { position: absolute; inset: 0; background: radial-gradient(70% 45% at 50% 62%, #2a140a 0%, #0B0908 70%); }
+    .f03-slate { position: absolute; inset: 0; background: url(assets/images/slate.jpg) center / cover; }
+    .f03-food { position: absolute; display: block; filter: drop-shadow(0 26px 30px rgba(0,0,0,0.55)); }
+    .f03-band { position: absolute; -webkit-mask: url(assets/images/brush.png) center / 100% 100% no-repeat; mask: url(assets/images/brush.png) center / 100% 100% no-repeat; }
+    .f03-band span { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; white-space: nowrap; }
+    .f03-m { position: absolute; overflow: hidden; box-sizing: content-box; padding-top: 70px; margin-top: -70px; }
+    .f03-m > * { display: inline-block; }
+
+
+    #f03-bg { position: absolute; inset: 0; background: radial-gradient(70% 50% at 50% 45%, #ff8a3d 0%, #F26A1B 55%, #c84b0c 100%); }
+    .f03-plus { font-family: "Anton"; font-size: 120px; color: #0B0908; }
+    .f03-f { font-family: "Oswald"; font-weight: 700; font-size: 46px; color: #0B0908; letter-spacing: 0.03em; white-space: nowrap; }
+
+  </style>
+  <div id="root" data-composition-id="03-menu" data-start="0" data-duration="5.45" data-width="1080" data-height="1920">
+    <div id="f03-clip" class="clip" data-start="0" data-duration="5.45" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div id="f03-bg"></div>
+    <div id="f03-shk" class="f03-full">
+      <div class="f03-a f03-c f03-m" style="top:150px; height:300px"><span class="f03-h f03-gr" id="f03-t" style="font-size:290px; color:#0B0908">Menu</span></div>
+    <img class="f03-food" id="f03-pil" src="assets/images/food/pilons.png" alt="" style="left:70px; top:560px; width:560px; ">
+    <img class="f03-food" id="f03-riz" src="assets/images/food/riz.png" alt="" style="left:300px; top:820px; width:470px; ">
+      <div class="f03-a" id="f03-can" style="left:742px; top:520px; width:200px; height:360px">
+        <div style="position:absolute; left:0; top:18px; width:200px; height:330px; border-radius:26px 26px 30px 30px; background:linear-gradient(90deg, #5e0906 0%, #D7261E 22%, #ff5a3c 40%, #D7261E 62%, #4a0705 100%); box-shadow: 0 26px 30px rgba(0,0,0,0.4)"></div>
+        <div style="position:absolute; left:10px; top:0; width:180px; height:34px; border-radius:50%; background:linear-gradient(180deg,#e8e8e8,#8d8d8d)"></div>
+        <div style="position:absolute; left:0; right:0; top:150px; text-align:center; font-family:Anton; font-size:64px; color:#F4E9D8; letter-spacing:0.02em">33CL</div>
+        <div style="position:absolute; left:0; right:0; top:230px; text-align:center; font-family:Oswald; font-weight:700; font-size:24px; letter-spacing:0.3em; color:#F4E9D8; opacity:0.85">BOISSON</div>
+      </div>
+      <div class="f03-a f03-plus" id="f03-p1" style="left:640px; top:600px">+</div>
+      <div class="f03-a f03-plus" id="f03-p2" style="left:180px; top:900px">+</div>
+      <div class="f03-a f03-c" style="top:1250px; display:flex; flex-direction:column; align-items:center; gap:6px">
+        <div class="f03-f" id="f03-f1">1 CUISSE OU 3 PILONS</div>
+        <div class="f03-f" id="f03-f2">+ 1 ACCOMPAGNEMENT</div>
+        <div class="f03-f" id="f03-f3">+ 1 BOISSON 33CL</div>
+      </div>
+    <div class="f03-band" id="f03-pr" style="left:90px; top:1470px; width:900px; height:250px; background:#0B0908"><span style="font-family:'Black Ops One'; font-size:190px; color:#F26A1B">6€90</span></div>
+    </div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="03-menu"] ' + s);
+      tl.fromTo(R("#f03-t"), { opacity: 0, scale: 1.6, filter: "blur(14px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.32, ease: "expo.out" }, 0.12);
+      tl.fromTo(R("#f03-shk"), { x: -13, y: 8 }, { x: 0, y: 0, duration: 0.45, ease: "elastic.out(1.2, 0.3)", immediateRender: false }, 0.15);
+      tl.fromTo(R("#f03-pil"), { x: -900, rotation: -25 }, { x: 0, rotation: -6, duration: 0.55, ease: "power3.out" }, 0.45);
+      tl.fromTo(R("#f03-riz"), { y: 1200, rotation: 20 }, { y: 0, rotation: 4, duration: 0.55, ease: "power3.out" }, 0.75);
+      tl.fromTo(R("#f03-can"), { x: 700, rotation: 30 }, { x: 0, rotation: 8, duration: 0.55, ease: "power3.out" }, 1.05);
+      ["#f03-pil", "#f03-riz", "#f03-can"].forEach((s, i) => tl.to(R(s), { y: "+=" + (i % 2 ? -14 : 14), rotation: "+=2", duration: 3.2, ease: "sine.inOut" }, 1.6));
+      tl.fromTo([R("#f03-p1"), R("#f03-p2")], { scale: 0, rotation: -90 }, { scale: 1, rotation: 0, duration: 0.35, ease: "back.out(3)", stagger: 0.25 }, 1.2);
+      tl.fromTo(R("#f03-f1"), { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 1.55);
+      tl.fromTo(R("#f03-f2"), { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 1.75);
+      tl.fromTo(R("#f03-f3"), { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 1.95);
+      tl.fromTo(R("#f03-pr"), { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.42, ease: "power3.inOut" }, 2.45);
+      tl.fromTo(R("#f03-pr span"), { opacity: 0, scale: 1.6, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.3, ease: "expo.out" }, 2.7);
+      tl.fromTo(R("#f03-shk"), { x: -21, y: 13 }, { x: 0, y: 0, duration: 0.45, ease: "elastic.out(1.2, 0.3)", immediateRender: false }, 2.75);
+      tl.to(R("#f03-shk"), { y: -1500, filter: "blur(18px)", duration: 0.3, ease: "power3.in" }, 4.95);
+
+      tl.to({}, { duration: 5.45 }, 0);
+      window.__timelines["03-menu"] = tl;
+    })();
+  </script>
+</template>

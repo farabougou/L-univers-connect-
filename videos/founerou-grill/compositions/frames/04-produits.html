@@ -1,0 +1,159 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Anton"; src: url("assets/fonts/anton-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Black Ops One"; src: url("assets/fonts/black-ops-one-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Permanent Marker"; src: url("assets/fonts/permanent-marker-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 500; src: url("assets/fonts/oswald-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 700; src: url("assets/fonts/oswald-latin-700-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: #0B0908; }
+
+    .f04-a { position: absolute; }
+    .f04-c { left: 0; right: 0; text-align: center; }
+    .f04-full { position: absolute; inset: 0; }
+    .f04-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+    .f04-h { font-family: "Anton"; color: #F4E9D8; text-transform: uppercase; line-height: 0.92; white-space: nowrap; letter-spacing: 0.005em; }
+    .f04-st { font-family: "Black Ops One"; color: #F4E9D8; line-height: 1; white-space: nowrap; }
+    .f04-gr { padding: 0.22em 0.04em; margin-top: -0.22em; -webkit-mask-image: url(assets/images/grunge.png); -webkit-mask-size: 640px 640px; mask-image: url(assets/images/grunge.png); mask-size: 640px 640px; }
+    .f04-mk { font-family: "Permanent Marker"; color: #F4E9D8; white-space: nowrap; }
+    .f04-in { font-family: "Oswald"; font-weight: 500; color: #F4E9D8; white-space: nowrap; letter-spacing: 0.04em; }
+    .f04-kick { font-family: "Oswald"; font-weight: 700; font-size: 32px; letter-spacing: 0.34em; color: #FFB627; white-space: nowrap; text-transform: uppercase; }
+    .f04-coal { position: absolute; inset: 0; background: radial-gradient(70% 45% at 50% 62%, #2a140a 0%, #0B0908 70%); }
+    .f04-slate { position: absolute; inset: 0; background: url(assets/images/slate.jpg) center / cover; }
+    .f04-food { position: absolute; display: block; filter: drop-shadow(0 26px 30px rgba(0,0,0,0.55)); }
+    .f04-band { position: absolute; -webkit-mask: url(assets/images/brush.png) center / 100% 100% no-repeat; mask: url(assets/images/brush.png) center / 100% 100% no-repeat; }
+    .f04-band span { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; white-space: nowrap; }
+    .f04-m { position: absolute; overflow: hidden; box-sizing: content-box; padding-top: 70px; margin-top: -70px; }
+    .f04-m > * { display: inline-block; }
+
+
+    .f04-it { position: absolute; inset: 0; opacity: 0; }
+    .f04-band small { font-size: 0.55em; vertical-align: 0.55em; }
+
+  </style>
+  <div id="root" data-composition-id="04-produits" data-start="0" data-duration="7.65" data-width="1080" data-height="1920">
+    <div id="f04-clip" class="clip" data-start="0" data-duration="7.65" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="f04-coal"></div>
+    <canvas class="f04-cv" id="f04-fl" width="1080" height="1920"></canvas>
+    <canvas class="f04-cv" id="f04-emb" width="1080" height="1920"></canvas>
+    <div id="f04-shk" class="f04-full">
+      <div class="f04-a f04-c f04-m" style="top:230px; height:200px"><span class="f04-h f04-gr" id="f04-t" style="font-size:180px">Nos produits</span></div>
+      <div class="f04-a f04-c f04-mk" id="f04-s" style="top:440px; font-size:60px; color:#F26A1B; transform: rotate(-3deg)">tout droit du grill</div>
+      <div class="f04-a f04-in" id="f04-n" style="right:70px; top:1650px; font-size:40px; opacity:0.7">1/8</div>
+    <div class="f04-it" id="f04-i0">
+      <img class="f04-food" src="assets/images/food/poulet.png" alt="" style="left:140px; top:640px; width:800px">
+      <div class="f04-a f04-c f04-h" style="top:1150px; font-size:140px">1 POULET</div>
+      <div class="f04-band" id="f04-b0" style="left:230px; top:1340px; width:620px; height:190px; background:#F26A1B"><span style="font-family:'Black Ops One'; font-size:150px; color:#0B0908">8<small>€</small></span></div>
+    </div>
+    <div class="f04-it" id="f04-i1">
+      <img class="f04-food" src="assets/images/food/demi-poulet.png" alt="" style="left:140px; top:640px; width:800px">
+      <div class="f04-a f04-c f04-h" style="top:1150px; font-size:140px">1/2 POULET</div>
+      <div class="f04-band" id="f04-b1" style="left:230px; top:1340px; width:620px; height:190px; background:#F26A1B"><span style="font-family:'Black Ops One'; font-size:150px; color:#0B0908">4<small>€</small></span></div>
+    </div>
+    <div class="f04-it" id="f04-i2">
+      <img class="f04-food" src="assets/images/food/cuisse.png" alt="" style="left:140px; top:640px; width:800px">
+      <div class="f04-a f04-c f04-h" style="top:1150px; font-size:140px">1 CUISSE</div>
+      <div class="f04-band" id="f04-b2" style="left:230px; top:1340px; width:620px; height:190px; background:#F26A1B"><span style="font-family:'Black Ops One'; font-size:150px; color:#0B0908">2<small>€</small></span></div>
+    </div>
+    <div class="f04-it" id="f04-i3">
+      <img class="f04-food" src="assets/images/food/pilons.png" alt="" style="left:140px; top:640px; width:800px">
+      <div class="f04-a f04-c f04-h" style="top:1150px; font-size:140px">3 PILONS</div>
+      <div class="f04-band" id="f04-b3" style="left:230px; top:1340px; width:620px; height:190px; background:#F26A1B"><span style="font-family:'Black Ops One'; font-size:150px; color:#0B0908">3<small>€</small></span></div>
+    </div>
+    <div class="f04-it" id="f04-i4">
+      <img class="f04-food" src="assets/images/food/ailes.png" alt="" style="left:140px; top:640px; width:800px">
+      <div class="f04-a f04-c f04-h" style="top:1150px; font-size:140px">4 AILES</div>
+      <div class="f04-band" id="f04-b4" style="left:230px; top:1340px; width:620px; height:190px; background:#F26A1B"><span style="font-family:'Black Ops One'; font-size:150px; color:#0B0908">2<small>€</small>50</span></div>
+    </div>
+    <div class="f04-it" id="f04-i5">
+      <img class="f04-food" src="assets/images/food/saucisse.png" alt="" style="left:140px; top:640px; width:800px">
+      <div class="f04-a f04-c f04-h" style="top:1150px; font-size:140px">1 SAUCISSE</div>
+      <div class="f04-band" id="f04-b5" style="left:230px; top:1340px; width:620px; height:190px; background:#F26A1B"><span style="font-family:'Black Ops One'; font-size:150px; color:#0B0908">2<small>€</small></span></div>
+    </div>
+    <div class="f04-it" id="f04-i6">
+      <img class="f04-food" src="assets/images/food/brick.png" alt="" style="left:140px; top:640px; width:800px">
+      <div class="f04-a f04-c f04-h" style="top:1150px; font-size:140px">1 BRICK</div>
+      <div class="f04-band" id="f04-b6" style="left:230px; top:1340px; width:620px; height:190px; background:#F26A1B"><span style="font-family:'Black Ops One'; font-size:150px; color:#0B0908">2<small>€</small>50</span></div>
+    </div>
+    <div class="f04-it" id="f04-i7">
+      <img class="f04-food" src="assets/images/food/donuts.png" alt="" style="left:140px; top:640px; width:800px">
+      <div class="f04-a f04-c f04-h" style="top:1150px; font-size:140px">1 DONUTS</div>
+      <div class="f04-band" id="f04-b7" style="left:230px; top:1340px; width:620px; height:190px; background:#F26A1B"><span style="font-family:'Black Ops One'; font-size:150px; color:#0B0908">2<small>€</small>50</span></div>
+    </div>
+    </div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="04-produits"] ' + s);
+      const __e = FG.embers(R("#f04-emb"), { n: 90, seed: 11 });
+      const __l = FG.flames(R("#f04-fl"), { y: 2000, height: 480, n: 170, size: 95, alpha: 0.12, seed: 7 });
+      const __f = { t: 0 };
+      tl.fromTo(__f, { t: 0 }, { t: 7.7, duration: 7.7, ease: "none", onUpdate: () => { __e(__f.t); __l(__f.t); } }, 0);
+      __e(__f.t); __l(__f.t);
+      tl.fromTo(R("#f04-t"), { yPercent: 105 }, { yPercent: 0, duration: 0.45, ease: "power4.out" }, 0.1);
+      tl.fromTo(R("#f04-s"), { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(2)" }, 0.35);
+      tl.fromTo(R("#f04-n"), { opacity: 0 }, { opacity: 0.7, duration: 0.3 }, 0.55);
+      tl.fromTo(R("#f04-i0"), { opacity: 1, x: 1150, rotation: 9, filter: "blur(22px)" }, { x: 0, rotation: 0, filter: "blur(0px)", duration: 0.24, ease: "power3.out", immediateRender: false }, 0.55);
+      tl.set(R("#f04-i0"), { opacity: 1 }, 0.55);
+      tl.fromTo(R("#f04-b0"), { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.16, ease: "power3.inOut" }, 0.59);
+      tl.fromTo(R("#f04-b0 span"), { opacity: 0, scale: 1.6, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.3, ease: "expo.out" }, 0.69);
+      tl.set(R("#f04-n"), { textContent: "1/8" }, 0.55);
+      tl.to(R("#f04-i0"), { x: -1150, rotation: -9, filter: "blur(22px)", duration: 0.18, ease: "power3.in" }, 1.17);
+      tl.set(R("#f04-i0"), { opacity: 0 }, 1.35);
+      tl.fromTo(R("#f04-i1"), { opacity: 1, x: -1150, rotation: -9, filter: "blur(22px)" }, { x: 0, rotation: 0, filter: "blur(0px)", duration: 0.24, ease: "power3.out", immediateRender: false }, 1.35);
+      tl.set(R("#f04-i1"), { opacity: 1 }, 1.35);
+      tl.fromTo(R("#f04-b1"), { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.16, ease: "power3.inOut" }, 1.39);
+      tl.fromTo(R("#f04-b1 span"), { opacity: 0, scale: 1.6, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.3, ease: "expo.out" }, 1.49);
+      tl.set(R("#f04-n"), { textContent: "2/8" }, 1.35);
+      tl.to(R("#f04-i1"), { x: 1150, rotation: 9, filter: "blur(22px)", duration: 0.18, ease: "power3.in" }, 1.97);
+      tl.set(R("#f04-i1"), { opacity: 0 }, 2.15);
+      tl.fromTo(R("#f04-i2"), { opacity: 1, x: 1150, rotation: 9, filter: "blur(22px)" }, { x: 0, rotation: 0, filter: "blur(0px)", duration: 0.24, ease: "power3.out", immediateRender: false }, 2.15);
+      tl.set(R("#f04-i2"), { opacity: 1 }, 2.15);
+      tl.fromTo(R("#f04-b2"), { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.16, ease: "power3.inOut" }, 2.19);
+      tl.fromTo(R("#f04-b2 span"), { opacity: 0, scale: 1.6, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.3, ease: "expo.out" }, 2.29);
+      tl.set(R("#f04-n"), { textContent: "3/8" }, 2.15);
+      tl.to(R("#f04-i2"), { x: -1150, rotation: -9, filter: "blur(22px)", duration: 0.18, ease: "power3.in" }, 2.77);
+      tl.set(R("#f04-i2"), { opacity: 0 }, 2.95);
+      tl.fromTo(R("#f04-i3"), { opacity: 1, x: -1150, rotation: -9, filter: "blur(22px)" }, { x: 0, rotation: 0, filter: "blur(0px)", duration: 0.24, ease: "power3.out", immediateRender: false }, 2.95);
+      tl.set(R("#f04-i3"), { opacity: 1 }, 2.95);
+      tl.fromTo(R("#f04-b3"), { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.16, ease: "power3.inOut" }, 2.99);
+      tl.fromTo(R("#f04-b3 span"), { opacity: 0, scale: 1.6, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.3, ease: "expo.out" }, 3.09);
+      tl.set(R("#f04-n"), { textContent: "4/8" }, 2.95);
+      tl.to(R("#f04-i3"), { x: 1150, rotation: 9, filter: "blur(22px)", duration: 0.18, ease: "power3.in" }, 3.57);
+      tl.set(R("#f04-i3"), { opacity: 0 }, 3.75);
+      tl.fromTo(R("#f04-i4"), { opacity: 1, x: 1150, rotation: 9, filter: "blur(22px)" }, { x: 0, rotation: 0, filter: "blur(0px)", duration: 0.24, ease: "power3.out", immediateRender: false }, 3.75);
+      tl.set(R("#f04-i4"), { opacity: 1 }, 3.75);
+      tl.fromTo(R("#f04-b4"), { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.16, ease: "power3.inOut" }, 3.79);
+      tl.fromTo(R("#f04-b4 span"), { opacity: 0, scale: 1.6, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.3, ease: "expo.out" }, 3.89);
+      tl.set(R("#f04-n"), { textContent: "5/8" }, 3.75);
+      tl.to(R("#f04-i4"), { x: -1150, rotation: -9, filter: "blur(22px)", duration: 0.18, ease: "power3.in" }, 4.37);
+      tl.set(R("#f04-i4"), { opacity: 0 }, 4.55);
+      tl.fromTo(R("#f04-i5"), { opacity: 1, x: -1150, rotation: -9, filter: "blur(22px)" }, { x: 0, rotation: 0, filter: "blur(0px)", duration: 0.24, ease: "power3.out", immediateRender: false }, 4.55);
+      tl.set(R("#f04-i5"), { opacity: 1 }, 4.55);
+      tl.fromTo(R("#f04-b5"), { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.16, ease: "power3.inOut" }, 4.59);
+      tl.fromTo(R("#f04-b5 span"), { opacity: 0, scale: 1.6, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.3, ease: "expo.out" }, 4.69);
+      tl.set(R("#f04-n"), { textContent: "6/8" }, 4.55);
+      tl.to(R("#f04-i5"), { x: 1150, rotation: 9, filter: "blur(22px)", duration: 0.18, ease: "power3.in" }, 5.17);
+      tl.set(R("#f04-i5"), { opacity: 0 }, 5.35);
+      tl.fromTo(R("#f04-i6"), { opacity: 1, x: 1150, rotation: 9, filter: "blur(22px)" }, { x: 0, rotation: 0, filter: "blur(0px)", duration: 0.24, ease: "power3.out", immediateRender: false }, 5.35);
+      tl.set(R("#f04-i6"), { opacity: 1 }, 5.35);
+      tl.fromTo(R("#f04-b6"), { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.16, ease: "power3.inOut" }, 5.39);
+      tl.fromTo(R("#f04-b6 span"), { opacity: 0, scale: 1.6, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.3, ease: "expo.out" }, 5.49);
+      tl.set(R("#f04-n"), { textContent: "7/8" }, 5.35);
+      tl.to(R("#f04-i6"), { x: -1150, rotation: -9, filter: "blur(22px)", duration: 0.18, ease: "power3.in" }, 5.97);
+      tl.set(R("#f04-i6"), { opacity: 0 }, 6.15);
+      tl.fromTo(R("#f04-i7"), { opacity: 1, x: -1150, rotation: -9, filter: "blur(22px)" }, { x: 0, rotation: 0, filter: "blur(0px)", duration: 0.24, ease: "power3.out", immediateRender: false }, 6.15);
+      tl.set(R("#f04-i7"), { opacity: 1 }, 6.15);
+      tl.fromTo(R("#f04-b7"), { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.16, ease: "power3.inOut" }, 6.19);
+      tl.fromTo(R("#f04-b7 span"), { opacity: 0, scale: 1.6, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.3, ease: "expo.out" }, 6.29);
+      tl.set(R("#f04-n"), { textContent: "8/8" }, 6.15);
+      tl.to(R("#f04-shk"), { x: 1100, filter: "blur(18px)", duration: 0.28, ease: "power3.in" }, 7.12);
+
+      tl.to({}, { duration: 7.65 }, 0);
+      window.__timelines["04-produits"] = tl;
+    })();
+  </script>
+</template>
