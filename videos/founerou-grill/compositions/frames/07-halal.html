@@ -31,8 +31,8 @@
     #f07-ring { position: absolute; left: 320px; top: 250px; width: 440px; height: 440px; border-radius: 50%; box-shadow: 0 0 90px rgba(30,107,58,0.6); }
 
   </style>
-  <div id="root" data-composition-id="07-halal" data-start="0" data-duration="3.45" data-width="1080" data-height="1920">
-    <div id="f07-clip" class="clip" data-start="0" data-duration="3.45" data-track-index="0" style="position:absolute; inset:0"></div>
+  <div id="root" data-composition-id="07-halal" data-start="0" data-duration="4.45" data-width="1080" data-height="1920">
+    <div id="f07-clip" class="clip" data-start="0" data-duration="4.45" data-track-index="0" style="position:absolute; inset:0"></div>
     <div class="f07-coal"></div>
     <canvas class="f07-cv" id="f07-emb" width="1080" height="1920"></canvas>
     <div id="f07-shk" class="f07-full">
@@ -62,9 +62,9 @@
       tl.fromTo(R("#f07-shk"), { x: -16, y: 10 }, { x: 0, y: 0, duration: 0.45, ease: "elastic.out(1.2, 0.3)", immediateRender: false }, 1.05);
       tl.fromTo(R("#f07-t3"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 1.35);
       tl.fromTo(R("#f07-t4"), { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2.2)" }, 1.8);
-      tl.to(R("#f07-shk"), { y: -1500, filter: "blur(18px)", duration: 0.28, ease: "power3.in" }, 2.95);
+      tl.to(R("#f07-shk"), { y: -1500, filter: "blur(18px)", duration: 0.28, ease: "power3.in" }, 3.95);
 
-      tl.to({}, { duration: 3.45 }, 0);
+      tl.to({}, { duration: 4.45 }, 0);
       window.__timelines["07-halal"] = tl;
     })();
   </script>

@@ -4,10 +4,11 @@
 # Les plats sont détourés depuis le flyer du client (.src/clean_cutouts.py). Effets de feu : assets/vendor/fire.js.
 import os, json
 P = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-W, H, TOTAL, OV = 1080, 1920, 36.5, 0.25
+W, H, TOTAL, OV = 1080, 1920, 39.4, 0.25
 TOK = {'%COAL%': '#0B0908', '%CHAR%': '#17110D', '%FIRE%': '#F26A1B', '%EMBER%': '#FFB627', '%RED%': '#D7261E', '%BONE%': '#F4E9D8', '%GREEN%': '#1E6B3A'}
-SC = [('01-accroche', 0.0, 3.6), ('02-brochette', 3.6, 4.8), ('03-menu', 8.4, 5.2), ('04-produits', 13.6, 7.4),
-      ('05-accomp', 21.0, 4.0), ('06-boissons', 25.0, 3.6), ('07-halal', 28.6, 3.2), ('08-contact', 31.8, 4.7)]
+# scene timing follows the voiceover (.src/vo.py): « six euros 90 », « trois euros la barquette » land on their price slams
+SC = [('01-accroche', 0.0, 3.6), ('02-brochette', 3.6, 4.8), ('03-menu', 8.4, 5.8), ('04-produits', 14.2, 7.4),
+      ('05-accomp', 21.6, 4.0), ('06-boissons', 25.6, 3.6), ('07-halal', 29.2, 4.2), ('08-contact', 33.4, 6.0)]
 
 FONTS = '''
     @font-face { font-family: "Anton"; src: url("assets/fonts/anton-latin-400-normal.woff2") format("woff2"); }
@@ -133,8 +134,8 @@ F['03-menu'] = ('''
  '      ["#X-pil", "#X-riz", "#X-can"].forEach((s, i) => tl.to(R(s), { y: "+=" + (i % 2 ? -14 : 14), rotation: "+=2", duration: 3.2, ease: "sine.inOut" }, 1.6));\n'
  '      tl.fromTo([R("#X-p1"), R("#X-p2")], { scale: 0, rotation: -90 }, { scale: 1, rotation: 0, duration: 0.35, ease: "back.out(3)", stagger: 0.25 }, 1.2);\n' +
  up('#X-f1', 1.55, 0.35, 24) + up('#X-f2', 1.75, 0.35, 24) + up('#X-f3', 1.95, 0.35, 24) +
- band_in('X-pr', 2.45) + shake(2.75, 1.3) +
- '      tl.to(R("#X-shk"), { y: -1500, filter: "blur(18px)", duration: 0.3, ease: "power3.in" }, 4.95);\n')
+ band_in('X-pr', 4.1) + shake(4.37, 1.3) +
+ '      tl.to(R("#X-shk"), { y: -1500, filter: "blur(18px)", duration: 0.3, ease: "power3.in" }, 5.55);\n')
 
 # ── 04 · nos produits: one per beat, prices on the brush ─────────────────
 PROD = [('poulet', '1 POULET', '8€'), ('demi-poulet', '1/2 POULET', '4€'), ('cuisse', '1 CUISSE', '2€'), ('pilons', '3 PILONS', '3€'),
@@ -183,7 +184,7 @@ F['05-accomp'] = ('', '''    <div class="X-slate"></div>
     <div id="X-shk" class="X-full">
       <div class="X-a X-c X-m" style="top:170px; height:150px"><span class="X-h X-gr" id="X-t" style="font-size:132px; color:%FIRE%">Accompagnements</span></div>
 ''' + acc_h.replace('    <img', '      <img') + band('X-pr', 80, 1430, 920, 230, '%FIRE%', '3€ <em style=\'font-style:normal; font-size:0.6em; margin-left:18px\'>LA BARQUETTE</em>', 'font-family:Anton; font-size:150px; color:%COAL%').replace('    <div class="X-band"', '      <div class="X-band"') + '''    </div>
-''', mask('#X-t', 0.1) + acc_j + band_in('X-pr', 1.6) + shake(1.85, 1.1) +
+''', mask('#X-t', 0.1) + acc_j + band_in('X-pr', 2.4) + shake(2.67, 1.1) +
  '      tl.to(R("#X-shk"), { y: 1500, filter: "blur(18px)", duration: 0.28, ease: "power3.in" }, 3.72);\n')
 
 # ── 06 · boissons ──────────────────────────────────────────────────────────
@@ -226,7 +227,7 @@ F['07-halal'] = ('''
  up('#X-t1', 0.55, 0.4) + '      tl.fromTo(R("#X-rule"), { scaleX: 0 }, { scaleX: 1, duration: 0.4, ease: "power2.inOut" }, 0.8);\n' +
  slam('#X-t2', 1.0, 1.7) + shake(1.05, 1.0) + up('#X-t3', 1.35, 0.4) +
  '      tl.fromTo(R("#X-t4"), { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2.2)" }, 1.8);\n'
- '      tl.to(R("#X-shk"), { y: -1500, filter: "blur(18px)", duration: 0.28, ease: "power3.in" }, 2.95);\n')
+ '      tl.to(R("#X-shk"), { y: -1500, filter: "blur(18px)", duration: 0.28, ease: "power3.in" }, 3.95);\n')
 
 # ── 08 · contact ─────────────────────────────────────────────────────────
 F['08-contact'] = ('''
@@ -288,12 +289,16 @@ for i, (fid, st, ln) in enumerate(SC):
     if i > 0:
         trans += f'        tl.fromTo("#el-{fid}", {{ opacity: 0 }}, {{ opacity: 1, duration: 0.12, ease: "none" }}, {st});\n'
 # sound design: (file, start, volume)
-SFX = [('sizzle', 0.0, 0.5), ('impact', 0.35, 0.55), ('impact', 0.95, 0.6),
-       ('whoosh', 3.45, 0.5), ('riser', 3.75, 0.45), ('impact', 5.1, 0.75), ('sizzle', 4.3, 0.35),
-       ('whoosh', 8.25, 0.5), ('impact', 8.55, 0.45), ('impact', 11.2, 0.7),
-       ('whoosh', 13.45, 0.5)] + [('whoosh', round(13.6 + 0.55 + i * 0.8, 2), 0.28) for i in range(1, 8)] + [
-       ('whoosh', 20.85, 0.5), ('impact', 22.85, 0.6), ('whoosh', 24.85, 0.45), ('whoosh', 28.45, 0.45), ('impact', 29.65, 0.55),
-       ('whoosh', 31.65, 0.5), ('riser', 30.6, 0.4), ('impact', 32.25, 0.7), ('impact', 33.5, 0.75), ('sizzle', 33.6, 0.35)]
+# sound design, relative to scene starts: (scene, time in scene, file, volume)
+ST = {fid: st for fid, st, ln in SC}
+REL = [('01-accroche', 0.0, 'sizzle', 0.45), ('01-accroche', 0.35, 'impact', 0.5), ('01-accroche', 0.95, 'impact', 0.55),
+       ('02-brochette', -0.15, 'whoosh', 0.45), ('02-brochette', 0.15, 'riser', 0.4), ('02-brochette', 1.5, 'impact', 0.7), ('02-brochette', 0.7, 'sizzle', 0.3),
+       ('03-menu', -0.15, 'whoosh', 0.45), ('03-menu', 0.15, 'impact', 0.4), ('03-menu', 4.37, 'impact', 0.65),
+       ('04-produits', -0.15, 'whoosh', 0.45)] + [('04-produits', round(0.55 + i * 0.8, 2), 'whoosh', 0.22) for i in range(1, 8)] + [
+       ('05-accomp', -0.15, 'whoosh', 0.45), ('05-accomp', 2.67, 'impact', 0.55), ('06-boissons', -0.15, 'whoosh', 0.4),
+       ('07-halal', -0.15, 'whoosh', 0.4), ('07-halal', 1.05, 'impact', 0.5),
+       ('08-contact', -1.2, 'riser', 0.35), ('08-contact', -0.15, 'whoosh', 0.45), ('08-contact', 0.45, 'impact', 0.6), ('08-contact', 1.7, 'impact', 0.7), ('08-contact', 1.8, 'sizzle', 0.3)]
+SFX = [(f, round(ST[sc] + t, 2), v) for sc, t, f, v in REL]
 import soundfile as _sf
 LEN = {n: round(_sf.info(f'{P}/assets/{n}.wav').duration, 2) for n in ('whoosh', 'impact', 'sizzle', 'riser')}
 sfx = ''.join(f'      <audio id="sfx{i}" src="assets/{f}.wav" data-start="{t}" data-duration="{LEN[f]}" data-track-index="{20 + i % 6}" data-volume="{v}"></audio>\n' for i, (f, t, v) in enumerate(SFX))
