@@ -1,0 +1,57 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Cormorant"; font-weight: 300; src: url("assets/fonts/cormorant-garamond-latin-300-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 300; font-style: italic; src: url("assets/fonts/cormorant-garamond-latin-300-italic.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 400; font-style: italic; src: url("assets/fonts/cormorant-garamond-latin-400-italic.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 500; src: url("assets/fonts/cormorant-garamond-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 400; src: url("assets/fonts/montserrat-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 500; src: url("assets/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; }
+
+    .s01-a { position: absolute; }
+    .s01-c { left: 0; right: 0; text-align: center; }
+    .s01-cv { position: absolute; left: 0; top: 0; }
+    .s01-d { font-family: "Cormorant"; font-weight: 300; color: #F5E6D3; white-space: nowrap; line-height: 1.05; }
+    .s01-i { font-family: "Cormorant"; font-weight: 300; font-style: italic; color: #F5E6D3; white-space: nowrap; line-height: 1.05; }
+    .s01-cap { font-family: "Montserrat"; font-weight: 500; font-size: 25px; letter-spacing: 0.34em; color: #D4AF37; white-space: nowrap; text-transform: uppercase; }
+    .s01-w { display: inline-block; }
+    .s01-frame { position: absolute; overflow: hidden; background: #000; -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 72%, rgba(0,0,0,0) 100%); mask-image: linear-gradient(180deg, #000 0%, #000 72%, rgba(0,0,0,0) 100%); }
+    .s01-frame img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+    .s01-frame canvas { position: absolute; left: 0; top: 0; }
+    .s01-line { position: absolute; height: 1px; background: linear-gradient(90deg, rgba(212,175,55,0), #D4AF37, rgba(212,175,55,0)); }
+    .s01-glow { position: absolute; border-radius: 50%; background: radial-gradient(closest-side, rgba(212,175,55,0.38), rgba(212,175,55,0.08) 55%, rgba(212,175,55,0)); }
+
+
+    #s01-orb { left: 140px; top: 460px; width: 800px; height: 800px; }
+
+  </style>
+  <div id="root" data-composition-id="01-respirez" data-start="0" data-duration="5.6" data-width="1080" data-height="1920">
+    <div id="s01-clip" class="clip" data-start="0" data-duration="5.6" data-track-index="0" style="position:absolute; inset:0"></div>
+    <canvas class="s01-cv" id="s01-v" width="1080" height="1920"></canvas>
+    <div class="s01-glow" id="s01-orb"></div>
+    <div class="s01-a s01-c s01-i" id="s01-t" style="top:770px; font-size:200px">Respirez.</div>
+    <div class="s01-a s01-c s01-cap" id="s01-k" style="top:1060px; letter-spacing:0.55em">SensExpress</div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="01-respirez"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="01-respirez"] ' + s);
+      const __r0 = AURA.vapour(R("#s01-v"), { x: 540, y: 2050, rise: 1500, size: 300, alpha: 0.12, n: 55, life: 6.5, seed: 4 });
+      const __p = { t: 0 };
+      tl.fromTo(__p, { t: 0 }, { t: 5.6, duration: 5.6, ease: "none", onUpdate: () => { __r0(__p.t); } }, 0);
+      __r0(__p.t);
+      tl.fromTo(R("#s01-orb"), { scale: 0.1, opacity: 0 }, { scale: 1, opacity: 1, duration: 3.0, ease: "power2.out" }, 0.2);
+      tl.fromTo(R("#s01-t"), { opacity: 0, scale: 1.1, filter: "blur(34px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 2.4, ease: "expo.out" }, 0.9);
+      tl.fromTo(R("#s01-k"), { opacity: 0, y: 0 }, { opacity: 1, y: 0, duration: 1.4, ease: "power3.out" }, 2.0);
+      tl.to(R("#s01-t"), { opacity: 0, y: -90, scale: 1.06, filter: "blur(26px)", duration: 1.5, ease: "power2.in" }, 3.9);
+      tl.to([R("#s01-k"), R("#s01-orb")], { opacity: 0, duration: 1.2, ease: "power2.in" }, 4.1);
+
+      tl.to({}, { duration: 5.6 }, 0);
+      window.__timelines["01-respirez"] = tl;
+    })();
+  </script>
+</template>
