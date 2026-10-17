@@ -28,8 +28,8 @@
     #s08-orb { left: 90px; top: 380px; width: 900px; height: 600px; }
 
   </style>
-  <div id="root" data-composition-id="08-logo" data-start="0" data-duration="3.6" data-width="1080" data-height="1920">
-    <div id="s08-clip" class="clip" data-start="0" data-duration="3.6" data-track-index="0" style="position:absolute; inset:0"></div>
+  <div id="root" data-composition-id="08-logo" data-start="0" data-duration="3.8" data-width="1080" data-height="1920">
+    <div id="s08-clip" class="clip" data-start="0" data-duration="3.8" data-track-index="0" style="position:absolute; inset:0"></div>
     <canvas class="s08-cv" id="s08-v" width="1080" height="1920"></canvas>
     <div class="s08-glow" id="s08-orb"></div>
     <img id="s08-logo" src="assets/images/sensexpress-logo.png" alt="SensExpress">
@@ -57,7 +57,7 @@
       tl.fromTo(R("#s08-w"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 1.7);
       tl.fromTo(R("#s08-p"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 1.95);
 
-      tl.to({}, { duration: 3.6 }, 0);
+      tl.to({}, { duration: 3.8 }, 0);
       window.__timelines["08-logo"] = tl;
     })();
   </script>

@@ -30,8 +30,8 @@
     #s07-svg { position: absolute; left: 0; top: 0; }
 
   </style>
-  <div id="root" data-composition-id="07-signature" data-start="0" data-duration="3.4" data-width="1080" data-height="1920">
-    <div id="s07-clip" class="clip" data-start="0" data-duration="3.4" data-track-index="0" style="position:absolute; inset:0"></div>
+  <div id="root" data-composition-id="07-signature" data-start="0" data-duration="3.6" data-width="1080" data-height="1920">
+    <div id="s07-clip" class="clip" data-start="0" data-duration="3.6" data-track-index="0" style="position:absolute; inset:0"></div>
     <div id="s07-ring">
       <svg id="s07-svg" width="1080" height="1920"><circle id="s07-c" cx="540" cy="900" r="330" fill="none" stroke="#D4AF37" stroke-width="1.5" stroke-opacity="0.8"/></svg>
       <div class="s07-dot" id="s07-d0" style="left:435px; top:465px"><img src="assets/images/prince.jpg" alt=""></div>
@@ -52,19 +52,19 @@
       const RA = (s) => document.querySelectorAll('[data-composition-id="07-signature"] ' + s);
       const C = R("#s07-c"), L = 2 * Math.PI * 330;
       tl.fromTo(C, { attr: { "stroke-dasharray": L + " " + L, "stroke-dashoffset": L } }, { attr: { "stroke-dashoffset": 0 }, duration: 1.4, ease: "power2.inOut" }, 0.05);
-      tl.fromTo(R("#s07-ring"), { rotation: -20 }, { rotation: 18, duration: 3.4, ease: "none" }, 0);
+      tl.fromTo(R("#s07-ring"), { rotation: -20 }, { rotation: 18, duration: 3.6, ease: "none" }, 0);
       tl.fromTo(R("#s07-d0"), { opacity: 0, scale: 0.4, filter: "blur(14px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 1.0, ease: "expo.out" }, 0.15);
       tl.fromTo(R("#s07-d1"), { opacity: 0, scale: 0.4, filter: "blur(14px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 1.0, ease: "expo.out" }, 0.25);
       tl.fromTo(R("#s07-d2"), { opacity: 0, scale: 0.4, filter: "blur(14px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 1.0, ease: "expo.out" }, 0.35);
       tl.fromTo(R("#s07-d3"), { opacity: 0, scale: 0.4, filter: "blur(14px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 1.0, ease: "expo.out" }, 0.45);
       tl.fromTo(R("#s07-d4"), { opacity: 0, scale: 0.4, filter: "blur(14px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 1.0, ease: "expo.out" }, 0.55);
       tl.fromTo(R("#s07-d5"), { opacity: 0, scale: 0.4, filter: "blur(14px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 1.0, ease: "expo.out" }, 0.65);
-      tl.fromTo(R("#s07-t1"), { opacity: 0, y: 20, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "expo.out", stagger: 0 }, 0.7);
-      tl.fromTo(R("#s07-t2"), { opacity: 0, y: 20, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "expo.out", stagger: 0 }, 0.95);
-      tl.to(R("#s07-ring"), { scale: 0.05, opacity: 0, filter: "blur(20px)", duration: 1.0, ease: "power3.in" }, 2.15);
-      tl.to([R("#s07-t1"), R("#s07-t2")], { opacity: 0, y: -10, filter: "blur(16px)", duration: 0.8, ease: "power2.in", stagger: 0.04 }, 2.2);
+      tl.fromTo(R("#s07-t1"), { opacity: 0, y: 20, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "expo.out", stagger: 0 }, 0.55);
+      tl.fromTo(R("#s07-t2"), { opacity: 0, y: 20, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "expo.out", stagger: 0 }, 1.5);
+      tl.to(R("#s07-ring"), { scale: 0.05, opacity: 0, filter: "blur(20px)", duration: 1.0, ease: "power3.in" }, 2.4);
+      tl.to([R("#s07-t1"), R("#s07-t2")], { opacity: 0, y: -10, filter: "blur(16px)", duration: 0.8, ease: "power2.in", stagger: 0.04 }, 2.45);
 
-      tl.to({}, { duration: 3.4 }, 0);
+      tl.to({}, { duration: 3.6 }, 0);
       window.__timelines["07-signature"] = tl;
     })();
   </script>

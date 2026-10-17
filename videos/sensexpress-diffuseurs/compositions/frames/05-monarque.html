@@ -25,8 +25,8 @@
 
 
   </style>
-  <div id="root" data-composition-id="05-monarque" data-start="0" data-duration="5.8" data-width="1080" data-height="1920">
-    <div id="s05-clip" class="clip" data-start="0" data-duration="5.8" data-track-index="0" style="position:absolute; inset:0"></div>
+  <div id="root" data-composition-id="05-monarque" data-start="0" data-duration="5.6" data-width="1080" data-height="1920">
+    <div id="s05-clip" class="clip" data-start="0" data-duration="5.6" data-track-index="0" style="position:absolute; inset:0"></div>
     <div class="s05-frame" id="s05-f" style="left:160px; top:200px; width:760px; height:1000px; border-radius:380px 380px 40px 40px"><img id="s05-fi" src="assets/images/monarque.jpg" alt=""><canvas id="s05-fv" width="760" height="1000"></canvas><canvas id="s05-st" width="760" height="1000" style="mix-blend-mode:screen"></canvas></div>
     <div class="s05-a s05-c s05-i" id="s05-n" style="top:1225px; font-size:150px">Le Monarque</div>
     <div class="s05-a s05-c s05-d" id="s05-s2" style="top:1415px; font-size:62px">Deux parfums. Un ciel d'étoiles.</div>
@@ -45,14 +45,14 @@
       __r0(__p.t); __r1(__p.t);
       tl.fromTo(R("#s05-f"), { clipPath: "inset(40% 34% 40% 34% round 760px 760px 760px 760px)", opacity: 0 }, { clipPath: "inset(0% 0% 0% 0% round 380px 380px 40px 40px)", opacity: 1, duration: 1.8, ease: "expo.out" }, 0.1);
       tl.fromTo(R("#s05-fi"), { scale: 1.18, filter: "blur(10px) brightness(0.7)" }, { scale: 1.0, filter: "blur(0px) brightness(1)", duration: 4.4, ease: "power2.out" }, 0.1);
-      tl.fromTo(R("#s05-st"), { opacity: 0 }, { opacity: 1, duration: 1.6, ease: "power2.out" }, 1.4);
+      tl.fromTo(R("#s05-st"), { opacity: 0 }, { opacity: 1, duration: 1.4, ease: "power2.out" }, 2.5);
       tl.fromTo(R("#s05-n"), { opacity: 0, y: 40, filter: "blur(18px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.6, ease: "expo.out" }, 0.9);
       tl.fromTo(R("#s05-s2"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 1.6);
-      tl.fromTo(R("#s05-s1"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 2.0);
-      tl.to(R("#s05-f"), { clipPath: "inset(40% 34% 40% 34% round 760px 760px 760px 760px)", opacity: 0, filter: "blur(8px)", duration: 1.0, ease: "power3.in" }, 4.35);
-      tl.to([R("#s05-n"), R("#s05-s1"), R("#s05-s2")], { opacity: 0, y: -26, filter: "blur(14px)", duration: 0.8, ease: "power2.in", stagger: 0.04 }, 4.3);
+      tl.fromTo(R("#s05-s1"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 2.6);
+      tl.to(R("#s05-f"), { clipPath: "inset(40% 34% 40% 34% round 760px 760px 760px 760px)", opacity: 0, filter: "blur(8px)", duration: 1.0, ease: "power3.in" }, 4.2);
+      tl.to([R("#s05-n"), R("#s05-s1"), R("#s05-s2")], { opacity: 0, y: -26, filter: "blur(14px)", duration: 0.8, ease: "power2.in", stagger: 0.04 }, 4.15);
 
-      tl.to({}, { duration: 5.8 }, 0);
+      tl.to({}, { duration: 5.6 }, 0);
       window.__timelines["05-monarque"] = tl;
     })();
   </script>

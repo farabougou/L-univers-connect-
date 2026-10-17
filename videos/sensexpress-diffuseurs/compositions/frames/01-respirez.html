@@ -27,8 +27,8 @@
     #s01-orb { left: 140px; top: 460px; width: 800px; height: 800px; }
 
   </style>
-  <div id="root" data-composition-id="01-respirez" data-start="0" data-duration="5.6" data-width="1080" data-height="1920">
-    <div id="s01-clip" class="clip" data-start="0" data-duration="5.6" data-track-index="0" style="position:absolute; inset:0"></div>
+  <div id="root" data-composition-id="01-respirez" data-start="0" data-duration="5.2" data-width="1080" data-height="1920">
+    <div id="s01-clip" class="clip" data-start="0" data-duration="5.2" data-track-index="0" style="position:absolute; inset:0"></div>
     <canvas class="s01-cv" id="s01-v" width="1080" height="1920"></canvas>
     <div class="s01-glow" id="s01-orb"></div>
     <div class="s01-a s01-c s01-i" id="s01-t" style="top:770px; font-size:200px">Respirez.</div>
@@ -47,10 +47,10 @@
       tl.fromTo(R("#s01-orb"), { scale: 0.1, opacity: 0 }, { scale: 1, opacity: 1, duration: 3.0, ease: "power2.out" }, 0.2);
       tl.fromTo(R("#s01-t"), { opacity: 0, scale: 1.1, filter: "blur(34px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 2.4, ease: "expo.out" }, 0.9);
       tl.fromTo(R("#s01-k"), { opacity: 0, y: 0 }, { opacity: 1, y: 0, duration: 1.4, ease: "power3.out" }, 2.0);
-      tl.to(R("#s01-t"), { opacity: 0, y: -90, scale: 1.06, filter: "blur(26px)", duration: 1.5, ease: "power2.in" }, 3.9);
-      tl.to([R("#s01-k"), R("#s01-orb")], { opacity: 0, duration: 1.2, ease: "power2.in" }, 4.1);
+      tl.to(R("#s01-t"), { opacity: 0, y: -90, scale: 1.06, filter: "blur(26px)", duration: 1.4, ease: "power2.in" }, 3.55);
+      tl.to([R("#s01-k"), R("#s01-orb")], { opacity: 0, duration: 1.1, ease: "power2.in" }, 3.75);
 
-      tl.to({}, { duration: 5.6 }, 0);
+      tl.to({}, { duration: 5.2 }, 0);
       window.__timelines["01-respirez"] = tl;
     })();
   </script>

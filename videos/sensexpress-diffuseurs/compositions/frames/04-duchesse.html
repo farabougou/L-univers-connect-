@@ -27,8 +27,8 @@
     #s04-f img { filter: brightness(0.82) contrast(1.06); }
 
   </style>
-  <div id="root" data-composition-id="04-duchesse" data-start="0" data-duration="5.8" data-width="1080" data-height="1920">
-    <div id="s04-clip" class="clip" data-start="0" data-duration="5.8" data-track-index="0" style="position:absolute; inset:0"></div>
+  <div id="root" data-composition-id="04-duchesse" data-start="0" data-duration="7.8" data-width="1080" data-height="1920">
+    <div id="s04-clip" class="clip" data-start="0" data-duration="7.8" data-track-index="0" style="position:absolute; inset:0"></div>
     <div class="s04-frame" id="s04-f" style="left:230px; top:190px; width:620px; height:900px; border-radius:44px 44px 44px 44px"><img id="s04-fi" src="assets/images/duchesse.jpg" alt=""></div>
     <div class="s04-a s04-c s04-i" id="s04-n" style="top:1120px; font-size:130px">La Duchesse</div>
     <div class="s04-a s04-c" id="s04-num" style="top:1270px"><span class="s04-d" style="font-size:190px; color:#D4AF37" id="s04-v">0</span><span class="s04-d" style="font-size:90px; color:#D4AF37; margin-left:18px">m²</span></div>
@@ -44,15 +44,15 @@
       tl.fromTo(R("#s04-f"), { clipPath: "inset(40% 34% 40% 34% round 620px 620px 620px 620px)", opacity: 0 }, { clipPath: "inset(0% 0% 0% 0% round 44px 44px 44px 44px)", opacity: 1, duration: 1.8, ease: "expo.out" }, 0.1);
       tl.fromTo(R("#s04-fi"), { scale: 1.18, filter: "blur(10px) brightness(0.7)" }, { scale: 1.0, filter: "blur(0px) brightness(1)", duration: 4.4, ease: "power2.out" }, 0.1);
       tl.fromTo(R("#s04-n"), { opacity: 0, y: 40, filter: "blur(18px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.6, ease: "expo.out" }, 0.7);
-      tl.fromTo(R("#s04-s1"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 1.1);
-      tl.fromTo(R("#s04-num"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 1.0, ease: "power3.out" }, 1.2);
+      tl.fromTo(R("#s04-s1"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 1.8);
+      tl.fromTo(R("#s04-num"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 1.0, ease: "power3.out" }, 1.9);
       const cnt = { v: 0 }, out = R("#s04-v");
-      tl.fromTo(cnt, { v: 0 }, { v: 5000, duration: 2.0, ease: "expo.out", onUpdate: () => { out.textContent = Math.round(cnt.v).toLocaleString("fr-FR").replace(/\u202f|\u00a0/g, " "); } }, 1.2);
-      tl.fromTo(R("#s04-s2"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 2.0);
-      tl.to(R("#s04-f"), { clipPath: "inset(40% 34% 40% 34% round 620px 620px 620px 620px)", opacity: 0, filter: "blur(8px)", duration: 1.0, ease: "power3.in" }, 4.35);
-      tl.to([R("#s04-n"), R("#s04-num"), R("#s04-s1"), R("#s04-s2")], { opacity: 0, y: -26, filter: "blur(14px)", duration: 0.8, ease: "power2.in", stagger: 0.04 }, 4.3);
+      tl.fromTo(cnt, { v: 0 }, { v: 5000, duration: 2.0, ease: "expo.out", onUpdate: () => { out.textContent = Math.round(cnt.v).toLocaleString("fr-FR").replace(/\u202f|\u00a0/g, " "); } }, 2.0);
+      tl.fromTo(R("#s04-s2"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 4.6);
+      tl.to(R("#s04-f"), { clipPath: "inset(40% 34% 40% 34% round 620px 620px 620px 620px)", opacity: 0, filter: "blur(8px)", duration: 1.0, ease: "power3.in" }, 6.35);
+      tl.to([R("#s04-n"), R("#s04-num"), R("#s04-s1"), R("#s04-s2")], { opacity: 0, y: -26, filter: "blur(14px)", duration: 0.8, ease: "power2.in", stagger: 0.04 }, 6.3);
 
-      tl.to({}, { duration: 5.8 }, 0);
+      tl.to({}, { duration: 7.8 }, 0);
       window.__timelines["04-duchesse"] = tl;
     })();
   </script>

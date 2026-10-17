@@ -5,10 +5,11 @@
 # agrandies ×4 par super-résolution EDSR. Textes produits repris du site, sans prix (non lisibles pour 3 modèles).
 import os, json
 P = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-W, H, TOTAL, OV = 1080, 1920, 37.0, 0.6
+W, H, TOTAL, OV = 1080, 1920, 39.8, 0.6
 TOK = {'%BG%': '#08080C', '%GOLD%': '#D4AF37', '%CHAMP%': '#F5E6D3', '%MUTE%': '#B9AE9E'}
-SC = [('01-respirez', 0.0, 5.0), ('02-manifeste', 5.0, 4.2), ('03-prince', 9.2, 5.4), ('04-duchesse', 14.6, 5.2),
-      ('05-monarque', 19.8, 5.2), ('06-trio', 25.0, 5.6), ('07-signature', 30.6, 2.8), ('08-logo', 33.4, 3.6)]
+# scene timing follows the voiceover (.src/vo.py): each product appears when Anna names it
+SC = [('01-respirez', 0.0, 4.6), ('02-manifeste', 4.6, 4.0), ('03-prince', 8.6, 6.2), ('04-duchesse', 14.8, 7.2),
+      ('05-monarque', 22.0, 5.0), ('06-trio', 27.0, 6.0), ('07-signature', 33.0, 3.0), ('08-logo', 36.0, 3.8)]
 # product photos: (file, width, height, nozzle fraction x, y, jet direction in radians from vertical)
 IMG = {'prince': (0.500, 0.215, 0.0), 'duchesse': None, 'senspro': (0.775, 0.262, 0.15), 'monarque': (0.511, 0.200, 0.0),
        'nomade': (0.686, 0.313, 0.35), 'duosens': (0.627, 0.352, 0.0)}
@@ -94,8 +95,8 @@ F['01-respirez'] = ('''
  '      tl.fromTo(R("#X-orb"), { scale: 0.1, opacity: 0 }, { scale: 1, opacity: 1, duration: 3.0, ease: "power2.out" }, 0.2);\n'
  '      tl.fromTo(R("#X-t"), { opacity: 0, scale: 1.1, filter: "blur(34px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 2.4, ease: "expo.out" }, 0.9);\n' +
  fade_in('#X-k', 2.0, 1.4, 0) +
- '      tl.to(R("#X-t"), { opacity: 0, y: -90, scale: 1.06, filter: "blur(26px)", duration: 1.5, ease: "power2.in" }, 3.9);\n'
- '      tl.to([R("#X-k"), R("#X-orb")], { opacity: 0, duration: 1.2, ease: "power2.in" }, 4.1);\n')
+ '      tl.to(R("#X-t"), { opacity: 0, y: -90, scale: 1.06, filter: "blur(26px)", duration: 1.4, ease: "power2.in" }, 3.55);\n'
+ '      tl.to([R("#X-k"), R("#X-orb")], { opacity: 0, duration: 1.1, ease: "power2.in" }, 3.75);\n')
 
 # ── 02 · manifeste ─────────────────────────────────────────────────────────
 F['02-manifeste'] = ('', words('Un parfum peut', 'X-d', 'top:690px; font-size:118px', 'X-l1') +
@@ -112,7 +113,7 @@ F['03-prince'] = ('', fh + '''    <div class="X-a X-c X-i" id="X-n" style="top:1
     <div class="X-a X-c X-d" id="X-s2" style="top:1490px; font-size:66px">Jusqu'à 300 m²</div>
 ''', drive(6.0, [fj]) + morph_in('X-f', fc, fo, 0.1) +
  '      tl.fromTo(R("#X-n"), { opacity: 0, y: 40, filter: "blur(18px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.6, ease: "expo.out" }, 0.9);\n' +
- fade_in('#X-s1', 1.5) + fade_in('#X-s2', 1.8) + morph_out('X-f', fc, 4.55) + blur_out(['#X-n', '#X-s1', '#X-s2'], 4.5, 0.8))
+ fade_in('#X-s1', 1.5) + fade_in('#X-s2', 3.4) + morph_out('X-f', fc, 5.35) + blur_out(['#X-n', '#X-s1', '#X-s2'], 5.3, 0.8))
 
 # ── 04 · La Duchesse ───────────────────────────────────────────────────────
 fh, fj, fo, fc = frame('X-f', 'duchesse', 230, 190, 620, 900, radius=(44, 44, 44, 44))
@@ -124,10 +125,10 @@ F['04-duchesse'] = ('''
     <div class="X-a X-c X-cap" id="X-s2" style="top:1500px; color:%CHAMP%; letter-spacing:0.26em">Hôtels · aéroports · showrooms</div>
 ''', morph_in('X-f', fc, fo, 0.1) +
  '      tl.fromTo(R("#X-n"), { opacity: 0, y: 40, filter: "blur(18px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.6, ease: "expo.out" }, 0.7);\n' +
- fade_in('#X-s1', 1.1) + fade_in('#X-num', 1.2, 1.0, 20) +
+ fade_in('#X-s1', 1.8) + fade_in('#X-num', 1.9, 1.0, 20) +
  '      const cnt = { v: 0 }, out = R("#X-v");\n'
- '      tl.fromTo(cnt, { v: 0 }, { v: 5000, duration: 2.0, ease: "expo.out", onUpdate: () => { out.textContent = Math.round(cnt.v).toLocaleString("fr-FR").replace(/\\u202f|\\u00a0/g, " "); } }, 1.2);\n' +
- fade_in('#X-s2', 2.0) + morph_out('X-f', fc, 4.35) + blur_out(['#X-n', '#X-num', '#X-s1', '#X-s2'], 4.3, 0.8))
+ '      tl.fromTo(cnt, { v: 0 }, { v: 5000, duration: 2.0, ease: "expo.out", onUpdate: () => { out.textContent = Math.round(cnt.v).toLocaleString("fr-FR").replace(/\\u202f|\\u00a0/g, " "); } }, 2.0);\n' +
+ fade_in('#X-s2', 4.6) + morph_out('X-f', fc, 6.35) + blur_out(['#X-n', '#X-num', '#X-s1', '#X-s2'], 6.3, 0.8))
 
 # ── 05 · Le Monarque (projecteur d'étoiles) ─────────────────────────────────
 fh, fj, fo, fc = frame('X-f', 'monarque', 160, 200, 760, 1000, vap={'alpha': 0.22, 'rise': 260}, seed=33)
@@ -135,30 +136,29 @@ F['05-monarque'] = ('', fh.replace('</div>\n', '<canvas id="X-st" width="760" he
     <div class="X-a X-c X-d" id="X-s2" style="top:1415px; font-size:62px">Deux parfums. Un ciel d'étoiles.</div>
     <div class="X-a X-c X-cap" id="X-s1" style="top:1530px">Double recharge · projecteur d'étoiles</div>
 ''', drive(5.8, [fj, 'AURA.stars(R("#X-st"), { n: 140, band: 0.42, seed: 8 })']) +
- morph_in('X-f', fc, fo, 0.1) + '      tl.fromTo(R("#X-st"), { opacity: 0 }, { opacity: 1, duration: 1.6, ease: "power2.out" }, 1.4);\n'
+ morph_in('X-f', fc, fo, 0.1) + '      tl.fromTo(R("#X-st"), { opacity: 0 }, { opacity: 1, duration: 1.4, ease: "power2.out" }, 2.5);\n'
  '      tl.fromTo(R("#X-n"), { opacity: 0, y: 40, filter: "blur(18px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.6, ease: "expo.out" }, 0.9);\n' +
- fade_in('#X-s2', 1.6) + fade_in('#X-s1', 2.0) + morph_out('X-f', fc, 4.35) + blur_out(['#X-n', '#X-s1', '#X-s2'], 4.3, 0.8))
+ fade_in('#X-s2', 1.6) + fade_in('#X-s1', 2.6) + morph_out('X-f', fc, 4.2) + blur_out(['#X-n', '#X-s1', '#X-s2'], 4.15, 0.8))
 
-# ── 06 · Nomade / DuoSens / SensPro ────────────────────────────────────────
-TRIO = [('nomade', 'Le Nomade', "Jusqu'à 30 jours d'autonomie"), ('duosens', 'DuoSens', 'Maison & voiture · double cartouche'), ('senspro', 'SensPro', 'Diffuseur mural')]
+# ── 06 · Nomade / DuoSens / SensPro — triptych, each one lands on its spoken name ──
+TRIO = [('nomade', 'Le Nomade', '30 jours', 0.1), ('duosens', 'DuoSens', 'Maison & voiture', 0.95), ('senspro', 'SensPro', 'Mural', 2.35)]
 th, tjs, tm = '', '', []
-for i, (img, name, spec) in enumerate(TRIO):
-    h_, j_, o_, c_ = frame(f'X-f{i}', img, 180, 230, 720, 900, radius=(48, 48, 48, 48), vap={'alpha': 0.24, 'size': 60}, seed=40 + i)
-    th += h_ + f'    <div class="X-a X-c X-i" id="X-n{i}" style="top:1170px; font-size:130px">{name}</div>\n    <div class="X-a X-c X-cap" id="X-s{i}" style="top:1360px">{spec}</div>\n'
+for i, (img, name, spec, t0) in enumerate(TRIO):
+    x = 40 + i * 340
+    h_, j_, o_, c_ = frame(f'X-f{i}', img, x, 470, 320, 520, radius=(160, 160, 22, 22), vap={'alpha': 0.26, 'size': 30, 'n': 40}, seed=40 + i)
+    th += h_ + f'    <div class="X-a X-i" id="X-n{i}" style="left:{x}px; width:320px; text-align:center; top:1010px; font-size:62px">{name}</div>\n    <div class="X-a X-cap" id="X-s{i}" style="left:{x}px; width:320px; text-align:center; top:1095px; font-size:18px; letter-spacing:0.26em">{spec}</div>\n'
     if j_: tm.append(j_)
-    t0 = 0.05 + i * 1.85
-    tjs += (f'      tl.fromTo(R("#X-f{i}"), {{ opacity: 0, x: 140, filter: "blur(18px)", clipPath: "{c_}" }}, {{ opacity: 1, x: 0, filter: "blur(0px)", clipPath: "{o_}", duration: 1.3, ease: "{EXPO}" }}, {t0:.2f});\n'
-            f'      tl.fromTo(R("#X-f{i}i"), {{ scale: 1.14 }}, {{ scale: 1.0, duration: 2.6, ease: "power2.out" }}, {t0:.2f});\n'
-            f'      tl.fromTo(R("#X-n{i}"), {{ opacity: 0, y: 30, filter: "blur(16px)" }}, {{ opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "{EXPO}" }}, {t0 + 0.35:.2f});\n'
-            f'      tl.fromTo(R("#X-s{i}"), {{ opacity: 0, y: 14 }}, {{ opacity: 1, y: 0, duration: 1.0, ease: "power3.out" }}, {t0 + 0.6:.2f});\n')
-    if i < 2:
-        te = t0 + 1.55
-        tjs += (f'      tl.to(R("#X-f{i}"), {{ opacity: 0, x: -140, filter: "blur(18px)", duration: 0.75, ease: "power3.in" }}, {te:.2f});\n'
-                f'      tl.to([R("#X-n{i}"), R("#X-s{i}")], {{ opacity: 0, y: -20, filter: "blur(12px)", duration: 0.6, ease: "power2.in" }}, {te:.2f});\n')
-tjs += f'      tl.to([R("#X-f2"), R("#X-n2"), R("#X-s2")], {{ opacity: 0, filter: "blur(14px)", scale: 0.94, duration: 0.8, ease: "power2.in" }}, 4.9);\n'
+    tjs += (f'      tl.fromTo(R("#X-f{i}"), {{ opacity: 0, y: 60, filter: "blur(16px)", clipPath: "{c_}" }}, {{ opacity: 1, y: 0, filter: "blur(0px)", clipPath: "{o_}", duration: 1.5, ease: "{EXPO}" }}, {t0:.2f});\n'
+            f'      tl.fromTo(R("#X-f{i}i"), {{ scale: 1.2 }}, {{ scale: 1.0, duration: 4.5, ease: "power2.out" }}, {t0:.2f});\n'
+            f'      tl.fromTo(R("#X-n{i}"), {{ opacity: 0, y: 24, filter: "blur(14px)" }}, {{ opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "{EXPO}" }}, {t0 + 0.25:.2f});\n'
+            f'      tl.fromTo(R("#X-s{i}"), {{ opacity: 0, y: 12 }}, {{ opacity: 1, y: 0, duration: 1.0, ease: "power3.out" }}, {t0 + 0.5:.2f});\n')
+th += words('Un diffuseur pour chaque espace.', 'X-i', 'top:1260px; font-size:76px', 'X-cl')
+th += '    <div class="X-line" id="X-ln" style="left:390px; top:1400px; width:300px"></div>\n'
+tjs += blur_in('#X-cl', 3.15, 1.4, 24, 14, 0.09) + line_in('#X-ln', 3.6, 1.2)
+tjs += blur_out(['#X-f0', '#X-f1', '#X-f2', '#X-n0', '#X-n1', '#X-n2', '#X-s0', '#X-s1', '#X-s2', '#X-cl', '#X-ln'], 5.3, 0.8, -20, 16)
 F['06-trio'] = ('''
     [id^="X-n"], [id^="X-s"] { opacity: 0; }
-''', th, drive(6.2, tm) + tjs)
+''', th, drive(6.6, tm) + tjs)
 
 # ── 07 · Six diffuseurs, une signature (ring) ──────────────────────────────
 RING = ['prince', 'duchesse', 'monarque', 'nomade', 'duosens', 'senspro']
@@ -180,10 +180,10 @@ F['07-signature'] = ('''
     <div class="X-a X-c X-d" id="X-t2" style="top:905px; font-size:60px; color:%GOLD%">Une signature.</div>
 ''', '      const C = R("#X-c"), L = 2 * Math.PI * 330;\n'
  '      tl.fromTo(C, { attr: { "stroke-dasharray": L + " " + L, "stroke-dashoffset": L } }, { attr: { "stroke-dashoffset": 0 }, duration: 1.4, ease: "power2.inOut" }, 0.05);\n'
- '      tl.fromTo(R("#X-ring"), { rotation: -20 }, { rotation: 18, duration: 3.4, ease: "none" }, 0);\n' + rj.replace('R("#X-d', 'R("#X-d') +
- blur_in('#X-t1', 0.7, 1.2, 20, 14, 0, False) + blur_in('#X-t2', 0.95, 1.2, 20, 14, 0, False) +
- '      tl.to(R("#X-ring"), { scale: 0.05, opacity: 0, filter: "blur(20px)", duration: 1.0, ease: "power3.in" }, 2.15);\n' +
- blur_out(['#X-t1', '#X-t2'], 2.2, 0.8, -10, 16))
+ '      tl.fromTo(R("#X-ring"), { rotation: -20 }, { rotation: 18, duration: 3.6, ease: "none" }, 0);\n' + rj.replace('R("#X-d', 'R("#X-d') +
+ blur_in('#X-t1', 0.55, 1.2, 20, 14, 0, False) + blur_in('#X-t2', 1.5, 1.2, 20, 14, 0, False) +
+ '      tl.to(R("#X-ring"), { scale: 0.05, opacity: 0, filter: "blur(20px)", duration: 1.0, ease: "power3.in" }, 2.4);\n' +
+ blur_out(['#X-t1', '#X-t2'], 2.45, 0.8, -10, 16))
 
 # ── 08 · logo ──────────────────────────────────────────────────────────────
 F['08-logo'] = ('''
@@ -267,7 +267,7 @@ idx = f'''<!doctype html>
     <div id="root" data-composition-id="main" data-start="0" data-duration="{TOTAL}" data-width="{W}" data-height="{H}" data-fps="25">
       <canvas id="bg" class="clip" data-start="0" data-duration="{TOTAL}" data-track-index="0" width="{W}" height="{H}"></canvas>
       <div id="vig" class="clip" data-start="0" data-duration="{TOTAL}" data-track-index="9"></div>
-{scenes}      <audio id="el-bgm" src="assets/music.wav" data-start="0" data-duration="{TOTAL}" data-track-index="11" data-volume="{0.4 if voice else 0.85}"></audio>
+{scenes}      <audio id="el-bgm" src="assets/music.wav" data-start="0" data-duration="{TOTAL}" data-track-index="11" data-volume="{0.24 if voice else 0.85}"></audio>
 {breaths}{vo}    </div>
     <script>
       window.__timelines = window.__timelines || {{}};
