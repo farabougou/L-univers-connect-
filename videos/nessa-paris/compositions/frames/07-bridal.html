@@ -27,8 +27,8 @@
 
 
   </style>
-  <div id="root" data-composition-id="07-bridal" data-start="0" data-duration="4.8" data-width="1080" data-height="1920">
-    <div id="s07-clip" class="clip" data-start="0" data-duration="4.8" data-track-index="0" style="position:absolute; inset:0"></div>
+  <div id="root" data-composition-id="07-bridal" data-start="0" data-duration="5.0" data-width="1080" data-height="1920">
+    <div id="s07-clip" class="clip" data-start="0" data-duration="5.0" data-track-index="0" style="position:absolute; inset:0"></div>
     <canvas class="s07-cv" id="s07-m" width="1080" height="1920"></canvas>
     <div class="s07-frame" id="s07-f" style="left:110px; top:260px; width:860px; height:1020px; border-radius:430px 430px 40px 40px"><img id="s07-fi" src="assets/images/bridal.jpg" alt=""><canvas id="s07-fv" width="860" height="1020"></canvas></div>
     <div class="s07-a s07-c s07-i" id="s07-n" style="top:1290px; font-size:116px">Bridal Glow Ritual</div>
@@ -44,17 +44,17 @@
       const __r0 = AURA.vapour(R("#s07-m"), {"x": 540, "y": 1450, "rise": 1350, "size": 320, "alpha": 0.075, "n": 64, "life": 6.5, "sx": 900, "fin": 0.3, "seed": 61});
       const __r1 = AURA.vapour(R("#s07-fv"), {"x": 430.0, "y": 1040.4, "rise": 918, "size": 258, "alpha": 0.1, "n": 50, "life": 5.5, "sx": 688, "fin": 0.3, "seed": 62});
       const __p = { t: 0 };
-      tl.fromTo(__p, { t: 0 }, { t: 4.8, duration: 4.8, ease: "none", onUpdate: () => { __r0(__p.t); __r1(__p.t); } }, 0);
+      tl.fromTo(__p, { t: 0 }, { t: 5.0, duration: 5.0, ease: "none", onUpdate: () => { __r0(__p.t); __r1(__p.t); } }, 0);
       __r0(__p.t); __r1(__p.t);
       tl.fromTo(R("#s07-f"), { clipPath: "inset(40% 34% 40% 34% round 860px 860px 860px 860px)", opacity: 0 }, { clipPath: "inset(0% 0% 0% 0% round 430px 430px 40px 40px)", opacity: 1, duration: 1.6, ease: "expo.out" }, 0.1);
       tl.fromTo(R("#s07-fi"), { scale: 1.18, filter: "blur(10px) brightness(0.7)" }, { scale: 1.0, filter: "blur(0px) brightness(1)", duration: 4.2, ease: "power2.out" }, 0.1);
-      tl.fromTo(R("#s07-n"), { opacity: 0, y: 40, filter: "blur(18px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.6, ease: "expo.out" }, 0.7);
-      tl.fromTo(R("#s07-s2"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 1.4);
-      tl.fromTo(R("#s07-s1"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 2.0);
-      tl.to(R("#s07-f"), { clipPath: "inset(40% 34% 40% 34% round 860px 860px 860px 860px)", opacity: 0, filter: "blur(8px)", duration: 1.0, ease: "power3.in" }, 3.55);
-      tl.to([R("#s07-n"), R("#s07-s1"), R("#s07-s2")], { opacity: 0, y: -26, filter: "blur(14px)", duration: 0.8, ease: "power2.in", stagger: 0.04 }, 3.5);
+      tl.fromTo(R("#s07-n"), { opacity: 0, y: 40, filter: "blur(18px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.6, ease: "expo.out" }, 0.55);
+      tl.fromTo(R("#s07-s2"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 1.75);
+      tl.fromTo(R("#s07-s1"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 2.3);
+      tl.to(R("#s07-f"), { clipPath: "inset(40% 34% 40% 34% round 860px 860px 860px 860px)", opacity: 0, filter: "blur(8px)", duration: 1.0, ease: "power3.in" }, 3.85);
+      tl.to([R("#s07-n"), R("#s07-s1"), R("#s07-s2")], { opacity: 0, y: -26, filter: "blur(14px)", duration: 0.8, ease: "power2.in", stagger: 0.04 }, 3.8);
 
-      tl.to({}, { duration: 4.8 }, 0);
+      tl.to({}, { duration: 5.0 }, 0);
       window.__timelines["07-bridal"] = tl;
     })();
   </script>

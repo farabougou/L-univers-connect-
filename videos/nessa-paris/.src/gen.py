@@ -7,8 +7,9 @@ import os, json, math
 P = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 W, H, OV = 1080, 1920, 0.6
 TOK = {'%BG%': '#08080C', '%GOLD%': '#D4AF37', '%CHAMP%': '#F5E6D3', '%MUTE%': '#B9AE9E'}
-SC = [('01-eveil', 0.0, 5.0), ('02-lumiere', 5.0, 4.2), ('03-softglow', 9.2, 5.6), ('04-nature', 14.8, 5.6),
-      ('05-intense', 20.4, 5.2), ('06-visage', 25.6, 5.6), ('07-bridal', 31.2, 4.2), ('08-logo', 35.4, 3.8)]
+# scene timing follows the voiceover (.src/vo.py): each sentence lands in its scene, every word on its visual
+SC = [('01-eveil', 0.0, 4.6), ('02-lumiere', 4.6, 3.6), ('03-softglow', 8.2, 6.3), ('04-nature', 14.5, 5.8),
+      ('05-intense', 20.3, 5.6), ('06-visage', 25.9, 5.3), ('07-bridal', 31.2, 4.4), ('08-logo', 35.6, 3.9)]
 TOTAL = round(SC[-1][1] + SC[-1][2], 2)
 SIZES = json.load(open(f'{P}/assets/images/sizes.json'))
 
@@ -112,9 +113,9 @@ F['01-eveil'] = ('''
  '      tl.to(R("#X-drop"), { scale: 0, opacity: 0, duration: 0.5, ease: "power2.out" }, 1.2);\n' +
  ''.join(f'      tl.fromTo(R("#X-r{k}"), {{ attr: {{ rx: 6, ry: 1 }}, opacity: 0.9 }}, {{ attr: {{ rx: 420, ry: 64 }}, opacity: 0, duration: 2.6, ease: "{EXPO}" }}, {1.2 + k * 0.22:.2f});\n' for k in range(3)) +
  '      tl.fromTo(R("#X-orb"), { scale: 0.1, opacity: 0 }, { scale: 1, opacity: 1, duration: 3.0, ease: "power2.out" }, 1.15);\n' +
- wordmark_in('X-nm', 1.45) + fade_in('#X-p', 2.3, 1.4, 0) + name_in('#X-t', 2.9, 1.5) +
- blur_out(['#X-nm', '#X-p', '#X-t'], 4.15, 1.0, -60, 22) +
- '      tl.to(R("#X-orb"), { opacity: 0, scale: 1.3, duration: 1.2, ease: "power2.in" }, 4.3);\n')
+ wordmark_in('X-nm', 1.3) + fade_in('#X-p', 1.9, 1.4, 0) + name_in('#X-t', 2.55, 1.5) +
+ blur_out(['#X-nm', '#X-p', '#X-t'], 3.7, 1.0, -60, 22) +
+ '      tl.to(R("#X-orb"), { opacity: 0, scale: 1.3, duration: 1.2, ease: "power2.in" }, 3.85);\n')
 
 # ── 02 · Votre peau a sa propre lumière — fils de soie ──────────────────────
 F['02-lumiere'] = ('', f'''    <canvas class="X-cv" id="X-s" width="{W}" height="{H}"></canvas>
@@ -124,9 +125,9 @@ F['02-lumiere'] = ('', f'''    <canvas class="X-cv" id="X-s" width="{W}" height=
  '    <div class="X-line" id="X-ln" style="left:390px; top:1200px; width:300px"></div>\n',
  drive(dur_of('02-lumiere'), ['AURA.silk(R("#X-s"), { y: 980, spread: 520, n: 4, alpha: 0.13, seed: 12 })']) +
  '      tl.fromTo(R("#X-s"), { opacity: 0 }, { opacity: 1, duration: 1.6, ease: "power2.out" }, 0);\n' +
- blur_in('#X-l1', 0.35) + blur_in('#X-l2', 0.9) + blur_in('#X-l3', 1.5, 1.8, 40, 22) + line_in('#X-ln', 2.1, 1.4) +
- blur_out(['#X-l1', '#X-l2', '#X-l3', '#X-ln'], 3.6, 0.9) +
- '      tl.to(R("#X-s"), { opacity: 0, duration: 1.0, ease: "power2.in" }, 3.7);\n')
+ blur_in('#X-l1', 0.3) + blur_in('#X-l2', 0.95) + blur_in('#X-l3', 1.72, 1.8, 40, 22) + line_in('#X-ln', 2.05, 1.4) +
+ blur_out(['#X-l1', '#X-l2', '#X-l3', '#X-ln'], 2.9, 0.9) +
+ '      tl.to(R("#X-s"), { opacity: 0, duration: 1.0, ease: "power2.in" }, 3.0);\n')
 
 # ── 03 · Soft Glow ─────────────────────────────────────────────────────────
 mh, mj = mist('X-m', {'x': 540, 'y': 1300, 'rise': 1200, 'size': 300, 'alpha': 0.075, 'n': 64, 'life': 6.5, 'sx': 800, 'fin': 0.3, 'seed': 21})
@@ -134,8 +135,8 @@ fh, fj, fo, fc = frame('X-f', 'softglow', 160, 200, 760, 1000, seed=22)
 F['03-softglow'] = ('', mh + fh + '''    <div class="X-a X-c X-i" id="X-n" style="top:1225px; font-size:150px">Soft Glow</div>
     <div class="X-a X-c X-cap" id="X-s1" style="top:1430px">Papaye · Niacinamide · Acide kojique</div>
     <div class="X-a X-c X-d" id="X-s2" style="top:1490px; font-size:64px">Une peau plus nette, plus lumineuse.</div>
-''', drive(dur_of('03-softglow'), [mj, fj]) + morph_in('X-f', fc, fo, 0.1) + name_in('#X-n', 0.9) +
- fade_in('#X-s1', 1.6) + fade_in('#X-s2', 2.4) + morph_out('X-f', fc, 4.95) + blur_out(['#X-n', '#X-s1', '#X-s2'], 4.9, 0.8))
+''', drive(dur_of('03-softglow'), [mj, fj]) + morph_in('X-f', fc, fo, 0.1) + name_in('#X-n', 0.75) +
+ fade_in('#X-s1', 1.9) + fade_in('#X-s2', 3.45) + morph_out('X-f', fc, 5.65) + blur_out(['#X-n', '#X-s1', '#X-s2'], 5.6, 0.8))
 
 # ── 04 · Le meilleur de la nature : trois orbes d'ingrédients dans la brume ──
 ORBS = [('papaye', 'Papaye', 205, 900), ('carotte', 'Carotte', 540, 1060), ('curcuma', 'Curcuma', 875, 900)]
@@ -143,7 +144,7 @@ oh, oj = '', ''
 for i, (img, lab, cx, cy) in enumerate(ORBS):
     oh += (f'    <div class="X-orbi" id="X-o{i}" style="left:{cx - 125}px; top:{cy - 125}px"><img src="assets/images/{img}.jpg" alt=""></div>\n'
            f'    <div class="X-a X-i" id="X-ol{i}" style="left:{cx - 200}px; width:400px; text-align:center; top:{cy + 150}px; font-size:64px">{lab}</div>\n')
-    t0 = 0.7 + i * 0.35
+    t0 = (0.33, 0.81, 1.5)[i]
     oj += (f'      tl.fromTo(R("#X-o{i}"), {{ opacity: 0, scale: 0.3, filter: "blur(18px)" }}, {{ opacity: 1, scale: 1, filter: "blur(0px)", duration: 1.8, ease: "elastic.out(1, 0.75)" }}, {t0:.2f});\n'
            f'      tl.fromTo(R("#X-o{i}"), {{ y: 0 }}, {{ y: -26, duration: 1.7, ease: "sine.inOut", yoyo: true, repeat: 1 }}, {t0 + 0.6:.2f});\n'
            f'      tl.fromTo(R("#X-ol{i}"), {{ opacity: 0, y: 20, filter: "blur(12px)" }}, {{ opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "{EXPO}" }}, {t0 + 0.35:.2f});\n')
@@ -156,11 +157,11 @@ F['04-nature'] = ('''
 ''', mh + '''    <svg id="X-svg" width="1080" height="1920"><path id="X-arc" d="M 205 900 Q 540 1230 875 900" fill="none" stroke="%GOLD%" stroke-width="1.2" stroke-opacity="0.7"/></svg>
 ''' + words('Le meilleur', 'X-d', 'top:340px; font-size:110px', 'X-h1') + words('de la nature', 'X-i', 'top:465px; font-size:140px; color:%GOLD%', 'X-h2') +
  oh + words('au service de votre éclat.', 'X-i', 'top:1520px; font-size:72px', 'X-h3'),
- drive(dur_of('04-nature'), [mj]) + blur_in('#X-h1', 0.2) + blur_in('#X-h2', 0.6, 1.6) +
+ drive(dur_of('04-nature'), [mj]) + blur_in('#X-h1', 2.27) + blur_in('#X-h2', 2.85, 1.6) +
  '      const A = R("#X-arc"), AL = A.getTotalLength();\n'
- '      tl.fromTo(A, { attr: { "stroke-dasharray": AL + " " + AL, "stroke-dashoffset": AL } }, { attr: { "stroke-dashoffset": 0 }, duration: 2.2, ease: "power2.inOut" }, 0.8);\n' +
- oj + blur_in('#X-h3', 2.6, 1.4, 24, 14, 0.08) +
- blur_out(['#X-h1', '#X-h2', '#X-o0', '#X-o1', '#X-o2', '#X-ol0', '#X-ol1', '#X-ol2', '#X-h3', '#X-svg'], 4.9, 0.85, -40, 18))
+ '      tl.fromTo(A, { attr: { "stroke-dasharray": AL + " " + AL, "stroke-dashoffset": AL } }, { attr: { "stroke-dashoffset": 0 }, duration: 2.2, ease: "power2.inOut" }, 0.5);\n' +
+ oj + blur_in('#X-h3', 3.43, 1.1, 24, 14, 0.08) +
+ blur_out(['#X-h1', '#X-h2', '#X-o0', '#X-o1', '#X-o2', '#X-ol0', '#X-ol1', '#X-ol2', '#X-h3', '#X-svg'], 5.0, 0.85, -40, 18))
 
 # ── 05 · Intense Glow Skin ─────────────────────────────────────────────────
 mh, mj = mist('X-m', {'x': 540, 'y': 1200, 'rise': 1100, 'size': 280, 'alpha': 0.075, 'n': 64, 'life': 6.5, 'sx': 760, 'fin': 0.3, 'seed': 41})
@@ -168,11 +169,11 @@ fh, fj, fo, fc = frame('X-f', 'intense', 190, 180, 700, 900, radius=(44, 44, 44,
 F['05-intense'] = ('', mh + fh + '''    <div class="X-a X-c X-i" id="X-n" style="top:1110px; font-size:124px">Intense Glow Skin</div>
     <div class="X-a X-c X-d" id="X-s2" style="top:1270px; font-size:70px; color:%GOLD%">La version intense.</div>
     <div class="X-a X-c X-cap" id="X-s1" style="top:1385px">Carotte · Alpha-arbutine · Collagène</div>
-''', drive(dur_of('05-intense'), [mj, fj]) + morph_in('X-f', fc, fo, 0.1) + name_in('#X-n', 0.8) +
- fade_in('#X-s2', 1.6) + fade_in('#X-s1', 2.3) + morph_out('X-f', fc, 4.55) + blur_out(['#X-n', '#X-s1', '#X-s2'], 4.5, 0.8))
+''', drive(dur_of('05-intense'), [mj, fj]) + morph_in('X-f', fc, fo, 0.1) + name_in('#X-n', 0.65) +
+ fade_in('#X-s2', 1.85) + fade_in('#X-s1', 2.6) + morph_out('X-f', fc, 5.0) + blur_out(['#X-n', '#X-s1', '#X-s2'], 4.95, 0.8))
 
 # ── 06 · Le rituel visage : Nettoyer · Réparer · Hydrater ───────────────────
-TRIO = [('nila', 'Nettoyer', 'Savon Nila', 0.3), ('perfectskin', 'Réparer', 'Perfect Skin', 1.0), ('hydra', 'Hydrater', 'Hydra Face Cream', 1.7)]
+TRIO = [('nila', 'Nettoyer', 'Savon Nila', 0.4), ('perfectskin', 'Réparer', 'Perfect Skin', 1.09), ('hydra', 'Hydrater', 'Hydra Face Cream', 1.78)]
 th, tjs, tm = '', '', []
 for i, (img, step, prod, t0) in enumerate(TRIO):
     x = 40 + i * 340
@@ -187,8 +188,8 @@ for i, (img, step, prod, t0) in enumerate(TRIO):
 th = words('Le rituel visage', 'X-i', 'top:300px; font-size:110px', 'X-t') + th
 th += words('Plus nette. Plus lumineuse.', 'X-d', 'top:1300px; font-size:72px', 'X-cl')
 th += '    <div class="X-line" id="X-ln" style="left:390px; top:1430px; width:300px"></div>\n'
-tjs = blur_in('#X-t', 0.0, 1.5, 30, 16, 0.12) + tjs + blur_in('#X-cl', 2.9, 1.4, 24, 14, 0.09) + line_in('#X-ln', 3.3, 1.2)
-tjs += blur_out(['#X-t', '#X-f0', '#X-f1', '#X-f2', '#X-n0', '#X-n1', '#X-n2', '#X-s0', '#X-s1', '#X-s2', '#X-cl', '#X-ln'], 4.9, 0.8, -20, 16)
+tjs = blur_in('#X-t', 2.55, 1.5, 30, 16, 0.12) + tjs + blur_in('#X-cl', 3.3, 1.2, 24, 14, 0.09) + line_in('#X-ln', 3.6, 1.1)
+tjs += blur_out(['#X-t', '#X-f0', '#X-f1', '#X-f2', '#X-n0', '#X-n1', '#X-n2', '#X-s0', '#X-s1', '#X-s2', '#X-cl', '#X-ln'], 4.6, 0.8, -20, 16)
 F['06-visage'] = ('''
     [id^="X-n"], [id^="X-s"] { opacity: 0; }
 ''', th, drive(dur_of('06-visage'), tm) + tjs)
@@ -199,8 +200,8 @@ fh, fj, fo, fc = frame('X-f', 'bridal', 110, 260, 860, 1020, radius=(430, 430, 4
 F['07-bridal'] = ('', mh + fh + '''    <div class="X-a X-c X-i" id="X-n" style="top:1290px; font-size:116px">Bridal Glow Ritual</div>
     <div class="X-a X-c X-d" id="X-s2" style="top:1430px; font-size:66px">Le rituel des grands jours.</div>
     <div class="X-a X-c X-cap" id="X-s1" style="top:1540px">Visage &amp; corps · 4 soins</div>
-''', drive(dur_of('07-bridal'), [mj, fj]) + morph_in('X-f', fc, fo, 0.1, 1.6) + name_in('#X-n', 0.7) +
- fade_in('#X-s2', 1.4) + fade_in('#X-s1', 2.0) + morph_out('X-f', fc, 3.55) + blur_out(['#X-n', '#X-s1', '#X-s2'], 3.5, 0.8))
+''', drive(dur_of('07-bridal'), [mj, fj]) + morph_in('X-f', fc, fo, 0.1, 1.6) + name_in('#X-n', 0.55) +
+ fade_in('#X-s2', 1.75) + fade_in('#X-s1', 2.3) + morph_out('X-f', fc, 3.85) + blur_out(['#X-n', '#X-s1', '#X-s2'], 3.8, 0.8))
 
 # ── 08 · signature ─────────────────────────────────────────────────────────
 mh, mj = mist('X-v', {'x': 540, 'y': 2050, 'rise': 1500, 'size': 360, 'alpha': 0.085, 'n': 80, 'life': 7.0, 'sx': 1000, 'fin': 0.3, 'seed': 9})
@@ -214,8 +215,8 @@ F['08-logo'] = ('''
     <div class="X-a X-c X-cap" id="X-k" style="top:1215px; font-size:24px">Soins visage &amp; corps</div>
 ''', drive(dur_of('08-logo'), [mj]) +
  '      tl.fromTo(R("#X-orb"), { scale: 0.2, opacity: 0 }, { scale: 1, opacity: 1, duration: 1.8, ease: "expo.out" }, 0.0);\n' +
- wordmark_in('X-nm', 0.15, 50) + fade_in('#X-p', 0.8, 1.2, 0) + name_in('#X-t', 1.1) +
- line_in('#X-ln', 1.5, 1.2) + fade_in('#X-w', 1.8) + fade_in('#X-k', 2.05))
+ wordmark_in('X-nm', 0.1, 50) + fade_in('#X-p', 0.75, 1.2, 0) + name_in('#X-t', 1.07) +
+ line_in('#X-ln', 1.45, 1.2) + fade_in('#X-w', 1.75) + fade_in('#X-k', 2.0))
 
 def scene(fid, dur, css, html, js):
     pre = 's' + fid[:2]
@@ -256,7 +257,7 @@ for i, (fid, st, ln) in enumerate(SC):
     scenes += f'      <div id="el-{fid}" class="scene" data-composition-id="{fid}" data-composition-src="compositions/frames/{fid}.html" data-start="{st}" data-duration="{dur}" data-track-index="{1 + i % 2}"></div>\n'
     if i > 0:
         trans += f'        tl.fromTo("#el-{fid}", {{ opacity: 0 }}, {{ opacity: 1, duration: {OV}, ease: "power2.inOut" }}, {st});\n'
-breaths = ''.join(f'      <audio id="br{i}" src="assets/breath.wav" data-start="{round(st - 0.3, 2)}" data-duration="1.1" data-track-index="{12 + i % 3}" data-volume="0.22"></audio>\n' for i, (fid, st, ln) in enumerate(SC) if st > 0)
+breaths = ''.join(f'      <audio id="br{i}" src="assets/breath.wav" data-start="{round(st - 0.3, 2)}" data-duration="1.1" data-track-index="{12 + i % 3}" data-volume="0.18"></audio>\n' for i, (fid, st, ln) in enumerate(SC) if st > 0)
 VOJ = f'{P}/assets/voice/voice.json'
 voice = os.path.exists(VOJ)
 vo = ''.join(f'      <audio id="vo{i}" src="{s}" data-start="{a}" data-duration="{d}" data-track-index="{30 + i}" data-volume="1"></audio>\n' for i, (s, a, d) in enumerate(json.load(open(VOJ)))) if voice else ''

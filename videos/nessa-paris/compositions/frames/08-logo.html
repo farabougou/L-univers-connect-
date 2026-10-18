@@ -29,8 +29,8 @@
     #s08-orb { left: 90px; top: 380px; width: 900px; height: 700px; }
 
   </style>
-  <div id="root" data-composition-id="08-logo" data-start="0" data-duration="3.8" data-width="1080" data-height="1920">
-    <div id="s08-clip" class="clip" data-start="0" data-duration="3.8" data-track-index="0" style="position:absolute; inset:0"></div>
+  <div id="root" data-composition-id="08-logo" data-start="0" data-duration="3.9" data-width="1080" data-height="1920">
+    <div id="s08-clip" class="clip" data-start="0" data-duration="3.9" data-track-index="0" style="position:absolute; inset:0"></div>
     <canvas class="s08-cv" id="s08-v" width="1080" height="1920"></canvas>
     <div class="s08-glow" id="s08-orb"></div>
     <div class="s08-word" id="s08-nm" style="top:560px; font-size:190px"><span id="s08-nm0" style="margin: 0 0.12em">N</span><span id="s08-nm1" style="margin: 0 0.12em">E</span><span id="s08-nm2" style="margin: 0 0.12em">S</span><span id="s08-nm3" style="margin: 0 0.12em">S</span><span id="s08-nm4" style="margin: 0 0.12em">A</span></div>
@@ -48,21 +48,21 @@
       const RA = (s) => document.querySelectorAll('[data-composition-id="08-logo"] ' + s);
       const __r0 = AURA.vapour(R("#s08-v"), {"x": 540, "y": 2050, "rise": 1500, "size": 360, "alpha": 0.085, "n": 80, "life": 7.0, "sx": 1000, "fin": 0.3, "seed": 9});
       const __p = { t: 0 };
-      tl.fromTo(__p, { t: 0 }, { t: 3.8, duration: 3.8, ease: "none", onUpdate: () => { __r0(__p.t); } }, 0);
+      tl.fromTo(__p, { t: 0 }, { t: 3.9, duration: 3.9, ease: "none", onUpdate: () => { __r0(__p.t); } }, 0);
       __r0(__p.t);
       tl.fromTo(R("#s08-orb"), { scale: 0.2, opacity: 0 }, { scale: 1, opacity: 1, duration: 1.8, ease: "expo.out" }, 0.0);
-      tl.fromTo(R("#s08-nm0"), { opacity: 0, x: -100, filter: "blur(22px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 2.2, ease: "expo.out" }, 0.39);
-      tl.fromTo(R("#s08-nm1"), { opacity: 0, x: -50, filter: "blur(22px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 2.2, ease: "expo.out" }, 0.27);
-      tl.fromTo(R("#s08-nm2"), { opacity: 0, x: 0, filter: "blur(22px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 2.2, ease: "expo.out" }, 0.15);
-      tl.fromTo(R("#s08-nm3"), { opacity: 0, x: 50, filter: "blur(22px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 2.2, ease: "expo.out" }, 0.27);
-      tl.fromTo(R("#s08-nm4"), { opacity: 0, x: 100, filter: "blur(22px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 2.2, ease: "expo.out" }, 0.39);
-      tl.fromTo(R("#s08-p"), { opacity: 0, y: 0 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 0.8);
-      tl.fromTo(R("#s08-t"), { opacity: 0, y: 40, filter: "blur(18px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.6, ease: "expo.out" }, 1.1);
-      tl.fromTo(R("#s08-ln"), { scaleX: 0, opacity: 0 }, { scaleX: 1, opacity: 1, duration: 1.2, ease: "expo.out" }, 1.5);
-      tl.fromTo(R("#s08-w"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 1.8);
-      tl.fromTo(R("#s08-k"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 2.05);
+      tl.fromTo(R("#s08-nm0"), { opacity: 0, x: -100, filter: "blur(22px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 2.2, ease: "expo.out" }, 0.34);
+      tl.fromTo(R("#s08-nm1"), { opacity: 0, x: -50, filter: "blur(22px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 2.2, ease: "expo.out" }, 0.22);
+      tl.fromTo(R("#s08-nm2"), { opacity: 0, x: 0, filter: "blur(22px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 2.2, ease: "expo.out" }, 0.10);
+      tl.fromTo(R("#s08-nm3"), { opacity: 0, x: 50, filter: "blur(22px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 2.2, ease: "expo.out" }, 0.22);
+      tl.fromTo(R("#s08-nm4"), { opacity: 0, x: 100, filter: "blur(22px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 2.2, ease: "expo.out" }, 0.34);
+      tl.fromTo(R("#s08-p"), { opacity: 0, y: 0 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 0.75);
+      tl.fromTo(R("#s08-t"), { opacity: 0, y: 40, filter: "blur(18px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.6, ease: "expo.out" }, 1.07);
+      tl.fromTo(R("#s08-ln"), { scaleX: 0, opacity: 0 }, { scaleX: 1, opacity: 1, duration: 1.2, ease: "expo.out" }, 1.45);
+      tl.fromTo(R("#s08-w"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 1.75);
+      tl.fromTo(R("#s08-k"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 2.0);
 
-      tl.to({}, { duration: 3.8 }, 0);
+      tl.to({}, { duration: 3.9 }, 0);
       window.__timelines["08-logo"] = tl;
     })();
   </script>

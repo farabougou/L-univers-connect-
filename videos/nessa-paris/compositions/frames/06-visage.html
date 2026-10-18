@@ -29,8 +29,8 @@
     [id^="s06-n"], [id^="s06-s"] { opacity: 0; }
 
   </style>
-  <div id="root" data-composition-id="06-visage" data-start="0" data-duration="6.2" data-width="1080" data-height="1920">
-    <div id="s06-clip" class="clip" data-start="0" data-duration="6.2" data-track-index="0" style="position:absolute; inset:0"></div>
+  <div id="root" data-composition-id="06-visage" data-start="0" data-duration="5.9" data-width="1080" data-height="1920">
+    <div id="s06-clip" class="clip" data-start="0" data-duration="5.9" data-track-index="0" style="position:absolute; inset:0"></div>
     <div class="s06-a s06-c s06-i" id="s06-t" style="top:300px; font-size:110px" ><span class="s06-w">Le</span> <span class="s06-w">rituel</span> <span class="s06-w">visage</span></div>
     <div class="s06-frame" id="s06-f0" style="left:40px; top:520px; width:320px; height:520px; border-radius:160px 160px 22px 22px"><img id="s06-f0i" src="assets/images/nila.jpg" alt=""><canvas id="s06-f0v" width="320" height="520"></canvas></div>
     <div class="s06-a s06-i" id="s06-n0" style="left:40px; width:320px; text-align:center; top:1060px; font-size:66px">Nettoyer</div>
@@ -54,26 +54,26 @@
       const __r1 = AURA.vapour(R("#s06-f1v"), {"x": 160.0, "y": 530.4, "rise": 468, "size": 110, "alpha": 0.13, "n": 34, "life": 5.5, "sx": 256, "fin": 0.3, "seed": 51});
       const __r2 = AURA.vapour(R("#s06-f2v"), {"x": 160.0, "y": 530.4, "rise": 468, "size": 110, "alpha": 0.13, "n": 34, "life": 5.5, "sx": 256, "fin": 0.3, "seed": 52});
       const __p = { t: 0 };
-      tl.fromTo(__p, { t: 0 }, { t: 6.2, duration: 6.2, ease: "none", onUpdate: () => { __r0(__p.t); __r1(__p.t); __r2(__p.t); } }, 0);
+      tl.fromTo(__p, { t: 0 }, { t: 5.9, duration: 5.9, ease: "none", onUpdate: () => { __r0(__p.t); __r1(__p.t); __r2(__p.t); } }, 0);
       __r0(__p.t); __r1(__p.t); __r2(__p.t);
-      tl.fromTo(RA("#s06-t .s06-w"), { opacity: 0, y: 30, filter: "blur(16px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.5, ease: "expo.out", stagger: 0.12 }, 0.0);
-      tl.fromTo(R("#s06-f0"), { opacity: 0, y: 60, filter: "blur(16px)", clipPath: "inset(40% 34% 40% 34% round 320px 320px 320px 320px)" }, { opacity: 1, y: 0, filter: "blur(0px)", clipPath: "inset(0% 0% 0% 0% round 160px 160px 22px 22px)", duration: 1.5, ease: "expo.out" }, 0.30);
-      tl.fromTo(R("#s06-f0i"), { scale: 1.2 }, { scale: 1.0, duration: 4.5, ease: "power2.out" }, 0.30);
-      tl.fromTo(R("#s06-n0"), { opacity: 0, y: 24, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "expo.out" }, 0.55);
-      tl.fromTo(R("#s06-s0"), { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 1.0, ease: "power3.out" }, 0.80);
-      tl.fromTo(R("#s06-f1"), { opacity: 0, y: 60, filter: "blur(16px)", clipPath: "inset(40% 34% 40% 34% round 320px 320px 320px 320px)" }, { opacity: 1, y: 0, filter: "blur(0px)", clipPath: "inset(0% 0% 0% 0% round 160px 160px 22px 22px)", duration: 1.5, ease: "expo.out" }, 1.00);
-      tl.fromTo(R("#s06-f1i"), { scale: 1.2 }, { scale: 1.0, duration: 4.5, ease: "power2.out" }, 1.00);
-      tl.fromTo(R("#s06-n1"), { opacity: 0, y: 24, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "expo.out" }, 1.25);
-      tl.fromTo(R("#s06-s1"), { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 1.0, ease: "power3.out" }, 1.50);
-      tl.fromTo(R("#s06-f2"), { opacity: 0, y: 60, filter: "blur(16px)", clipPath: "inset(40% 34% 40% 34% round 320px 320px 320px 320px)" }, { opacity: 1, y: 0, filter: "blur(0px)", clipPath: "inset(0% 0% 0% 0% round 160px 160px 22px 22px)", duration: 1.5, ease: "expo.out" }, 1.70);
-      tl.fromTo(R("#s06-f2i"), { scale: 1.2 }, { scale: 1.0, duration: 4.5, ease: "power2.out" }, 1.70);
-      tl.fromTo(R("#s06-n2"), { opacity: 0, y: 24, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "expo.out" }, 1.95);
-      tl.fromTo(R("#s06-s2"), { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 1.0, ease: "power3.out" }, 2.20);
-      tl.fromTo(RA("#s06-cl .s06-w"), { opacity: 0, y: 24, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.4, ease: "expo.out", stagger: 0.09 }, 2.9);
-      tl.fromTo(R("#s06-ln"), { scaleX: 0, opacity: 0 }, { scaleX: 1, opacity: 1, duration: 1.2, ease: "expo.out" }, 3.3);
-      tl.to([R("#s06-t"), R("#s06-f0"), R("#s06-f1"), R("#s06-f2"), R("#s06-n0"), R("#s06-n1"), R("#s06-n2"), R("#s06-s0"), R("#s06-s1"), R("#s06-s2"), R("#s06-cl"), R("#s06-ln")], { opacity: 0, y: -20, filter: "blur(16px)", duration: 0.8, ease: "power2.in", stagger: 0.04 }, 4.9);
+      tl.fromTo(RA("#s06-t .s06-w"), { opacity: 0, y: 30, filter: "blur(16px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.5, ease: "expo.out", stagger: 0.12 }, 2.55);
+      tl.fromTo(R("#s06-f0"), { opacity: 0, y: 60, filter: "blur(16px)", clipPath: "inset(40% 34% 40% 34% round 320px 320px 320px 320px)" }, { opacity: 1, y: 0, filter: "blur(0px)", clipPath: "inset(0% 0% 0% 0% round 160px 160px 22px 22px)", duration: 1.5, ease: "expo.out" }, 0.40);
+      tl.fromTo(R("#s06-f0i"), { scale: 1.2 }, { scale: 1.0, duration: 4.5, ease: "power2.out" }, 0.40);
+      tl.fromTo(R("#s06-n0"), { opacity: 0, y: 24, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "expo.out" }, 0.65);
+      tl.fromTo(R("#s06-s0"), { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 1.0, ease: "power3.out" }, 0.90);
+      tl.fromTo(R("#s06-f1"), { opacity: 0, y: 60, filter: "blur(16px)", clipPath: "inset(40% 34% 40% 34% round 320px 320px 320px 320px)" }, { opacity: 1, y: 0, filter: "blur(0px)", clipPath: "inset(0% 0% 0% 0% round 160px 160px 22px 22px)", duration: 1.5, ease: "expo.out" }, 1.09);
+      tl.fromTo(R("#s06-f1i"), { scale: 1.2 }, { scale: 1.0, duration: 4.5, ease: "power2.out" }, 1.09);
+      tl.fromTo(R("#s06-n1"), { opacity: 0, y: 24, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "expo.out" }, 1.34);
+      tl.fromTo(R("#s06-s1"), { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 1.0, ease: "power3.out" }, 1.59);
+      tl.fromTo(R("#s06-f2"), { opacity: 0, y: 60, filter: "blur(16px)", clipPath: "inset(40% 34% 40% 34% round 320px 320px 320px 320px)" }, { opacity: 1, y: 0, filter: "blur(0px)", clipPath: "inset(0% 0% 0% 0% round 160px 160px 22px 22px)", duration: 1.5, ease: "expo.out" }, 1.78);
+      tl.fromTo(R("#s06-f2i"), { scale: 1.2 }, { scale: 1.0, duration: 4.5, ease: "power2.out" }, 1.78);
+      tl.fromTo(R("#s06-n2"), { opacity: 0, y: 24, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "expo.out" }, 2.03);
+      tl.fromTo(R("#s06-s2"), { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 1.0, ease: "power3.out" }, 2.28);
+      tl.fromTo(RA("#s06-cl .s06-w"), { opacity: 0, y: 24, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "expo.out", stagger: 0.09 }, 3.3);
+      tl.fromTo(R("#s06-ln"), { scaleX: 0, opacity: 0 }, { scaleX: 1, opacity: 1, duration: 1.1, ease: "expo.out" }, 3.6);
+      tl.to([R("#s06-t"), R("#s06-f0"), R("#s06-f1"), R("#s06-f2"), R("#s06-n0"), R("#s06-n1"), R("#s06-n2"), R("#s06-s0"), R("#s06-s1"), R("#s06-s2"), R("#s06-cl"), R("#s06-ln")], { opacity: 0, y: -20, filter: "blur(16px)", duration: 0.8, ease: "power2.in", stagger: 0.04 }, 4.6);
 
-      tl.to({}, { duration: 6.2 }, 0);
+      tl.to({}, { duration: 5.9 }, 0);
       window.__timelines["06-visage"] = tl;
     })();
   </script>

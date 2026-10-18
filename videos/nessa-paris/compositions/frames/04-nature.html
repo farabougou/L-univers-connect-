@@ -32,8 +32,8 @@
     #s04-svg { position: absolute; left: 0; top: 0; }
 
   </style>
-  <div id="root" data-composition-id="04-nature" data-start="0" data-duration="6.2" data-width="1080" data-height="1920">
-    <div id="s04-clip" class="clip" data-start="0" data-duration="6.2" data-track-index="0" style="position:absolute; inset:0"></div>
+  <div id="root" data-composition-id="04-nature" data-start="0" data-duration="6.4" data-width="1080" data-height="1920">
+    <div id="s04-clip" class="clip" data-start="0" data-duration="6.4" data-track-index="0" style="position:absolute; inset:0"></div>
     <canvas class="s04-cv" id="s04-m" width="1080" height="1920"></canvas>
     <svg id="s04-svg" width="1080" height="1920"><path id="s04-arc" d="M 205 900 Q 540 1230 875 900" fill="none" stroke="#D4AF37" stroke-width="1.2" stroke-opacity="0.7"/></svg>
     <div class="s04-a s04-c s04-d" id="s04-h1" style="top:340px; font-size:110px" ><span class="s04-w">Le</span> <span class="s04-w">meilleur</span></div>
@@ -54,25 +54,25 @@
       const RA = (s) => document.querySelectorAll('[data-composition-id="04-nature"] ' + s);
       const __r0 = AURA.vapour(R("#s04-m"), {"x": 540, "y": 2050, "rise": 1550, "size": 360, "alpha": 0.08, "n": 80, "life": 7.0, "sx": 1000, "fin": 0.3, "seed": 31});
       const __p = { t: 0 };
-      tl.fromTo(__p, { t: 0 }, { t: 6.2, duration: 6.2, ease: "none", onUpdate: () => { __r0(__p.t); } }, 0);
+      tl.fromTo(__p, { t: 0 }, { t: 6.4, duration: 6.4, ease: "none", onUpdate: () => { __r0(__p.t); } }, 0);
       __r0(__p.t);
-      tl.fromTo(RA("#s04-h1 .s04-w"), { opacity: 0, y: 34, filter: "blur(16px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.4, ease: "expo.out", stagger: 0.11 }, 0.2);
-      tl.fromTo(RA("#s04-h2 .s04-w"), { opacity: 0, y: 34, filter: "blur(16px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.6, ease: "expo.out", stagger: 0.11 }, 0.6);
+      tl.fromTo(RA("#s04-h1 .s04-w"), { opacity: 0, y: 34, filter: "blur(16px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.4, ease: "expo.out", stagger: 0.11 }, 2.27);
+      tl.fromTo(RA("#s04-h2 .s04-w"), { opacity: 0, y: 34, filter: "blur(16px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.6, ease: "expo.out", stagger: 0.11 }, 2.85);
       const A = R("#s04-arc"), AL = A.getTotalLength();
-      tl.fromTo(A, { attr: { "stroke-dasharray": AL + " " + AL, "stroke-dashoffset": AL } }, { attr: { "stroke-dashoffset": 0 }, duration: 2.2, ease: "power2.inOut" }, 0.8);
-      tl.fromTo(R("#s04-o0"), { opacity: 0, scale: 0.3, filter: "blur(18px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 1.8, ease: "elastic.out(1, 0.75)" }, 0.70);
-      tl.fromTo(R("#s04-o0"), { y: 0 }, { y: -26, duration: 1.7, ease: "sine.inOut", yoyo: true, repeat: 1 }, 1.30);
-      tl.fromTo(R("#s04-ol0"), { opacity: 0, y: 20, filter: "blur(12px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "expo.out" }, 1.05);
-      tl.fromTo(R("#s04-o1"), { opacity: 0, scale: 0.3, filter: "blur(18px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 1.8, ease: "elastic.out(1, 0.75)" }, 1.05);
-      tl.fromTo(R("#s04-o1"), { y: 0 }, { y: -26, duration: 1.7, ease: "sine.inOut", yoyo: true, repeat: 1 }, 1.65);
-      tl.fromTo(R("#s04-ol1"), { opacity: 0, y: 20, filter: "blur(12px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "expo.out" }, 1.40);
-      tl.fromTo(R("#s04-o2"), { opacity: 0, scale: 0.3, filter: "blur(18px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 1.8, ease: "elastic.out(1, 0.75)" }, 1.40);
-      tl.fromTo(R("#s04-o2"), { y: 0 }, { y: -26, duration: 1.7, ease: "sine.inOut", yoyo: true, repeat: 1 }, 2.00);
-      tl.fromTo(R("#s04-ol2"), { opacity: 0, y: 20, filter: "blur(12px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "expo.out" }, 1.75);
-      tl.fromTo(RA("#s04-h3 .s04-w"), { opacity: 0, y: 24, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.4, ease: "expo.out", stagger: 0.08 }, 2.6);
-      tl.to([R("#s04-h1"), R("#s04-h2"), R("#s04-o0"), R("#s04-o1"), R("#s04-o2"), R("#s04-ol0"), R("#s04-ol1"), R("#s04-ol2"), R("#s04-h3"), R("#s04-svg")], { opacity: 0, y: -40, filter: "blur(18px)", duration: 0.85, ease: "power2.in", stagger: 0.04 }, 4.9);
+      tl.fromTo(A, { attr: { "stroke-dasharray": AL + " " + AL, "stroke-dashoffset": AL } }, { attr: { "stroke-dashoffset": 0 }, duration: 2.2, ease: "power2.inOut" }, 0.5);
+      tl.fromTo(R("#s04-o0"), { opacity: 0, scale: 0.3, filter: "blur(18px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 1.8, ease: "elastic.out(1, 0.75)" }, 0.33);
+      tl.fromTo(R("#s04-o0"), { y: 0 }, { y: -26, duration: 1.7, ease: "sine.inOut", yoyo: true, repeat: 1 }, 0.93);
+      tl.fromTo(R("#s04-ol0"), { opacity: 0, y: 20, filter: "blur(12px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "expo.out" }, 0.68);
+      tl.fromTo(R("#s04-o1"), { opacity: 0, scale: 0.3, filter: "blur(18px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 1.8, ease: "elastic.out(1, 0.75)" }, 0.81);
+      tl.fromTo(R("#s04-o1"), { y: 0 }, { y: -26, duration: 1.7, ease: "sine.inOut", yoyo: true, repeat: 1 }, 1.41);
+      tl.fromTo(R("#s04-ol1"), { opacity: 0, y: 20, filter: "blur(12px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "expo.out" }, 1.16);
+      tl.fromTo(R("#s04-o2"), { opacity: 0, scale: 0.3, filter: "blur(18px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 1.8, ease: "elastic.out(1, 0.75)" }, 1.50);
+      tl.fromTo(R("#s04-o2"), { y: 0 }, { y: -26, duration: 1.7, ease: "sine.inOut", yoyo: true, repeat: 1 }, 2.10);
+      tl.fromTo(R("#s04-ol2"), { opacity: 0, y: 20, filter: "blur(12px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "expo.out" }, 1.85);
+      tl.fromTo(RA("#s04-h3 .s04-w"), { opacity: 0, y: 24, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.1, ease: "expo.out", stagger: 0.08 }, 3.43);
+      tl.to([R("#s04-h1"), R("#s04-h2"), R("#s04-o0"), R("#s04-o1"), R("#s04-o2"), R("#s04-ol0"), R("#s04-ol1"), R("#s04-ol2"), R("#s04-h3"), R("#s04-svg")], { opacity: 0, y: -40, filter: "blur(18px)", duration: 0.85, ease: "power2.in", stagger: 0.04 }, 5.0);
 
-      tl.to({}, { duration: 6.2 }, 0);
+      tl.to({}, { duration: 6.4 }, 0);
       window.__timelines["04-nature"] = tl;
     })();
   </script>

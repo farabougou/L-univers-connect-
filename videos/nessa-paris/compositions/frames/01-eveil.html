@@ -32,8 +32,8 @@
     #s01-svg { position: absolute; left: 0; top: 0; }
 
   </style>
-  <div id="root" data-composition-id="01-eveil" data-start="0" data-duration="5.6" data-width="1080" data-height="1920">
-    <div id="s01-clip" class="clip" data-start="0" data-duration="5.6" data-track-index="0" style="position:absolute; inset:0"></div>
+  <div id="root" data-composition-id="01-eveil" data-start="0" data-duration="5.2" data-width="1080" data-height="1920">
+    <div id="s01-clip" class="clip" data-start="0" data-duration="5.2" data-track-index="0" style="position:absolute; inset:0"></div>
     <canvas class="s01-cv" id="s01-v" width="1080" height="1920"></canvas>
     <div class="s01-glow" id="s01-orb"></div>
     <svg id="s01-svg" width="1080" height="1920"><ellipse id="s01-r0" cx="540" cy="1090" rx="420" ry="64" fill="none" stroke="#D4AF37" stroke-width="2.0"/><ellipse id="s01-r1" cx="540" cy="1090" rx="420" ry="64" fill="none" stroke="#D4AF37" stroke-width="1.5"/><ellipse id="s01-r2" cx="540" cy="1090" rx="420" ry="64" fill="none" stroke="#D4AF37" stroke-width="1.0"/></svg>
@@ -50,7 +50,7 @@
       const RA = (s) => document.querySelectorAll('[data-composition-id="01-eveil"] ' + s);
       const __r0 = AURA.vapour(R("#s01-v"), {"x": 540, "y": 2050, "rise": 1550, "size": 360, "alpha": 0.085, "n": 80, "life": 7.0, "sx": 1000, "fin": 0.3, "seed": 4});
       const __p = { t: 0 };
-      tl.fromTo(__p, { t: 0 }, { t: 5.6, duration: 5.6, ease: "none", onUpdate: () => { __r0(__p.t); } }, 0);
+      tl.fromTo(__p, { t: 0 }, { t: 5.2, duration: 5.2, ease: "none", onUpdate: () => { __r0(__p.t); } }, 0);
       __r0(__p.t);
       tl.fromTo(R("#s01-drop"), { y: -1180, scaleY: 1.7, opacity: 0 }, { y: 0, scaleY: 1, opacity: 1, duration: 1.05, ease: "power3.in" }, 0.15);
       tl.to(R("#s01-drop"), { scale: 0, opacity: 0, duration: 0.5, ease: "power2.out" }, 1.2);
@@ -58,17 +58,17 @@
       tl.fromTo(R("#s01-r1"), { attr: { rx: 6, ry: 1 }, opacity: 0.9 }, { attr: { rx: 420, ry: 64 }, opacity: 0, duration: 2.6, ease: "expo.out" }, 1.42);
       tl.fromTo(R("#s01-r2"), { attr: { rx: 6, ry: 1 }, opacity: 0.9 }, { attr: { rx: 420, ry: 64 }, opacity: 0, duration: 2.6, ease: "expo.out" }, 1.64);
       tl.fromTo(R("#s01-orb"), { scale: 0.1, opacity: 0 }, { scale: 1, opacity: 1, duration: 3.0, ease: "power2.out" }, 1.15);
-      tl.fromTo(R("#s01-nm0"), { opacity: 0, x: -140, filter: "blur(22px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 2.2, ease: "expo.out" }, 1.69);
-      tl.fromTo(R("#s01-nm1"), { opacity: 0, x: -70, filter: "blur(22px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 2.2, ease: "expo.out" }, 1.57);
-      tl.fromTo(R("#s01-nm2"), { opacity: 0, x: 0, filter: "blur(22px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 2.2, ease: "expo.out" }, 1.45);
-      tl.fromTo(R("#s01-nm3"), { opacity: 0, x: 70, filter: "blur(22px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 2.2, ease: "expo.out" }, 1.57);
-      tl.fromTo(R("#s01-nm4"), { opacity: 0, x: 140, filter: "blur(22px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 2.2, ease: "expo.out" }, 1.69);
-      tl.fromTo(R("#s01-p"), { opacity: 0, y: 0 }, { opacity: 1, y: 0, duration: 1.4, ease: "power3.out" }, 2.3);
-      tl.fromTo(R("#s01-t"), { opacity: 0, y: 40, filter: "blur(18px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.5, ease: "expo.out" }, 2.9);
-      tl.to([R("#s01-nm"), R("#s01-p"), R("#s01-t")], { opacity: 0, y: -60, filter: "blur(22px)", duration: 1.0, ease: "power2.in", stagger: 0.04 }, 4.15);
-      tl.to(R("#s01-orb"), { opacity: 0, scale: 1.3, duration: 1.2, ease: "power2.in" }, 4.3);
+      tl.fromTo(R("#s01-nm0"), { opacity: 0, x: -140, filter: "blur(22px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 2.2, ease: "expo.out" }, 1.54);
+      tl.fromTo(R("#s01-nm1"), { opacity: 0, x: -70, filter: "blur(22px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 2.2, ease: "expo.out" }, 1.42);
+      tl.fromTo(R("#s01-nm2"), { opacity: 0, x: 0, filter: "blur(22px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 2.2, ease: "expo.out" }, 1.30);
+      tl.fromTo(R("#s01-nm3"), { opacity: 0, x: 70, filter: "blur(22px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 2.2, ease: "expo.out" }, 1.42);
+      tl.fromTo(R("#s01-nm4"), { opacity: 0, x: 140, filter: "blur(22px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 2.2, ease: "expo.out" }, 1.54);
+      tl.fromTo(R("#s01-p"), { opacity: 0, y: 0 }, { opacity: 1, y: 0, duration: 1.4, ease: "power3.out" }, 1.9);
+      tl.fromTo(R("#s01-t"), { opacity: 0, y: 40, filter: "blur(18px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.5, ease: "expo.out" }, 2.55);
+      tl.to([R("#s01-nm"), R("#s01-p"), R("#s01-t")], { opacity: 0, y: -60, filter: "blur(22px)", duration: 1.0, ease: "power2.in", stagger: 0.04 }, 3.7);
+      tl.to(R("#s01-orb"), { opacity: 0, scale: 1.3, duration: 1.2, ease: "power2.in" }, 3.85);
 
-      tl.to({}, { duration: 5.6 }, 0);
+      tl.to({}, { duration: 5.2 }, 0);
       window.__timelines["01-eveil"] = tl;
     })();
   </script>
