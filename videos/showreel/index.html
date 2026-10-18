@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="assets/vendor/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #0A0A0C; }
+      #root { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: #0A0A0C; }
+      .shot { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; object-fit: cover; }
+      #wall { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; transform-origin: 540px 960px; }
+      .tile { position: absolute; width: 348px; height: 628px; object-fit: cover; border-radius: 10px; }
+      .scene { position: absolute; inset: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="50.323" data-width="1080" data-height="1920" data-fps="25">
+      <video id="v-i1" class="clip shot" src="assets/clips/i1.mp4" data-start="0.0" data-duration="0.484" data-track-index="1" muted playsinline></video>
+      <video id="v-i2" class="clip shot" src="assets/clips/i2.mp4" data-start="0.484" data-duration="0.484" data-track-index="2" muted playsinline></video>
+      <video id="v-i3" class="clip shot" src="assets/clips/i3.mp4" data-start="0.968" data-duration="0.484" data-track-index="1" muted playsinline></video>
+      <video id="v-i4" class="clip shot" src="assets/clips/i4.mp4" data-start="1.452" data-duration="0.484" data-track-index="2" muted playsinline></video>
+      <video id="v-m01" class="clip shot" src="assets/clips/m01.mp4" data-start="7.742" data-duration="1.935" data-track-index="1" muted playsinline></video>
+      <video id="v-m02" class="clip shot" src="assets/clips/m02.mp4" data-start="9.677" data-duration="1.935" data-track-index="2" muted playsinline></video>
+      <video id="v-m03" class="clip shot" src="assets/clips/m03.mp4" data-start="11.613" data-duration="0.968" data-track-index="1" muted playsinline></video>
+      <video id="v-m04" class="clip shot" src="assets/clips/m04.mp4" data-start="12.581" data-duration="0.968" data-track-index="2" muted playsinline></video>
+      <video id="v-m05" class="clip shot" src="assets/clips/m05.mp4" data-start="13.548" data-duration="0.968" data-track-index="1" muted playsinline></video>
+      <video id="v-m06" class="clip shot" src="assets/clips/m06.mp4" data-start="14.516" data-duration="0.968" data-track-index="2" muted playsinline></video>
+      <video id="v-m07" class="clip shot" src="assets/clips/m07.mp4" data-start="15.484" data-duration="0.968" data-track-index="1" muted playsinline></video>
+      <video id="v-m08" class="clip shot" src="assets/clips/m08.mp4" data-start="16.452" data-duration="0.968" data-track-index="2" muted playsinline></video>
+      <video id="v-m09" class="clip shot" src="assets/clips/m09.mp4" data-start="17.419" data-duration="0.968" data-track-index="1" muted playsinline></video>
+      <video id="v-m10" class="clip shot" src="assets/clips/m10.mp4" data-start="18.387" data-duration="0.968" data-track-index="2" muted playsinline></video>
+      <video id="v-m11" class="clip shot" src="assets/clips/m11.mp4" data-start="19.355" data-duration="0.968" data-track-index="1" muted playsinline></video>
+      <video id="v-m12" class="clip shot" src="assets/clips/m12.mp4" data-start="20.323" data-duration="0.968" data-track-index="2" muted playsinline></video>
+      <video id="v-m13" class="clip shot" src="assets/clips/m13.mp4" data-start="21.29" data-duration="0.968" data-track-index="1" muted playsinline></video>
+      <video id="v-m14" class="clip shot" src="assets/clips/m14.mp4" data-start="22.258" data-duration="0.968" data-track-index="2" muted playsinline></video>
+      <video id="v-m15" class="clip shot" src="assets/clips/m15.mp4" data-start="23.226" data-duration="0.968" data-track-index="1" muted playsinline></video>
+      <video id="v-m16" class="clip shot" src="assets/clips/m16.mp4" data-start="24.194" data-duration="0.968" data-track-index="2" muted playsinline></video>
+      <video id="v-m17" class="clip shot" src="assets/clips/m17.mp4" data-start="25.161" data-duration="0.968" data-track-index="1" muted playsinline></video>
+      <video id="v-m18" class="clip shot" src="assets/clips/m18.mp4" data-start="26.129" data-duration="0.968" data-track-index="2" muted playsinline></video>
+      <video id="v-v1" class="clip shot" src="assets/clips/v1.mp4" data-start="29.032" data-duration="1.935" data-track-index="1" muted playsinline></video>
+      <video id="v-v2" class="clip shot" src="assets/clips/v2.mp4" data-start="30.968" data-duration="1.935" data-track-index="2" muted playsinline></video>
+      <video id="v-v3" class="clip shot" src="assets/clips/v3.mp4" data-start="32.903" data-duration="0.968" data-track-index="1" muted playsinline></video>
+      <video id="v-v4" class="clip shot" src="assets/clips/v4.mp4" data-start="33.871" data-duration="0.968" data-track-index="2" muted playsinline></video>
+      <video id="v-v5" class="clip shot" src="assets/clips/v5.mp4" data-start="34.839" data-duration="0.968" data-track-index="1" muted playsinline></video>
+      <video id="v-v6" class="clip shot" src="assets/clips/v6.mp4" data-start="35.806" data-duration="0.968" data-track-index="2" muted playsinline></video>
+      <div id="wall">
+        <video id="v-w1" class="clip tile" src="assets/clips/w1.mp4" data-start="40.645" data-duration="3.871" data-track-index="4" muted playsinline style="left:6px; top:6px"></video>
+        <video id="v-w2" class="clip tile" src="assets/clips/w2.mp4" data-start="40.645" data-duration="3.871" data-track-index="5" muted playsinline style="left:366px; top:6px"></video>
+        <video id="v-w3" class="clip tile" src="assets/clips/w3.mp4" data-start="40.645" data-duration="3.871" data-track-index="6" muted playsinline style="left:726px; top:6px"></video>
+        <video id="v-w4" class="clip tile" src="assets/clips/w4.mp4" data-start="40.645" data-duration="3.871" data-track-index="4" muted playsinline style="left:6px; top:646px"></video>
+        <video id="v-w5" class="clip tile" src="assets/clips/w5.mp4" data-start="40.645" data-duration="3.871" data-track-index="5" muted playsinline style="left:366px; top:646px"></video>
+        <video id="v-w6" class="clip tile" src="assets/clips/w6.mp4" data-start="40.645" data-duration="3.871" data-track-index="6" muted playsinline style="left:726px; top:646px"></video>
+        <video id="v-w7" class="clip tile" src="assets/clips/w7.mp4" data-start="40.645" data-duration="3.871" data-track-index="4" muted playsinline style="left:6px; top:1286px"></video>
+        <video id="v-w8" class="clip tile" src="assets/clips/w8.mp4" data-start="40.645" data-duration="3.871" data-track-index="5" muted playsinline style="left:366px; top:1286px"></video>
+        <video id="v-w9" class="clip tile" src="assets/clips/w9.mp4" data-start="40.645" data-duration="3.871" data-track-index="6" muted playsinline style="left:726px; top:1286px"></video>
+      </div>
+      <div id="el-overlay" class="scene" data-composition-id="overlay" data-composition-src="compositions/overlay.html" data-start="0" data-duration="50.323" data-track-index="8"></div>
+      <audio id="el-bgm" src="assets/music.wav" data-start="0" data-duration="50.323" data-track-index="15" data-volume="0.9"></audio>
+      <audio id="sfx0" src="assets/impact.wav" data-start="0.0" data-duration="1.2" data-track-index="20" data-volume="0.5"></audio>
+      <audio id="sfx1" src="assets/riser.wav" data-start="5.081" data-duration="1.4" data-track-index="21" data-volume="0.35"></audio>
+      <audio id="sfx2" src="assets/impact.wav" data-start="7.742" data-duration="1.2" data-track-index="22" data-volume="0.6"></audio>
+      <audio id="sfx3" src="assets/whoosh.wav" data-start="26.997" data-duration="0.55" data-track-index="23" data-volume="0.4"></audio>
+      <audio id="sfx4" src="assets/riser.wav" data-start="27.581" data-duration="1.4" data-track-index="20" data-volume="0.3"></audio>
+      <audio id="sfx5" src="assets/impact.wav" data-start="29.032" data-duration="1.2" data-track-index="21" data-volume="0.55"></audio>
+      <audio id="sfx6" src="assets/impact.wav" data-start="36.774" data-duration="1.2" data-track-index="22" data-volume="0.4"></audio>
+      <audio id="sfx7" src="assets/impact.wav" data-start="40.645" data-duration="1.2" data-track-index="23" data-volume="0.6"></audio>
+      <audio id="sfx8" src="assets/impact.wav" data-start="44.516" data-duration="1.2" data-track-index="20" data-volume="0.55"></audio>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+      (function () { var tl = window.__timelines["main"];
+        tl.fromTo("#v-i1", { scale: 1.07, filter: "brightness(1.15)" }, { scale: 1, filter: "brightness(1)", duration: 0.32, ease: "power3.out" }, 0.0);
+        tl.to("#v-i1", { scale: 1.035, duration: 0.16399999999999998, ease: "none" }, 0.320);
+        tl.fromTo("#v-i2", { scale: 1.07, filter: "brightness(1.15)" }, { scale: 1, filter: "brightness(1)", duration: 0.32, ease: "power3.out" }, 0.484);
+        tl.to("#v-i2", { scale: 1.035, duration: 0.16399999999999998, ease: "none" }, 0.804);
+        tl.fromTo("#v-i3", { scale: 1.07, filter: "brightness(1.15)" }, { scale: 1, filter: "brightness(1)", duration: 0.32, ease: "power3.out" }, 0.968);
+        tl.to("#v-i3", { scale: 1.035, duration: 0.16399999999999998, ease: "none" }, 1.288);
+        tl.fromTo("#v-i4", { scale: 1.07, filter: "brightness(1.15)" }, { scale: 1, filter: "brightness(1)", duration: 0.32, ease: "power3.out" }, 1.452);
+        tl.to("#v-i4", { scale: 1.035, duration: 0.16399999999999998, ease: "none" }, 1.772);
+        tl.fromTo("#v-m01", { scale: 1.14, filter: "brightness(1.5)" }, { scale: 1, filter: "brightness(1)", duration: 0.5, ease: "power3.out" }, 7.742);
+        tl.to("#v-m01", { scale: 1.035, duration: 1.615, ease: "none" }, 8.062);
+        tl.fromTo("#v-m02", { scale: 1.07, filter: "brightness(1.15)" }, { scale: 1, filter: "brightness(1)", duration: 0.32, ease: "power3.out" }, 9.677);
+        tl.to("#v-m02", { scale: 1.035, duration: 1.615, ease: "none" }, 9.997);
+        tl.fromTo("#v-m03", { scale: 1.07, filter: "brightness(1.15)" }, { scale: 1, filter: "brightness(1)", duration: 0.32, ease: "power3.out" }, 11.613);
+        tl.to("#v-m03", { scale: 1.035, duration: 0.6479999999999999, ease: "none" }, 11.933);
+        tl.fromTo("#v-m04", { scale: 1.07, filter: "brightness(1.15)" }, { scale: 1, filter: "brightness(1)", duration: 0.32, ease: "power3.out" }, 12.581);
+        tl.to("#v-m04", { scale: 1.035, duration: 0.6479999999999999, ease: "none" }, 12.901);
+        tl.fromTo("#v-m05", { scale: 1.07, filter: "brightness(1.15)" }, { scale: 1, filter: "brightness(1)", duration: 0.32, ease: "power3.out" }, 13.548);
+        tl.to("#v-m05", { scale: 1.035, duration: 0.6479999999999999, ease: "none" }, 13.868);
+        tl.fromTo("#v-m06", { scale: 1.07, filter: "brightness(1.15)" }, { scale: 1, filter: "brightness(1)", duration: 0.32, ease: "power3.out" }, 14.516);
+        tl.to("#v-m06", { scale: 1.035, duration: 0.6479999999999999, ease: "none" }, 14.836);
+        tl.fromTo("#v-m07", { scale: 1.07, filter: "brightness(1.15)" }, { scale: 1, filter: "brightness(1)", duration: 0.32, ease: "power3.out" }, 15.484);
+        tl.to("#v-m07", { scale: 1.035, duration: 0.6479999999999999, ease: "none" }, 15.804);
+        tl.fromTo("#v-m08", { scale: 1.07, filter: "brightness(1.15)" }, { scale: 1, filter: "brightness(1)", duration: 0.32, ease: "power3.out" }, 16.452);
+        tl.to("#v-m08", { scale: 1.035, duration: 0.6479999999999999, ease: "none" }, 16.772);
+        tl.fromTo("#v-m09", { scale: 1.07, filter: "brightness(1.15)" }, { scale: 1, filter: "brightness(1)", duration: 0.32, ease: "power3.out" }, 17.419);
+        tl.to("#v-m09", { scale: 1.035, duration: 0.6479999999999999, ease: "none" }, 17.739);
+        tl.fromTo("#v-m10", { scale: 1.07, filter: "brightness(1.15)" }, { scale: 1, filter: "brightness(1)", duration: 0.32, ease: "power3.out" }, 18.387);
+        tl.to("#v-m10", { scale: 1.035, duration: 0.6479999999999999, ease: "none" }, 18.707);
+        tl.fromTo("#v-m11", { scale: 1.07, filter: "brightness(1.15)" }, { scale: 1, filter: "brightness(1)", duration: 0.32, ease: "power3.out" }, 19.355);
+        tl.to("#v-m11", { scale: 1.035, duration: 0.6479999999999999, ease: "none" }, 19.675);
+        tl.fromTo("#v-m12", { scale: 1.07, filter: "brightness(1.15)" }, { scale: 1, filter: "brightness(1)", duration: 0.32, ease: "power3.out" }, 20.323);
+        tl.to("#v-m12", { scale: 1.035, duration: 0.6479999999999999, ease: "none" }, 20.643);
+        tl.fromTo("#v-m13", { scale: 1.07, filter: "brightness(1.15)" }, { scale: 1, filter: "brightness(1)", duration: 0.32, ease: "power3.out" }, 21.29);
+        tl.to("#v-m13", { scale: 1.035, duration: 0.6479999999999999, ease: "none" }, 21.610);
+        tl.fromTo("#v-m14", { scale: 1.07, filter: "brightness(1.15)" }, { scale: 1, filter: "brightness(1)", duration: 0.32, ease: "power3.out" }, 22.258);
+        tl.to("#v-m14", { scale: 1.035, duration: 0.6479999999999999, ease: "none" }, 22.578);
+        tl.fromTo("#v-m15", { scale: 1.07, filter: "brightness(1.15)" }, { scale: 1, filter: "brightness(1)", duration: 0.32, ease: "power3.out" }, 23.226);
+        tl.to("#v-m15", { scale: 1.035, duration: 0.6479999999999999, ease: "none" }, 23.546);
+        tl.fromTo("#v-m16", { scale: 1.07, filter: "brightness(1.15)" }, { scale: 1, filter: "brightness(1)", duration: 0.32, ease: "power3.out" }, 24.194);
+        tl.to("#v-m16", { scale: 1.035, duration: 0.6479999999999999, ease: "none" }, 24.514);
+        tl.fromTo("#v-m17", { scale: 1.07, filter: "brightness(1.15)" }, { scale: 1, filter: "brightness(1)", duration: 0.32, ease: "power3.out" }, 25.161);
+        tl.to("#v-m17", { scale: 1.035, duration: 0.6479999999999999, ease: "none" }, 25.481);
+        tl.fromTo("#v-m18", { scale: 1.07, filter: "brightness(1.15)" }, { scale: 1, filter: "brightness(1)", duration: 0.32, ease: "power3.out" }, 26.129);
+        tl.to("#v-m18", { scale: 1.035, duration: 0.6479999999999999, ease: "none" }, 26.449);
+        tl.fromTo("#v-v1", { scale: 1.14, filter: "brightness(1.5)" }, { scale: 1, filter: "brightness(1)", duration: 0.5, ease: "power3.out" }, 29.032);
+        tl.to("#v-v1", { scale: 1.035, duration: 1.615, ease: "none" }, 29.352);
+        tl.fromTo("#v-v2", { scale: 1.07, filter: "brightness(1.15)" }, { scale: 1, filter: "brightness(1)", duration: 0.32, ease: "power3.out" }, 30.968);
+        tl.to("#v-v2", { scale: 1.035, duration: 1.615, ease: "none" }, 31.288);
+        tl.fromTo("#v-v3", { scale: 1.07, filter: "brightness(1.15)" }, { scale: 1, filter: "brightness(1)", duration: 0.32, ease: "power3.out" }, 32.903);
+        tl.to("#v-v3", { scale: 1.035, duration: 0.6479999999999999, ease: "none" }, 33.223);
+        tl.fromTo("#v-v4", { scale: 1.07, filter: "brightness(1.15)" }, { scale: 1, filter: "brightness(1)", duration: 0.32, ease: "power3.out" }, 33.871);
+        tl.to("#v-v4", { scale: 1.035, duration: 0.6479999999999999, ease: "none" }, 34.191);
+        tl.fromTo("#v-v5", { scale: 1.07, filter: "brightness(1.15)" }, { scale: 1, filter: "brightness(1)", duration: 0.32, ease: "power3.out" }, 34.839);
+        tl.to("#v-v5", { scale: 1.035, duration: 0.6479999999999999, ease: "none" }, 35.159);
+        tl.fromTo("#v-v6", { scale: 1.07, filter: "brightness(1.15)" }, { scale: 1, filter: "brightness(1)", duration: 0.32, ease: "power3.out" }, 35.806);
+        tl.to("#v-v6", { scale: 1.035, duration: 0.6479999999999999, ease: "none" }, 36.126);
+        tl.fromTo("#wall", { scale: 2.9 }, { scale: 1, duration: 1.452, ease: "expo.out" }, 40.645);
+        tl.to("#wall", { scale: 0.94, duration: 2.419, ease: "none" }, 42.097);
+        tl.fromTo("#v-w1", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power2.out" }, 40.645);
+        tl.fromTo("#v-w2", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power2.out" }, 40.695);
+        tl.fromTo("#v-w3", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power2.out" }, 40.745);
+        tl.fromTo("#v-w4", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power2.out" }, 40.795);
+        tl.fromTo("#v-w5", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power2.out" }, 40.845);
+        tl.fromTo("#v-w6", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power2.out" }, 40.895);
+        tl.fromTo("#v-w7", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power2.out" }, 40.945);
+        tl.fromTo("#v-w8", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power2.out" }, 40.995);
+        tl.fromTo("#v-w9", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power2.out" }, 41.045);
+        tl.to({}, { duration: 50.323 }, 0);
+      })();
+    </script>
+  </body>
+</html>
