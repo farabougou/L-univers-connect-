@@ -80,4 +80,6 @@ L = L * 0.9 + verb(L, 1) * 0.22; R = R * 0.9 + verb(R, 2) * 0.22
 t = np.arange(N) / SR
 fade = np.minimum(1, t / 0.05) * np.clip((dur - t) / 2.5, 0, 1)
 mix = np.tanh(1.15 * np.stack([L, R], 1)) * fade[:, None]; mix /= np.abs(mix).max() / 0.9
+if len(sys.argv) > 3:  # voiceover bed: about -10 dB under the voice, swelling back after its last word
+    ve = float(sys.argv[3]); mix *= (0.3 + 0.7 * np.clip((t - ve) / 0.6, 0, 1))[:, None]
 sf.write(out, mix, SR); print('ok', dur, 'bar', round(bar, 4))
