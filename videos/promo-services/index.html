@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="assets/vendor/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Inter"; font-weight: 400; src: url("assets/fonts/inter-latin-400-normal.woff2") format("woff2"); }
+      @font-face { font-family: "Inter"; font-weight: 600; src: url("assets/fonts/inter-latin-600-normal.woff2") format("woff2"); }
+      @font-face { font-family: "Inter"; font-weight: 800; src: url("assets/fonts/inter-latin-800-normal.woff2") format("woff2"); }
+      @font-face { font-family: "Inter"; font-weight: 900; src: url("assets/fonts/inter-latin-900-normal.woff2") format("woff2"); }
+      @font-face { font-family: "Plex Mono"; font-weight: 500; src: url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #0A0A0C; }
+      #root { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: #0A0A0C; font-family: "Inter", sans-serif; perspective: 1600px; }
+      #grid { position: absolute; inset: 0; background-image: radial-gradient(rgba(244,242,238,0.10) 1.5px, transparent 1.6px); background-size: 40px 40px; }
+      .glow { position: absolute; width: 900px; height: 900px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,90,31,0.22), rgba(255,90,31,0)); }
+      .sec { position: absolute; inset: 0; visibility: hidden; opacity: 0; }
+      .num { position: absolute; left: 70px; top: 150px; font: 500 34px "Plex Mono"; color: #FF5A1F; }
+      .ttl { position: absolute; left: 66px; top: 190px; font: 900 112px/1 "Inter"; color: #F4F2EE; letter-spacing: -0.045em; white-space: nowrap; }
+      .sub { position: absolute; left: 70px; right: 70px; top: 330px; font: 500 38px/1.3 "Inter"; color: #9A98A0; }
+      .big { position: absolute; left: 0; right: 0; text-align: center; font: 900 128px/1 "Inter"; color: #F4F2EE; letter-spacing: -0.045em; white-space: nowrap; }
+      .big em, .ttl em { font-style: normal; color: #FF5A1F; }
+      .w { display: inline-block; }
+      .cap { position: absolute; left: 0; right: 0; text-align: center; font: 600 32px "Inter"; letter-spacing: 0.3em; color: #9A98A0; text-transform: uppercase; white-space: nowrap; }
+      .lap { position: absolute; transform-origin: 50% 100%; }
+      .lap-s { position: relative; margin: 0 auto; overflow: hidden; background: #000; border: 20px solid #1c1c21; border-bottom-width: 26px; border-radius: 26px 26px 6px 6px; box-sizing: content-box; box-shadow: 0 40px 80px rgba(0,0,0,0.6); }
+      .lap-b { width: 1000px; height: 28px; margin: 0 0 0 -30px; background: linear-gradient(180deg, #3a3a42, #1d1d22); border-radius: 0 0 26px 26px; }
+      .site { position: absolute; left: 0; top: 0; display: block; }
+      .ph { position: absolute; background: #0d0d10; padding: 10px; box-shadow: 0 0 0 3px #4a4a52, 0 40px 80px rgba(0,0,0,0.65); }
+      .ph-s { position: relative; width: 100%; height: 100%; overflow: hidden; background: #000; }
+      .isl { position: absolute; left: 50%; top: 12px; width: 30%; height: 26px; margin-left: -15%; border-radius: 14px; background: #000; z-index: 5; }
+      .kscr { position: absolute; left: 0; top: 0; width: 100%; height: auto; opacity: 0; filter: brightness(1); }
+      #k0 { opacity: 1; }
+      .tap { position: absolute; left: 50%; top: 58%; width: 70px; height: 70px; margin: -35px; border-radius: 50%; background: rgba(255,255,255,0.7); opacity: 0; z-index: 6; }
+      .adv { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; }
+      .url { position: absolute; left: 70px; top: 1230px; font: 500 34px "Plex Mono"; color: #F4F2EE; padding: 14px 22px; border-radius: 12px; background: rgba(244,242,238,0.06); border: 1px solid rgba(244,242,238,0.16); }
+      .url b { color: #3BD16F; font-weight: 500; }
+      .pills { position: absolute; left: 0; right: 0; display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+      .pills span { font: 700 32px "Inter"; color: #F4F2EE; padding: 16px 26px; border-radius: 40px; border: 2px solid #FF5A1F; background: rgba(255,90,31,0.10); }
+      .card { position: absolute; width: 340px; padding: 22px 24px; border-radius: 22px; background: rgba(22,22,26,0.88); border: 1px solid rgba(244,242,238,0.14); box-shadow: 0 20px 50px rgba(0,0,0,0.45); z-index: 4; }
+      .card i { display: block; width: 14px; height: 14px; border-radius: 7px; background: #FF5A1F; margin-bottom: 12px; box-shadow: 0 0 18px #FF5A1F; }
+      .card b { display: block; font: 800 34px/1.1 "Inter"; color: #F4F2EE; }
+      .card span { display: block; margin-top: 6px; font: 500 26px "Inter"; color: #9A98A0; }
+      .brand { position: absolute; text-align: center; font: 800 30px "Inter"; color: #F4F2EE; }
+      .name { position: absolute; left: 0; right: 0; top: 1090px; text-align: center; font: 900 150px/1 "Inter"; color: #F4F2EE; letter-spacing: -0.05em; }
+      #q5 { top: 1260px; }
+      .cta { position: absolute; left: 140px; right: 140px; top: 1380px; text-align: center; font: 800 42px/104px "Inter"; color: #0A0A0C; background: #FF5A1F; border-radius: 52px; }
+      #flash { position: absolute; inset: 0; background: #F4F2EE; opacity: 0; pointer-events: none; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="30.968" data-width="1080" data-height="1920" data-fps="25">
+      <div id="stage" class="clip" data-start="0" data-duration="30.968" data-track-index="0" style="position:absolute; inset:0">
+        <div id="grid"></div>
+        <div class="glow" id="glow1" style="left:-200px; top:200px"></div>
+        <div class="glow" id="glow2" style="left:400px; top:1100px"></div>
+
+    <section id="sec0" class="sec">
+      <div class="big" id="h1" style="top:620px"><span class="w">Votre</span> <span class="w">business</span></div>
+      <div class="big" id="h2" style="top:750px"><span class="w">mérite</span> <span class="w">d'être</span></div>
+      <div class="big" id="h3" style="top:880px; font-size:220px"><em>vu.</em></div>
+      <div class="cap" id="h4" style="top:1160px">Site · Application · Pub vidéo</div>
+    </section>
+    <section id="sec1" class="sec">
+      <div class="num">01</div><div class="ttl">Sites internet</div>
+      <div class="sub">Votre vitrine en ligne, belle sur ordinateur et sur mobile.</div>
+      <div class="lap" style="left:70px; top:560px; width:940px">
+        <div class="lap-s" style="width:900px; height:562px">
+          <img class="site" id="d-ktf" src="assets/images/ktf-desk.jpg" alt="" style="width:900px">
+          <img class="site" id="d-sx" src="assets/images/sensexpress-desk.jpg" alt="" style="width:900px; opacity:0">
+        </div>
+        <div class="lap-b"></div>
+      </div>
+      <div class="ph" id="p1" style="left:770px; top:860px; width:300px; height:620px; border-radius:48px; transform: rotate(0deg); "><div class="ph-s" style="border-radius:38px"><img class="site" id="m-ktf" src="assets/images/ktf-mob.jpg" alt="" style="width:276px"><img class="site" id="m-sx" src="assets/images/sensexpress-mob.jpg" alt="" style="width:276px; opacity:0"><i class="isl"></i></div></div>
+      <div class="url" id="u1"><b>●</b> ktf-shipping.com</div>
+      <div class="url" id="u2" style="opacity:0"><b>●</b> sensexpress.com</div>
+      <div class="pills" style="top:1560px"><span>Design sur mesure</span><span>Version mobile</span><span>Mise en ligne</span></div>
+    </section>
+    <section id="sec2" class="sec">
+      <div class="num">02</div><div class="ttl">Applications</div>
+      <div class="sub">Comme KOFA, mon app de livraison à Bamako.</div>
+      <div class="ph" id="p2" style="left:300px; top:520px; width:480px; height:1000px; border-radius:76px; transform: rotate(0deg); "><div class="ph-s" style="border-radius:66px"><img class="kscr" id="k0" src="assets/images/accueil.jpg" alt=""><img class="kscr" id="k1" src="assets/images/diaspora.jpg" alt=""><img class="kscr" id="k2" src="assets/images/restaurant-onboarding.jpg" alt=""><img class="kscr" id="k3" src="assets/images/compte.jpg" alt=""><div class="tap" id="tap"></div><i class="isl"></i></div></div>
+      <div class="card" id="c1" style="left:40px; top:760px"><i></i><b>Suivi du livreur</b><span>en direct sur la carte</span></div><div class="card" id="c2" style="left:700px; top:1060px"><i></i><b>Note vocale</b><span>pour guider le livreur</span></div><div class="card" id="c3" style="left:40px; top:1360px"><i></i><b>Code à 4 chiffres</b><span>remis à la livraison</span></div>
+    </section>
+    <section id="sec3" class="sec">
+      <div class="num">03</div><div class="ttl">Pubs vidéo</div>
+      <div class="sub">Motion design pour vos réseaux : déjà 9 marques.</div>
+      <div class="ph" id="p30" style="left:60px; top:640px; width:300px; height:620px; border-radius:48px; transform: rotate(-7deg); z-index:1"><div class="ph-s" style="border-radius:38px"><video id="a-founerou" class="clip adv" src="assets/clips/founerou.mp4" data-start="19.355" data-duration="3.0" data-track-index="2" muted playsinline></video><video id="a-cassia-dress" class="clip adv" src="assets/clips/cassia-dress.mp4" data-start="22.258" data-duration="3.0" data-track-index="5" muted playsinline></video><i class="isl"></i></div></div><div class="brand" id="bA0" style="left:60px; width:300px; top:1286px">Founerou Grill's</div><div class="brand" id="bB0" style="left:60px; width:300px; top:1286px; opacity:0">Cassia Dressing</div><div class="ph" id="p31" style="left:360px; top:560px; width:360px; height:740px; border-radius:57px; transform: rotate(0deg); z-index:3"><div class="ph-s" style="border-radius:47px"><video id="a-sensexpress-diffuseurs" class="clip adv" src="assets/clips/sensexpress-diffuseurs.mp4" data-start="19.355" data-duration="3.0" data-track-index="3" muted playsinline></video><video id="a-enoryx-pub" class="clip adv" src="assets/clips/enoryx-pub.mp4" data-start="22.258" data-duration="3.0" data-track-index="6" muted playsinline></video><i class="isl"></i></div></div><div class="brand" id="bA1" style="left:360px; width:360px; top:1326px">SensExpress</div><div class="brand" id="bB1" style="left:360px; width:360px; top:1326px; opacity:0">Enoryx</div><div class="ph" id="p32" style="left:720px; top:640px; width:300px; height:620px; border-radius:48px; transform: rotate(7deg); z-index:1"><div class="ph-s" style="border-radius:38px"><video id="a-gimso" class="clip adv" src="assets/clips/gimso.mp4" data-start="19.355" data-duration="3.0" data-track-index="4" muted playsinline></video><video id="a-sk-print" class="clip adv" src="assets/clips/sk-print.mp4" data-start="22.258" data-duration="3.0" data-track-index="7" muted playsinline></video><i class="isl"></i></div></div><div class="brand" id="bA2" style="left:720px; width:300px; top:1286px">GimSo</div><div class="brand" id="bB2" style="left:720px; width:300px; top:1286px; opacity:0">SK Print</div>
+    </section>
+    <section id="sec4" class="sec">
+      <div class="big" id="q1" style="top:470px">Votre projet</div>
+      <div class="big" id="q2" style="top:600px">est <em>le prochain.</em></div>
+      <div class="pills" id="q3" style="top:820px"><span>Site internet</span><span>Application</span><span>Pub vidéo</span></div>
+      <div class="name" id="q4">MOHAMED</div>
+      <div class="cap" id="q5">Motion design · Vibe coding · Bamako</div>
+      <div class="cta" id="q6">Écrivez-moi en message privé</div>
+    </section>
+        <div id="flash"></div>
+      </div>
+      <audio id="el-bgm" src="assets/music.wav" data-start="0" data-duration="30.968" data-track-index="15" data-volume="0.9"></audio>
+      <audio id="sfx0" src="assets/riser.wav" data-start="2.419" data-duration="1.4" data-track-index="20" data-volume="0.3"></audio>
+      <audio id="sfx1" src="assets/impact.wav" data-start="3.871" data-duration="1.2" data-track-index="21" data-volume="0.5"></audio>
+      <audio id="sfx2" src="assets/whoosh.wav" data-start="7.642" data-duration="0.55" data-track-index="22" data-volume="0.3"></audio>
+      <audio id="sfx3" src="assets/impact.wav" data-start="11.613" data-duration="1.2" data-track-index="20" data-volume="0.45"></audio>
+      <audio id="sfx4" src="assets/impact.wav" data-start="19.355" data-duration="1.2" data-track-index="21" data-volume="0.45"></audio>
+      <audio id="sfx5" src="assets/impact.wav" data-start="25.161" data-duration="1.2" data-track-index="22" data-volume="0.55"></audio>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines["main"] = tl;
+      tl.fromTo("#grid", { backgroundPosition: "0px 0px" }, { backgroundPosition: "0px -240px", duration: 30.968, ease: "none" }, 0);
+      tl.fromTo("#glow1", { x: -120, y: 0 }, { x: 160, y: 300, duration: 30.968, ease: "sine.inOut" }, 0);
+      tl.fromTo("#glow2", { x: 100, y: 0 }, { x: -140, y: -260, duration: 30.968, ease: "sine.inOut" }, 0);
+      tl.set("#sec0", { autoAlpha: 1 }, 0.0);
+      tl.to("#sec0", { y: -140, autoAlpha: 0, filter: "blur(14px)", duration: 0.28, ease: "power3.in" }, 3.591);
+      tl.set("#sec1", { autoAlpha: 1 }, 3.871);
+      tl.to("#sec1", { y: -140, autoAlpha: 0, filter: "blur(14px)", duration: 0.28, ease: "power3.in" }, 11.333);
+      tl.set("#sec2", { autoAlpha: 1 }, 11.613);
+      tl.to("#sec2", { y: -140, autoAlpha: 0, filter: "blur(14px)", duration: 0.28, ease: "power3.in" }, 19.075);
+      tl.set("#sec3", { autoAlpha: 1 }, 19.355);
+      tl.to("#sec3", { y: -140, autoAlpha: 0, filter: "blur(14px)", duration: 0.28, ease: "power3.in" }, 24.881);
+      tl.set("#sec4", { autoAlpha: 1 }, 25.161);
+      tl.fromTo("#sec1 .num", { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: 0.4, ease: "expo.out" }, 3.871);
+      tl.fromTo("#sec1 .ttl", { opacity: 0, y: 50, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 3.921);
+      tl.fromTo("#sec1 .sub", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 4.355);
+      tl.fromTo("#sec2 .num", { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: 0.4, ease: "expo.out" }, 11.613);
+      tl.fromTo("#sec2 .ttl", { opacity: 0, y: 50, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 11.663);
+      tl.fromTo("#sec2 .sub", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 12.097);
+      tl.fromTo("#sec3 .num", { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: 0.4, ease: "expo.out" }, 19.355);
+      tl.fromTo("#sec3 .ttl", { opacity: 0, y: 50, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 19.405);
+      tl.fromTo("#sec3 .sub", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 19.839);
+      gsap.utils.toArray("#h1 .w, #h2 .w").forEach((w, i) => tl.fromTo(w, { opacity: 0, y: 50, filter: "blur(16px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.4, ease: "expo.out" }, 0.4839 * (0.5 + i)));
+      tl.fromTo("#h3", { opacity: 0, scale: 2.2, filter: "blur(24px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.45, ease: "expo.out" }, 1.935);
+      tl.fromTo("#h4", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 2.903);
+      tl.fromTo(".lap", { y: 500, rotationX: 28, opacity: 0 }, { y: 0, rotationX: 0, opacity: 1, duration: 0.8, ease: "expo.out" }, 3.971);
+      tl.fromTo("#p1", { x: 400, rotation: 14, opacity: 0 }, { x: 0, rotation: 4, opacity: 1, duration: 0.8, ease: "expo.out" }, 4.355);
+      tl.fromTo("#d-ktf", { y: 0 }, { y: -1423, duration: 3.471, ease: "power1.inOut" }, 4.271);
+      tl.fromTo("#m-ktf", { y: 0 }, { y: -629, duration: 3.471, ease: "power1.inOut" }, 4.271);
+      tl.fromTo("#d-sx", { y: 0 }, { y: -1423, duration: 3.471, ease: "power1.inOut" }, 8.142);
+      tl.fromTo("#m-sx", { y: 0 }, { y: -629, duration: 3.471, ease: "power1.inOut" }, 8.142);
+      tl.fromTo(["#d-sx", "#m-sx"], { opacity: 0, x: 120 }, { opacity: 1, x: 0, duration: 0.35, ease: "power3.out" }, 7.742);
+      tl.to(["#d-ktf", "#m-ktf"], { opacity: 0, x: -120, duration: 0.3, ease: "power3.in" }, 7.742);
+      tl.fromTo("#u1", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4 }, 4.839); tl.to("#u1", { opacity: 0, duration: 0.2 }, 7.642);
+      tl.fromTo("#u2", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4 }, 7.842);
+      gsap.utils.toArray("#sec1 .pills span").forEach((p, i) => tl.fromTo(p, { opacity: 0, y: 24, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.35, ease: "back.out(2)" }, 5.806 + i * 0.4839));
+      tl.fromTo("#p2", { y: 700, rotation: -6, opacity: 0 }, { y: 0, rotation: 0, opacity: 1, duration: 0.8, ease: "expo.out" }, 11.713);
+      tl.fromTo("#p2", { rotationY: 0 }, { rotationY: -10, duration: 7.258, ease: "sine.inOut" }, 12.097);
+      tl.fromTo("#tap", { opacity: 0.85, scale: 0.4 }, { opacity: 0, scale: 1.7, duration: 0.4, ease: "power2.out", immediateRender: false }, 13.248);
+      tl.fromTo("#k1", { xPercent: 100 }, { xPercent: 0, duration: 0.42, ease: "power3.inOut", immediateRender: false }, 13.548);
+      tl.set("#k1", { opacity: 1 }, 13.548);
+      tl.to("#k0", { xPercent: -30, filter: "brightness(0.55)", duration: 0.42, ease: "power3.inOut" }, 13.548);
+      tl.fromTo("#tap", { opacity: 0.85, scale: 0.4 }, { opacity: 0, scale: 1.7, duration: 0.4, ease: "power2.out", immediateRender: false }, 15.184);
+      tl.fromTo("#k2", { xPercent: 100 }, { xPercent: 0, duration: 0.42, ease: "power3.inOut", immediateRender: false }, 15.484);
+      tl.set("#k2", { opacity: 1 }, 15.484);
+      tl.to("#k1", { xPercent: -30, filter: "brightness(0.55)", duration: 0.42, ease: "power3.inOut" }, 15.484);
+      tl.fromTo("#tap", { opacity: 0.85, scale: 0.4 }, { opacity: 0, scale: 1.7, duration: 0.4, ease: "power2.out", immediateRender: false }, 17.119);
+      tl.fromTo("#k3", { xPercent: 100 }, { xPercent: 0, duration: 0.42, ease: "power3.inOut", immediateRender: false }, 17.419);
+      tl.set("#k3", { opacity: 1 }, 17.419);
+      tl.to("#k2", { xPercent: -30, filter: "brightness(0.55)", duration: 0.42, ease: "power3.inOut" }, 17.419);
+      tl.fromTo("#c1", { opacity: 0, x: -120, filter: "blur(10px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 13.065);
+      tl.to("#c1", { y: -14, duration: 1.4, ease: "sine.inOut", yoyo: true, repeat: 3 }, 13.548);
+      tl.fromTo("#c2", { opacity: 0, x: 120, filter: "blur(10px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 15.0);
+      tl.to("#c2", { y: -14, duration: 1.4, ease: "sine.inOut", yoyo: true, repeat: 3 }, 15.484);
+      tl.fromTo("#c3", { opacity: 0, x: -120, filter: "blur(10px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 16.935);
+      tl.to("#c3", { y: -14, duration: 1.4, ease: "sine.inOut", yoyo: true, repeat: 3 }, 17.419);
+      tl.fromTo("#p30", { y: 900, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: "expo.out" }, 19.355);
+      tl.fromTo("#bA0", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 19.839); tl.to("#bA0", { opacity: 0, duration: 0.2 }, 22.158);
+      tl.fromTo("#bB0", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 22.358);
+      tl.fromTo("#p30", { scale: 1.06 }, { scale: 1, duration: 0.35, ease: "power3.out", immediateRender: false }, 22.258);
+      tl.fromTo("#p31", { y: 900, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: "expo.out" }, 19.435);
+      tl.fromTo("#bA1", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 19.839); tl.to("#bA1", { opacity: 0, duration: 0.2 }, 22.158);
+      tl.fromTo("#bB1", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 22.358);
+      tl.fromTo("#p31", { scale: 1.06 }, { scale: 1, duration: 0.35, ease: "power3.out", immediateRender: false }, 22.258);
+      tl.fromTo("#p32", { y: 900, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: "expo.out" }, 19.515);
+      tl.fromTo("#bA2", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 19.839); tl.to("#bA2", { opacity: 0, duration: 0.2 }, 22.158);
+      tl.fromTo("#bB2", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 22.358);
+      tl.fromTo("#p32", { scale: 1.06 }, { scale: 1, duration: 0.35, ease: "power3.out", immediateRender: false }, 22.258);
+      tl.fromTo("#q1", { opacity: 0, y: 60, filter: "blur(16px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 25.161);
+      tl.fromTo("#q2", { opacity: 0, y: 60, filter: "blur(16px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, ease: "expo.out" }, 25.645);
+      gsap.utils.toArray("#q3 span").forEach((p, i) => tl.fromTo(p, { opacity: 0, y: 24, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.35, ease: "back.out(2)" }, 26.129 + i * 0.4839));
+      tl.fromTo("#q4", { opacity: 0, scale: 1.3, filter: "blur(18px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.6, ease: "expo.out" }, 27.097);
+      tl.fromTo("#q5", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 27.581);
+      tl.fromTo("#q6", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, 28.065);
+      tl.to("#q6", { scale: 1.05, duration: 0.4839, ease: "sine.inOut", yoyo: true, repeat: 7 }, 28.548);
+      tl.fromTo("#flash", { opacity: 0.6 }, { opacity: 0, duration: 0.25, ease: "power2.out", immediateRender: false }, 3.871);
+      tl.fromTo("#flash", { opacity: 0.6 }, { opacity: 0, duration: 0.25, ease: "power2.out", immediateRender: false }, 11.613);
+      tl.fromTo("#flash", { opacity: 0.6 }, { opacity: 0, duration: 0.25, ease: "power2.out", immediateRender: false }, 19.355);
+      tl.fromTo("#flash", { opacity: 0.6 }, { opacity: 0, duration: 0.25, ease: "power2.out", immediateRender: false }, 25.161);
+      tl.to({}, { duration: 30.968 }, 0);
+    </script>
+  </body>
+</html>

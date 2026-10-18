@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="UTF-8">
+<style>
+  @font-face { font-family: "Inter"; font-weight: 500; src: url("../assets/fonts/inter-latin-400-normal.woff2") format("woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 700; src: url("../assets/fonts/inter-latin-800-normal.woff2") format("woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 900; src: url("../assets/fonts/inter-latin-900-normal.woff2") format("woff2"); }
+  @font-face { font-family: "Plex Mono"; font-weight: 500; src: url("../assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { width: 1080px; height: 1350px; overflow: hidden; background: #0A0A0C; font-family: "Inter", sans-serif; position: relative; }
+  .grid { position: absolute; inset: 0; background-image: radial-gradient(rgba(244,242,238,0.10) 1.5px, transparent 1.6px); background-size: 40px 40px; }
+  .glow { position: absolute; width: 1000px; height: 1000px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,90,31,0.26), rgba(255,90,31,0)); }
+  .kick { position: absolute; left: 70px; top: 70px; font: 500 28px "Plex Mono"; color: #FF5A1F; letter-spacing: 0.08em; }
+  h1 { position: absolute; left: 66px; top: 120px; font: 900 96px/1 "Inter"; color: #F4F2EE; letter-spacing: -0.045em; }
+  h1 em { font-style: normal; color: #FF5A1F; }
+  .lap { position: absolute; left: 60px; top: 520px; width: 760px; }
+  .lap-s { width: 720px; height: 450px; margin: 0 auto; overflow: hidden; border: 16px solid #1c1c21; border-bottom-width: 22px; border-radius: 22px 22px 6px 6px; box-sizing: content-box; background: #000; box-shadow: 0 40px 80px rgba(0,0,0,0.6); }
+  .lap-s img { width: 720px; display: block; }
+  .lap-b { width: 820px; height: 24px; margin-left: -30px; background: linear-gradient(180deg, #3a3a42, #1d1d22); border-radius: 0 0 22px 22px; }
+  .ph { position: absolute; background: #0d0d10; padding: 9px; box-shadow: 0 0 0 3px #4a4a52, 0 40px 80px rgba(0,0,0,0.65); }
+  .ph div { width: 100%; height: 100%; overflow: hidden; border-radius: 30px; background: #000; position: relative; }
+  .ph img { width: 100%; display: block; }
+  .ph i { position: absolute; left: 50%; top: 10px; width: 30%; height: 20px; margin-left: -15%; border-radius: 10px; background: #000; }
+  .pills { position: absolute; left: 70px; top: 1150px; display: flex; gap: 14px; }
+  .pills span { font: 700 28px "Inter"; color: #F4F2EE; padding: 14px 22px; border-radius: 40px; border: 2px solid #FF5A1F; background: rgba(255,90,31,0.10); }
+  .cta { position: absolute; left: 70px; top: 1240px; font: 700 30px "Inter"; color: #F4F2EE; }
+  .cta b { color: #FF5A1F; }
+</style></head>
+<body>
+  <div class="grid"></div>
+  <div class="glow" style="left:-300px; top:300px"></div>
+  <div class="glow" style="left:500px; top:700px"></div>
+  <div class="kick">MOHAMED · MOTION DESIGN & VIBE CODING · BAMAKO</div>
+  <h1>Je crée votre site,<br>votre application<br>et vos <em>pubs vidéo.</em></h1>
+  <div class="lap"><div class="lap-s"><img src="../assets/images/ktf-desk.jpg" alt=""></div><div class="lap-b"></div></div>
+  <div class="ph" style="left:760px; top:470px; width:270px; height:560px; border-radius:40px; transform: rotate(5deg)"><div><img src="../assets/images/accueil.jpg" alt=""><i></i></div></div>
+  <div class="ph" style="left:600px; top:760px; width:190px; height:380px; border-radius:30px; transform: rotate(-6deg)"><div style="border-radius:22px"><img src="../assets/images/still-founerou.jpg" alt="" style="height:100%; object-fit:cover"><i></i></div></div>
+  <div class="pills"><span>Site internet</span><span>Application</span><span>Pub vidéo</span></div>
+  <div class="cta">Votre projet est le prochain → <b>écrivez-moi en message privé</b></div>
+</body></html>
