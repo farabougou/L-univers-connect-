@@ -1,0 +1,61 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Cormorant"; font-weight: 300; src: url("assets/fonts/cormorant-garamond-latin-300-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 300; font-style: italic; src: url("assets/fonts/cormorant-garamond-latin-300-italic.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 400; font-style: italic; src: url("assets/fonts/cormorant-garamond-latin-400-italic.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 500; src: url("assets/fonts/cormorant-garamond-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 400; src: url("assets/fonts/montserrat-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 500; src: url("assets/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; }
+
+    .s07-a { position: absolute; }
+    .s07-c { left: 0; right: 0; text-align: center; }
+    .s07-cv { position: absolute; left: 0; top: 0; }
+    .s07-d { font-family: "Cormorant"; font-weight: 300; color: #F5E6D3; white-space: nowrap; line-height: 1.05; }
+    .s07-i { font-family: "Cormorant"; font-weight: 300; font-style: italic; color: #F5E6D3; white-space: nowrap; line-height: 1.05; }
+    .s07-cap { font-family: "Montserrat"; font-weight: 500; font-size: 25px; letter-spacing: 0.34em; color: #D4AF37; white-space: nowrap; text-transform: uppercase; }
+    .s07-w { display: inline-block; }
+    .s07-frame { position: absolute; overflow: hidden; background: #000; -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 72%, rgba(0,0,0,0) 100%); mask-image: linear-gradient(180deg, #000 0%, #000 72%, rgba(0,0,0,0) 100%); }
+    .s07-frame img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+    .s07-frame canvas { position: absolute; left: 0; top: 0; }
+    .s07-line { position: absolute; height: 1px; background: linear-gradient(90deg, rgba(212,175,55,0), #D4AF37, rgba(212,175,55,0)); }
+    .s07-glow { position: absolute; border-radius: 50%; background: radial-gradient(closest-side, rgba(212,175,55,0.38), rgba(212,175,55,0.08) 55%, rgba(212,175,55,0)); }
+    .s07-word { position: absolute; left: 0; right: 0; text-align: center; font-family: "Cormorant"; font-weight: 500; color: #F5E6D3; white-space: nowrap; line-height: 1; }
+    .s07-word span { display: inline-block; }
+
+
+  </style>
+  <div id="root" data-composition-id="07-bridal" data-start="0" data-duration="4.8" data-width="1080" data-height="1920">
+    <div id="s07-clip" class="clip" data-start="0" data-duration="4.8" data-track-index="0" style="position:absolute; inset:0"></div>
+    <canvas class="s07-cv" id="s07-m" width="1080" height="1920"></canvas>
+    <div class="s07-frame" id="s07-f" style="left:110px; top:260px; width:860px; height:1020px; border-radius:430px 430px 40px 40px"><img id="s07-fi" src="assets/images/bridal.jpg" alt=""><canvas id="s07-fv" width="860" height="1020"></canvas></div>
+    <div class="s07-a s07-c s07-i" id="s07-n" style="top:1290px; font-size:116px">Bridal Glow Ritual</div>
+    <div class="s07-a s07-c s07-d" id="s07-s2" style="top:1430px; font-size:66px">Le rituel des grands jours.</div>
+    <div class="s07-a s07-c s07-cap" id="s07-s1" style="top:1540px">Visage &amp; corps · 4 soins</div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="07-bridal"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="07-bridal"] ' + s);
+      const __r0 = AURA.vapour(R("#s07-m"), {"x": 540, "y": 1450, "rise": 1350, "size": 320, "alpha": 0.075, "n": 64, "life": 6.5, "sx": 900, "fin": 0.3, "seed": 61});
+      const __r1 = AURA.vapour(R("#s07-fv"), {"x": 430.0, "y": 1040.4, "rise": 918, "size": 258, "alpha": 0.1, "n": 50, "life": 5.5, "sx": 688, "fin": 0.3, "seed": 62});
+      const __p = { t: 0 };
+      tl.fromTo(__p, { t: 0 }, { t: 4.8, duration: 4.8, ease: "none", onUpdate: () => { __r0(__p.t); __r1(__p.t); } }, 0);
+      __r0(__p.t); __r1(__p.t);
+      tl.fromTo(R("#s07-f"), { clipPath: "inset(40% 34% 40% 34% round 860px 860px 860px 860px)", opacity: 0 }, { clipPath: "inset(0% 0% 0% 0% round 430px 430px 40px 40px)", opacity: 1, duration: 1.6, ease: "expo.out" }, 0.1);
+      tl.fromTo(R("#s07-fi"), { scale: 1.18, filter: "blur(10px) brightness(0.7)" }, { scale: 1.0, filter: "blur(0px) brightness(1)", duration: 4.2, ease: "power2.out" }, 0.1);
+      tl.fromTo(R("#s07-n"), { opacity: 0, y: 40, filter: "blur(18px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.6, ease: "expo.out" }, 0.7);
+      tl.fromTo(R("#s07-s2"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 1.4);
+      tl.fromTo(R("#s07-s1"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 2.0);
+      tl.to(R("#s07-f"), { clipPath: "inset(40% 34% 40% 34% round 860px 860px 860px 860px)", opacity: 0, filter: "blur(8px)", duration: 1.0, ease: "power3.in" }, 3.55);
+      tl.to([R("#s07-n"), R("#s07-s1"), R("#s07-s2")], { opacity: 0, y: -26, filter: "blur(14px)", duration: 0.8, ease: "power2.in", stagger: 0.04 }, 3.5);
+
+      tl.to({}, { duration: 4.8 }, 0);
+      window.__timelines["07-bridal"] = tl;
+    })();
+  </script>
+</template>

@@ -1,0 +1,61 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Cormorant"; font-weight: 300; src: url("assets/fonts/cormorant-garamond-latin-300-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 300; font-style: italic; src: url("assets/fonts/cormorant-garamond-latin-300-italic.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 400; font-style: italic; src: url("assets/fonts/cormorant-garamond-latin-400-italic.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 500; src: url("assets/fonts/cormorant-garamond-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 400; src: url("assets/fonts/montserrat-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 500; src: url("assets/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; }
+
+    .s03-a { position: absolute; }
+    .s03-c { left: 0; right: 0; text-align: center; }
+    .s03-cv { position: absolute; left: 0; top: 0; }
+    .s03-d { font-family: "Cormorant"; font-weight: 300; color: #F5E6D3; white-space: nowrap; line-height: 1.05; }
+    .s03-i { font-family: "Cormorant"; font-weight: 300; font-style: italic; color: #F5E6D3; white-space: nowrap; line-height: 1.05; }
+    .s03-cap { font-family: "Montserrat"; font-weight: 500; font-size: 25px; letter-spacing: 0.34em; color: #D4AF37; white-space: nowrap; text-transform: uppercase; }
+    .s03-w { display: inline-block; }
+    .s03-frame { position: absolute; overflow: hidden; background: #000; -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 72%, rgba(0,0,0,0) 100%); mask-image: linear-gradient(180deg, #000 0%, #000 72%, rgba(0,0,0,0) 100%); }
+    .s03-frame img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+    .s03-frame canvas { position: absolute; left: 0; top: 0; }
+    .s03-line { position: absolute; height: 1px; background: linear-gradient(90deg, rgba(212,175,55,0), #D4AF37, rgba(212,175,55,0)); }
+    .s03-glow { position: absolute; border-radius: 50%; background: radial-gradient(closest-side, rgba(212,175,55,0.38), rgba(212,175,55,0.08) 55%, rgba(212,175,55,0)); }
+    .s03-word { position: absolute; left: 0; right: 0; text-align: center; font-family: "Cormorant"; font-weight: 500; color: #F5E6D3; white-space: nowrap; line-height: 1; }
+    .s03-word span { display: inline-block; }
+
+
+  </style>
+  <div id="root" data-composition-id="03-softglow" data-start="0" data-duration="6.2" data-width="1080" data-height="1920">
+    <div id="s03-clip" class="clip" data-start="0" data-duration="6.2" data-track-index="0" style="position:absolute; inset:0"></div>
+    <canvas class="s03-cv" id="s03-m" width="1080" height="1920"></canvas>
+    <div class="s03-frame" id="s03-f" style="left:160px; top:200px; width:760px; height:1000px; border-radius:380px 380px 40px 40px"><img id="s03-fi" src="assets/images/softglow.jpg" alt=""><canvas id="s03-fv" width="760" height="1000"></canvas></div>
+    <div class="s03-a s03-c s03-i" id="s03-n" style="top:1225px; font-size:150px">Soft Glow</div>
+    <div class="s03-a s03-c s03-cap" id="s03-s1" style="top:1430px">Papaye · Niacinamide · Acide kojique</div>
+    <div class="s03-a s03-c s03-d" id="s03-s2" style="top:1490px; font-size:64px">Une peau plus nette, plus lumineuse.</div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="03-softglow"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="03-softglow"] ' + s);
+      const __r0 = AURA.vapour(R("#s03-m"), {"x": 540, "y": 1300, "rise": 1200, "size": 300, "alpha": 0.075, "n": 64, "life": 6.5, "sx": 800, "fin": 0.3, "seed": 21});
+      const __r1 = AURA.vapour(R("#s03-fv"), {"x": 380.0, "y": 1020.0, "rise": 900, "size": 228, "alpha": 0.1, "n": 50, "life": 5.5, "sx": 608, "fin": 0.3, "seed": 22});
+      const __p = { t: 0 };
+      tl.fromTo(__p, { t: 0 }, { t: 6.2, duration: 6.2, ease: "none", onUpdate: () => { __r0(__p.t); __r1(__p.t); } }, 0);
+      __r0(__p.t); __r1(__p.t);
+      tl.fromTo(R("#s03-f"), { clipPath: "inset(40% 34% 40% 34% round 760px 760px 760px 760px)", opacity: 0 }, { clipPath: "inset(0% 0% 0% 0% round 380px 380px 40px 40px)", opacity: 1, duration: 1.8, ease: "expo.out" }, 0.1);
+      tl.fromTo(R("#s03-fi"), { scale: 1.18, filter: "blur(10px) brightness(0.7)" }, { scale: 1.0, filter: "blur(0px) brightness(1)", duration: 4.4, ease: "power2.out" }, 0.1);
+      tl.fromTo(R("#s03-n"), { opacity: 0, y: 40, filter: "blur(18px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.6, ease: "expo.out" }, 0.9);
+      tl.fromTo(R("#s03-s1"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 1.6);
+      tl.fromTo(R("#s03-s2"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 2.4);
+      tl.to(R("#s03-f"), { clipPath: "inset(40% 34% 40% 34% round 760px 760px 760px 760px)", opacity: 0, filter: "blur(8px)", duration: 1.0, ease: "power3.in" }, 4.95);
+      tl.to([R("#s03-n"), R("#s03-s1"), R("#s03-s2")], { opacity: 0, y: -26, filter: "blur(14px)", duration: 0.8, ease: "power2.in", stagger: 0.04 }, 4.9);
+
+      tl.to({}, { duration: 6.2 }, 0);
+      window.__timelines["03-softglow"] = tl;
+    })();
+  </script>
+</template>
