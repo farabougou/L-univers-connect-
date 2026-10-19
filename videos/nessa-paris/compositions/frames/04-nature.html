@@ -24,31 +24,54 @@
     .s04-glow { position: absolute; border-radius: 50%; background: radial-gradient(closest-side, rgba(212,175,55,0.38), rgba(212,175,55,0.08) 55%, rgba(212,175,55,0)); }
     .s04-word { position: absolute; left: 0; right: 0; text-align: center; font-family: "Cormorant"; font-weight: 500; color: #F5E6D3; white-space: nowrap; line-height: 1; }
     .s04-word span { display: inline-block; }
+    .s04-bk { position: absolute; border-radius: 50%; }
+    .s04-gold { --st-glow: rgba(212,175,55,0.45); }
 
 
     .s04-orbi { position: absolute; width: 250px; height: 250px; border-radius: 50%; overflow: hidden;
-      box-shadow: 0 0 0 2px rgba(212,175,55,0.75), 0 0 60px rgba(212,175,55,0.35), 0 0 140px rgba(212,175,55,0.15); }
+      box-shadow: 0 0 0 2px rgba(212,175,55,0.75), 0 0 60px rgba(212,175,55,0.35), 0 0 140px rgba(212,175,55,0.15), 0 30px 60px rgba(0,0,0,0.5); }
     .s04-orbi img { width: 100%; height: 100%; object-fit: cover; display: block; }
     #s04-svg { position: absolute; left: 0; top: 0; }
 
   </style>
   <div id="root" data-composition-id="04-nature" data-start="0" data-duration="6.4" data-width="1080" data-height="1920">
     <div id="s04-clip" class="clip" data-start="0" data-duration="6.4" data-track-index="0" style="position:absolute; inset:0"></div>
-    <canvas class="s04-cv" id="s04-m" width="1080" height="1920"></canvas>
-    <svg id="s04-svg" width="1080" height="1920"><path id="s04-arc" d="M 205 900 Q 540 1230 875 900" fill="none" stroke="#D4AF37" stroke-width="1.2" stroke-opacity="0.7"/></svg>
+    <div class="st-stage">
+    <div class="st-layer" id="s04-Lbg">
+      <canvas class="s04-cv" id="s04-m" width="1080" height="1920"></canvas>
+    </div>
+    <div class="st-layer" id="s04-Lmid">
+      <svg id="s04-svg" width="1080" height="1920"><path id="s04-arc" d="M 205 900 Q 540 1230 875 900" fill="none" stroke="#D4AF37" stroke-width="1.2" stroke-opacity="0.7"/></svg>
+      <div class="s04-orbi" id="s04-o0" style="left:80px; top:775px"><img src="assets/images/papaye.jpg" alt=""></div>
+      <div class="s04-orbi" id="s04-o1" style="left:415px; top:935px"><img src="assets/images/carotte.jpg" alt=""></div>
+      <div class="s04-orbi" id="s04-o2" style="left:750px; top:775px"><img src="assets/images/curcuma.jpg" alt=""></div>
+    </div>
+    <div class="st-layer" id="s04-Lfg">
+      <i class="s04-bk" style="left:214px; top:230px; width:84px; height:84px; background: radial-gradient(circle, rgba(212,175,55,0.36), rgba(212,175,55,0) 70%)"></i>
+      <i class="s04-bk" style="left:406px; top:1729px; width:128px; height:128px; background: radial-gradient(circle, rgba(212,175,55,0.53), rgba(212,175,55,0) 70%)"></i>
+      <i class="s04-bk" style="left:63px; top:434px; width:142px; height:142px; background: radial-gradient(circle, rgba(245,230,211,0.55), rgba(245,230,211,0) 70%)"></i>
+      <i class="s04-bk" style="left:869px; top:396px; width:74px; height:74px; background: radial-gradient(circle, rgba(245,230,211,0.50), rgba(245,230,211,0) 70%)"></i>
+      <i class="s04-bk" style="left:931px; top:1659px; width:50px; height:50px; background: radial-gradient(circle, rgba(245,230,211,0.49), rgba(245,230,211,0) 70%)"></i>
+      <i class="s04-bk" style="left:527px; top:367px; width:92px; height:92px; background: radial-gradient(circle, rgba(245,230,211,0.35), rgba(245,230,211,0) 70%)"></i>
+      <i class="s04-bk" style="left:994px; top:1093px; width:137px; height:137px; background: radial-gradient(circle, rgba(212,175,55,0.56), rgba(212,175,55,0) 70%)"></i>
+      <i class="s04-bk" style="left:-10px; top:125px; width:109px; height:109px; background: radial-gradient(circle, rgba(212,175,55,0.40), rgba(212,175,55,0) 70%)"></i>
+      <i class="s04-bk" style="left:989px; top:226px; width:47px; height:47px; background: radial-gradient(circle, rgba(245,230,211,0.38), rgba(245,230,211,0) 70%)"></i>
+      <i class="s04-bk" style="left:654px; top:477px; width:76px; height:76px; background: radial-gradient(circle, rgba(212,175,55,0.37), rgba(212,175,55,0) 70%)"></i>
+    </div>
+    </div>
+    <div class="st-layer" id="s04-Ltxt">
     <div class="s04-a s04-c s04-d" id="s04-h1" style="top:340px; font-size:110px" ><span class="s04-w">Le</span> <span class="s04-w">meilleur</span></div>
     <div class="s04-a s04-c s04-i" id="s04-h2" style="top:465px; font-size:140px; color:#D4AF37" ><span class="s04-w">de</span> <span class="s04-w">la</span> <span class="s04-w">nature</span></div>
-    <div class="s04-orbi" id="s04-o0" style="left:80px; top:775px"><img src="assets/images/papaye.jpg" alt=""></div>
-    <div class="s04-a s04-i" id="s04-ol0" style="left:5px; width:400px; text-align:center; top:1050px; font-size:64px">Papaye</div>
-    <div class="s04-orbi" id="s04-o1" style="left:415px; top:935px"><img src="assets/images/carotte.jpg" alt=""></div>
-    <div class="s04-a s04-i" id="s04-ol1" style="left:340px; width:400px; text-align:center; top:1210px; font-size:64px">Carotte</div>
-    <div class="s04-orbi" id="s04-o2" style="left:750px; top:775px"><img src="assets/images/curcuma.jpg" alt=""></div>
-    <div class="s04-a s04-i" id="s04-ol2" style="left:675px; width:400px; text-align:center; top:1050px; font-size:64px">Curcuma</div>
+    <div class="s04-a s04-i" id="s04-ol0" data-layout-allow-occlusion style="left:5px; width:400px; text-align:center; top:1050px; font-size:64px">Papaye</div>
+    <div class="s04-a s04-i" id="s04-ol1" data-layout-allow-occlusion style="left:340px; width:400px; text-align:center; top:1210px; font-size:64px">Carotte</div>
+    <div class="s04-a s04-i" id="s04-ol2" data-layout-allow-occlusion style="left:675px; width:400px; text-align:center; top:1050px; font-size:64px">Curcuma</div>
     <div class="s04-a s04-c s04-i" id="s04-h3" style="top:1520px; font-size:72px" ><span class="s04-w">au</span> <span class="s04-w">service</span> <span class="s04-w">de</span> <span class="s04-w">votre</span> <span class="s04-w">éclat.</span></div>
+    </div>
 
   </div>
   <script>
     (function () {
+      const S = STUDIO;
       const tl = gsap.timeline({ paused: true });
       const R = (s) => document.querySelector('[data-composition-id="04-nature"] ' + s);
       const RA = (s) => document.querySelectorAll('[data-composition-id="04-nature"] ' + s);
@@ -56,21 +79,24 @@
       const __p = { t: 0 };
       tl.fromTo(__p, { t: 0 }, { t: 6.4, duration: 6.4, ease: "none", onUpdate: () => { __r0(__p.t); } }, 0);
       __r0(__p.t);
-      tl.fromTo(RA("#s04-h1 .s04-w"), { opacity: 0, y: 34, filter: "blur(16px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.4, ease: "expo.out", stagger: 0.11 }, 2.27);
-      tl.fromTo(RA("#s04-h2 .s04-w"), { opacity: 0, y: 34, filter: "blur(16px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.6, ease: "expo.out", stagger: 0.11 }, 2.85);
+      S.life(tl, RA(".s04-bk"), 0, 6.4, { x: 12, y: 16, rotate: 0, scale: 0.03, period: 7, seed: 5 });
+      S.camera(tl, [{ el: R("#s04-Lbg"), depth: 0.35 }, { el: R("#s04-Lmid"), depth: 1 }, { el: R("#s04-Lfg"), depth: 1.8 }, { el: R("#s04-Ltxt"), depth: 0.4, blur: false }], { start: 0, end: 6.4, dof: { k: 9, max: 12 }, drift: { x: 4, y: 4, r: 0.08, period: 9 }, keys: [{ t: 0, x: 50, s: 1.06, ry: -6, f: 1.0 }, { t: 6.4, x: -50, s: 1.0, ry: 6, ease: S.ease.breath }] });
       const A = R("#s04-arc"), AL = A.getTotalLength();
-      tl.fromTo(A, { attr: { "stroke-dasharray": AL + " " + AL, "stroke-dashoffset": AL } }, { attr: { "stroke-dashoffset": 0 }, duration: 2.2, ease: "power2.inOut" }, 0.5);
-      tl.fromTo(R("#s04-o0"), { opacity: 0, scale: 0.3, filter: "blur(18px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 1.8, ease: "elastic.out(1, 0.75)" }, 0.33);
-      tl.fromTo(R("#s04-o0"), { y: 0 }, { y: -26, duration: 1.7, ease: "sine.inOut", yoyo: true, repeat: 1 }, 0.93);
-      tl.fromTo(R("#s04-ol0"), { opacity: 0, y: 20, filter: "blur(12px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "expo.out" }, 0.68);
-      tl.fromTo(R("#s04-o1"), { opacity: 0, scale: 0.3, filter: "blur(18px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 1.8, ease: "elastic.out(1, 0.75)" }, 0.81);
-      tl.fromTo(R("#s04-o1"), { y: 0 }, { y: -26, duration: 1.7, ease: "sine.inOut", yoyo: true, repeat: 1 }, 1.41);
-      tl.fromTo(R("#s04-ol1"), { opacity: 0, y: 20, filter: "blur(12px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "expo.out" }, 1.16);
-      tl.fromTo(R("#s04-o2"), { opacity: 0, scale: 0.3, filter: "blur(18px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 1.8, ease: "elastic.out(1, 0.75)" }, 1.50);
-      tl.fromTo(R("#s04-o2"), { y: 0 }, { y: -26, duration: 1.7, ease: "sine.inOut", yoyo: true, repeat: 1 }, 2.10);
-      tl.fromTo(R("#s04-ol2"), { opacity: 0, y: 20, filter: "blur(12px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "expo.out" }, 1.85);
-      tl.fromTo(RA("#s04-h3 .s04-w"), { opacity: 0, y: 24, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.1, ease: "expo.out", stagger: 0.08 }, 3.43);
-      tl.to([R("#s04-h1"), R("#s04-h2"), R("#s04-o0"), R("#s04-o1"), R("#s04-o2"), R("#s04-ol0"), R("#s04-ol1"), R("#s04-ol2"), R("#s04-h3"), R("#s04-svg")], { opacity: 0, y: -40, filter: "blur(18px)", duration: 0.85, ease: "power2.in", stagger: 0.04 }, 5.0);
+      tl.fromTo(A, { attr: { "stroke-dasharray": AL + " " + AL, "stroke-dashoffset": AL } }, { attr: { "stroke-dashoffset": 0 }, duration: 2.2, ease: S.ease.glide }, 0.5);
+      S.pop(tl, R("#s04-o0"), 0.33, { from: 0.3, response: 0.6, damping: 0.78 });
+      tl.fromTo(R("#s04-o0"), { filter: "blur(16px)" }, { filter: "blur(0px)", duration: 0.9, ease: S.ease.silk }, 0.33);
+      S.rise(tl, R("#s04-ol0"), 0.63, { y: 20, blur: 12, duration: 1.2 });
+      S.pop(tl, R("#s04-o1"), 0.81, { from: 0.3, response: 0.6, damping: 0.78 });
+      tl.fromTo(R("#s04-o1"), { filter: "blur(16px)" }, { filter: "blur(0px)", duration: 0.9, ease: S.ease.silk }, 0.81);
+      S.rise(tl, R("#s04-ol1"), 1.11, { y: 20, blur: 12, duration: 1.2 });
+      S.pop(tl, R("#s04-o2"), 1.5, { from: 0.3, response: 0.6, damping: 0.78 });
+      tl.fromTo(R("#s04-o2"), { filter: "blur(16px)" }, { filter: "blur(0px)", duration: 0.9, ease: S.ease.silk }, 1.5);
+      S.rise(tl, R("#s04-ol2"), 1.8, { y: 20, blur: 12, duration: 1.2 });
+      S.life(tl, [R("#s04-o0"), R("#s04-o1"), R("#s04-o2")], 2.2, 6.4, { y: 12, x: 3, rotate: 0.8, scale: 0.01, period: 4.5, seed: 9 });
+      S.rise(tl, RA("#s04-h1 .s04-w"), 2.27, { y: 34, blur: 14, stagger: 0.1, duration: 1.5 });
+      S.rise(tl, S.split(R("#s04-h2")), 2.85, { y: 36, blur: 16, stagger: 0.035, duration: 1.6, from: "start", max: 0.7 });
+      S.rise(tl, RA("#s04-h3 .s04-w"), 3.43, { y: 24, blur: 12, stagger: 0.07, duration: 1.1 });
+      S.leave(tl, [R("#s04-h1"), R("#s04-h2"), R("#s04-o0"), R("#s04-o1"), R("#s04-o2"), R("#s04-ol0"), R("#s04-ol1"), R("#s04-ol2"), R("#s04-h3"), R("#s04-svg")], 5.60, { y: -44, blur: 18, duration: 0.75, ease: S.ease.accel });
 
       tl.to({}, { duration: 6.4 }, 0);
       window.__timelines["04-nature"] = tl;

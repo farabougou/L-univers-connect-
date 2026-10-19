@@ -24,25 +24,46 @@
     .s08-glow { position: absolute; border-radius: 50%; background: radial-gradient(closest-side, rgba(212,175,55,0.38), rgba(212,175,55,0.08) 55%, rgba(212,175,55,0)); }
     .s08-word { position: absolute; left: 0; right: 0; text-align: center; font-family: "Cormorant"; font-weight: 500; color: #F5E6D3; white-space: nowrap; line-height: 1; }
     .s08-word span { display: inline-block; }
+    .s08-bk { position: absolute; border-radius: 50%; }
+    .s08-gold { --st-glow: rgba(212,175,55,0.45); }
 
-
-    #s08-orb { left: 90px; top: 380px; width: 900px; height: 700px; }
 
   </style>
   <div id="root" data-composition-id="08-logo" data-start="0" data-duration="3.9" data-width="1080" data-height="1920">
     <div id="s08-clip" class="clip" data-start="0" data-duration="3.9" data-track-index="0" style="position:absolute; inset:0"></div>
-    <canvas class="s08-cv" id="s08-v" width="1080" height="1920"></canvas>
-    <div class="s08-glow" id="s08-orb"></div>
+    <div class="st-stage">
+    <div class="st-layer" id="s08-Lbg">
+      <canvas class="s08-cv" id="s08-v" width="1080" height="1920"></canvas>
+      <div class="s08-glow" id="s08-orb" style="left:90px; top:380px; width:900px; height:700px"></div>
+    </div>
+    <div class="st-layer" id="s08-Lmid">
+    </div>
+    <div class="st-layer" id="s08-Lfg">
+      <i class="s08-bk" style="left:203px; top:1811px; width:54px; height:54px; background: radial-gradient(circle, rgba(212,175,55,0.52), rgba(212,175,55,0) 70%)"></i>
+      <i class="s08-bk" style="left:227px; top:1878px; width:63px; height:63px; background: radial-gradient(circle, rgba(212,175,55,0.50), rgba(212,175,55,0) 70%)"></i>
+      <i class="s08-bk" style="left:903px; top:205px; width:66px; height:66px; background: radial-gradient(circle, rgba(212,175,55,0.33), rgba(212,175,55,0) 70%)"></i>
+      <i class="s08-bk" style="left:413px; top:1700px; width:82px; height:82px; background: radial-gradient(circle, rgba(212,175,55,0.35), rgba(212,175,55,0) 70%)"></i>
+      <i class="s08-bk" style="left:1090px; top:156px; width:108px; height:108px; background: radial-gradient(circle, rgba(245,230,211,0.43), rgba(245,230,211,0) 70%)"></i>
+      <i class="s08-bk" style="left:333px; top:1312px; width:95px; height:95px; background: radial-gradient(circle, rgba(245,230,211,0.50), rgba(245,230,211,0) 70%)"></i>
+      <i class="s08-bk" style="left:615px; top:302px; width:47px; height:47px; background: radial-gradient(circle, rgba(212,175,55,0.58), rgba(212,175,55,0) 70%)"></i>
+      <i class="s08-bk" style="left:165px; top:1781px; width:104px; height:104px; background: radial-gradient(circle, rgba(245,230,211,0.52), rgba(245,230,211,0) 70%)"></i>
+      <i class="s08-bk" style="left:97px; top:1446px; width:51px; height:51px; background: radial-gradient(circle, rgba(245,230,211,0.51), rgba(245,230,211,0) 70%)"></i>
+      <i class="s08-bk" style="left:1042px; top:1592px; width:95px; height:95px; background: radial-gradient(circle, rgba(212,175,55,0.38), rgba(212,175,55,0) 70%)"></i>
+    </div>
+    </div>
+    <div class="st-layer" id="s08-Ltxt">
     <div class="s08-word" id="s08-nm" style="top:560px; font-size:190px"><span id="s08-nm0" style="margin: 0 0.12em">N</span><span id="s08-nm1" style="margin: 0 0.12em">E</span><span id="s08-nm2" style="margin: 0 0.12em">S</span><span id="s08-nm3" style="margin: 0 0.12em">S</span><span id="s08-nm4" style="margin: 0 0.12em">A</span></div>
     <div class="s08-a s08-c s08-cap" id="s08-p" style="top:780px; font-size:30px; letter-spacing:0.9em; padding-left:0.9em">Paris</div>
-    <div class="s08-a s08-c s08-i" id="s08-t" style="top:930px; font-size:96px; color:#D4AF37">Révélez votre éclat.</div>
+    <div class="s08-a s08-c s08-i st-glow s08-gold" id="s08-t" style="top:930px; font-size:96px; color:#D4AF37">Révélez votre éclat.</div>
     <div class="s08-line" id="s08-ln" style="left:390px; top:1090px; width:300px"></div>
     <div class="s08-a s08-c s08-cap" id="s08-w" style="top:1140px; color:#F5E6D3; font-size:34px; letter-spacing:0.16em; text-transform:none">nessaparisbeauty.com</div>
     <div class="s08-a s08-c s08-cap" id="s08-k" style="top:1215px; font-size:24px">Soins visage &amp; corps</div>
+    </div>
 
   </div>
   <script>
     (function () {
+      const S = STUDIO;
       const tl = gsap.timeline({ paused: true });
       const R = (s) => document.querySelector('[data-composition-id="08-logo"] ' + s);
       const RA = (s) => document.querySelectorAll('[data-composition-id="08-logo"] ' + s);
@@ -50,17 +71,15 @@
       const __p = { t: 0 };
       tl.fromTo(__p, { t: 0 }, { t: 3.9, duration: 3.9, ease: "none", onUpdate: () => { __r0(__p.t); } }, 0);
       __r0(__p.t);
-      tl.fromTo(R("#s08-orb"), { scale: 0.2, opacity: 0 }, { scale: 1, opacity: 1, duration: 1.8, ease: "expo.out" }, 0.0);
-      tl.fromTo(R("#s08-nm0"), { opacity: 0, x: -100, filter: "blur(22px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 2.2, ease: "expo.out" }, 0.34);
-      tl.fromTo(R("#s08-nm1"), { opacity: 0, x: -50, filter: "blur(22px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 2.2, ease: "expo.out" }, 0.22);
-      tl.fromTo(R("#s08-nm2"), { opacity: 0, x: 0, filter: "blur(22px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 2.2, ease: "expo.out" }, 0.10);
-      tl.fromTo(R("#s08-nm3"), { opacity: 0, x: 50, filter: "blur(22px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 2.2, ease: "expo.out" }, 0.22);
-      tl.fromTo(R("#s08-nm4"), { opacity: 0, x: 100, filter: "blur(22px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 2.2, ease: "expo.out" }, 0.34);
-      tl.fromTo(R("#s08-p"), { opacity: 0, y: 0 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 0.75);
-      tl.fromTo(R("#s08-t"), { opacity: 0, y: 40, filter: "blur(18px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.6, ease: "expo.out" }, 1.07);
-      tl.fromTo(R("#s08-ln"), { scaleX: 0, opacity: 0 }, { scaleX: 1, opacity: 1, duration: 1.2, ease: "expo.out" }, 1.45);
-      tl.fromTo(R("#s08-w"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 1.75);
-      tl.fromTo(R("#s08-k"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 2.0);
+      S.life(tl, RA(".s08-bk"), 0, 3.9, { x: 12, y: 16, rotate: 0, scale: 0.03, period: 7, seed: 5 });
+      S.camera(tl, [{ el: R("#s08-Lbg"), depth: 0.4 }, { el: R("#s08-Lmid"), depth: 1 }, { el: R("#s08-Lfg"), depth: 1.7 }, { el: R("#s08-Ltxt"), depth: 0.7, blur: false }], { start: 0, end: 3.9, dof: { k: 9, max: 12 }, drift: { x: 4, y: 4, r: 0.08, period: 9 }, keys: [{ t: 0, s: 1.08, f: 1.0 }, { t: 3.9, s: 1.0, ease: S.ease.silk }] });
+      tl.fromTo(R("#s08-orb"), { scale: 0.2, opacity: 0 }, { scale: 1, opacity: 1, duration: 1.8, ease: S.ease.silk }, 0.0);
+      S.converge(tl, [R("#s08-nm0"), R("#s08-nm1"), R("#s08-nm2"), R("#s08-nm3"), R("#s08-nm4")], 0.1, { spread: 50, blur: 22, duration: 2.2, stagger: 0.12 });
+      S.rise(tl, R("#s08-p"), 0.75, { y: 0, blur: 6, duration: 1.2 });
+      S.rise(tl, S.split(R("#s08-t"), { by: "words" }), 1.07, { y: 30, blur: 16, stagger: 0.12, duration: 1.5 });
+      tl.fromTo(R("#s08-ln"), { scaleX: 0, opacity: 0 }, { scaleX: 1, opacity: 1, duration: 1.2, ease: S.ease.silk }, 1.45);
+      S.rise(tl, R("#s08-w"), 1.75, { y: 16, blur: 8, duration: 1.3 });
+      S.rise(tl, R("#s08-k"), 2.0, { y: 16, blur: 8, duration: 1.3 });
 
       tl.to({}, { duration: 3.9 }, 0);
       window.__timelines["08-logo"] = tl;

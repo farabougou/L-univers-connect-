@@ -9,5 +9,12 @@
   "media": {
     "autoProxy": true
   },
-  "authoringSkill": "general-video"
+  "authoringSkill": "general-video",
+  "registryItems": [
+    {
+      "name": "motion-blur",
+      "type": "hyperframes:component",
+      "target": "compositions/components/motion-blur.html"
+    }
+  ]
 }
