@@ -56,6 +56,12 @@ Dans le script de la composition : `const S = STUDIO;`. Tout passe par la timeli
 - `S.pop(tl, cibles, t, { from, y, response, damping, stagger })` : arrivée sur ressort (pills, icônes, prix).
 - `S.leave(tl, cibles, t, { y, blur, duration })` : sortie courte et décalée.
 
+### Effets de texte nommés (`animate-text`)
+- Le skill `animate-text` (Pixel Point) est installé dans `.agents/skills/animate-text`. C'est un catalogue de 24 effets de texte avec leurs timings exacts : `soft-blur-in`, `typewriter`, `shared-axis-y`, `kinetic-center-build`…
+- Pour trouver un effet : `node .agents/skills/animate-text/scripts/find-spec.mjs "<idée>"`. Pour lire ses valeurs : `get-spec.mjs <id>`.
+- Le traduire avec les outils Studio (`split` + `rise` / `maskUp` / `converge` et un `S.bezier` aux valeurs de la spec), dans la timeline en pause.
+- Le dépôt d'origine ne déclare pas de licence. On s'inspire des timings, mais on ne copie jamais ses fichiers JSON dans un projet client.
+
 ## Vie continue
 `S.life(tl, éléments, début, fin, { x, y, rotate, scale, period, seed })` fait dériver chaque élément avec sa propre phase.
 - Elle écrit les propriétés CSS individuelles `translate`, `rotate` et `scale`, donc elle se cumule avec les animations GSAP sur le même élément sans les écraser.

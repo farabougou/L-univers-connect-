@@ -10,7 +10,7 @@ description: Faire monter une vidéo HyperFrames existante (ou en cours) au nive
 ## Étape 1 — Audit (avant de toucher au code)
 1. Rendre la version actuelle (ou partir du dernier rendu) et faire une planche de frames : une image toutes les 0,5 s pour les scènes rapides, et sur chaque transition.
 2. Lister les défauts par scène, avec leur timecode, en les classant selon les 12 interdits de `studio-quality`. Par exemple : « 03 · 9,2–10,4 s : titre en bloc (interdit 4), fond immobile (6), coupe sèche vers 04 (7) ».
-3. Lancer la carte d'animation : `HYPERFRAMES_SKILL_PKG_VERSION=0.8.145 HYPERFRAMES_SKILL_BOOTSTRAP_DEPS=1 node ~/.claude/skills/hyperframes-animation/scripts/animation-map.mjs videos/<projet> --out videos/<projet>/.hyperframes/anim-map`. Elle repère les temps morts, les décalages incohérents et les éléments figés.
+3. Lancer la carte d'animation : `HYPERFRAMES_SKILL_PKG_VERSION=0.8.177 HYPERFRAMES_SKILL_BOOTSTRAP_DEPS=1 node .agents/skills/hyperframes-animation/scripts/animation-map.mjs videos/<projet> --out videos/<projet>/.hyperframes/anim-map`. Elle repère les temps morts, les décalages incohérents et les éléments figés.
 4. Classer les corrections par impact : d'abord ce qui se voit le plus (rythme, transitions, texte), puis la finition.
 
 ## Étape 2 — Passes, dans cet ordre
@@ -30,7 +30,7 @@ Règles :
 - Garder le calage sur la voix : toute retouche de timing part des cues de `.src/vo.py`.
 
 ## Étape 3 — Contrôle et livraison
-1. `npx hyperframes@0.8.145 check` : 0 erreur.
+1. `npx hyperframes@0.8.177 check` : 0 erreur.
 2. Planche avant/après aux mêmes instants : `ffmpeg … hstack`, avant à gauche et après à droite. L'envoyer avec la vidéo.
 3. Rendu final en `--quality high`, ré-encodage en `-crf 19–21` et `loudnorm=I=-14`.
 4. Commit : « Polish studio : <projet> », avec la liste des passes appliquées.

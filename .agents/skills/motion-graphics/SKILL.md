@@ -1,7 +1,7 @@
 ---
 name: motion-graphics
 description: >
-  A short, design-led motion graphic where motion is the message — kinetic
+  Use when creating a short, design-led motion graphic where motion is the message — kinetic
   typography, stat count-up, chart/data-viz hit, logo sting / brand lockup,
   lower-third / callout / social overlay, animated map (highlight regions,
   connect places, zoom to a location), animated tweet / news-article /
@@ -32,7 +32,7 @@ A short design-led motion graphic. **Asset-first**: decide the asset strategy an
 | source ◇ | Bash — media-use resolve (**skip if `asset_needs` is empty**)         | `assets/` + `assets/index.md`                                    | `phases/source/guide.md`      |
 | design   | subagent — shot design around resolved assets                         | `shot-plan.json` (final: block(s) + layout + motion + positions) | `agents/director.md` (Part 2) |
 | build    | subagent — reuse-first composition                                    | `compositions/index.html`                                        | `agents/builder.md`           |
-| verify   | Bash — `lint`, `check`, proof snapshots; repair on failure            | `snapshots/contact-sheet.jpg`                                    | Step 5                        |
+| verify   | Bash — `lint`, `check`, proof snapshots; repair on failure            | `.hyperframes/artifacts/snapshots/<id>/contact-sheet.jpg`        | Step 5                        |
 | approve  | Open the preview; ask render or changes; wait for the answer          | explicit render approval                                         | Step 6                        |
 | render   | Bash — `hyperframes render` (MP4, or `--format webm/mov` for overlay) | `renders/video.mp4` or transparent overlay                       | Step 6                        |
 

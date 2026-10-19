@@ -14,10 +14,18 @@ Ce skill fixe le **niveau d'exigence**. Le contrat technique reste celui des ski
 - Toute retouche (« c'est pas top », « plus fluide », « plus pro », « plus luxe ») : appliquer aussi `studio-polish-pass`.
 - Tout recalage sur une voix off : le recalage ne doit pas casser la chorégraphie (refaire les passes 2 à 6 sur les scènes touchées).
 
+## Version de HyperFrames
+- Nouveau projet : `hyperframes@0.8.177`. C'est la version testée avec le système Studio : la démo rend à l'identique de la 0.8.145.
+- Projet existant : garder la version figée dans son `package.json`, pour qu'il se rende toujours de la même façon. Les commandes de ces skills s'écrivent avec cette version.
+- Monter un ancien projet de version :
+  1. `npx hyperframes@latest upgrade --project videos/<projet> --check` pour voir ce qui change ;
+  2. la même commande sans `--check` pour l'appliquer ;
+  3. un nouveau rendu, puis une comparaison image par image avec l'ancien rendu (`ffmpeg … -lavfi ssim`).
+
 ## Outils maison (à utiliser par défaut)
 - `videos/_studio/studio.js` + `studio.css` : système de design motion (courbes, ressorts, texte découpé, vie continue, caméra 2.5D avec profondeur de champ, grain, reflets, transitions). Copier dans `<projet>/assets/vendor/`. API et presets : skill `studio-motion-system`.
 - `videos/_studio/demo/` : démo de référence de 9 s qui utilise tout le système. Repartir de son `.src/gen.py` pour un nouveau projet.
-- Registre HyperFrames : chercher avant de construire (`npx hyperframes@0.8.145 catalog <mot>`, puis `add <nom>`). Composants validés : `motion-blur`, `vignette`, `light-sweep-pass`, `grain-overlay`, `camera-shake`, `rack-focus`, `focus-rack`, `morph-text`, `svg-mask-reveal`, `shimmer-sweep`, `push-in`, `pull-back-reveal`, `whip-pan-cut`, `organic-light-leak-overlay`, `extended-keyframe`, `drift-hold`.
+- Registre HyperFrames : chercher avant de construire (`npx hyperframes@0.8.177 catalog <mot>`, puis `add <nom>`). Composants validés : `motion-blur`, `vignette`, `light-sweep-pass`, `grain-overlay`, `camera-shake`, `rack-focus`, `focus-rack`, `morph-text`, `svg-mask-reveal`, `shimmer-sweep`, `push-in`, `pull-back-reveal`, `whip-pan-cut`, `organic-light-leak-overlay`, `extended-keyframe`, `drift-hold`.
 - Blocs « shader » (WebGL / WebGPU : `light-leak`, `cinematic-zoom`, `cross-warp-morph`, `whip-pan`, `godrays`, `mesh-gradient`…) : le conteneur cloud rend en logiciel (`WebGL unavailable`). Ne jamais les livrer sans un rendu de test réussi.
 
 ## Les 12 interdits
@@ -57,7 +65,7 @@ Chaque passe a son livrable. Le détail, les recettes et le code sont dans `refe
 - [ ] Le fond n'est jamais immobile ; chaque plan tenu plus de 2 s a un mouvement de caméra.
 - [ ] Chaque transition est motivée par une forme, un mouvement, une couleur ou un son.
 - [ ] Planche de frames vérifiée : début, milieu et fin de chaque scène, et chaque transition.
-- [ ] `npx hyperframes@0.8.145 check` passe sans erreur, et les avertissements ont été lus.
+- [ ] `npx hyperframes@0.8.177 check` passe sans erreur, et les avertissements ont été lus.
 - [ ] Son : voix intelligible, musique en dessous, pas de saturation, -14 LUFS en sortie.
 - [ ] Rien d'inventé (prix, chiffres, logos, avis) sans validation du client.
 

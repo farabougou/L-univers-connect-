@@ -1,7 +1,7 @@
 # Finition : lumière, profondeur, matière
 
 ## Flou de mouvement
-- **Composant officiel** `motion-blur` (`npx hyperframes@0.8.145 add motion-blur`) :
+- **Composant officiel** `motion-blur` (`npx hyperframes@0.8.177 add motion-blur`) :
   - coller le contenu de `compositions/components/motion-blur.html` à la fin du `<body>` de la composition ;
   - marquer l'élément qui bouge avec `data-hf-motion-blur` ;
   - réglages par défaut : obturateur à 720°, 16 échantillons.
@@ -46,5 +46,5 @@
 
 ## Étalonnage et vignette
 - `.st-vignette` sur tout film sombre.
-- Comparer des étalonnages : `npx hyperframes@0.8.145 grade-compare --for frame.png --grades '[...]'`, ou avec des LUT `.cube` (`--luts`).
+- Comparer des étalonnages : `npx hyperframes@0.8.177 grade-compare --for frame.png --grades '[...]'`, ou avec des LUT `.cube` (`--luts`).
 - Garder la même température d'image sur tous les plans : photos client chaudes → halos dorés, pas bleus.

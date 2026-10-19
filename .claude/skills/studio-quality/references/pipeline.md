@@ -10,7 +10,7 @@ Toutes les recettes utilisent `STUDIO` (`videos/_studio/studio.js`) et une seule
    - « énergique, rue, food » → `punchy`.
 3. **Palette** : fond, un seul accent, un neutre, une couleur de lumière (le halo). L'accent ne sert qu'aux mots-clés.
 4. **Typographie** : 1 police d'affichage et 1 police de texte ou mono. Graisse et taille créent la hiérarchie, pas la couleur.
-5. **Carte des temps** : beats de la musique (`npx hyperframes@0.8.145 beats`) et mots de la voix (`transcribe -m small -l fr`). Chaque scène commence sur un beat ou sur un mot.
+5. **Carte des temps** : beats de la musique (`npx hyperframes@0.8.177 beats`) et mots de la voix (`transcribe -m small -l fr`). Chaque scène commence sur un beat ou sur un mot.
 6. **Liste des plans** : pour chaque plan, le sujet, ce qu'on lit, le mouvement de caméra et la transition de sortie.
 
 ## Passe 1 — Blocking
@@ -77,10 +77,10 @@ Les recettes sont dans `transitions.md`. Pour le son :
 - sortie : `ffmpeg -af loudnorm=I=-14:TP=-1.0 -ar 48000 -c:a aac -b:a 192k`.
 
 ## Passe 7 — QA
-1. `npx hyperframes@0.8.145 check` : 0 erreur ; lire les avertissements de contraste et de débordement.
+1. `npx hyperframes@0.8.177 check` : 0 erreur ; lire les avertissements de contraste et de débordement.
 2. Planche de frames : `ffmpeg -ss T -i rendu.mp4 -frames:v 1` sur début, milieu et fin de chaque scène et sur chaque transition, assemblées avec `xstack`.
-3. Éléments héros : `npx hyperframes@0.8.145 keyframes --selector "#hero" --shot hero.png` (pelure d'oignon de la trajectoire). La courbe doit être fluide, sans saut.
-4. Chorégraphie globale : `HYPERFRAMES_SKILL_PKG_VERSION=0.8.145 HYPERFRAMES_SKILL_BOOTSTRAP_DEPS=1 node ~/.claude/skills/hyperframes-animation/scripts/animation-map.mjs <projet> --out <projet>/.hyperframes/anim-map`. Chercher les temps morts et les staggers incohérents.
+3. Éléments héros : `npx hyperframes@0.8.177 keyframes --selector "#hero" --shot hero.png` (pelure d'oignon de la trajectoire). La courbe doit être fluide, sans saut.
+4. Chorégraphie globale : `HYPERFRAMES_SKILL_PKG_VERSION=0.8.177 HYPERFRAMES_SKILL_BOOTSTRAP_DEPS=1 node .agents/skills/hyperframes-animation/scripts/animation-map.mjs <projet> --out <projet>/.hyperframes/anim-map`. Chercher les temps morts et les staggers incohérents.
 5. Rendus d'itération en `--quality draft` ; rendu final en `--quality high`, puis ré-encodage en `-crf 19–21` pour l'envoi.
 6. Images par seconde :
    - 30 i/s par défaut pour les réseaux ;
