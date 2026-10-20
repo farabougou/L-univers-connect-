@@ -1,0 +1,1060 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="assets/vendor/gsap.min.js"></script>
+    <script src="assets/vendor/studio.js"></script>
+    <link rel="stylesheet" href="assets/vendor/studio.css" />
+    <style>
+      @font-face { font-family: "Archivo Black"; src: url("assets/fonts/archivo-black-latin-400-normal.woff2") format("woff2"); }
+      @font-face { font-family: "Instrument Serif"; font-style: italic; src: url("assets/fonts/instrument-serif-latin-400-italic.woff2") format("woff2"); }
+      @font-face { font-family: "Instrument Serif"; font-style: normal; src: url("assets/fonts/instrument-serif-latin-400-normal.woff2") format("woff2"); }
+      @font-face { font-family: "Inter"; font-weight: 600; src: url("assets/fonts/inter-latin-600-normal.woff2") format("woff2"); }
+      @font-face { font-family: "Inter"; font-weight: 800; src: url("assets/fonts/inter-latin-800-normal.woff2") format("woff2"); }
+      @font-face { font-family: "Plex Mono"; font-weight: 500; src: url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #0A090B; }
+      #root { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: #0A090B; font-family: "Inter", sans-serif; }
+      #glow { position: absolute; left: -260px; top: 900px; width: 1600px; height: 1300px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,79,31,0.30), rgba(255,79,31,0.08) 55%, rgba(255,79,31,0)); }
+      .pill { position: absolute; left: 56px; top: 318px; height: 82px; padding: 0 34px; border-radius: 41px; background: #F3EBDD; display: flex; align-items: center; gap: 16px; font: 800 34px "Inter"; color: #111; }
+      .pill i { width: 18px; height: 18px; border-radius: 9px; background: #FF4F1F; }
+      .me { position: absolute; right: 56px; top: 308px; width: 420px; height: 102px; border-radius: 24px; background: #F3EBDD; display: flex; align-items: center; gap: 18px; padding: 0 20px; }
+      .me b { width: 66px; height: 66px; border-radius: 33px; background: #FF4F1F; color: #fff; font: 400 34px "Archivo Black"; display: flex; align-items: center; justify-content: center; }
+      .me div { display: flex; flex-direction: column; gap: 2px; }
+      .me strong { font: 800 32px "Inter"; color: #111; }
+      .me span { font: 600 23px "Inter"; color: #5F5A54; }
+      #card { position: absolute; left: 40px; top: 500px; width: 1000px; height: 563px; border-radius: 30px; overflow: hidden; box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 0 90px rgba(255,79,31,0.32), 0 40px 90px rgba(0,0,0,0.6); }
+      #stage { position: absolute; left: 0; top: 0; width: 1600px; height: 900px; transform: scale(0.625); transform-origin: 0 0; overflow: hidden; background: #141414; }
+      .kick { position: absolute; left: 60px; top: 1150px; font: 500 28px "Plex Mono"; letter-spacing: 0.2em; color: #FF4F1F; white-space: nowrap; }
+      .hl { position: absolute; left: 56px; font: 400 104px/1 "Archivo Black"; color: #F3EBDD; letter-spacing: -0.02em; white-space: nowrap; }
+      .hl em { font: italic 400 118px/1 "Instrument Serif"; color: #FF4F1F; letter-spacing: 0; }
+      #hl3 { color: #141414; }
+      #box { position: absolute; left: 44px; top: 1418px; width: 772px; height: 118px; background: #FF4F1F; border-radius: 8px; transform-origin: 0 50%; }
+      .sub { position: absolute; left: 60px; top: 1580px; font: 500 24px "Plex Mono"; letter-spacing: 0.14em; color: #8E877E; white-space: nowrap; }
+      /* — showreel (repère 1600×900) — */
+      .sec { position: absolute; inset: 0; visibility: hidden; opacity: 0; overflow: hidden; }
+      .mono { font: 500 18px "Plex Mono"; letter-spacing: 0.14em; white-space: nowrap; }
+      #s0 { background: #EFEAE0; color: #141414; }
+      #s0 h2 { position: absolute; left: 92px; top: 92px; font: italic 400 76px/1 "Instrument Serif"; }
+      #s0 .note { position: absolute; right: 92px; top: 128px; }
+      .row { position: absolute; left: 92px; right: 92px; height: 40px; }
+      .row .lab { position: absolute; left: 0; top: 10px; font: 500 18px "Plex Mono"; letter-spacing: 0.14em; color: #3A3732; }
+      .row .trk { position: absolute; left: 330px; right: 0; top: 19px; height: 2px; background: repeating-linear-gradient(90deg, rgba(20,20,20,0.35) 0 2px, transparent 2px 40px); }
+      .dot { position: absolute; left: 316px; top: 6px; width: 28px; height: 28px; border-radius: 14px; }
+      .ab { position: absolute; top: 212px; font: 500 18px "Plex Mono"; color: #3A3732; }
+      #s1 { background: #2340FF; color: #fff; }
+      #s1 svg { position: absolute; left: 0; top: 0; }
+      .cross { position: absolute; background: rgba(255,255,255,0.22); }
+      #s2 { background: #101012; color: #fff; }
+      #s3 { background: #FF4F1F; color: #141414; }
+      .ad { position: absolute; top: 96px; width: 382px; height: 680px; border-radius: 18px; overflow: hidden; background: #000; box-shadow: 0 30px 60px rgba(0,0,0,0.45); }
+      .vid { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; }
+      .adl { position: absolute; top: 792px; width: 382px; display: flex; justify-content: space-between; align-items: baseline; }
+      .adl em { font: italic 400 36px "Instrument Serif"; }
+      .adl span { font: 500 14px "Plex Mono"; letter-spacing: 0.14em; opacity: 0.75; }
+      #s4, #s5 { background: #0B0B0D; }
+      #s4 canvas, #s5 canvas { position: absolute; left: 0; top: 0; }
+      .wbg { position: absolute; inset: 0; visibility: hidden; display: flex; align-items: center; justify-content: center; }
+      .word { font: 400 232px/1 "Archivo Black"; letter-spacing: -0.03em; white-space: nowrap; }
+      #s7 { background: #FF4F1F; color: #141414; }
+      #mark { position: absolute; left: 230px; top: 300px; overflow: visible; }
+      #mark line { stroke: #141414; stroke-width: 30; stroke-linecap: round; }
+      #nm { position: absolute; left: 430px; top: 292px; font: 400 196px/1 "Archivo Black"; letter-spacing: -0.03em; white-space: nowrap; }
+      #nm span { display: inline-block; }
+      #md { position: absolute; left: 438px; top: 500px; font: italic 400 96px/1 "Instrument Serif"; white-space: nowrap; }
+      #rule { position: absolute; left: 200px; right: 200px; top: 660px; height: 2px; background: #141414; transform-origin: 0 50%; }
+      #fine { position: absolute; left: 200px; right: 200px; top: 684px; display: flex; justify-content: space-between; font: 500 15px "Plex Mono"; letter-spacing: 0.14em; }
+      /* habillage technique */
+      #hud { position: absolute; inset: 0; color: #141414; pointer-events: none; }
+      .cor { position: absolute; width: 30px; height: 30px; border-color: currentColor; border-style: solid; }
+      #hud .tl { position: absolute; left: 70px; top: 40px; }
+      #hud .tr { position: absolute; right: 70px; top: 40px; }
+      #hud .tr span { position: absolute; right: 0; top: 0; opacity: 0; }
+      #hud .bl { position: absolute; left: 70px; bottom: 40px; }
+      #hud .br { position: absolute; right: 70px; bottom: 40px; display: flex; gap: 14px; align-items: center; }
+      #bars { display: flex; gap: 5px; }
+      #bars i { width: 14px; height: 14px; border: 2px solid currentColor; }
+      #beat { width: 12px; height: 12px; border-radius: 6px; background: currentColor; }
+      #prog { position: absolute; left: 0; bottom: 0; width: 1600px; height: 4px; background: currentColor; transform-origin: 0 50%; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="17.4" data-width="1080" data-height="1920" data-fps="60">
+      <div id="frame" class="clip" data-start="0" data-duration="17.4" data-track-index="0" style="position:absolute; inset:0">
+        <div id="glow"></div>
+        <div class="pill" id="pill"><i></i>Showreel · Motion design</div>
+        <div class="me" id="me"><b>M</b><div><strong>Mohamed</strong><span>Motion design · Bamako</span></div></div>
+        <div id="card"><div id="stage">
+          <div class="sec" id="s0"><h2>Six façons d'aller de A à B.</h2><div class="mono note">MÊME DISTANCE · MÊME DURÉE (1,2 S)</div>
+            <div class="ab" style="left:420px">A</div><div class="ab" style="right:92px">B</div>
+          <div class="row" style="top:250px"><span class="lab">LINÉAIRE</span><i class="trk"></i><b class="dot" id="d0" data-hf-motion-blur='{"samplesPerFrame": 8}' style="background:#9B958C"></b></div>
+          <div class="row" style="top:346px"><span class="lab">EASE-IN</span><i class="trk"></i><b class="dot" id="d1" data-hf-motion-blur='{"samplesPerFrame": 8}' style="background:#FF4F1F"></b></div>
+          <div class="row" style="top:442px"><span class="lab">EASE-OUT</span><i class="trk"></i><b class="dot" id="d2" data-hf-motion-blur='{"samplesPerFrame": 8}' style="background:#FF4F1F"></b></div>
+          <div class="row" style="top:538px"><span class="lab">SILK</span><i class="trk"></i><b class="dot" id="d3" data-hf-motion-blur='{"samplesPerFrame": 8}' style="background:#FF4F1F"></b></div>
+          <div class="row" style="top:634px"><span class="lab">OVERSHOOT</span><i class="trk"></i><b class="dot" id="d4" data-hf-motion-blur='{"samplesPerFrame": 8}' style="background:#FF4F1F"></b></div>
+          <div class="row" style="top:730px"><span class="lab">RESSORT</span><i class="trk"></i><b class="dot" id="d5" data-hf-motion-blur='{"samplesPerFrame": 8}' style="background:#2340FF"></b></div>
+          </div>
+          <div class="sec" id="s1"><div class="cross" style="left:800px; top:120px; width:1px; height:660px"></div><div class="cross" style="left:200px; top:450px; width:1200px; height:1px"></div>
+            <svg width="1600" height="900"><g transform="translate(800 450)"><path id="echo" fill="none" stroke="#FF4F1F" stroke-width="3" opacity="0.8"/><path id="shape" fill="#F4F1EA"/></g><g id="ring"></g></svg>
+            <div class="mono" style="position:absolute; left:200px; top:480px">MORPH <span id="mlab">CERCLE</span></div>
+            <div class="mono" style="position:absolute; right:200px; top:480px">ROT <span id="mrot">0.0</span>° · RESSORT ζ=0.42</div>
+          </div>
+          <div class="sec" id="s2">
+        <div class="ad" id="ad0" style="left:177px"><video id="v0" class="clip vid" src="assets/clips/nessa.mp4" data-start="4.6" data-duration="2.0" data-track-index="3" muted playsinline></video></div>
+        <div class="adl" id="al0" style="left:177px"><em>Nessa Paris</em><span>BEAUTÉ</span></div>
+        <div class="ad" id="ad1" style="left:609px"><video id="v1" class="clip vid" src="assets/clips/sensexpress.mp4" data-start="4.6" data-duration="2.0" data-track-index="4" muted playsinline></video></div>
+        <div class="adl" id="al1" style="left:609px"><em>SensExpress</em><span>PARFUM D'AMBIANCE</span></div>
+        <div class="ad" id="ad2" style="left:1041px"><video id="v2" class="clip vid" src="assets/clips/cassia.mp4" data-start="4.6" data-duration="2.0" data-track-index="5" muted playsinline></video></div>
+        <div class="adl" id="al2" style="left:1041px"><em>Cassia Dressing</em><span>MODE</span></div>
+          </div>
+          <div class="sec" id="s3">
+        <div class="ad" id="ad3" style="left:177px"><video id="v3" class="clip vid" src="assets/clips/founerou.mp4" data-start="6.6" data-duration="2.0" data-track-index="3" muted playsinline></video></div>
+        <div class="adl" id="al3" style="left:177px"><em>Founerou Grill's</em><span>RESTAURANT</span></div>
+        <div class="ad" id="ad4" style="left:609px"><video id="v4" class="clip vid" src="assets/clips/gimso.mp4" data-start="6.6" data-duration="2.0" data-track-index="4" muted playsinline></video></div>
+        <div class="adl" id="al4" style="left:609px"><em>GimSo</em><span>PUB TIKTOK</span></div>
+        <div class="ad" id="ad5" style="left:1041px"><video id="v5" class="clip vid" src="assets/clips/skprint.mp4" data-start="6.6" data-duration="2.0" data-track-index="5" muted playsinline></video></div>
+        <div class="adl" id="al5" style="left:1041px"><em>SK Print</em><span>IMPRESSION</span></div>
+          </div>
+          <div class="sec" id="s4"><canvas id="tru" width="1600" height="900"></canvas></div>
+          <div class="sec" id="s5"><canvas id="pts" width="1600" height="900"></canvas><div class="mono" style="position:absolute; left:200px; top:780px; color:#fff">POINTS 900 · <span id="plab">SPHÈRE</span></div></div>
+          <div class="sec" id="s6">
+        <div class="wbg" id="wb0" style="background:#FF4F1F"><div class="word" id="w0" data-hf-motion-blur='{"samplesPerFrame": 8}' style="color:#141414">FLUIDE.</div></div>
+        <div class="wbg" id="wb1" style="background:#FFFFFF"><div class="word" id="w1" data-hf-motion-blur='{"samplesPerFrame": 8}' style="color:#2340FF">PRÉCIS.</div></div>
+        <div class="wbg" id="wb2" style="background:#D7FF3A"><div class="word" id="w2" data-hf-motion-blur='{"samplesPerFrame": 8}' style="color:#141414">JAMAIS</div></div>
+        <div class="wbg" id="wb3" style="background:#141414"><div class="word" id="w3" data-hf-motion-blur='{"samplesPerFrame": 8}' style="color:#FFFFFF">LINÉAIRE<i style="color:#FF4F1F">.</i></div></div>
+          </div>
+          <div class="sec" id="s7"><svg id="mark" width="200" height="200" viewBox="0 0 200 200"><g id="mk" transform="translate(100 100)"><line x1="0" y1="0" x2="91.1" y2="12.8"/><line x1="0" y1="0" x2="56.1" y2="54.2"/><line x1="0" y1="0" x2="16.7" y2="94.5"/><line x1="0" y1="0" x2="-36.8" y2="75.5"/><line x1="0" y1="0" x2="-79.5" y2="42.3"/><line x1="0" y1="0" x2="-79.2" y2="-11.1"/><line x1="0" y1="0" x2="-68.3" y2="-66.0"/><line x1="0" y1="0" x2="-13.2" y2="-74.8"/><line x1="0" y1="0" x2="38.6" y2="-79.1"/><line x1="0" y1="0" x2="75.9" y2="-40.4"/></g></svg>
+            <div id="nm"><span id="n0">M</span><span id="n1">O</span><span id="n2">H</span><span id="n3">A</span><span id="n4">M</span><span id="n5">E</span><span id="n6">D</span></div><div id="md">motion designer</div><div id="rule"></div>
+            <div id="fine"><span>SHOWREEL 2026</span><span>16 SECONDES</span><span>CHAQUE IMAGE CRÉÉE EN CODE</span><span>DISPONIBLE POUR VOS PROJETS</span></div>
+          </div>
+          <div id="hud">
+            <div class="cor" style="left:24px; top:24px; border-width:3px 0 0 3px"></div><div class="cor" style="right:24px; top:24px; border-width:3px 3px 0 0"></div>
+            <div class="cor" style="left:24px; bottom:24px; border-width:0 0 3px 3px"></div><div class="cor" style="right:24px; bottom:24px; border-width:0 3px 3px 0"></div>
+            <div class="mono tl"><b>MOHAMED</b>&nbsp;&nbsp;&nbsp;MOTION REEL — 2026</div>
+            <div class="mono tr"><span id="sl0">01 — EASING</span><span id="sl1">02 — MORPHING</span><span id="sl2">03 — PUBS · LUXE</span><span id="sl3">04 — PUBS · STREET</span><span id="sl4">05 — MOTIFS</span><span id="sl5">06 — 3D</span><span id="sl6">07 — TYPO</span><span id="sl7">08 — FIN</span></div>
+            <div class="mono bl"><span id="tc">00:00:00:00</span>&nbsp;&nbsp;&nbsp;60 FPS</div>
+            <div class="mono br">120 BPM <span id="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span> <span id="barn">BAR 1/8</span> <span id="beat"></span></div>
+            <div id="prog"></div>
+          </div>
+        </div></div>
+        <div class="kick" id="kick">× 100 % CRÉÉ EN CODE · SANS AFTER EFFECTS ×</div>
+        <div class="hl" id="hl1" style="top:1196px">Votre marque</div>
+        <div class="hl" id="hl2" style="top:1302px"><span class="st-mask"><span class="st-word">mérite</span></span> <span class="st-mask"><em class="st-word">une vraie</em></span></div>
+        <div id="box"></div>
+        <div class="hl" id="hl3" style="top:1426px">&nbsp;pub vidéo.</div>
+        <div class="sub" id="sub">SITES · APPLICATIONS · PUBS VIDÉO — BAMAKO</div>
+        <canvas id="grain" class="st-grain" width="1080" height="1920" style="opacity:0.05"></canvas>
+      </div>
+      <audio id="music" src="assets/music.wav" data-start="0.6" data-duration="16.8" data-track-index="10" data-volume="0.9"></audio>
+      <audio id="sfx0" src="assets/whoosh.wav" data-start="0.05" data-duration="0.55" data-track-index="11" data-volume="0.45"></audio>
+      <audio id="sfx1" src="assets/impact.wav" data-start="14.6" data-duration="1.2" data-track-index="12" data-volume="0.5"></audio>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      (function () {
+        const S = STUDIO, $ = (q) => document.querySelector(q), $$ = (q) => Array.from(document.querySelectorAll(q));
+        const tl = gsap.timeline({ paused: true });
+        const R0 = 0.6, BAR = 2.0, BEAT = BAR / 4, at = (bar, beat = 0) => R0 + bar * BAR + beat * BEAT;
+
+        // ── cadre : la carte se pose, les pastilles et l'accroche arrivent, puis tout respire ──
+        tl.fromTo("#glow", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 1.4, ease: S.ease.silk }, 0);
+        S.pop(tl, ["#pill", "#me"], 0.08, { from: 0.7, y: -20, damping: 0.75, response: 0.45, stagger: 0.1 });
+        tl.fromTo("#card", { scale: 0.88, opacity: 0, filter: "blur(18px)" }, { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.8, ease: S.ease.silk }, 0);
+        S.rise(tl, S.split($("#kick")), 0.3, { y: 14, blur: 6, stagger: 0.012, duration: 0.6, max: 0.4 });
+        S.maskUp(tl, S.split($("#hl1"), { by: "words", mask: true }), 0.42, { duration: 0.8 });
+        S.maskUp(tl, $$("#hl2 .st-word"), 0.55, { duration: 0.8 });
+        tl.fromTo("#box", { scaleX: 0 }, { scaleX: 1, duration: 0.55, ease: S.ease.swift }, 0.72);
+        S.maskUp(tl, S.split($("#hl3"), { by: "words", mask: true }), 0.82, { duration: 0.7 });
+        tl.fromTo("#sub", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: S.ease.breath }, 1.1);
+        S.life(tl, [$("#card")], 1.0, 17.4, { x: 0, y: 4, rotate: 0.15, scale: 0.003, period: 6, seed: 3 });
+        S.life(tl, [$("#pill"), $("#me")], 1.0, 17.4, { x: 2, y: 3, rotate: 0.3, scale: 0.004, period: 5, seed: 7 });
+        tl.fromTo("#glow", { scale: 1 }, { scale: 1.06, duration: 2.0, ease: S.ease.breath, yoyo: true, repeat: 7, immediateRender: false }, 1.4);
+
+        // ── sections : coupe franche sur chaque mesure ──
+        for (let i = 0; i < 8; i++) {
+          tl.set("#s" + i, { autoAlpha: 1 }, at(i));
+          if (i < 7) tl.set("#s" + i, { autoAlpha: 0 }, at(i + 1));
+          tl.set("#sl" + i, { opacity: 1 }, at(i)); if (i < 7) tl.set("#sl" + i, { opacity: 0 }, at(i + 1));
+        }
+        [[0, "#141414"], [1, "#FFFFFF"], [2, "#FFFFFF"], [3, "#141414"], [4, "#FFFFFF"], [5, "#FFFFFF"], [6, "#141414"], [6.25, "#2340FF"], [6.5, "#141414"], [6.75, "#FFFFFF"], [7, "#141414"]].forEach(([b, c]) => tl.set("#hud", { color: c }, at(Math.floor(b), (b % 1) * 4)));
+
+        // habillage : timecode, mesures, temps, barre de progression (fonction pure du temps)
+        const tc = $("#tc"), sq = $$("#bars i"), barn = $("#barn"), beat = $("#beat"), prog = $("#prog");
+        const hud = (t) => {
+          const lt = Math.max(0, t - R0), f = Math.floor(lt * 60 + 1e-6), b = Math.min(7, Math.floor(lt / BAR));
+          tc.textContent = "00:00:" + String(Math.floor(f / 60)).padStart(2, "0") + ":" + String(f % 60).padStart(2, "0");
+          sq.forEach((e, i) => { e.style.background = i <= b ? "currentColor" : "transparent"; });
+          barn.textContent = "BAR " + (b + 1) + "/8";
+          beat.style.opacity = (lt % BEAT) < 0.12 ? 1 : 0.25;
+          prog.style.transform = "scaleX(" + Math.min(1, lt / (8 * BAR)).toFixed(4) + ")";
+        };
+
+        // ── 01 · easing : six courbes, même distance, même durée ──
+        const spr = S.spring({ response: 0.5, damping: 0.42 }).ease;
+        ["none", "power2.in", "power2.out", "silk", "overshoot", "spring"].forEach((e, i) => tl.fromTo("#d" + i, { x: 0 }, { x: 1044, duration: 1.2, ease: e === "spring" ? spr : (S.ease[e] || e) }, at(0, 0.6)));
+        S.rise(tl, $("#s0 h2"), at(0), { y: 20, blur: 8, duration: 0.6 });
+
+        // ── 02 · morphing : cercle → triangle → étoile → carré sur les temps, ressort et écho ──
+        const SH = {"circle": [[0.0, -190.0], [16.6, -189.3], [33.0, -187.1], [49.2, -183.5], [65.0, -178.5], [80.3, -172.2], [95.0, -164.5], [109.0, -155.6], [122.1, -145.5], [134.4, -134.4], [145.5, -122.1], [155.6, -109.0], [164.5, -95.0], [172.2, -80.3], [178.5, -65.0], [183.5, -49.2], [187.1, -33.0], [189.3, -16.6], [190.0, 0.0], [189.3, 16.6], [187.1, 33.0], [183.5, 49.2], [178.5, 65.0], [172.2, 80.3], [164.5, 95.0], [155.6, 109.0], [145.5, 122.1], [134.4, 134.4], [122.1, 145.5], [109.0, 155.6], [95.0, 164.5], [80.3, 172.2], [65.0, 178.5], [49.2, 183.5], [33.0, 187.1], [16.6, 189.3], [0.0, 190.0], [-16.6, 189.3], [-33.0, 187.1], [-49.2, 183.5], [-65.0, 178.5], [-80.3, 172.2], [-95.0, 164.5], [-109.0, 155.6], [-122.1, 145.5], [-134.4, 134.4], [-145.5, 122.1], [-155.6, 109.0], [-164.5, 95.0], [-172.2, 80.3], [-178.5, 65.0], [-183.5, 49.2], [-187.1, 33.0], [-189.3, 16.6], [-190.0, 0.0], [-189.3, -16.6], [-187.1, -33.0], [-183.5, -49.2], [-178.5, -65.0], [-172.2, -80.3], [-164.5, -95.0], [-155.6, -109.0], [-145.5, -122.1], [-134.4, -134.4], [-122.1, -145.5], [-109.0, -155.6], [-95.0, -164.5], [-80.3, -172.2], [-65.0, -178.5], [-49.2, -183.5], [-33.0, -187.1], [-16.6, -189.3]], "triangle": [[0.0, -235.0], [17.9, -204.1], [31.7, -180.0], [43.0, -160.5], [52.5, -144.1], [60.6, -130.0], [67.8, -117.5], [74.4, -106.2], [80.4, -95.8], [86.0, -86.0], [91.4, -76.7], [96.6, -67.7], [101.8, -58.8], [106.9, -49.8], [112.1, -40.8], [117.5, -31.5], [123.1, -21.7], [129.2, -11.3], [135.7, 0.0], [142.9, 12.5], [151.1, 26.6], [160.5, 43.0], [171.8, 62.5], [185.7, 86.6], [203.5, 117.5], [167.8, 117.5], [140.0, 117.5], [117.5, 117.5], [98.6, 117.5], [82.3, 117.5], [67.8, 117.5], [54.8, 117.5], [42.8, 117.5], [31.5, 117.5], [20.7, 117.5], [10.3, 117.5], [0.0, 117.5], [-10.3, 117.5], [-20.7, 117.5], [-31.5, 117.5], [-42.8, 117.5], [-54.8, 117.5], [-67.8, 117.5], [-82.3, 117.5], [-98.6, 117.5], [-117.5, 117.5], [-140.0, 117.5], [-167.8, 117.5], [-203.5, 117.5], [-185.7, 86.6], [-171.8, 62.5], [-160.5, 43.0], [-151.1, 26.6], [-142.9, 12.5], [-135.7, 0.0], [-129.2, -11.3], [-123.1, -21.7], [-117.5, -31.5], [-112.1, -40.8], [-106.9, -49.8], [-101.8, -58.7], [-96.6, -67.7], [-91.4, -76.7], [-86.0, -86.0], [-80.4, -95.8], [-74.4, -106.2], [-67.8, -117.5], [-60.6, -130.0], [-52.5, -144.1], [-43.0, -160.5], [-31.7, -180.0], [-17.9, -204.1]], "star": [[0.0, -235.0], [16.7, -191.2], [28.3, -160.7], [37.0, -138.0], [43.8, -120.3], [49.3, -105.7], [54.0, -93.5], [58.0, -82.9], [67.5, -80.5], [79.8, -79.8], [94.3, -79.1], [111.7, -78.2], [133.6, -77.1], [162.3, -75.7], [202.4, -73.7], [199.8, -53.5], [170.8, -30.1], [149.7, -13.1], [133.4, 0.0], [120.4, 10.5], [109.5, 19.3], [100.1, 26.8], [96.2, 35.0], [99.3, 46.3], [102.8, 59.3], [107.0, 74.9], [112.2, 94.1], [118.9, 118.9], [128.0, 152.5], [128.9, 184.1], [92.6, 160.4], [67.0, 143.7], [47.7, 131.1], [32.5, 121.2], [19.9, 113.0], [9.3, 106.1], [0.0, 100.0], [-9.3, 106.1], [-19.9, 113.0], [-32.5, 121.2], [-47.7, 131.1], [-67.0, 143.7], [-92.6, 160.4], [-128.9, 184.1], [-128.0, 152.5], [-118.9, 118.9], [-112.2, 94.1], [-107.0, 74.9], [-102.8, 59.3], [-99.3, 46.3], [-96.2, 35.0], [-100.1, 26.8], [-109.5, 19.3], [-120.4, 10.5], [-133.4, 0.0], [-149.7, -13.1], [-170.8, -30.1], [-199.8, -53.5], [-202.4, -73.7], [-162.3, -75.7], [-133.6, -77.1], [-111.7, -78.2], [-94.3, -79.1], [-79.8, -79.8], [-67.5, -80.5], [-58.0, -82.9], [-54.0, -93.5], [-49.3, -105.7], [-43.8, -120.3], [-37.0, -138.0], [-28.3, -160.7], [-16.7, -191.2]], "square": [[0.0, -152.0], [13.3, -152.0], [26.8, -152.0], [40.7, -152.0], [55.3, -152.0], [70.9, -152.0], [87.8, -152.0], [106.5, -152.0], [127.6, -152.0], [152.0, -152.0], [152.0, -127.6], [152.0, -106.5], [152.0, -87.8], [152.0, -70.9], [152.0, -55.3], [152.0, -40.7], [152.0, -26.8], [152.0, -13.3], [152.0, 0.0], [152.0, 13.3], [152.0, 26.8], [152.0, 40.7], [152.0, 55.3], [152.0, 70.9], [152.0, 87.8], [152.0, 106.5], [152.0, 127.6], [152.0, 152.0], [127.6, 152.0], [106.5, 152.0], [87.8, 152.0], [70.9, 152.0], [55.3, 152.0], [40.7, 152.0], [26.8, 152.0], [13.3, 152.0], [0.0, 152.0], [-13.3, 152.0], [-26.8, 152.0], [-40.7, 152.0], [-55.3, 152.0], [-70.9, 152.0], [-87.8, 152.0], [-106.5, 152.0], [-127.6, 152.0], [-152.0, 152.0], [-152.0, 127.6], [-152.0, 106.5], [-152.0, 87.8], [-152.0, 70.9], [-152.0, 55.3], [-152.0, 40.7], [-152.0, 26.8], [-152.0, 13.3], [-152.0, 0.0], [-152.0, -13.3], [-152.0, -26.8], [-152.0, -40.7], [-152.0, -55.3], [-152.0, -70.9], [-152.0, -87.8], [-152.0, -106.5], [-152.0, -127.6], [-152.0, -152.0], [-127.6, -152.0], [-106.5, -152.0], [-87.8, -152.0], [-70.9, -152.0], [-55.3, -152.0], [-40.7, -152.0], [-26.8, -152.0], [-13.3, -152.0]]}, SEQ = [["circle", "CERCLE"], ["triangle", "CERCLE → TRIANGLE"], ["star", "TRIANGLE → ÉTOILE"], ["square", "ÉTOILE → CARRÉ"]];
+        const mE = S.spring({ response: 0.42, damping: 0.42 }).ease, MD = 0.45, shapePath = $("#shape"), echo = $("#echo");
+        const ring = $("#ring"), NS = "http://www.w3.org/2000/svg", tris = [];
+        for (let k = 0; k < 10; k++) { const p = document.createElementNS(NS, "polygon"); p.setAttribute("points", "0,-15 13,10 -13,10"); p.setAttribute("fill", "#F4F1EA"); ring.appendChild(p); tris.push(p); }
+        const morphAt = (lt) => {
+          let i = 0; while (i < 3 && lt >= (i + 1) * BEAT) i++;
+          if (i === 0) return { pts: SH.circle, rot: 0, lab: SEQ[0][1] };
+          const a = SH[SEQ[i - 1][0]], b = SH[SEQ[i][0]], p = mE(Math.min(1, Math.max(0, (lt - i * BEAT) / MD)));
+          return { pts: a.map((q, k) => [q[0] + (b[k][0] - q[0]) * p, q[1] + (b[k][1] - q[1]) * p]), rot: 72 * (i - 1) + 72 * p, lab: SEQ[i][1] };
+        };
+        const d = (m, s) => "M" + m.pts.map((q) => { const r = m.rot * Math.PI / 180, c = Math.cos(r), n = Math.sin(r); return ((q[0] * c - q[1] * n) * s).toFixed(1) + " " + ((q[0] * n + q[1] * c) * s).toFixed(1); }).join("L") + "Z";
+        const morph = (t) => {
+          const lt = t - at(1); if (lt < -0.01 || lt > BAR + 0.01) return;
+          const pop = S.ease.overshoot(Math.min(1, Math.max(0, lt / 0.35)));
+          const m = morphAt(lt), e = morphAt(Math.max(0, lt - 0.08));
+          shapePath.setAttribute("d", d(m, pop)); echo.setAttribute("d", d(e, pop * 1.04));
+          $("#mlab").textContent = m.lab; $("#mrot").textContent = m.rot.toFixed(1);
+          tris.forEach((p, k) => { const a = lt * 0.9 + k * Math.PI / 5, x = 800 + Math.cos(a) * 340 * pop, y = 450 + Math.sin(a) * 300 * pop; p.setAttribute("transform", "translate(" + x.toFixed(1) + " " + y.toFixed(1) + ") rotate(" + (a * 57.3 + 90).toFixed(1) + ")"); });
+        };
+
+        // ── 03 / 04 · vos pubs : trois vidéos qui montent sur ressort ──
+        [[2, [0, 1, 2]], [3, [3, 4, 5]]].forEach(([bar, ids]) => {
+          S.pop(tl, ids.map((i) => "#ad" + i), at(bar), { from: 0.9, y: 140, damping: 0.72, response: 0.5, stagger: 0.07 });
+          S.rise(tl, ids.map((i) => "#al" + i), at(bar, 0.6), { y: 16, blur: 6, stagger: 0.07, duration: 0.6 });
+        });
+
+        // ── 05 · motifs : tuiles de Truchet qui pivotent en vagues depuis le centre ──
+        const tru = $("#tru").getContext("2d"), hash = (a, b, c) => { let h = (a * 73856093) ^ (b * 19349663) ^ (c * 83492791); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+        const truchet = (t) => {
+          const lt = t - at(4); if (lt < -0.01 || lt > BAR + 0.01) return;
+          tru.fillStyle = "#0B0B0D"; tru.fillRect(0, 0, 1600, 900); tru.lineWidth = 18; tru.lineCap = "butt";
+          for (let gy = 1; gy < 8; gy++) for (let gx = 0; gx < 16; gx++) {  // rangées du haut et du bas laissées noires : l'habillage reste lisible
+            const dist = Math.hypot(gx - 7.5, gy - 4) * 0.045; let rot = (hash(gx, gy, 1) < 0.5 ? 0 : 1) * Math.PI / 2;
+            for (let w = 0; w < 4; w++) rot += S.ease.silk(Math.min(1, Math.max(0, (lt - w * BEAT - dist) / 0.32))) * Math.PI / 2;
+            tru.save(); tru.translate(gx * 100 + 50, gy * 100 + 50); tru.rotate(rot);
+            tru.strokeStyle = lt > 2 * BEAT && hash(gx, gy, 2) < 0.3 ? "#FF4F1F" : "#F4F1EA";
+            tru.beginPath(); tru.arc(-50, -50, 50, 0, Math.PI / 2); tru.stroke();
+            tru.beginPath(); tru.arc(50, 50, 50, Math.PI, Math.PI * 1.5); tru.stroke(); tru.restore();
+          }
+        };
+
+        // ── 06 · 3D : 900 points, sphère qui devient un tore, en rotation ──
+        const pts = $("#pts").getContext("2d"), NP = 900, SPH = [], TOR = [];
+        for (let k = 0; k < NP; k++) {
+          const y = 1 - 2 * (k + 0.5) / NP, r = Math.sqrt(1 - y * y), ph = k * 2.399963; SPH.push([r * Math.cos(ph), y, r * Math.sin(ph)]);
+          const u = 2 * Math.PI * ((k * 0.618034) % 1), v = 2 * Math.PI * k / NP * 23; TOR.push([(0.78 + 0.3 * Math.cos(v)) * Math.cos(u), 0.3 * Math.sin(v), (0.78 + 0.3 * Math.cos(v)) * Math.sin(u)]);
+        }
+        const cloud = (t) => {
+          const lt = t - at(5); if (lt < -0.01 || lt > BAR + 0.01) return;
+          pts.fillStyle = "#0B0B0D"; pts.fillRect(0, 0, 1600, 900);
+          const m = S.ease.glide(Math.min(1, Math.max(0, (lt - 0.8) / 0.7))), grow = S.ease.silk(Math.min(1, lt / 0.6));
+          const ry = lt * 1.2, rx = 0.45 + 0.25 * m, cy = Math.cos(ry), sy = Math.sin(ry), cx = Math.cos(rx), sx = Math.sin(rx);
+          $("#plab").textContent = m < 0.5 ? "SPHÈRE" : "SPHÈRE → TORE";
+          for (let k = 0; k < NP; k++) {
+            const a = SPH[k], b = TOR[k]; let x = (a[0] + (b[0] - a[0]) * m) * grow, y = (a[1] + (b[1] - a[1]) * m) * grow, z = (a[2] + (b[2] - a[2]) * m) * grow;
+            const x1 = x * cy + z * sy, z1 = -x * sy + z * cy, y1 = y * cx - z1 * sx, z2 = y * sx + z1 * cx;
+            const f = 620 / (z2 + 2.8), px = 800 + x1 * f * 1.3, py = 430 + y1 * f * 1.3, s = Math.max(1.2, 4.2 * f / 300);
+            pts.globalAlpha = 0.35 + 0.65 * (1 - (z2 + 1) / 2); pts.fillStyle = k % 9 === 0 ? "#FF4F1F" : "#F4F1EA";
+            pts.beginPath(); pts.arc(px, py, s, 0, 6.2832); pts.fill();
+          }
+          pts.globalAlpha = 1;
+        };
+
+        // ── 07 · typo : un mot par temps, qui claque (écrasement + flou de mouvement) ──
+        for (let i = 0; i < 4; i++) {
+          tl.set("#wb" + i, { visibility: "visible" }, at(6, i)); if (i < 3) tl.set("#wb" + i, { visibility: "hidden" }, at(6, i + 1));
+          tl.fromTo("#w" + i, { scaleX: 1.35, scaleY: 0.25, y: 80, opacity: 0 }, { scaleX: 1, scaleY: 1, y: 0, opacity: 1, duration: 0.28, ease: S.ease.overshoot }, at(6, i));
+        }
+
+        // ── 08 · fin : l'étoile tourne et se pose, MOHAMED se décode lettre par lettre ──
+        const mk = S.spring({ response: 0.5, damping: 0.6 });
+        tl.fromTo("#mark", { scale: 0, rotation: -160 }, { scale: 1, rotation: 0, duration: mk.duration, ease: mk.ease }, at(7));
+        tl.fromTo("#mark", { rotation: 0 }, { rotation: 40, duration: BAR - 0.6, ease: "none", immediateRender: false }, at(7, 1.2));
+        const GL = "ABCDEFGHJKLMNPRSTUVWXYZ#%&*", letters = $$("#nm span"), FINAL = "MOHAMED";
+        const decode = (t) => {
+          letters.forEach((el, i) => {
+            const s0 = at(7, 0.5) + i * 0.05, f = Math.floor(t * 60);
+            if (t < s0) { el.style.opacity = 0; return; }
+            el.style.opacity = 1; el.textContent = t < s0 + 0.28 ? GL[Math.floor(hash(f, i, 7) * GL.length)] : FINAL[i];
+          });
+        };
+        S.rise(tl, "#md", at(7, 1.4), { y: 24, blur: 10, duration: 0.8 });
+        tl.fromTo("#rule", { scaleX: 0 }, { scaleX: 1, duration: 0.7, ease: S.ease.swift }, at(7, 1.8));
+        S.rise(tl, $$("#fine span"), at(7, 2.0), { y: 10, blur: 4, stagger: 0.06, duration: 0.5 });
+
+        // un seul pilote pour tout ce qui se dessine image par image (seek-safe)
+        S.drive(tl, 0, 17.4, [hud, morph, truchet, cloud, decode, S.grain($("#grain"), { fps: 60, seed: 5 })]);
+
+        tl.to({}, { duration: 17.4 }, 0);
+        window.__timelines["main"] = tl;
+      })();
+    </script>
+<!--
+  Motion Blur — After Effects-style shutter-based motion blur.
+
+  Usage: paste this snippet into your composition, then put
+  data-hf-motion-blur on any element your GSAP timeline animates.
+  Nothing else to call, and no order to get wrong.
+
+  How it works — the same model After Effects uses for the layer Motion Blur
+  switch (temporal supersampling), synthesised inside the page because the
+  renderer captures one instant per frame with no shutter:
+
+    1. After every timeline update (each rendered frame), the snippet seeks
+       the timeline to `samplesPerFrame` sub-frame times spread evenly across
+       the shutter window, reads each target's RESOLVED `transform` at every
+       sample, then restores the frame time. Seeks run with events suppressed,
+       so no user callbacks fire and the DOM ends up exactly where the frame
+       left it. Reading the resolved matrix rather than a list of named GSAP
+       properties is what makes every driver work: translation, scale,
+       rotation, 3D rotation and skew arrive in the same one value, and a
+       driver nobody thought of needs no change here.
+    2. One copy of the element per sample is stacked in an isolated group,
+       each carrying its sample's transform, each at 1/N opacity with
+       `mix-blend-mode: plus-lighter`. plus-lighter adds premultiplied colour,
+       so N+1 copies at 1/N sum to the average — the shutter integral. The
+       isolation is load-bearing: without a transparent backdrop of its own
+       the first copy would add onto the page and blow a light background out
+       to white. Result: a smear along the actual trajectory whose extent is
+       speed × shutter time, with no decaying one-sided trail. The tails —
+       where fewer copies overlap — step down evenly at 1/N per copy; wherever
+       the element travels less than its own size the copies pile up past 1
+       and clamp, so the middle of the smear is solid rather than a plateau.
+    3. The element itself paints over that group, sharp and at full opacity.
+       No single copy ever exceeds 1/N, so a moving edge resolves as a
+       staircase of ghosts behind a solid frame-time instance. The group
+       carries the element's own opacity, so a beat that moves and fades at
+       once fades its smear with it. With `sharp: 0` the element is hidden
+       while it moves instead, leaving only the shutter average.
+    4. When every sampled transform collapses to the current one (element at
+       rest), the group is hidden so the element renders sharp.
+
+  Shutter window (AE semantics, per frame at time t, frame interval 1/fps):
+    shutterTime = shutterAngle / 360 / fps
+    windowStart = t + shutterPhase / 360 / fps
+    copy k      = windowStart + k / N × shutterTime,   k = 0..N  (N+1 copies)
+  N counts sub-intervals, so both ends of the window carry a copy.
+  Defaults (shutterAngle 720, shutterPhase -360) integrate [t - 1/fps, t + 1/fps]:
+  a solid moving at 2000 px/s at 30 fps smears 133 px, centred on its position.
+
+  These defaults are measured, not assumed. On a 1920×1080 / 30 fps After Effects
+  export of translating text, the outermost duplicate on the trailing side sits
+  exactly at the previous frame's position and the outermost leading duplicate
+  exactly at the next frame's, with 8 evenly spaced duplicates in between on each
+  side (window = 2 frames = 720°, phase -360°, 16 sub-intervals). Reading the ghost
+  staircase across a stroke gives steps of 0.063 ± 0.002 of the sharp text
+  intensity — a flat 1/16 per duplicate, with no taper toward the window edges
+  (triangle weighting scores 1.6 dB worse against the same export). The sharp
+  instance on top is what keeps total ink above the unblurred frame's.
+
+  Requirements:
+  - Elements must be animated via `transform` (GSAP x/y/scale/rotation and the
+    3D and skew properties all qualify), not left/top. Transformed ancestors
+    are still not compensated.
+  - A 3D beat reads its perspective off the element's parent and applies it per
+    copy, so the vanishing point follows each copy's transform-origin rather
+    than the parent's perspective-origin. Those agree when the element is
+    centred in its perspective parent, which is how a 3D beat is authored.
+  - A copy drops the element's id but keeps its classes, because a class rule is
+    the only thing that can still style a copy's pseudo-elements. So a selector
+    written against a class matches the copies too: after attaching, address the
+    element by id or by reference, never by a class a copy also carries.
+  - A target is blurred once: a second attachMotionBlur() call naming the same
+    element leaves the first call's copies in place rather than stacking a
+    second set over them.
+  - Cost is N + 1 copies of the target's whole subtree, restyled on attach and
+    on resize and re-transformed every frame. Point it at the element that
+    moves, not at a container holding it.
+  - The host must render the timeline for the blur to update — HyperFrames
+    seeks every frame. A fresh paused timeline that is never seeked shows no
+    blur on its first frame.
+  - A declarative target is attached as soon as its composition's timeline is
+    registered, and the registry is also polled for about eight seconds after
+    load, so a composition that mounts asynchronously is picked up too. A
+    target added to the document after that window needs attachMotionBlur().
+  - GSAP must be loaded before this snippet executes.
+
+  API:
+    data-hf-motion-blur on the element that moves. Empty for defaults, else a
+      JSON OBJECT of the options below (double quotes on the keys). The
+      element's timeline is the one registered under the data-composition-id of
+      its nearest ancestor carrying that attribute, so a sub-composition's
+      targets follow that sub-composition.
+      Three things warn rather than rendering sharp in silence: a target no
+      composition ever registers a timeline for, a value that is not JSON, and
+      a value that parses but is not an object (null, a number, a string).
+      A second timeline registered under the same key also warns: the copies
+      keep following the first one.
+    attachMotionBlur(selector, timeline, options?) — the imperative form, for a
+      target built after the polling window. Call it AFTER defining all tweens,
+      so the timeline's final duration is known.
+      Either form blurs a given element once, whichever names it first.
+
+  Options:
+    shutterAngle     — degrees of the frame interval the shutter is open
+                       (default 720 = two frames, as measured off the AE
+                       reference; 360 = one frame, 0 disables)
+    shutterPhase     — degrees offset of the window start from the frame
+                       time (default -360 = centred on the frame, one frame
+                       back, like the AE reference)
+    samplesPerFrame  — sub-intervals of the shutter window, so N+1 duplicates
+                       each at 1/N opacity (default 16, max 64)
+    fps              — composition frame rate (default: the data-fps of the
+                       target's own composition root, else 30). Pass it
+                       explicitly when rendering with an fps override
+                       (`hyperframes render --fps`).
+    sharp            — 1 (default) paints the element itself, crisp, over its
+                       smear; 0 hides it while it moves, leaving only the
+                       shutter average: a soft blur with no frame-time edge.
+                       It hides through a marker attribute, never the
+                       element's own visibility, so autoAlpha still works
+                       (an inline visibility !important on it wins).
+
+  A key that is none of the five, or a value that is not a finite number, is
+  refused by name rather than read as defaults. Both halves matter: a
+  non-numeric angle hides the smear, and a non-numeric phase seeks every copy
+  to NaN, which parks them at the timeline's start.
+-->
+
+<script>
+  (function () {
+    /* SHUTTER_SNIPPET_START */
+    if (!window._hfMbUid) window._hfMbUid = 0;
+    if (!window._hfMbAttached) window._hfMbAttached = new WeakSet();
+    if (!window._hfMbSkipped) window._hfMbSkipped = new WeakSet();
+    if (!window._hfMbProxies) window._hfMbProxies = new WeakSet();
+    if (!window._hfMbTimeline) window._hfMbTimeline = new WeakMap();
+    if (!window._hfMbWarned) window._hfMbWarned = new WeakSet();
+
+    // The declarative form. A copy of a target must not carry it, or the copy is swept
+    // as a target of its own; the group's own marker is `data-hf-motion-blur-group`.
+    var SWEEP_ATTR = "data-hf-motion-blur";
+    // About eight seconds. Long enough for an asynchronously mounted sub-composition, short
+    // enough that a page with a genuine mistake in it reports before anyone stops watching.
+    var POLL_MS = 32;
+    var POLL_TICKS = 250;
+    var SWEEP_SELECTOR = "[" + SWEEP_ATTR + "]";
+    var OPTION_KEYS = ["shutterAngle", "shutterPhase", "samplesPerFrame", "fps", "sharp"];
+
+    // A copy is a deep clone, so the attribute rides along on the root AND on every marked
+    // descendant. Any one left behind is swept as a target of its own, which clones again.
+    var COPY_STRIP = [SWEEP_ATTR, "data-composition-id", "data-fps"];
+
+    // sharp 0 hides a moving target through this marker rather than its own visibility,
+    // which the author's timeline (autoAlpha) may be writing too.
+    var HIDE_ATTR = "data-hf-motion-blur-hiding";
+
+    function installHideRule() {
+      if (document.getElementById("hf-mb-hide")) return;
+      var rule = document.createElement("style");
+      rule.id = "hf-mb-hide";
+      rule.textContent = "[" + HIDE_ATTR + "]{visibility:hidden!important}";
+      (document.head || document.documentElement).appendChild(rule);
+    }
+
+    function stripAttrs(el) {
+      for (var a = 0; a < COPY_STRIP.length; a++) el.removeAttribute(COPY_STRIP[a]);
+    }
+
+    function stripCopyAttrs(root) {
+      stripAttrs(root);
+      var inner = root.querySelectorAll("[" + COPY_STRIP.join("],[") + "]");
+      for (var i = 0; i < inner.length; i++) stripAttrs(inner[i]);
+    }
+
+    // Shutter length is measured in frames, so the snippet must know the composition
+    // frame rate: explicit option, else the target's OWN root, else the first root in
+    // the document, else 30. The target's root is what makes two compositions on one
+    // page read their own data-fps instead of sharing the first one written.
+    function resolveFps(optionFps, target) {
+      var explicit = Number(optionFps);
+      if (explicit > 0) return explicit;
+
+      var scoped = target ? target.closest("[data-composition-id][data-fps]") : null;
+      var root = scoped || document.querySelector("[data-composition-id][data-fps]");
+      var rootFps = root ? Number(root.getAttribute("data-fps")) : 0;
+      if (rootFps > 0) return rootFps;
+
+      return 30;
+    }
+
+    function numOption(value, fallback) {
+      return value !== undefined ? Number(value) : fallback;
+    }
+
+    // A resolved `transform` is either "none", a 2D matrix(a,b,c,d,e,f) or a 3D
+    // matrix3d of 16. Splitting the numbers into the linear part and the
+    // translation is what lets the deadband below use a pixel tolerance on the
+    // one and an angle/ratio tolerance on the other.
+    function parseTransform(value) {
+      if (!value || value === "none") return { linear: [1, 0, 0, 1], translate: [0, 0, 0] };
+      var nums = value
+        .slice(value.indexOf("(") + 1, -1)
+        .split(",")
+        .map(parseFloat);
+      if (nums.length === 16) {
+        return {
+          linear: [
+            nums[0],
+            nums[1],
+            nums[2],
+            nums[4],
+            nums[5],
+            nums[6],
+            nums[8],
+            nums[9],
+            nums[10],
+            nums[3],
+            nums[7],
+            nums[11],
+            nums[15],
+          ],
+          translate: [nums[12], nums[13], nums[14]],
+        };
+      }
+      return {
+        linear: [nums[0], nums[1], nums[2], nums[3]],
+        translate: [nums[4], nums[5], 0],
+      };
+    }
+
+    // Deadband: half a pixel of travel, a thousandth of a unit of linear change,
+    // about 0.06 degrees or 0.1% of scale. Below it the average is the source.
+    // The 2D and 3D forms have different arities, so a change of form counts as
+    // movement rather than being compared component by component.
+    function differs(a, b) {
+      if (a.linear.length !== b.linear.length) return true;
+      for (var i = 0; i < a.linear.length; i++) {
+        if (Math.abs(a.linear[i] - b.linear[i]) > 0.001) return true;
+      }
+      for (var j = 0; j < 3; j++) {
+        if (Math.abs(a.translate[j] - b.translate[j]) > 0.5) return true;
+      }
+      return false;
+    }
+
+    window.attachMotionBlur = function (selector, tl, opts) {
+      opts = opts || {};
+      var shutterAngle = numOption(opts.shutterAngle, 720);
+      var shutterPhase = numOption(opts.shutterPhase, -360);
+      var requestedSamples = numOption(opts.samplesPerFrame, 16);
+      var sharp = opts.sharp !== 0;
+      if (!sharp) installHideRule();
+      var samples = Number.isFinite(requestedSamples)
+        ? Math.max(2, Math.min(64, Math.round(requestedSamples)))
+        : 16;
+      var items = Array.isArray(selector) ? selector : [selector];
+      var targets = items.reduce(function (acc, s) {
+        if (typeof s === "string") {
+          document.querySelectorAll(s).forEach(function (el) {
+            acc.push(el);
+          });
+        } else if (s instanceof Element) {
+          acc.push(s);
+        }
+        return acc;
+      }, []);
+
+      // `samples` counts sub-intervals of the shutter window, so there is one copy at
+      // every interval boundary — both ends of the window included — and each carries
+      // 1/samples of the source. That is what the reference export shows: the outermost
+      // copy sits exactly one frame away from the frame time, not half a step short.
+      var copies = samples + 1;
+      var alpha = String(1 / samples);
+
+      // A copy loses the `#id` rules that styled the original, so it carries its resolved style inline
+      // (enumerated: Chrome returns "" for a computed cssText). Visibility is not frozen: the root
+      // follows the group each frame, so a target hidden at attach still smears.
+      function resolvedStyles(source, out, parentVisibility) {
+        var cs = getComputedStyle(source);
+        var text = "";
+        for (var i = 0; i < cs.length; i++) {
+          var value = cs.getPropertyValue(cs[i]);
+          var inherited = parentVisibility === undefined || value === parentVisibility;
+          if (cs[i] === "visibility" && inherited) continue;
+          text += cs[i] + ":" + value + ";";
+        }
+        // A copy is a still of one instant. Left live, an inherited transition or
+        // keyframe animation would carry it somewhere the timeline never sampled.
+        out.push(text + "transition:none;animation:none;");
+        for (var c = 0; c < source.children.length; c++) {
+          resolvedStyles(source.children[c], out, cs.getPropertyValue("visibility"));
+        }
+        return out;
+      }
+
+      function paintResolvedStyles(copy, styles, cursor) {
+        copy.style.cssText = styles[cursor.i++];
+        for (var c = 0; c < copy.children.length; c++) {
+          paintResolvedStyles(copy.children[c], styles, cursor);
+        }
+      }
+
+      // Perspective applies to a parent's children only, and a copy is a grandchild.
+      // Sharing the parent's 3D context would need preserve-3d on the group, which
+      // mix-blend-mode flattens, so each copy carries the perspective itself. See the
+      // header for what that does to the vanishing point.
+      function parentPerspective(el) {
+        var value = el.parentNode ? getComputedStyle(el.parentNode).perspective : "none";
+        return value && value !== "none" ? "perspective(" + value + ") " : "";
+      }
+
+      function attachOne(el) {
+        var group = document.createElement("div");
+        group.setAttribute("data-hf-motion-blur-group", "hf-mb-" + window._hfMbUid++);
+        group.style.cssText =
+          "position:absolute;left:0;top:0;width:0;height:0;isolation:isolate;pointer-events:none;display:none;";
+
+        var clones = [];
+        for (var k = 0; k < copies; k++) {
+          var clone = el.cloneNode(true);
+          clone.removeAttribute("id");
+          stripCopyAttrs(clone);
+          clones.push(clone);
+          group.appendChild(clone);
+        }
+        var s = {
+          el: el,
+          group: group,
+          clones: clones,
+          samples: [],
+          perspective: "",
+          watch: null,
+        };
+
+        // Resolved styles and the parent's perspective are px once read, so a
+        // container-relative element needs them again when its box changes. Per frame
+        // that would walk the whole subtree once per copy; on resize it costs nothing
+        // on a fixed-size render and keeps a live preview honest.
+        function snapshot() {
+          // Read a target hidden right now (an autoAlpha entrance) as shown, so a descendant
+          // hidden by its own rule still differs from it; the inline value goes back exactly.
+          var hidden = getComputedStyle(el).visibility !== "visible";
+          var inline = el.style.getPropertyValue("visibility");
+          var priority = el.style.getPropertyPriority("visibility");
+          if (hidden) el.style.setProperty("visibility", "visible", "important");
+          var styles;
+          try {
+            styles = resolvedStyles(el, []);
+          } finally {
+            if (hidden) el.style.setProperty("visibility", inline, priority);
+          }
+          s.perspective = parentPerspective(el);
+          for (var c = 0; c < clones.length; c++) {
+            paintResolvedStyles(clones[c], styles, { i: 0 });
+            clones[c].style.position = "absolute";
+            clones[c].style.margin = "0";
+            clones[c].style.opacity = alpha;
+            clones[c].style.mixBlendMode = "plus-lighter";
+          }
+        }
+
+        // Snapshot BEFORE the group enters the page, so a throw in the style walk leaves
+        // nothing behind: the record the rollback needs does not exist until it returns.
+        snapshot();
+        el.parentNode.insertBefore(group, el);
+        if (typeof ResizeObserver === "function") {
+          s.watch = new ResizeObserver(snapshot);
+          s.watch.observe(el);
+        }
+        return s;
+      }
+
+      var state = [];
+      // Every element this call marked. A throw inside `attachOne` never returns its
+      // record, so `state` alone cannot give the marks back.
+      var claimed = [];
+      try {
+        for (var q = 0; q < targets.length; q++) {
+          var candidate = targets[q];
+          // One group per element, whether a second call names it or one call names it
+          // twice: a second set of copies over the first would double the ink. Marked
+          // BEFORE the copies go in: inserting them runs custom-element reactions
+          // synchronously, and one that registers a timeline re-enters the write trap.
+          if (window._hfMbAttached.has(candidate)) continue;
+          window._hfMbAttached.add(candidate);
+          window._hfMbTimeline.set(candidate, tl);
+          claimed.push(candidate);
+          state.push(attachOne(candidate));
+        }
+      } catch (e) {
+        unmark(claimed);
+        discard(state);
+        throw e;
+      }
+      // Nothing to blur means nothing to seek: a tracker here would run the whole sample
+      // loop every frame over an empty set.
+      if (state.length === 0) return;
+
+      // One seek loop drives the whole call, so the window is ONE length, and it belongs
+      // to the composition of an element this call actually attached.
+      var fps = resolveFps(opts.fps, state[0].el);
+      for (var d = 1; d < state.length; d++) {
+        if (resolveFps(opts.fps, state[d].el) === fps) continue;
+        var line = "one call cannot blur compositions at different frame rates; using ";
+        console.warn("[motion-blur] " + line + fps, state[d].el);
+        break;
+      }
+
+      function readTransform(el) {
+        var cs = getComputedStyle(el);
+        return {
+          css: cs.transform,
+          origin: cs.transformOrigin,
+          opacity: cs.opacity,
+          visibility: cs.visibility,
+          parsed: parseTransform(cs.transform),
+        };
+      }
+
+      var scheduled = false;
+
+      function applyShutter() {
+        var shutterTime = shutterAngle / 360 / fps;
+        if (!(shutterTime > 0)) {
+          state.forEach(function (s) {
+            s.group.style.display = "none";
+          });
+          return;
+        }
+
+        var t0 = tl.time();
+        var duration = tl.duration();
+        var windowStart = t0 + shutterPhase / 360 / fps;
+
+        // Sample the real trajectory: seek to each sub-frame time with events
+        // suppressed (so no tween callbacks, including this tracker's, fire),
+        // read the resolved transform, then restore the frame time.
+        try {
+          for (var k = 0; k < copies; k++) {
+            var tk = windowStart + (k / samples) * shutterTime;
+            tl.time(Math.min(duration, Math.max(0, tk)), true);
+            state.forEach(function (s) {
+              s.samples[k] = readTransform(s.el);
+            });
+          }
+        } finally {
+          tl.time(t0, true);
+        }
+
+        state.forEach(function (s) {
+          // Read the element as the timeline left it: the marker is this snippet's own.
+          if (!sharp) s.el.removeAttribute(HIDE_ATTR);
+          var current = readTransform(s.el);
+          var moved = false;
+          for (var i = 0; i < copies; i++) {
+            if (differs(s.samples[i].parsed, current.parsed)) {
+              moved = true;
+              break;
+            }
+          }
+          if (!moved) {
+            s.group.style.display = "none";
+            return;
+          }
+
+          // The copies are absolutely positioned inside the group, and the group sits at
+          // the origin of the element's own containing block, so the element's offset box
+          // places them. Re-read every frame: a beat is free to move the box itself.
+          var left = s.el.offsetLeft + "px";
+          var top = s.el.offsetTop + "px";
+          var width = s.el.offsetWidth + "px";
+          var height = s.el.offsetHeight + "px";
+          for (var j = 0; j < copies; j++) {
+            var clone = s.clones[j];
+            clone.style.left = left;
+            clone.style.top = top;
+            clone.style.width = width;
+            clone.style.height = height;
+            clone.style.transformOrigin = s.samples[j].origin;
+            clone.style.transform =
+              s.perspective + (s.samples[j].css === "none" ? "" : s.samples[j].css);
+          }
+          // The copies are the element's own ink, so they carry its opacity and visibility:
+          // a beat that moves and fades at once would otherwise leave a full-strength
+          // smear behind a vanishing element. It rides the group, not the copies, whose
+          // own opacity is the 1/N shutter weight.
+          s.group.style.opacity = current.opacity;
+          // Set only where the element differs from its parent: an explicit value would
+          // outlive an ancestor that hides later, like a clip that has ended.
+          var shared = getComputedStyle(s.el.parentNode).visibility;
+          s.group.style.visibility = current.visibility === shared ? "" : current.visibility;
+          s.group.style.display = "";
+          if (!sharp) s.el.setAttribute(HIDE_ATTR, "");
+        });
+      }
+
+      // tl.eventCallback("onUpdate") is unavailable under the HyperFrames runtime proxy, so a
+      // tracker tween's onUpdate fires on every seek. Sampling is deferred to a microtask:
+      // seeking GSAP from inside its own render reads stale tween state, while the microtask
+      // runs after the seek returns and before the frame is captured or painted.
+      var _proxy = { t: 0 };
+      try {
+        tl.to(
+          _proxy,
+          {
+            t: 1,
+            duration: Math.max(tl.duration(), 0.1),
+            ease: "none",
+            onUpdate: function () {
+              if (scheduled) return;
+              scheduled = true;
+              Promise.resolve().then(function () {
+                scheduled = false;
+                applyShutter();
+              });
+            },
+          },
+          0,
+        );
+      } catch (e) {
+        unmark(claimed);
+        discard(state);
+        throw e;
+      }
+    };
+
+    // An empty attribute means defaults; anything else is a JSON options object. A value that
+    // is not an options object is skipped loudly rather than read as defaults, because a typo
+    // in it would otherwise render as a silently unblurred element.
+    function sweepOptions(el) {
+      var text = (el.getAttribute(SWEEP_ATTR) || "").trim();
+      if (text === "") return {};
+      var parsed = null;
+      try {
+        parsed = JSON.parse(text);
+      } catch (e) {
+        return refuse(el, "is not JSON: " + text);
+      }
+      // `null`, a number and a string all parse. None of them is a set of options.
+      if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+        return refuse(el, "is not a JSON object: " + text);
+      }
+      var bad = unknownKey(parsed);
+      if (bad !== null) return refuse(el, "names no such option: " + bad);
+      var wrong = nonNumber(parsed);
+      if (wrong !== null) return refuse(el, "needs a number for " + wrong);
+      if (parsed.sharp !== undefined && parsed.sharp !== 0 && parsed.sharp !== 1) {
+        return refuse(el, "needs 0 or 1 for sharp");
+      }
+      return parsed;
+    }
+
+    // A misspelled key is the likeliest typo in a JSON object, and reading it as
+    // defaults is the silent no-op this attribute exists to remove.
+    function unknownKey(parsed) {
+      for (var key in parsed) {
+        if (OPTION_KEYS.indexOf(key) < 0) return key;
+      }
+      return null;
+    }
+
+    // A key with a value the shutter cannot use is the same silent no-op as a key it does
+    // not know: a non-numeric angle hides the smear, a non-numeric phase parks every copy
+    // at the timeline's start. JSON gives real numbers, so anything else is a typo.
+    function nonNumber(parsed) {
+      for (var i = 0; i < OPTION_KEYS.length; i++) {
+        var held = parsed[OPTION_KEYS[i]];
+        if (held === undefined) continue;
+        if (typeof held !== "number" || !Number.isFinite(held)) return OPTION_KEYS[i];
+      }
+      return null;
+    }
+
+    // A throw partway through an attach leaves an element blurred by nothing, so the copies
+    // go too, along with the observer that would otherwise keep walking a detached subtree
+    // on every resize of an element nothing blurs.
+    // The mark is what a second trigger reads, so it is the first thing to give back.
+    function unmark(els) {
+      for (var i = 0; i < els.length; i++) {
+        window._hfMbAttached.delete(els[i]);
+        window._hfMbTimeline.delete(els[i]);
+      }
+    }
+
+    function discard(state) {
+      for (var i = 0; i < state.length; i++) {
+        var s = state[i];
+        if (s.watch !== null) s.watch.disconnect();
+        if (s.group.parentNode !== null) s.group.parentNode.removeChild(s.group);
+      }
+    }
+
+    function refuse(el, why) {
+      window._hfMbSkipped.add(el);
+      console.warn("[motion-blur] " + SWEEP_ATTR + " " + why, el);
+      return null;
+    }
+
+    // An element belongs to the nearest composition above it, so a sub-composition's
+    // targets follow that sub-composition's own timeline.
+    function compositionOf(el) {
+      var host = el.closest("[data-composition-id]");
+      return host ? host.getAttribute("data-composition-id") : null;
+    }
+
+    // Anything else registered on the container is somebody else's bookkeeping: a
+    // timeline is the thing this snippet can seek and extend.
+    function isTimeline(value) {
+      return !!value && typeof value.time === "function" && typeof value.to === "function";
+    }
+
+    // Attached, or skipped as unparseable. Both are terminal, so a later trigger must not
+    // report or attach the element twice.
+    function handled(el) {
+      return window._hfMbAttached.has(el) || window._hfMbSkipped.has(el);
+    }
+
+    // The timeline registered for an element's own composition, or null. Read from the
+    // registry rather than taken from whoever wrote it, so every trigger agrees.
+    function timelineFor(el) {
+      var id = compositionOf(el);
+      if (id === null) return null;
+      var registry = window.__timelines;
+      var found = registry ? registry[id] : null;
+      return isTimeline(found) ? found : null;
+    }
+
+    // A marked element whose parent is not an Element has no target above it: the parent
+    // of a root is the Document, which has no `closest`.
+    function nestedInTarget(el) {
+      var parent = el.parentNode;
+      if (parent === null || typeof parent.closest !== "function") return false;
+      return parent.closest(SWEEP_SELECTOR) !== null;
+    }
+
+    // One owner of attaching one element. Answers whether the element still needs a trigger.
+    function claim(el) {
+      var tl = timelineFor(el);
+      if (handled(el)) {
+        var owner = window._hfMbTimeline.get(el);
+        // Re-registering a key with a DIFFERENT timeline leaves the copies driven by the one
+        // nobody seeks, which renders sharp and says nothing. Report it rather than guess.
+        var changed = tl !== null && owner !== undefined && owner !== tl;
+        if (changed && !window._hfMbWarned.has(el)) {
+          window._hfMbWarned.add(el);
+          console.warn(
+            "[motion-blur] a second timeline registered for this element; the copies still follow the first",
+            el,
+          );
+        }
+        return true;
+      }
+      // Its group would be inserted into the live outer element, so the outer target's
+      // style replay would walk a subtree its cursor no longer matches.
+      if (nestedInTarget(el)) {
+        refuse(el, "cannot blur a target inside another target; blur one of them");
+        return true;
+      }
+      var opts = sweepOptions(el);
+      if (opts === null) return true;
+      if (tl === null) return false;
+      window.attachMotionBlur(el, tl, opts);
+      return true;
+    }
+
+    // Returns the elements still waiting for their composition to register a timeline.
+    // The trap below runs this INSIDE the author's registration statement, so one bad
+    // target must not abort the rest of their composition script.
+    function sweep() {
+      var pending = [];
+      document.querySelectorAll(SWEEP_SELECTOR).forEach(function (el) {
+        try {
+          if (!claim(el)) pending.push(el);
+        } catch (e) {
+          window._hfMbSkipped.add(el);
+          console.warn("[motion-blur] could not blur this element: " + e, el);
+        }
+      });
+      return pending;
+    }
+
+    // Registering a timeline is the moment the author has finished building it, so trapping
+    // the write attaches before the renderer captures a frame. A microtask would be too
+    // early: it runs before the next `<script>` tag.
+    function registrationProxy(container) {
+      var proxy = new Proxy(container, {
+        set: function (target, key, value) {
+          target[key] = value;
+          if (typeof key === "string") sweep();
+          return true;
+        },
+      });
+      window._hfMbProxies.add(proxy);
+      return proxy;
+    }
+
+    function hookRegistration() {
+      var held = window.__timelines;
+      Object.defineProperty(window, "__timelines", {
+        configurable: true,
+        enumerable: true,
+        get: function () {
+          return held;
+        },
+        set: function (value) {
+          var container = !!value && typeof value === "object";
+          var fresh = container && !window._hfMbProxies.has(value);
+          held = fresh ? registrationProxy(value) : value;
+          if (fresh) sweep();
+        },
+      });
+      // A container assigned before this snippet ran is replayed through the setter, so a
+      // timeline already registered on it is swept too.
+      if (held !== undefined) window.__timelines = held;
+    }
+
+    // The trap above cannot see every registration: the runtime owns the registry object,
+    // wraps it per sub-composition, and mounts nested compositions asynchronously. So the
+    // registry is also POLLED, which needs no cooperation from whoever writes it.
+    function poll(ticks) {
+      var pending = sweep();
+      // The WHOLE budget, every time. Stopping the first tick nothing is pending kills the
+      // poll one tick into an ordinary page, which is before a late composition arrives.
+      if (ticks > 0) {
+        setTimeout(function () {
+          poll(ticks - 1);
+        }, POLL_MS);
+        return;
+      }
+      if (pending.length === 0) return;
+      var count = pending.length + " element(s) carry " + SWEEP_ATTR;
+      console.warn(
+        "[motion-blur] " + count + ", and no composition registered a timeline for them",
+        pending,
+      );
+    }
+
+    if (!window._hfMbHooked) {
+      window._hfMbHooked = true;
+      hookRegistration();
+      poll(POLL_TICKS);
+    }
+    /* SHUTTER_SNIPPET_END */
+  })();
+</script>
+
+<!--
+  Timeline integration example:
+
+  <div id="root" data-composition-id="my-composition" data-duration="6" data-fps="30">
+    <div id="my-box" data-hf-motion-blur></div>
+    <div id="my-title" data-hf-motion-blur='{"shutterAngle": 360}'></div>
+  </div>
+
+  const tl = gsap.timeline({ paused: true });
+
+  tl.fromTo("#my-box", { x: -100 }, { x: 1700, duration: 1.2, ease: "power3.inOut" }, 0.5);
+
+  // Extend to data-duration so seeks past the last tween reach the blur callback.
+  tl.set(document.body, {}, DATA_DURATION);
+
+  // The registration below is what attaches both targets, in that order.
+  window.__timelines = window.__timelines || {};
+  window.__timelines["my-composition"] = tl;
+
+  // Only for an element created later than the polling window above:
+  attachMotionBlur("#late-box", tl, { shutterAngle: 720, samplesPerFrame: 16 });
+-->
+
+  </body>
+</html>
