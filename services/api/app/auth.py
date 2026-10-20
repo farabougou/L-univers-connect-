@@ -52,15 +52,38 @@ def decode_token(token: str) -> dict[str, Any]:
         raise ApiError(503, "AUTH_PROVIDER_UNAVAILABLE") from exc
 
     try:
-        return jwt.decode(
-            token,
-            jwks,
-            algorithms=["RS256"],
-            audience=settings.oidc_audience,
-            issuer=settings.oidc_issuer,
-        )
+        return _verify_oidc_token(token, jwks)
     except JOSEError as exc:
         raise ApiError(401, "TOKEN_INVALID") from exc
+
+
+def _verify_oidc_token(token: str, jwks: dict[str, Any]) -> dict[str, Any]:
+    return jwt.decode(
+        token,
+        jwks,
+        algorithms=["RS256"],
+        audience=settings.oidc_audience,
+        issuer=settings.oidc_issuer,
+    )
+
+
+def decode_token_with_cached_keys(token: str) -> dict[str, Any] | None:
+    """Même vérification que `decode_token`, mais uniquement avec les clés
+    déjà en cache : aucun appel réseau, aucune exception.
+
+    Réservé à la limitation de débit (app/rate_limit.py), qui s'exécute dans
+    le middleware, sur la boucle d'événements : un appel bloquant vers le
+    fournisseur OIDC (indisponible, délai dépassé) y gèlerait toutes les
+    requêtes. Renvoie None si le jeton n'est pas vérifiable (cache encore
+    vide, signature invalide, expiré) : l'appelant se rabat alors sur
+    l'adresse IP. Ne sert jamais à autoriser quoi que ce soit."""
+    keys = _jwks_cache["keys"]
+    if keys is None:
+        return None
+    try:
+        return _verify_oidc_token(token, keys)
+    except JOSEError:
+        return None
 
 
 def get_current_claims(

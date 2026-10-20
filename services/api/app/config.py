@@ -10,6 +10,18 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     database_url: str = "postgresql+psycopg://paios:paios_dev_password@localhost:5432/paios"
 
+    # Pool de connexions Postgres (app/db.py). Les routes synchrones de
+    # FastAPI s'exécutent dans un pool de fils (40 par défaut) : un pool de
+    # connexions beaucoup plus petit ferait attendre les requêtes. Valeurs par
+    # défaut prudentes (30 connexions au maximum par processus, loin des 100
+    # d'un Postgres standard) ; à ajuster par variable d'environnement.
+    db_pool_size: int = 10
+    db_max_overflow: int = 20
+    db_pool_timeout_seconds: int = 15
+    # Recycle les connexions plus anciennes que cette durée, avant qu'un
+    # proxy réseau intermédiaire ne les coupe de son côté.
+    db_pool_recycle_seconds: int = 1800
+
     # Fournisseur OpenID Connect (Keycloak, voir docs/adr/002). L'API ne fait
     # jamais confiance à un jeton sans vérifier sa signature auprès de
     # l'émetteur déclaré ici.

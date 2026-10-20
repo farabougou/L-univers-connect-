@@ -144,24 +144,42 @@ def _require_result(connection: Connection, result_id: uuid.UUID) -> dict:
     return result
 
 
-def _with_estimated_cost(connection: Connection, result: dict) -> dict:
-    """Ajoute le coût estimé (app.economics) quand un tarif est actif pour
-    le site de l'équipement — sans jamais toucher au résultat persisté."""
+def _active_tariff_for_location(
+    connection: Connection, functional_location_id: uuid.UUID
+) -> dict | None:
     site_id = connection.execute(
         text("SELECT site_id FROM functional_locations WHERE id = :id"),
-        {"id": result["functional_location_id"]},
+        {"id": functional_location_id},
     ).scalar()
-    tariff = get_active_tariff(connection, site_id) if site_id else None
-    estimated_cost = (
-        estimate_energy_cost(
-            raw_consumption=result["raw_consumption"],
-            normalized_consumption=result["normalized_consumption"],
-            tariff=tariff,
+    return get_active_tariff(connection, site_id) if site_id else None
+
+
+def _with_estimated_costs(connection: Connection, results: list[dict]) -> list[dict]:
+    """Ajoute le coût estimé (app.economics) quand un tarif est actif pour
+    le site de l'équipement — sans jamais toucher au résultat persisté.
+
+    Le tarif ne dépend que de l'équipement : il est cherché une seule fois
+    par équipement distinct, pas une fois par résultat (audit V5 du
+    20/10/2026 : une liste de N résultats déclenchait 2 x N requêtes
+    identiques)."""
+    tariffs: dict[uuid.UUID, dict | None] = {}
+    enriched = []
+    for result in results:
+        location_id = result["functional_location_id"]
+        if location_id not in tariffs:
+            tariffs[location_id] = _active_tariff_for_location(connection, location_id)
+        tariff = tariffs[location_id]
+        estimated_cost = (
+            estimate_energy_cost(
+                raw_consumption=result["raw_consumption"],
+                normalized_consumption=result["normalized_consumption"],
+                tariff=tariff,
+            )
+            if tariff
+            else None
         )
-        if tariff
-        else None
-    )
-    return {**result, "estimated_cost": estimated_cost}
+        enriched.append({**result, "estimated_cost": estimated_cost})
+    return enriched
 
 
 @router.post(
@@ -238,7 +256,7 @@ def compute_normalized_result_route(
         raise api_error(exc, exc.status) from exc
     except EnergyDataInsufficient as exc:
         raise api_error(exc, exc.status) from exc
-    return NormalizedResultOut(**_with_estimated_cost(connection, result))
+    return NormalizedResultOut(**_with_estimated_costs(connection, [result])[0])
 
 
 @router.get("/normalized-results", response_model=list[NormalizedResultOut])
@@ -248,7 +266,7 @@ def list_normalized_results_route(
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
 ) -> list[NormalizedResultOut]:
     results = list_normalized_results(connection, functional_location_id=functional_location_id)
-    return [NormalizedResultOut(**_with_estimated_cost(connection, result)) for result in results]
+    return [NormalizedResultOut(**result) for result in _with_estimated_costs(connection, results)]
 
 
 @router.get("/normalized-results/{result_id}", response_model=NormalizedResultOut)
@@ -258,7 +276,7 @@ def get_normalized_result_route(
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
 ) -> NormalizedResultOut:
     result = _require_result(connection, result_id)
-    return NormalizedResultOut(**_with_estimated_cost(connection, result))
+    return NormalizedResultOut(**_with_estimated_costs(connection, [result])[0])
 
 
 @router.get("/comparison", response_model=ComparisonOut)

@@ -1948,6 +1948,53 @@ le détail. Catalogues i18n fr/en synchronisés vers `apps/web/src/i18n` et
 `apps/mobile/src/i18n` (`node shared/i18n/sync.mjs`) ; aucun fichier
 `.ts`/`.tsx` touché par cet audit.
 
+## V5 — Durcissement et performance, 20/10/2026
+
+Décidée explicitement par Mohamed (« rends le projet plus performant, ou passe
+en V5 directement — fais tout, sans me redemander »), comme l'exigeait la
+clôture de V4. Aucune fonctionnalité métier : un audit d'architecte,
+cybersécurité et performance du code existant, puis uniquement les défauts
+**confirmés**. Même discipline que l'audit du 16/10/2026 : chaque correction
+est prouvée par un test qui échoue sur l'ancien code (contrôle négatif), et
+rien n'est déployé (le déploiement reste `DEFERRED_EXTERNAL_DEPLOYMENT`).
+
+| Lot | Constat confirmé | Décision | Preuve |
+|---|---|---|---|
+| V5-1 `apps/web` | Next.js 16.3.5 : exécution de code à distance (`next/og`, GHSA-vcvr-r3jv-pc5j) et six autres avis (empoisonnement de cache, fuite d'informations, SSRF) — le code qui sert réellement le trafic web | REFACTOR (dépendance) : `next` et `eslint-config-next` en 16.4.2, `sharp` et `source-map-js` corrigés | `npm audit --omit=dev` : 0 vulnérabilité ; `tsc`, ESLint, 198/198 tests, `next build` |
+| V5-2 `app/db.py` | Aucune vérification des connexions du pool : une connexion coupée côté Postgres devenait une erreur 500 pour la personne | REFACTOR : `pool_pre_ping`, taille/dépassement/délai/recyclage configurables (`app/config.py`) | `tests/test_db_engine.py` (4) : connexion réellement terminée par `pg_terminate_backend` puis reprise transparente ; témoin négatif sans `pre_ping` qui échoue ; contexte tenant jamais conservé entre deux transactions du pool |
+| V5-3 `app/routers/energy.py` | `GET /energy/normalized-results` : 2 x N requêtes identiques (site et tarif redemandés à chaque résultat d'un même équipement) | REFACTOR : une recherche par équipement distinct | test qui compte les requêtes SQL (4 résultats : 1 recherche au lieu de 4), échoue sur l'ancien code |
+| V5-4 `app/rate_limit.py` | Clé de limitation par adresse IP, alors que le serveur Next.js appelle l'API au nom de **toutes** les personnes connectées sans transmettre leur adresse : tous les utilisateurs de tous les clients partageaient un seul quota de 120 requêtes/minute (déni de service involontaire, un client bruyant privait les autres) | REFACTOR : clé = identité **vérifiée** (appareil ou personne), repli sur l'IP pour un jeton non vérifiable ; `POST /devices/auth` (force brute) reste par IP ; vérification des jetons par les clés déjà en cache uniquement, sans appel réseau dans le middleware | `tests/test_rate_limit.py` (4) + 1 test d'intégration `/devices/auth` ; contrôles négatifs : ancienne clé IP (3 échecs), `/devices/auth` sans clé IP (1 échec) |
+| V5-5 `apps/mobile` | `shell-quote` (injection de commande, critique) dans l'outillage de build Expo | REFACTOR ciblé : 5 mises à jour de correctif (`shell-quote`, `ws`, `postcss`, `nanoid`, `source-map-js`) | `tsc` propre, 121/121 tests ; 31 alertes → 29, plus aucune critique |
+
+**Choix volontairement prudent côté mobile** : `npm audit fix` complet
+modifiait 63 paquets d'exécution et d'outillage (dont `expo-router`,
+`react-native-screens`) sans qu'aucun test sur téléphone ne soit possible ici
+— rejeté au profit de la mise à jour ciblée du seul paquet critique.
+
+**DEFER, avec raison** :
+
+- Mobile, 29 alertes restantes (outillage Expo/Metro, jamais embarqué dans
+  l'application livrée) : leur correction exige `npm audit fix --force`, donc
+  une montée de version du SDK Expo — à traiter avec un essai sur téléphone.
+- Web, 5 alertes « high » toutes issues d'une seule dépendance de lint
+  (`braces` via `eslint-config-next`), absente du code livré : le correctif
+  exige `--force` (risque de régression du lint).
+- Limitation de débit des requêtes anonymes derrière le proxy Railway :
+  `FORWARDED_ALLOW_IPS` documenté (`infra/RAILWAY_STAGING.md`, jamais `*`),
+  à renseigner avec la plage réelle du proxy après vérification sur un
+  déploiement de l'API — non vérifiable avant (`DEFERRED_EXTERNAL_DEPLOYMENT`).
+
+**Pistes repérées mais NON vérifiées** (à auditer avant toute décision, pas à
+traiter comme des défauts) : pagination systématique des routes de liste,
+mise en cache des politiques/tarifs actifs relus à chaque requête, routes
+synchrones (fils d'exécution) face à une charge réelle mesurée.
+
+**Vérification exécutée le 20/10/2026** : 1022/1022 tests backend (1012 + 10
+nouveaux, vraie base PostgreSQL), `ruff check` propre ; web : `tsc`, ESLint,
+198/198 tests, `next build` ; mobile : `tsc`, 121/121 tests. Aucune
+migration, aucune table nouvelle (donc pas de nouveau test d'isolation), aucun
+texte visible nouveau (catalogues i18n inchangés).
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente

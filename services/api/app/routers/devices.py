@@ -43,7 +43,7 @@ from app.devices import (
 )
 from app.errors import ApiError, api_error
 from app.i18n import negotiate_locale, render
-from app.rate_limit import limiter
+from app.rate_limit import ip_rate_limit_key, limiter
 from app.schemas import EdgeMeasurementBatch, MeasurementBatchResult
 from app.telemetry import ingest_measurements
 from app.tenancy import set_tenant_context
@@ -254,7 +254,7 @@ def set_device_public_key_route(
 
 
 @router.post("/devices/auth", response_model=DeviceToken)
-@limiter.limit("10/minute")
+@limiter.limit("10/minute", key_func=ip_rate_limit_key)
 def authenticate_device_route(
     request: Request,
     body: DeviceAuthRequest,

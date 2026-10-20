@@ -729,3 +729,33 @@ def test_authentification_appareil_est_limitee_en_debit(tenant):
     limited = client.post("/devices/auth", json=body)
     assert limited.status_code == 429
     assert limited.json()["code"] == "RATE_LIMITED"
+
+
+def test_la_limite_de_l_authentification_appareil_reste_par_adresse_meme_avec_des_jetons(
+    tenant, monkeypatch
+):
+    """Audit V5 du 20/10/2026 : la limitation générale suit l'identité
+    vérifiée, mais `/devices/auth` (avant toute authentification, cible d'une
+    force brute) doit rester limitée par adresse : joindre des jetons valides
+    différents ne doit pas offrir un quota neuf à chaque essai."""
+    from app import auth
+
+    monkeypatch.setitem(auth._jwks_cache, "keys", JWKS)
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        created = client.post(
+            "/devices",
+            json={"device_id": "cpt-rate-ip"},
+            headers=_human_headers(tenant["tenant_id"]),
+        )
+    body = {
+        "tenant_id": str(tenant["tenant_id"]),
+        "device_id": "cpt-rate-ip",
+        "secret": created.json()["secret"],
+    }
+
+    for index in range(10):
+        headers = {"Authorization": f"Bearer {make_token(sub=f'personne-{index}')}"}
+        assert client.post("/devices/auth", json=body, headers=headers).status_code == 200
+
+    headers = {"Authorization": f"Bearer {make_token(sub='personne-de-trop')}"}
+    assert client.post("/devices/auth", json=body, headers=headers).status_code == 429

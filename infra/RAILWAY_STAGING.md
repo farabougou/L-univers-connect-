@@ -69,6 +69,11 @@ partagé entre deux environnements.
    - `DEVICE_TOKEN_SECRET` = générer avec `openssl rand -hex 32`
    - `STORAGE_*` = voir étape 5
    - `ENVIRONMENT=staging`, `LOG_LEVEL=INFO`
+   - Facultatif : `DB_POOL_SIZE` (10), `DB_MAX_OVERFLOW` (20),
+     `DB_POOL_TIMEOUT_SECONDS` (15), `DB_POOL_RECYCLE_SECONDS` (1800) — pool de
+     connexions Postgres, valeurs par défaut prudentes (audit V5 du
+     20/10/2026) ; à ne changer que si les journaux montrent une attente.
+   - Facultatif : `FORWARDED_ALLOW_IPS` — voir « Limitation de débit » ci-dessous.
 4. Déployer. Railway assigne un domaine public (`*.up.railway.app`) — c'est
    ton **URL API**.
 
@@ -79,6 +84,30 @@ l'API). Le mobile appelle l'API directement depuis l'appareil, hors du cadre
 CORS (qui ne concerne que les navigateurs). Si un jour un composant du
 navigateur appelle l'API directement, ajouter `CORSMiddleware` dans
 `app/main.py` à ce moment-là seulement.
+
+### Limitation de débit (audit V5 du 20/10/2026)
+
+L'API limite le débit **par identité vérifiée** (personne ou appareil Edge),
+pas par adresse IP : le serveur Next.js appelle l'API au nom de toutes les
+personnes connectées, sans transmettre leur adresse, donc une clé par IP aurait
+fait partager un seul quota de 120 requêtes par minute à tous les utilisateurs
+de tous les clients. Un jeton non vérifiable (falsifié, expiré, clés de
+signature pas encore en cache) retombe sur le quota de l'adresse IP.
+
+Seules les requêtes **sans jeton** (dont `POST /devices/auth`, limité à 10 par
+minute, cible possible d'une force brute) dépendent de l'adresse IP du client.
+Derrière le proxy de Railway, uvicorn ne la lit dans `X-Forwarded-For` que pour
+les proxys listés dans `FORWARDED_ALLOW_IPS` (par défaut `127.0.0.1` : le proxy
+de Railway n'en fait pas partie, donc toutes ces requêtes partagent l'adresse
+du proxy — un quota commun, plus strict que voulu mais jamais plus permissif).
+
+- **Ne jamais mettre `FORWARDED_ALLOW_IPS=*`** : uvicorn retient alors la
+  première adresse de `X-Forwarded-For`, que le client contrôle — il pourrait
+  contourner la limite à volonté.
+- Pour obtenir la vraie adresse, y mettre la plage d'adresses du proxy de
+  Railway, **après l'avoir vérifiée sur un déploiement réel** (je ne l'ai pas
+  vérifiée ici : aucun déploiement de l'API n'existe encore, voir
+  `DEFERRED_EXTERNAL_DEPLOYMENT`).
 
 ## Étape 4 — Service Web (`apps/web`)
 

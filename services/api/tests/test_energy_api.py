@@ -9,9 +9,10 @@ from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import text
+from sqlalchemy import event, text
 
 from app.config_versions import activate_version, create_version
+from app.db import engine
 from app.economics import ENERGY_TARIFF
 from app.energy.baseline import ENERGY_BASELINE
 from app.energy.weather import record_weather_observation
@@ -350,3 +351,46 @@ def test_comparer_deux_resultats_d_equipements_differents_est_refuse(tenant) -> 
         )
     assert comparison.status_code == 422, comparison.text
     assert comparison.json()["code"] == "ENERGY_COMPARISON_CROSS_EQUIPMENT"
+
+
+def test_lister_n_resultats_ne_cherche_le_site_et_le_tarif_qu_une_seule_fois(tenant) -> None:
+    """Audit V5 du 20/10/2026 : une liste de N résultats d'un même équipement
+    déclenchait N recherches identiques du site et du tarif actif (2 x N
+    requêtes). Le tarif ne dépend que de l'équipement : une seule recherche
+    suffit, quel que soit le nombre de résultats."""
+    with in_tenant(tenant) as connection:
+        baseline_id = _prepare_normalized_period(connection, tenant)
+        _activate_tariff(connection, tenant, price_per_kwh=0.2)
+
+    statements: list[str] = []
+
+    def _record(_connection, _cursor, statement, _parameters, _context, _executemany) -> None:
+        statements.append(statement)
+
+    body = {
+        "baseline_config_version_id": str(baseline_id),
+        "period_start": "2026-01-01",
+        "period_end": "2026-01-31",
+    }
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        for _ in range(4):
+            created = client.post("/energy/normalized-results", json=body, headers=_headers(tenant))
+            assert created.status_code == 201, created.text
+
+        event.listen(engine, "before_cursor_execute", _record)
+        try:
+            listed = client.get(
+                "/energy/normalized-results",
+                params={"functional_location_id": str(tenant["location"])},
+                headers=_headers(tenant),
+            )
+        finally:
+            event.remove(engine, "before_cursor_execute", _record)
+
+    assert listed.status_code == 200, listed.text
+    assert len(listed.json()) == 4
+    assert all(item["estimated_cost"]["amount"] == 161.2 for item in listed.json())
+    site_lookups = [s for s in statements if "SELECT site_id FROM functional_locations" in s]
+    tariff_lookups = [s for s in statements if "FROM config_versions WHERE config_type" in s]
+    assert len(site_lookups) == 1
+    assert len(tariff_lookups) == 1
