@@ -35,8 +35,9 @@
 
   Etape 5 "Récupération du projet (une fenêtre GitHub peut s'ouvrir : connectez-vous)"
   git config --global core.symlinks true
-  $dossier = Join-Path $HOME "Documents\L-univers-connect-"
-  if (Test-Path $dossier) { Write-Host "  Le projet existe déjà : $dossier" }
+  # dossier à part : Documents\L-univers-connect- peut déjà contenir une autre branche (projet Asset Intelligence)
+  $dossier = Join-Path $HOME "Documents\Univers-videos"
+  if (Test-Path $dossier) { Write-Host "  Le projet vidéo existe déjà : $dossier" }
   else { git clone --depth 1 -b claude/upbeat-noether-hso8ah https://github.com/farabougou/L-univers-connect-.git $dossier }
 
   Etape 6 "Vérification"
