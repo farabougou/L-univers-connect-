@@ -51,15 +51,18 @@ EASE_ROWS = [('LINÉAIRE', 'none', '#9B958C'), ('EASE-IN', 'power2.in', ORANGE),
              ('SILK', 'silk', ORANGE), ('OVERSHOOT', 'overshoot', ORANGE), ('RESSORT', 'spring', BLUE)]
 ADS = [('nessa', 'Nessa Paris', 'BEAUTÉ'), ('sensexpress', 'SensExpress', "PARFUM D'AMBIANCE"), ('cassia', 'Cassia Dressing', 'MODE'),
        ('founerou', "Founerou Grill's", 'RESTAURANT'), ('gimso', 'GimSo', 'PUB TIKTOK'), ('skprint', 'SK Print', 'IMPRESSION')]
-WALL = [['nessa', 'kofamoto', 'cassia', 'enoryx'], ['ktf', 'gimso', 'fleche', 'sensexpress'], ['founerou', 'kofaapp', 'skprint', 'kofadev']]
+WALL = [['nessa', 'kofamoto', 'cassia', 'enoryx'], ['ktf', 'gimso', 'fleche', 'sensexpress'], ['founerou', 'kofaapp', 'skprint', 'enoryx3d']]
 WALL_Y = [(-480, -380), (-160, -300), (-560, -460)]     # colonnes en parallaxe (4 vidéos de 640 px pour 1920 px d'écran)
 WORDS = [('FLUIDE.', ORANGE, INK), ('PRÉCIS.', '#FFFFFF', BLUE), ('JAMAIS', LIME, INK), ('LINÉAIRE', INK, '#FFFFFF')]
-FACES = [('SITES', ORANGE, INK), ('APPLIS', BLUE, '#FFFFFF'), ('PUBS', LIME, INK), ('MOTION', CREAM, INK)]
-BARS = [0.34, 0.5, 0.42, 0.63, 0.55, 0.76, 0.68, 0.95]
+FACES = [('SITES', ORANGE, INK), ('APPLIS', BLUE, '#FFFFFF'), ('SAAS', LIME, INK), ('PUBS', CREAM, INK)]
+# produits créés (sites, applis, SaaS) : vraie vidéo, ou maquette animée pour le SaaS (pas de capture disponible)
+PRODUCTS = [('kofacode', 'KOFA', 'APPLI MOBILE'), (None, 'SaaS tout-en-un', 'PLATEFORME WEB'), ('enoryxapp', 'Enoryx', 'ÉNERGIE & BÂTIMENTS')]
+KPI = [(248, 'CLIENTS'), (96, 'COMMANDES'), (31, 'TÂCHES')]
+SBARS = [0.32, 0.5, 0.41, 0.66, 0.55, 0.8, 0.95]
 POSTS = [('#4A3F6B', '#2B2540'), ('#2E6F5E', '#173D33'), ('#8A5B3A', '#4A2F1D'), ('#3A5B8A', '#1F3350'), ('#6B6B6B', '#2E2E2E'),
          ('#7A3A4F', '#3E1D29'), ('#B08A3A', '#5A4519')]
 SECTIONS = ['01 — EASING', '02 — MORPHING', '03 — PUBS · LUXE', '04 — PUBS · STREET', '05 — MOTIFS', '06 — 3D', '07 — PARTICULES',
-            '08 — SITE WEB', '09 — LE MUR', '10 — DATA', '11 — SCROLL-STOP', '12 — CUBE 3D', '13 — LIQUIDE', '14 — TYPO', '15 — FIN', '16 — CONTACT']
+            '08 — SITE INTERNET', '09 — LE MUR', '10 — APPLIS & SAAS', '11 — SCROLL-STOP', '12 — CUBE 3D', '13 — LIQUIDE', '14 — TYPO', '15 — FIN', '16 — CONTACT']
 # couleur de l'habillage selon le fond (par mesure, et par mot pendant la typo)
 WH = '#FFFFFF'
 HUD = [(0, INK), (1, WH), (2, WH), (3, INK), (4, WH), (5, WH), (6, WH), (7, INK), (8, WH), (9, INK), (10, INK), (11, WH), (12, WH),
@@ -87,14 +90,21 @@ wall = ''
 for c, col in enumerate(WALL):
     tiles = ''.join(f'<div class="tile"><div class="tin"><video id="wv{c}{r}" class="clip vid" src="assets/clips/{k}.mp4" data-start="{at(8)}" data-duration="{BAR}" data-track-index="{20 + c * 4 + r}" muted playsinline></video></div></div>' for r, k in enumerate(col))
     wall += f'<div class="col" id="col{c}" style="left:{c * 360}px">{tiles}</div>'
-# données : barres, courbe, points
-CH_W, CH_H, BASE = 700, 440, 400
-bx = [i * 86 + 28 for i in range(len(BARS))]
-by = [round(BASE - h * 330, 1) for h in BARS]
-chart = ''.join(f'<div class="bar" style="left:{i * 86}px; height:{round(h * 330)}px; background:{ORANGE if i == len(BARS) - 1 else INK}"></div><div class="ax" style="left:{i * 86}px">S{i + 1}</div>' for i, h in enumerate(BARS))
-dots = ''.join(f'<i class="cdot" style="left:{x - 10}px; top:{y - 10}px"></i>' for x, y in zip(bx, by))
-LL = round(sum(math.hypot(bx[i + 1] - bx[i], by[i + 1] - by[i]) for i in range(len(bx) - 1)) + 2, 1)
-DC = round(2 * math.pi * 160, 1)
+# produits : deux vidéos d'applis et une maquette de tableau de bord SaaS
+SC = round(2 * math.pi * 52, 1)
+saas = ('<div class="sx-top"><i></i><i></i><i></i></div><div class="sx-side">' + ''.join(f'<i style="top:{20 + i * 50}px{"; background:" + ORANGE if i == 0 else ""}"></i>' for i in range(5)) + '</div>'
+        '<div class="sx-h">Tableau de bord</div>'
+        + ''.join(f'<div class="sx-kpi" style="left:{80 + i * 99}px"><b id="kv{i}">0</b><span>{lab}</span></div>' for i, (v, lab) in enumerate(KPI))
+        + '<div class="sx-panel" style="top:196px; height:236px">' + ''.join(f'<i class="sb" style="left:{18 + i * 37}px; height:{round(h * 180)}px; background:{ORANGE if i == len(SBARS) - 1 else "#4A4A58"}"></i>' for i, h in enumerate(SBARS)) + '</div>'
+        + f'<div class="sx-panel" style="top:448px; height:212px"><svg class="sx-don" width="140" height="140"><circle cx="70" cy="70" r="52" fill="none" stroke="#34343E" stroke-width="16"/><circle id="sring" cx="70" cy="70" r="52" fill="none" stroke="{ORANGE}" stroke-width="16" stroke-linecap="round" stroke-dasharray="{SC}" stroke-dashoffset="{SC}" transform="rotate(-90 70 70)"/></svg>'
+        + '<div class="sx-dn"><span id="sdn">0</span><small>%</small></div><span class="sx-pl">OBJECTIF DU MOIS</span></div>')
+prods = ''
+for j, (k, pname, kind) in enumerate(PRODUCTS):
+    x = 177 + j * 432
+    inner = saas if k is None else f'<video id="v{6 + j}" class="clip vid" src="assets/clips/{k}.mp4" data-start="{at(9)}" data-duration="{BAR}" data-track-index="{3 + j}" muted playsinline></video>'
+    prods += f'''
+        <div class="ad{' sx' if k is None else ''}" id="ad{6 + j}" style="left:{x}px">{inner}</div>
+        <div class="adl" id="al{6 + j}" style="left:{x}px"><em>{pname}</em><span>{kind}</span></div>'''
 # fil de réseau social : 7 publications avant la pub
 posts = ''.join(f'<div class="post" style="background:linear-gradient(160deg,{a},{b})"><i class="psh"></i><i class="pav"></i><i class="pb" style="left:80px; top:574px; width:150px"></i><i class="pb" style="left:24px; top:622px; width:230px"></i><i class="pb" style="left:24px; top:646px; width:150px"></i><i class="pic" style="top:380px"></i><i class="pic" style="top:450px"></i><i class="pic" style="top:520px"></i></div>' for a, b in POSTS)
 faces = ''.join(f'<div class="face" style="background:{bg}; color:{fg}; transform:rotateX({-90 * i}deg) translateZ(150px)">{t}</div>' for i, (t, bg, fg) in enumerate(FACES))
@@ -179,7 +189,7 @@ HTML = f'''<!doctype html>
       .lbl {{ position: absolute; left: 200px; top: 780px; }}
       /* 07 · particules */
       #s6 {{ background: {BLUE}; color: #fff; }}
-      #crea {{ position: absolute; left: 204px; top: 262px; font: italic 400 76px/1 "Instrument Serif"; color: {CREAM}; }}
+      #crea {{ position: absolute; left: 300px; top: 252px; font: italic 400 76px/1 "Instrument Serif"; color: {CREAM}; }}
       /* 08 · site web */
       #s7 {{ background: {LIME}; color: {INK}; }}
       #win {{ position: absolute; left: 230px; top: 105px; width: 1140px; height: 660px; border-radius: 22px; background: #FBFAF7; overflow: hidden; box-shadow: 0 40px 80px rgba(20,20,20,0.25), 0 0 0 2px rgba(20,20,20,0.08); }}
@@ -203,19 +213,23 @@ HTML = f'''<!doctype html>
       .wc i {{ position: absolute; left: 0; top: 0; right: 0; height: 150px; }}
       .wc b {{ position: absolute; left: 22px; height: 12px; border-radius: 6px; background: #DDD6CA; }}
       #cur {{ position: absolute; left: 0; top: 0; }}
-      /* 10 · data */
+      /* 10 · applis & SaaS */
       #s9 {{ background: {CREAM}; color: {INK}; }}
-      #s9 h3 {{ position: absolute; left: 150px; top: 116px; font: italic 400 76px/1 "Instrument Serif"; }}
-      #chart {{ position: absolute; left: 150px; top: 250px; width: {CH_W}px; height: {CH_H}px; }}
-      .bar {{ position: absolute; bottom: {CH_H - BASE}px; width: 56px; border-radius: 10px 10px 0 0; transform-origin: 50% 100%; }}
-      .ax {{ position: absolute; top: {BASE + 14}px; width: 56px; text-align: center; font: 500 15px "Plex Mono"; color: #6B655C; }}
-      #base {{ position: absolute; left: -10px; right: 0; top: {BASE}px; height: 2px; background: rgba(20,20,20,0.3); }}
-      #chart svg {{ position: absolute; left: 0; top: 0; overflow: visible; }}
-      .cdot {{ position: absolute; width: 20px; height: 20px; border-radius: 10px; background: {BLUE}; border: 4px solid {CREAM}; }}
-      #don {{ position: absolute; left: 1000px; top: 220px; }}
-      #dnum {{ position: absolute; left: 1000px; top: 360px; width: 400px; text-align: center; font: 400 116px/1 "Archivo Black"; letter-spacing: -0.03em; }}
-      #dnum small {{ font-size: 56px; }}
-      #dlab {{ position: absolute; left: 1000px; top: 662px; width: 400px; text-align: center; }}
+      .sx {{ background: #17171C; }}
+      .sx-top {{ position: absolute; left: 18px; top: 16px; display: flex; gap: 7px; }}
+      .sx-top i {{ width: 10px; height: 10px; border-radius: 5px; background: #3A3A46; }}
+      .sx-side {{ position: absolute; left: 0; top: 44px; bottom: 0; width: 62px; background: #1E1E25; }}
+      .sx-side i {{ position: absolute; left: 17px; width: 28px; height: 28px; border-radius: 8px; background: #33333D; }}
+      .sx-h {{ position: absolute; left: 80px; top: 50px; font: 800 22px "Inter"; color: #fff; }}
+      .sx-kpi {{ position: absolute; top: 94px; width: 88px; height: 86px; border-radius: 12px; background: #23232B; }}
+      .sx-kpi b {{ position: absolute; left: 12px; top: 14px; font: 400 26px "Archivo Black"; color: #fff; }}
+      .sx-kpi span {{ position: absolute; left: 12px; top: 58px; font: 500 10px "Plex Mono"; letter-spacing: 0.08em; color: #9B958C; }}
+      .sx-panel {{ position: absolute; left: 80px; width: 286px; border-radius: 14px; background: #23232B; overflow: hidden; }}
+      .sb {{ position: absolute; bottom: 24px; width: 22px; border-radius: 6px 6px 0 0; transform-origin: 50% 100%; }}
+      .sx-don {{ position: absolute; left: 18px; top: 36px; }}
+      .sx-dn {{ position: absolute; left: 176px; top: 66px; font: 400 40px/1 "Archivo Black"; color: #fff; }}
+      .sx-dn small {{ font-size: 20px; }}
+      .sx-pl {{ position: absolute; left: 178px; top: 120px; font: 500 10px "Plex Mono"; letter-spacing: 0.08em; color: #9B958C; }}
       /* 11 · scroll-stop */
       #s10 {{ background: {ORANGE}; color: {INK}; }}
       .ssl {{ position: absolute; left: 150px; font: 400 128px/1 "Archivo Black"; letter-spacing: -0.03em; white-space: nowrap; }}
@@ -299,13 +313,13 @@ HTML = f'''<!doctype html>
           </div>
           <div class="sec" id="s4"><canvas id="tru" width="1600" height="900"></canvas></div>
           <div class="sec" id="s5"><canvas id="pts" width="1600" height="900"></canvas><div class="mono lbl" style="color:#fff">POINTS 900 · <span id="plab">SPHÈRE</span></div></div>
-          <div class="sec" id="s6"><canvas id="par" width="1600" height="900"></canvas><div id="crea">créé à</div><div class="mono lbl">PARTICULES <span id="pcount">0</span> · TEXTE → POINTS</div></div>
+          <div class="sec" id="s6"><canvas id="par" width="1600" height="900"></canvas><div id="crea">chaque pixel est</div><div class="mono lbl">PARTICULES <span id="pcount">0</span> · TEXTE → POINTS</div></div>
           <div class="sec" id="s7">
-            <div id="win"><div id="wbar"><i style="background:#FF5F57"></i><i style="background:#FEBC2E"></i><i style="background:#28C840"></i><div id="url">votremarque.ml</div></div>
+            <div id="win"><div id="wbar"><i style="background:#FF5F57"></i><i style="background:#FEBC2E"></i><i style="background:#28C840"></i><div id="url">votremarque.com</div></div>
               <div id="view"><div id="page">
                 <div id="nav"><div class="logo"><i></i>Votre marque</div><div class="links"><span>Accueil</span><span>Produits</span><span>Contact</span><b>Commander</b></div></div>
                 <div id="wt"><div>{m("Votre")}</div><div>{m("boutique")}</div><div>{m("en ligne.", True)}</div></div>
-                <div id="wsub">Commandez, on livre partout à Bamako.</div>
+                <div id="wsub">Commandez en deux clics, livré chez vous.</div>
                 <div id="wbtn">Découvrir&nbsp;&nbsp;→</div>
                 <div id="hv"><div class="hs" style="left:46px; top:70px; width:250px; height:250px; border-radius:125px; background:{CREAM}"></div><div class="hs" style="left:230px; top:170px; width:170px; height:170px; border-radius:36px; background:{BLUE}; rotate:14deg"></div><div class="hs" style="left:330px; top:50px; width:84px; height:84px; border-radius:42px; background:{LIME}"></div></div>
                 <div class="wc" style="left:48px"><i style="background:{BLUE}"></i><b style="top:174px; width:200px"></b><b style="top:200px; width:130px"></b></div>
@@ -314,21 +328,17 @@ HTML = f'''<!doctype html>
               </div></div>
               <div id="cur">{CURSOR}</div>
             </div>
-            <div class="mono" style="position:absolute; left:230px; top:796px">SITE WEB · MISE EN PAGE ANIMÉE</div>
+            <div class="mono" style="position:absolute; left:230px; top:796px">SITE INTERNET · DESIGN + CODE</div>
           </div>
           <div class="sec" id="s8" style="background:#0A090B"></div>
-          <div class="sec" id="s9"><h3>Des chiffres qui parlent.</h3>
-            <div id="chart">{chart}<div id="base"></div><svg width="{CH_W}" height="{CH_H}"><polyline id="dline" points="{' '.join(f'{x},{y}' for x, y in zip(bx, by))}" fill="none" stroke="{BLUE}" stroke-width="5" stroke-linejoin="round" stroke-dasharray="{LL}" stroke-dashoffset="{LL}"/></svg>{dots}</div>
-            <svg id="don" width="400" height="400"><circle cx="200" cy="200" r="160" fill="none" stroke="#E3DBCC" stroke-width="38"/><circle id="dring" cx="200" cy="200" r="160" fill="none" stroke="{ORANGE}" stroke-width="38" stroke-linecap="round" stroke-dasharray="{DC}" stroke-dashoffset="{DC}" transform="rotate(-90 200 200)"/></svg>
-            <div id="dnum"><span id="dn">0</span><small>%</small></div><div class="mono" id="dlab">DONNÉES DE DÉMO</div>
-            <div class="mono" style="position:absolute; left:150px; top:796px">INFOGRAPHIE ANIMÉE</div>
+          <div class="sec" id="s9">{prods}
           </div>
           <div class="sec" id="s10"><div class="mono" style="position:absolute; left:154px; top:196px">SCROLL-STOP · L'ACCROCHE</div>
             <div class="ssl" id="ss1" style="top:262px">{m("Le pouce")}</div><div class="ssl" id="ss2" style="top:392px">{m("s'arrête")}</div><div class="ssl" id="ss3" style="top:500px">{m("ici.", True)}</div>
             <div id="ph"><div id="scr">
               <div id="strip" data-hf-motion-blur='{{"samplesPerFrame": 8}}'>{posts}</div>
               <div id="ssv"><video id="vss" class="clip vid" src="assets/clips/gimso.mp4" data-start="{at(10)}" data-duration="{BAR}" data-track-index="6" muted playsinline></video>
-                <div id="shade"></div><div id="ssn">@kofamali</div><div id="sst">Pub vidéo · Bamako</div>
+                <div id="shade"></div><div id="ssn">@kofamali</div><div id="sst">Pub vidéo · motion design</div>
                 <svg id="hrt" width="52" height="52" viewBox="0 0 24 24"><path id="hrtp" d="{HEART}" fill="#FFFFFF"/></svg><i class="sic" style="top:450px"></i><i class="sic" style="top:520px"></i>
                 {hearts("h1")}
               </div>
@@ -344,7 +354,7 @@ HTML = f'''<!doctype html>
             <div id="nm">{name}</div><div id="md">motion designer</div><div id="rule"></div>
             <div id="fine"><span>SHOWREEL 2026</span><span>32 SECONDES</span><span>CHAQUE IMAGE CRÉÉE EN CODE</span><span>DISPONIBLE POUR VOS PROJETS</span></div>
           </div>
-          <div class="sec" id="s15"><div id="cav">M</div><div id="hdl">@kofamali</div><div class="mono" id="ctal">TIKTOK · MOTION DESIGN · BAMAKO</div>
+          <div class="sec" id="s15"><div id="cav">M</div><div id="hdl">@kofamali</div><div class="mono" id="ctal">TIKTOK · SITES · APPLIS · PUBS VIDÉO</div>
             <div id="fol"><span id="foff">Suivre</span><span id="fon">Abonné ✓</span></div>{hearts("h2")}
             <div id="cur2">{CURSOR}</div>
           </div>
@@ -365,9 +375,9 @@ HTML = f'''<!doctype html>
           <div id="box"></div>
           <div class="hl" id="hl3" style="top:1426px">&nbsp;pub vidéo.</div>
         </div>
-        {act("B", "Votre site", m("mérite") + " " + m("de vraies", True), "animations.")}
+        {act("B", "Sites internet", m("et") + " " + m("applis mobiles", True), "sur mesure.")}
         {act("C", "Écrivez-moi", m("sur") + " " + m("TikTok", True), "@kofamali")}
-        <div class="sub" id="sub">SITES · APPLICATIONS · PUBS VIDÉO — BAMAKO</div>
+        <div class="sub" id="sub">SITES INTERNET · APPLIS MOBILES · PUBS VIDÉO</div>
         <div id="wall"><div id="grid">{wall}</div><div id="wpill"><i></i>Mes dernières créations</div></div>
         <canvas id="grain" class="st-grain" width="{W}" height="{H}" style="opacity:0.05"></canvas>
       </div>
@@ -509,16 +519,16 @@ JS = r'''
           pts.globalAlpha = 1;
         };
 
-        // ── 07 · particules : des points dispersés forment BAMAKO (vague de gauche à droite, ressort), puis explosent ──
+        // ── 07 · particules : des points dispersés forment CODÉ. (vague de gauche à droite, ressort), puis explosent ──
         const par = $("#par").getContext("2d"), psp = S.spring({ response: 0.45, damping: 0.6 }); let PT = null;
         const buildPT = () => {
           const c = document.createElement("canvas"); c.width = 1600; c.height = 900; const g = c.getContext("2d");
-          g.font = '400 250px "Archivo Black"'; g.textAlign = "center"; g.fillStyle = "#000"; g.fillText("BAMAKO", 800, 540);
+          g.font = '400 300px "Archivo Black"'; g.textAlign = "center"; g.fillStyle = "#000"; g.fillText("CODÉ.", 800, 570);
           const D = g.getImageData(0, 0, 1600, 900).data, L = [];
           for (let y = 0; y < 900; y += 8) for (let x = 0; x < 1600; x += 8) if (D[(y * 1600 + x) * 4 + 3] > 128) L.push([x, y]);
           $("#pcount").textContent = String(L.length);
-          return { ok: document.fonts.check('250px "Archivo Black"'), P: L.map(([x, y], i) => ({ x, y, sx: 800 + (hash(i, 1, 3) - 0.5) * 2600, sy: 450 + (hash(i, 2, 3) - 0.5) * 1500,
-            dl: (x - 200) / 1200 * 0.3 + hash(i, 3, 3) * 0.08, v: 500 + 900 * hash(i, 4, 3), lime: hash(i, 5, 3) < 0.12 })) };
+          return { ok: document.fonts.check('300px "Archivo Black"'), P: L.map(([x, y], i) => ({ x, y, sx: 800 + (hash(i, 1, 3) - 0.5) * 2600, sy: 450 + (hash(i, 2, 3) - 0.5) * 1500,
+            dl: (x - 300) / 1000 * 0.3 + hash(i, 3, 3) * 0.08, v: 500 + 900 * hash(i, 4, 3), lime: hash(i, 5, 3) < 0.12 })) };
         };
         const particles = (t) => {
           const lt = t - at(6); if (lt < -0.01 || lt > BAR + 0.01) return;
@@ -573,17 +583,17 @@ JS = r'''
         tl.fromTo(["#pill", "#me"], { autoAlpha: 0, scale: 0.7, y: -20 }, { autoAlpha: 1, scale: 1, y: 0, duration: back.duration, ease: back.ease, stagger: 0.08, immediateRender: false }, at(9));
         tl.fromTo(["#kick", "#sub"], { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5, ease: S.ease.breath, immediateRender: false }, at(9, 0.6));
 
-        // ── 10 · data : barres sur ressort, courbe qui se trace, anneau et compteur ──
+        // ── 10 · applis & SaaS : trois produits sur ressort ; dans le SaaS, compteurs, barres et anneau ──
+        S.pop(tl, ["#ad6", "#ad7", "#ad8"], at(9), { from: 0.9, y: 140, damping: 0.72, response: 0.5, stagger: 0.07 });
+        S.rise(tl, ["#al6", "#al7", "#al8"], at(9, 0.6), { y: 16, blur: 6, stagger: 0.07, duration: 0.6 });
         const bs = S.spring({ response: 0.5, damping: 0.6 });
-        S.rise(tl, "#s9 h3", at(9), { y: 20, blur: 8, duration: 0.6 });
-        tl.fromTo("#chart .bar", { scaleY: 0 }, { scaleY: 1, duration: bs.duration, ease: bs.ease, stagger: 0.05 }, at(9, 0.2));
-        tl.fromTo("#dline", { attr: { "stroke-dashoffset": LL } }, { attr: { "stroke-dashoffset": 0 }, duration: 0.9, ease: S.ease.glide }, at(9, 1.6));
-        S.pop(tl, $$("#chart .cdot"), at(9, 1.7), { from: 0, stagger: 0.1, damping: 0.55 });
-        const dring = $("#dring"), dn = $("#dn");
-        const donut = (t) => {
+        tl.fromTo("#ad7 .sb", { scaleY: 0 }, { scaleY: 1, duration: bs.duration, ease: bs.ease, stagger: 0.05 }, at(9, 1.4));
+        const kEl = KPIV.map((v, i) => $("#kv" + i)), sring = $("#sring"), sdn = $("#sdn");
+        const saas = (t) => {
           const lt = t - at(9); if (lt < -0.01 || lt > BAR + 0.01) return;
-          const p = S.ease.glide(cl((lt - 0.4) / 1.0));
-          dring.setAttribute("stroke-dashoffset", (DC * (1 - 0.72 * p)).toFixed(1)); dn.textContent = String(Math.round(72 * p));
+          const k = S.ease.silk(cl((lt - 0.6) / 0.9)), p = S.ease.glide(cl((lt - 0.9) / 0.9));
+          KPIV.forEach((v, i) => { kEl[i].textContent = String(Math.round(v * k)); });
+          sring.setAttribute("stroke-dashoffset", (SC * (1 - 0.72 * p)).toFixed(1)); sdn.textContent = String(Math.round(72 * p));
         };
 
         // ── 11 · scroll-stop : le fil défile à toute vitesse (flou de mouvement) et se pose sur la pub ──
@@ -678,10 +688,10 @@ JS = r'''
         const follows = burst($$(".h2"), at(15, 2.5), 783, 590, 46, 190);
 
         // un seul pilote pour tout ce qui se dessine image par image (seek-safe)
-        S.drive(tl, 0, TOTAL, [hud, morph, truchet, cloud, particles, donut, likes, cube, liquid, decode, follows, S.grain($("#grain"), { fps: 60, seed: 5 })]);
+        S.drive(tl, 0, TOTAL, [hud, morph, truchet, cloud, particles, saas, likes, cube, liquid, decode, follows, S.grain($("#grain"), { fps: 60, seed: 5 })]);
 '''
 for k, v in (('HUDC', json.dumps(HUD)), ('EASES', json.dumps([e for _, e, _ in EASE_ROWS])), ('SHAPES', json.dumps(SHAPES)),
-             ('WALLY', json.dumps(WALL_Y)), ('"CARD"', json.dumps(CARD)), ('LL', str(LL)), ('DC', str(DC)), ('TOTAL', str(TOTAL))):
+             ('WALLY', json.dumps(WALL_Y)), ('"CARD"', json.dumps(CARD)), ('KPIV', json.dumps([v for v, _ in KPI])), ('SC', str(SC)), ('TOTAL', str(TOTAL))):
     JS = JS.replace(k, v)
 HTML = HTML.replace('%%JS%%', JS).replace('%%MB%%', open(f'{P}/compositions/components/motion-blur.html').read())
 open(f'{P}/index.html', 'w').write(HTML)
