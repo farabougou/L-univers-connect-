@@ -1,5 +1,6 @@
-# Motion reel score: electro / afro-house, 120 BPM, one bar per reel section (1 bar = 2 s), 8 bars + tail.
-# bars: 0–1 hook breakdown + riser · 2–13 groove (sites, apps, pubs; lead from 6, open hats 10–13) · 14–15 outro
+# Motion reel score: electro / afro-house, 120 BPM, one bar per reel section (1 bar = 2 s), 16 bars + tail.
+# bars: 0 intro + riser · 1–7 groove (lead 2–5, open hats from 3, riser and kick drop-out in 7) · 8–11 drop (work wall)
+# · 12 breakdown without drums (liquid) · 13 claps on every beat + riser (kinetic type) · 14 last chorus · 15 outro + click
 import sys, numpy as np, soundfile as sf
 SR = 44100
 out, dur = sys.argv[1], float(sys.argv[2])
@@ -46,35 +47,45 @@ CH = [(45, [57, 60, 64, 69]), (41, [57, 60, 65, 69]), (48, [55, 60, 64, 67]), (4
 LOG = [(0, 0), (3, 0), (6, 7), (10, 0), (12, 5), (14, 3)]
 LEAD = [76, 74, 72, 74, 76, 79, 76, 74]
 nb = int(dur / bar) + 1
+DROP, BREAK, LEADS, OPEN = range(8, 12), 12, set(range(2, 6)) | set(range(8, 12)) | {14}, set(range(3, 12)) | {14}
+def click():
+    n = int(0.04 * SR); t = np.arange(n) / SR
+    return np.sin(2 * np.pi * 2300 * t) * np.exp(-t * 260) + rng.standard_normal(n) * np.exp(-t * 900) * 0.6
 for b in range(nb):
     t0 = b * bar; root, ch = CH[b % 4]
-    if b >= 8:  # tail: one last ringing chord after the logo
+    if b >= 16:  # tail: one last ringing chord after the contact card
         for m in ch: add(pad(hz(m), 1.6), t0, pan=((m % 5) - 2) * 0.2, g=0.03)
         continue
-    for m in ch: add(pad(hz(m), bar + 0.6), t0, pan=((m % 5) - 2) * 0.2, g=0.022)
-    for k in range(4): add(kick(), t0 + k * beat, g=0.55 if b else 0.4)
+    for m in ch: add(pad(hz(m), bar + 0.6), t0, pan=((m % 5) - 2) * 0.2, g=0.036 if b == BREAK else 0.022)
+    if b == BREAK:  # liquid: drums out, long lead notes, a soft shaker
+        for k in range(4): add(lead(hz(LEAD[k * 2]), 0.9), t0 + k * beat, pan=-0.15, g=0.045)
+        for k in range(8): add(shaker(70), t0 + k * beat / 2, pan=0.35, g=0.02)
+        continue
+    for k in range(3 if b == 7 else 4): add(kick(), t0 + k * beat, g=0.55 if b else 0.4)  # gap before the drop
     if b == 0:  # easing: sparse, ticking hats only
         for k in range(8): add(shaker(70), t0 + k * beat / 2, pan=0.35, g=0.03)
         add(riser(bar), t0, g=0.12)
         continue
     for k in (1, 3): add(clap(), t0 + k * beat, pan=0.05, g=0.38)
-    if b == 6:  # kinetic type: a clap on every word
+    if b == 13:  # kinetic type: a clap on every word
         for k in (0, 2): add(clap(), t0 + k * beat, pan=-0.05, g=0.3)
     for k in range(16): add(shaker(70 if k % 2 else 45), t0 + k * s16, pan=0.35, g=0.05 if k % 4 == 2 else 0.028)
     for st, off in LOG: add(logdrum(hz(root - 12 + off)), t0 + st * s16, g=0.33)
     for k in (2, 6, 10, 14): add(stab(hz(ch[1] + 12)) * 0.6 + stab(hz(ch[3] + 12)) * 0.5, t0 + k * s16, pan=0.2, g=0.03)
-    if 2 <= b <= 5:
-        for k, m in enumerate(LEAD): add(lead(hz(m + (0 if b % 2 else -2))), t0 + k * beat / 2, pan=-0.15, g=0.04)
-    if b in (3, 4, 5):
-        for k in range(4): add(ohat(), t0 + k * beat + beat / 2, pan=0.3, g=0.06)
-    if b == 6: add(riser(bar), t0, g=0.22)
+    if b in LEADS:
+        up = 12 if b in DROP else 0
+        for k, m in enumerate(LEAD): add(lead(hz(m + up + (0 if b % 2 else -2))), t0 + k * beat / 2, pan=-0.15, g=0.03 if up else 0.04)
+    if b in OPEN:
+        for k in range(4): add(ohat(), t0 + k * beat + beat / 2, pan=0.3, g=0.07 if b in DROP else 0.06)
+    if b in (7, 13): add(riser(bar), t0, g=0.22)
+    if b == 15: add(click(), t0 + 2.2 * beat, g=0.25)  # the "Suivre" button press
 def verb(x, seed):
     ir = np.random.default_rng(seed).standard_normal(int(1.2 * SR)) * np.exp(-np.arange(int(1.2 * SR)) / SR * 4.5)
     ir /= np.sqrt((ir ** 2).sum()); n = len(x) + len(ir)
     return np.fft.irfft(np.fft.rfft(x, n) * np.fft.rfft(ir, n), n)[:len(x)]
 L = L * 0.9 + verb(L, 1) * 0.22; R = R * 0.9 + verb(R, 2) * 0.22
 t = np.arange(N) / SR
-fade = np.minimum(1, t / 0.05) * np.clip((dur - t) / 2.5, 0, 1)
+fade = np.minimum(1, t / 0.05) * np.clip((dur - t) / 1.2, 0, 1)
 mix = np.tanh(1.15 * np.stack([L, R], 1)) * fade[:, None]; mix /= np.abs(mix).max() / 0.9
 if len(sys.argv) > 3:  # voiceover bed: about -10 dB under the voice, swelling back after its last word
     ve = float(sys.argv[3]); mix *= (0.3 + 0.7 * np.clip((t - ve) / 0.6, 0, 1))[:, None]

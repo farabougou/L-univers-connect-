@@ -80,7 +80,8 @@
         stagger: { each: cap(count(targets), o.stagger ?? stagger.chars, o.max ?? 0.6), from: o.from ?? 'start' } }, at);
   }
   function maskUp(tl, targets, at, o = {}) {
-    tl.fromTo(targets, { yPercent: 118, rotation: o.rotate ?? 5 },
+    // .st-mask a 0,14 em de marge en haut et 0,2 em en bas : à 118 % le haut des lettres dépassait encore de 2 px
+    tl.fromTo(targets, { yPercent: 140, rotation: o.rotate ?? 5 },
       { yPercent: 0, rotation: 0, duration: o.duration ?? dur.long, ease: o.ease ?? ease.silk, stagger: cap(count(targets), o.stagger ?? stagger.words, o.max ?? 0.6) }, at);
   }
   // Lettres qui se resserrent depuis le centre : remplace toute animation de letter-spacing.
