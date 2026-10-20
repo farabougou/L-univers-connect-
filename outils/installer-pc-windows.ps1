@@ -23,6 +23,10 @@
 
   Etape 3 "Claude Code"
   Invoke-RestMethod https://claude.ai/install.ps1 | Invoke-Expression
+  # l'installeur pose claude.exe dans ~\.local\bin sans toujours l'ajouter au PATH
+  $bin = Join-Path $HOME ".local\bin"
+  $p = [Environment]::GetEnvironmentVariable("Path", "User")
+  if ($p -notlike "*$bin*") { [Environment]::SetEnvironmentVariable("Path", "$p;$bin", "User") }
   Rafraichir-Path
 
   Etape 4 "Modules Python pour les scripts de montage"
@@ -36,12 +40,10 @@
   else { git clone --depth 1 -b claude/upbeat-noether-hso8ah https://github.com/farabougou/L-univers-connect-.git $dossier }
 
   Etape 6 "Vérification"
-  foreach ($c in "claude --version", "git --version", "node --version", "py -3.12 --version") {
-    $r = Invoke-Expression $c 2>&1 | Select-Object -First 1
-    Write-Host ("  {0,-22} {1}" -f $c, $r)
+  foreach ($c in "claude --version", "git --version", "node --version", "py -3.12 --version", "ffmpeg -version") {
+    try { $r = Invoke-Expression $c 2>&1 | Select-Object -First 1; Write-Host ("  {0,-22} {1}" -f $c, ($r -replace " Copyright.*", "")) }
+    catch { Write-Host ("  {0,-22} MANQUANT" -f $c) -ForegroundColor Red }
   }
-  $ff = ffmpeg -version 2>&1 | Select-Object -First 1
-  Write-Host ("  {0,-22} {1}" -f "ffmpeg -version", ($ff -replace " Copyright.*", ""))
   $lien = Get-Item (Join-Path $dossier ".claude\skills\hyperframes") -ErrorAction SilentlyContinue
   if ($lien -and $lien.PSIsContainer) { Write-Host "  Skills HyperFrames     OK" -ForegroundColor Green }
   else { Write-Host "  Skills HyperFrames     à réparer : redémarrez le PC, supprimez le dossier $dossier puis recollez ce script" -ForegroundColor Yellow }
