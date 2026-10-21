@@ -44,6 +44,16 @@ avatar → ajouter un nouveau look → coller la description, pour garder le mê
 > glowing orange asterisk logo (#FF4F1F) in the center and a black hood over his head, calm confident posture,
 > photorealistic, chest-up framing, facing the camera, vertical 9:16, high detail.
 
+**Choix de Mams : masque intégral (B)** — `avatar/mams-masque-v1.png`. Le symbole astérisque orange rappelle trop le
+logo de Claude : le remplacer par un monogramme à lui (M lumineux d'un seul trait) :
+
+> The same masked man from the reference image, same black hood, same matte black full-face mask, same orange overshirt,
+> same studio lights. Replace the glowing asterisk on the mask with a glowing orange (#FF4F1F) monogram letter M drawn as
+> one single continuous neon line with rounded ends, like a smooth motion path, centered on the mask, same soft glow.
+> Photorealistic, chest-up framing, facing the camera, vertical 9:16, high detail.
+
+Pas de lèvres visibles : vidéos en voix off (ElevenLabs), l'avatar animé sans parler (gestes, respiration, regard).
+
 ## Premier script (≈ 20 s, présentation)
 
 > Vous êtes cinquante-cinq mille à me suivre… et vous n'avez jamais vu mon visage.
