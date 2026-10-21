@@ -50,7 +50,7 @@ CURSOR = f'<svg width="32" height="42" viewBox="0 0 32 42"><path d="M2 2 L2 34 L
 EASE_ROWS = [('LINÉAIRE', 'none', '#9B958C'), ('EASE-IN', 'power2.in', ORANGE), ('EASE-OUT', 'power2.out', ORANGE),
              ('SILK', 'silk', ORANGE), ('OVERSHOOT', 'overshoot', ORANGE), ('RESSORT', 'spring', BLUE)]
 ADS = [('nessa', 'Nessa Paris', 'BEAUTÉ'), ('sensexpress', 'SensExpress', "PARFUM D'AMBIANCE"), ('cassia', 'Cassia Dressing', 'MODE'),
-       ('founerou', "Founerou Grill's", 'RESTAURANT'), ('gimso', 'GimSo', 'PUB TIKTOK'), ('skprint', 'SK Print', 'IMPRESSION')]
+       ('founerou', "Founerou Grill's", 'RESTAURANT'), ('gimso', 'GimSo', 'MODE BOGOLAN'), ('skprint', 'SK Print', 'IMPRESSION')]
 WALL = [['nessa', 'kofamoto', 'cassia', 'enoryx'], ['ktf', 'gimso', 'fleche', 'sensexpress'], ['founerou', 'kofaapp', 'skprint', 'enoryx3d']]
 WALL_Y = [(-480, -380), (-160, -300), (-560, -460)]     # colonnes en parallaxe (4 vidéos de 640 px pour 1920 px d'écran)
 WORDS = [('FLUIDE.', ORANGE, INK), ('PRÉCIS.', '#FFFFFF', BLUE), ('JAMAIS', LIME, INK), ('LINÉAIRE', INK, '#FFFFFF')]
@@ -59,6 +59,9 @@ FACES = [('SITES', ORANGE, INK), ('APPLIS', BLUE, '#FFFFFF'), ('SAAS', LIME, INK
 PRODUCTS = [('kofacode', 'KOFA', 'APPLI MOBILE'), (None, 'SaaS tout-en-un', 'PLATEFORME WEB'), ('enoryxapp', 'Enoryx', 'ÉNERGIE & BÂTIMENTS')]
 KPI = [(248, 'CLIENTS'), (96, 'COMMANDES'), (31, 'TÂCHES')]
 SBARS = [0.32, 0.5, 0.41, 0.66, 0.55, 0.8, 0.95]
+# GimSo : ses photos (tenues en Bogolan) à la place de sa vidéo, une par temps
+GIMSO = [f'assets/images/gimso-{i}.jpg' for i in range(1, 5)]
+def gph(i, imgs): return f'<div class="gph" id="{i}">' + ''.join(f'<img src="{u}" alt="GimSo" />' for u in imgs) + '</div>'
 POSTS = [('#4A3F6B', '#2B2540'), ('#2E6F5E', '#173D33'), ('#8A5B3A', '#4A2F1D'), ('#3A5B8A', '#1F3350'), ('#6B6B6B', '#2E2E2E'),
          ('#7A3A4F', '#3E1D29'), ('#B08A3A', '#5A4519')]
 SECTIONS = ['01 — EASING', '02 — MORPHING', '03 — PUBS · LUXE', '04 — PUBS · STREET', '05 — MOTIFS', '06 — 3D', '07 — PARTICULES',
@@ -76,8 +79,9 @@ for s, base in ((2, 0), (3, 3)):
     for j in range(3):
         k, name, sector = ADS[base + j]
         x = 177 + j * 432
+        media = gph(f'gp{base + j}', GIMSO) if k == 'gimso' else f'<video id="v{base + j}" class="clip vid" src="assets/clips/{k}.mp4" data-start="{at(s)}" data-duration="{BAR}" data-track-index="{3 + j}" muted playsinline></video>'
         ads += f'''
-        <div class="ad" id="ad{base + j}" style="left:{x}px"><video id="v{base + j}" class="clip vid" src="assets/clips/{k}.mp4" data-start="{at(s)}" data-duration="{BAR}" data-track-index="{3 + j}" muted playsinline></video></div>
+        <div class="ad" id="ad{base + j}" style="left:{x}px">{media}</div>
         <div class="adl" id="al{base + j}" style="left:{x}px"><em>{name}</em><span>{sector}</span></div>'''
     trio[s] = ads
 words = ''.join(f'''
@@ -88,7 +92,7 @@ barsq = ''.join('<i></i>' for _ in range(NB))
 # mur des pubs : 3 colonnes de 4 vidéos verticales
 wall = ''
 for c, col in enumerate(WALL):
-    tiles = ''.join(f'<div class="tile"><div class="tin"><video id="wv{c}{r}" class="clip vid" src="assets/clips/{k}.mp4" data-start="{at(8)}" data-duration="{BAR}" data-track-index="{20 + c * 4 + r}" muted playsinline></video></div></div>' for r, k in enumerate(col))
+    tiles = ''.join('<div class="tile"><div class="tin">' + (gph(f'gpw{c}{r}', GIMSO) if k == 'gimso' else f'<video id="wv{c}{r}" class="clip vid" src="assets/clips/{k}.mp4" data-start="{at(8)}" data-duration="{BAR}" data-track-index="{20 + c * 4 + r}" muted playsinline></video>') + '</div></div>' for r, k in enumerate(col))
     wall += f'<div class="col" id="col{c}" style="left:{c * 360}px">{tiles}</div>'
 # produits : deux vidéos d'applis et une maquette de tableau de bord SaaS
 SC = round(2 * math.pi * 52, 1)
@@ -181,6 +185,8 @@ HTML = f'''<!doctype html>
       #s3 {{ background: {ORANGE}; color: {INK}; }}
       .ad {{ position: absolute; top: 96px; width: 382px; height: 680px; border-radius: 18px; overflow: hidden; background: #000; box-shadow: 0 30px 60px rgba(0,0,0,0.45); }}
       .vid {{ position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; }}
+      .gph {{ position: absolute; inset: 0; overflow: hidden; background: #000; }}
+      .gph img {{ position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; visibility: hidden; }}
       .adl {{ position: absolute; top: 792px; width: 382px; display: flex; justify-content: space-between; align-items: baseline; }}
       .adl em {{ font: italic 400 36px "Instrument Serif"; }}
       .adl span {{ font: 500 14px "Plex Mono"; letter-spacing: 0.14em; opacity: 0.75; }}
@@ -315,11 +321,11 @@ HTML = f'''<!doctype html>
           <div class="sec" id="s5"><canvas id="pts" width="1600" height="900"></canvas><div class="mono lbl" style="color:#fff">POINTS 900 · <span id="plab">SPHÈRE</span></div></div>
           <div class="sec" id="s6"><canvas id="par" width="1600" height="900"></canvas><div id="crea">chaque pixel est</div><div class="mono lbl">PARTICULES <span id="pcount">0</span> · TEXTE → POINTS</div></div>
           <div class="sec" id="s7">
-            <div id="win"><div id="wbar"><i style="background:#FF5F57"></i><i style="background:#FEBC2E"></i><i style="background:#28C840"></i><div id="url">votremarque.com</div></div>
+            <div id="win"><div id="wbar"><i style="background:#FF5F57"></i><i style="background:#FEBC2E"></i><i style="background:#28C840"></i><div id="url">votremarque.ml</div></div>
               <div id="view"><div id="page">
                 <div id="nav"><div class="logo"><i></i>Votre marque</div><div class="links"><span>Accueil</span><span>Produits</span><span>Contact</span><b>Commander</b></div></div>
                 <div id="wt"><div>{m("Votre")}</div><div>{m("boutique")}</div><div>{m("en ligne.", True)}</div></div>
-                <div id="wsub">Commandez en deux clics, livré chez vous.</div>
+                <div id="wsub">Commandez, on livre partout à Bamako.</div>
                 <div id="wbtn">Découvrir&nbsp;&nbsp;→</div>
                 <div id="hv"><div class="hs" style="left:46px; top:70px; width:250px; height:250px; border-radius:125px; background:{CREAM}"></div><div class="hs" style="left:230px; top:170px; width:170px; height:170px; border-radius:36px; background:{BLUE}; rotate:14deg"></div><div class="hs" style="left:330px; top:50px; width:84px; height:84px; border-radius:42px; background:{LIME}"></div></div>
                 <div class="wc" style="left:48px"><i style="background:{BLUE}"></i><b style="top:174px; width:200px"></b><b style="top:200px; width:130px"></b></div>
@@ -337,7 +343,7 @@ HTML = f'''<!doctype html>
             <div class="ssl" id="ss1" style="top:262px">{m("Le pouce")}</div><div class="ssl" id="ss2" style="top:392px">{m("s'arrête")}</div><div class="ssl" id="ss3" style="top:500px">{m("ici.", True)}</div>
             <div id="ph"><div id="scr">
               <div id="strip" data-hf-motion-blur='{{"samplesPerFrame": 8}}'>{posts}</div>
-              <div id="ssv"><video id="vss" class="clip vid" src="assets/clips/gimso.mp4" data-start="{at(10)}" data-duration="{BAR}" data-track-index="6" muted playsinline></video>
+              <div id="ssv">{gph('gps', GIMSO[1:2])}
                 <div id="shade"></div><div id="ssn">@kofamali</div><div id="sst">Pub vidéo · motion design</div>
                 <svg id="hrt" width="52" height="52" viewBox="0 0 24 24"><path id="hrtp" d="{HEART}" fill="#FFFFFF"/></svg><i class="sic" style="top:450px"></i><i class="sic" style="top:520px"></i>
                 {hearts("h1")}
@@ -481,6 +487,17 @@ JS = r'''
           S.pop(tl, ids.map((i) => "#ad" + i), at(bar), { from: 0.9, y: 140, damping: 0.72, response: 0.5, stagger: 0.07 });
           S.rise(tl, ids.map((i) => "#al" + i), at(bar, 0.6), { y: 16, blur: 6, stagger: 0.07, duration: 0.6 });
         });
+
+        // GimSo : diaporama de ses photos, une coupe par temps et un zoom qui se pose (une seule photo dans le téléphone)
+        const slides = (sel, bar) => {
+          const im = $$(sel + " img"), n = im.length, d = BAR / n;
+          im.forEach((el, i) => {
+            const t0 = at(bar) + i * d;
+            tl.set(el, { autoAlpha: 1 }, t0); if (i < n - 1) tl.set(el, { autoAlpha: 0 }, t0 + d);
+            tl.fromTo(el, { scale: 1.15 }, { scale: 1.03, duration: d, ease: S.ease.silk }, t0);
+          });
+        };
+        slides("#gp4", 3); slides("#gpw11", 8); slides("#gps", 10);
 
         // ── 05 · motifs : tuiles de Truchet qui pivotent en vagues depuis le centre ──
         const tru = $("#tru").getContext("2d"), hash = (a, b, c) => { let h = (a * 73856093) ^ (b * 19349663) ^ (c * 83492791); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
