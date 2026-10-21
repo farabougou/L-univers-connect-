@@ -2041,6 +2041,18 @@ alertes restantes concernent uniquement l'outillage de build et de lint.
 **Après V5** : évolution continue, sans V6 automatique. La suite logique reste la
 validation sur un équipement réel, qui dépend de matériel physique.
 
+**Guide de test terrain SDM120 (21/10/2026)** : `docs/terrain/test-terrain-sdm120.md`
+décrit la procédure (répétition à blanc avec le simulateur, lecture directe du compteur,
+chaîne complète, épreuves de panne), des critères PASS/FAIL proposés (à valider par
+Mohamed avant le test) et la fiche de résultats. Il ne change aucun statut : le connecteur
+Modbus/SDM120 reste `FIELD_TESTED: BLOCKED_EXTERNAL` tant qu'une fiche réelle n'est pas
+remplie. Limites constatées en le rédigant (aucune n'est corrigée à ce stade) :
+connecteur Modbus TCP seulement (passerelle RS-485 vers Ethernet nécessaire), adresse
+Modbus 1 fixe dans le démon, vocabulaire des points limité à la puissance et à l'énergie
+(pas de tension, courant ni fréquence : **DEFER**, à décider avec un cas réel),
+`scripts/modbus_poll.py` limité au secret partagé (**REFACTOR** possible : accepter la
+clé d'appareil comme le démon), et scripts à lancer avec `PYTHONPATH=.`.
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente

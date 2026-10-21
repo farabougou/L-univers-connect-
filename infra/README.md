@@ -89,8 +89,12 @@ consulte l'application. En local, lancer le balayage en boucle à côté de l'AP
 
 ```bash
 cd services/api
-python scripts/supervision_sweep.py --interval 60
+PYTHONPATH=. python scripts/supervision_sweep.py --interval 60
 ```
+
+`PYTHONPATH=.` (valable pour tous les scripts de `services/api/scripts`) indique à Python
+de chercher le dossier `app` dans le dossier courant ; sans lui, Python répond
+`No module named 'app'`.
 
 En production (Railway), ce même script s'exécute avec `--once` sur un service Cron Jobs
 plutôt qu'en boucle : voir `app/supervision_sweep.py` pour le détail du mécanisme.

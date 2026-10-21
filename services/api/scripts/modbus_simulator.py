@@ -2,9 +2,9 @@
 
 But : valider le connecteur (app/connectors/modbus.py) sans matériel réel.
 N'est jamais démarré en production — uniquement lancé à la main pendant le
-développement, voir docs/dev/modbus.md.
+développement, voir docs/terrain/test-terrain-sdm120.md (répétition à blanc).
 
-Usage : python scripts/modbus_simulator.py [port, défaut 5020]
+Usage : PYTHONPATH=. python scripts/modbus_simulator.py [port, défaut 5020]
 """
 
 import sys
