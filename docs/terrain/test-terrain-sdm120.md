@@ -138,11 +138,15 @@ test, mais elles en fixent le périmètre.
    là (il ne plante plus et n'invente rien). Une copie de la configuration sur disque
    résoudrait ce cas : **DEFER**, à décider avant un déploiement sur un site sans
    alimentation de secours.
-9. **L'unité d'un point n'est pas comparée à celle du registre.** Le vocabulaire accepte
-   `kW` comme unité d'une puissance ; un point créé en `kW` afficherait des watts comme des
-   kilowatts (facteur 1000), et un point validé ne se modifie plus (rien n'est écrasé).
-   Créez le point en `W`. Le vérificateur contrôle l'unité des deux points ; l'interdire à
-   l'activation de la configuration est une correction recommandée, à décider.
+9. **L'unité est contrôlée à trois endroits (depuis le 21/10/2026, ADR 020).** À la création de
+   la connexion Modbus, l'unité du registre est comparée à celle du point : un registre en watts
+   ne peut pas alimenter un point en `kW` (erreur `MODBUS_UNIT_CONVERSION_REQUIRED`, avec le
+   facteur). À l'envoi, le démon déclare l'unité de chaque mesure et l'API refuse tout désaccord
+   (`MEASUREMENT_UNIT_CONVERSION_REQUIRED`), **sans jamais convertir** : la conversion est un acte
+   volontaire (point dans l'unité du registre, ou conversion à la source). Le démon journalise
+   chaque refus en erreur. Enfin le vérificateur contrôle l'unité des deux points. Limite : un
+   émetteur qui ne déclare pas son unité (BACnet, OPC UA, MQTT aujourd'hui) n'est pas contrôlé ; seul
+   le drapeau `out_of_range` signale alors après coup une valeur hors plage.
 10. **Les démons BACnet, OPC UA et MQTT ont la même structure que celle du démon Modbus
     avant correction** (configuration demandée à l'API à chaque tour, sans mémoire). Ils
     n'ont pas été modifiés : hors périmètre de ce pilote, à corriger avant leur propre essai.
@@ -299,6 +303,10 @@ curl -s -X POST http://localhost:8000/points \
        "point_class":"energy_meter_reading","unit":"kW.h",
        "functional_location_id":"<ID_EQUIPEMENT>","expected_interval_seconds":60}'
 ```
+
+Si vous créez par erreur le point de puissance en `kW`, la connexion de l'étape 3.5 sera refusée
+(registre en watts, point en kilowatts) : créez un nouveau point en `W`, un point validé ne se
+modifie plus.
 
 Chaque réponse contient un `id` : notez-les (`<ID_POINT_PUISSANCE>`, `<ID_POINT_ENERGIE>`).
 Puis validez-les (mise en service) :

@@ -49,11 +49,13 @@ def _tech(tenant):
 
 
 def _activate_modbus_mapping(connection, tenant):
+    # Registre et point cohérents : l'état d'une bobine simulée alimente un point d'état de marche
+    # (le registre « voltage » du SDM120, en V, ne peut pas alimenter une sonde de température).
     content = {
-        "device_type": "sdm120",
+        "device_type": "simulated_relay",
         "host": "127.0.0.1",
         "port": 502,
-        "points": [{"point_id": str(tenant["sensor"]), "register_name": "voltage"}],
+        "points": [{"point_id": str(tenant["run_status"]), "register_name": "relay_state"}],
     }
     version_id = create_version(
         connection,

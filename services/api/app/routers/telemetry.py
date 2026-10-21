@@ -65,6 +65,7 @@ def create_measurement(
             origin=body.origin,
             source=body.source,
             received_at=received_at,
+            unit=body.unit,
         )
     except MeasurementRejected as exc:
         raise api_error(exc, 400) from exc

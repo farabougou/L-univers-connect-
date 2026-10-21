@@ -108,11 +108,11 @@ def test_meme_point_deux_fois_est_refuse(tenant):
                 connection,
                 tenant,
                 points=[
-                    {"point_id": str(tenant["energy_point_id"]), "register_name": "voltage"},
                     {
                         "point_id": str(tenant["energy_point_id"]),
                         "register_name": "total_active_energy",
                     },
+                    {"point_id": str(tenant["energy_point_id"]), "register_name": "active_power"},
                 ],
             )
 

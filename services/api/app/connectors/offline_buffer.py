@@ -27,18 +27,23 @@ class BufferedReading:
     measured_at: datetime
     origin: str
     source: str
+    # Unité (code UCUM) dans laquelle `value` a été lue ; None si l'émetteur ne la connaît pas.
+    # Gardée avec la mesure : renvoyée après une coupure, une mesure en watts ne peut pas
+    # devenir une mesure en kilowatts par oubli.
+    unit: str | None = None
 
     def to_json(self) -> str:
-        return json.dumps(
-            {
-                "tenant_id": str(self.tenant_id),
-                "point_id": str(self.point_id),
-                "value": self.value,
-                "measured_at": self.measured_at.isoformat(),
-                "origin": self.origin,
-                "source": self.source,
-            }
-        )
+        data = {
+            "tenant_id": str(self.tenant_id),
+            "point_id": str(self.point_id),
+            "value": self.value,
+            "measured_at": self.measured_at.isoformat(),
+            "origin": self.origin,
+            "source": self.source,
+        }
+        if self.unit is not None:
+            data["unit"] = self.unit
+        return json.dumps(data)
 
     @staticmethod
     def from_json(line: str) -> "BufferedReading":
@@ -50,18 +55,22 @@ class BufferedReading:
             measured_at=datetime.fromisoformat(data["measured_at"]),
             origin=data["origin"],
             source=data["source"],
+            unit=data.get("unit"),
         )
 
     def as_http_item(self) -> dict[str, Any]:
         """Forme JSON attendue par POST /edge/measurements (voir
         app.connectors.edge_client) : un appareil parle par HTTP, jamais en
         objets Python directement à la base."""
-        return {
+        item: dict[str, Any] = {
             "point_id": str(self.point_id),
             "value": self.value,
             "measured_at": self.measured_at.isoformat(),
             "origin": self.origin,
         }
+        if self.unit is not None:
+            item["unit"] = self.unit
+        return item
 
 
 class OfflineBuffer:

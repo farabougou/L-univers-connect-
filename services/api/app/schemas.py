@@ -786,6 +786,9 @@ class MeasurementCreate(BaseModel):
     # « derived » et « estimated » sont réservés aux moteurs de la plateforme.
     origin: Literal["measured", "manual", "simulated"] = "measured"
     source: str = Field(default="api", min_length=1, max_length=50)
+    # Unité (code UCUM) de `value`, si l'émetteur la connaît : refusée si elle diffère de
+    # celle du point, jamais convertie (app/point_vocabulary.py::check_declared_unit).
+    unit: str | None = Field(default=None, min_length=1, max_length=30)
 
 
 class MeasurementItem(BaseModel):
@@ -793,6 +796,7 @@ class MeasurementItem(BaseModel):
     value: float = Field(allow_inf_nan=False)
     measured_at: AwareDatetime
     origin: Literal["measured", "manual", "simulated"] = "measured"
+    unit: str | None = Field(default=None, min_length=1, max_length=30)
 
 
 class MeasurementBatch(BaseModel):

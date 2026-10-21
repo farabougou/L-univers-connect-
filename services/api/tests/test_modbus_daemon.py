@@ -516,3 +516,68 @@ def test_tampon_tronque_par_une_coupure_de_courant_ne_bloque_pas_le_demon(tenant
     assert buffer.pending() == []
     sidecar = buffer.path.with_name(buffer.path.name + ".corrupt")
     assert sidecar.exists(), "les lignes illisibles sont conservées, jamais effacées"
+
+
+# --- Unités : le démon déclare celle du registre, l'API refuse un désaccord -------------
+
+
+def _with_register_unit(monkeypatch, register_name: str, unit: str) -> None:
+    from dataclasses import replace
+
+    from app.connectors.sdm120 import SDM120_POINTS
+
+    patched = [replace(r, unit=unit) if r.name == register_name else r for r in SDM120_POINTS]
+    monkeypatch.setitem(daemon.DEVICE_REGISTER_CATALOGS, "sdm120", patched)
+
+
+def _stored_values(tenant_id) -> list[float]:
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_id)
+        return [
+            row[0]
+            for row in connection.execute(
+                text("SELECT value FROM measurements WHERE tenant_id = :id ORDER BY value"),
+                {"id": tenant_id},
+            )
+        ]
+
+
+def test_le_demon_declare_l_unite_du_registre_et_l_api_l_accepte(tenant_two_points, tmp_path):
+    with _api(tenant_two_points) as api:
+        sent = []
+        real_post = api.post_measurements
+        api.post_measurements = lambda items, **kw: (sent.extend(items), real_post(items, **kw))[1]
+        run(
+            api=api,
+            equipment_id=tenant_two_points["location_id"],
+            interval_seconds=0.02,
+            buffer=OfflineBuffer(tmp_path / "buffer.jsonl"),
+            max_cycles=1,
+        )
+
+    assert sorted(item["unit"] for item in sent) == ["W", "kW.h"]
+    assert len(_stored_values(tenant_two_points["tenant_id"])) == 2
+
+
+def test_un_registre_dont_l_unite_differe_du_point_est_refuse_et_journalise_a_voix_haute(
+    tenant_two_points, tmp_path, monkeypatch, caplog
+):
+    """Configuration d'avant le contrôle d'activation, ou catalogue modifié : le registre répond
+    en kW alors que le point est en W. Rien n'est stocké pour cette mesure (jamais convertie),
+    l'autre mesure passe, et le démon ne présente pas cela comme une relève réussie."""
+    _with_register_unit(monkeypatch, "active_power", "kW")
+    buffer = OfflineBuffer(tmp_path / "buffer.jsonl")
+
+    with caplog.at_level("ERROR", logger="paios.modbus_daemon"), _api(tenant_two_points) as api:
+        run(
+            api=api,
+            equipment_id=tenant_two_points["location_id"],
+            interval_seconds=0.02,
+            buffer=buffer,
+            max_cycles=1,
+        )
+
+    assert _stored_values(tenant_two_points["tenant_id"]) == pytest.approx([1284.6], abs=0.01)
+    refusals = [r.getMessage() for r in caplog.records if "refusée" in r.getMessage()]
+    assert refusals and "MEASUREMENT_UNIT_CONVERSION_REQUIRED" in refusals[0]
+    assert buffer.pending() == [], "un refus n'est pas une coupure : le renvoyer échouerait encore"

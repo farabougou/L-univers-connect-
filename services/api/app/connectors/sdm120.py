@@ -27,6 +27,6 @@ SDM120_POINTS = [
         address=342,
         register_kind="input",
         data_type=FLOAT32,
-        unit="kWh",
+        unit="kW.h",
     ),
 ]

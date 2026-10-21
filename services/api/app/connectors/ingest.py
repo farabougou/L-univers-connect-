@@ -54,6 +54,8 @@ def poll_and_record(
             # "measured" : un relevé Modbus est une vraie mesure physique de
             # l'appareil, jamais une valeur générée (voir ck_measurements_origin).
             "origin": "measured",
+            # Le registre dit dans quelle unité il répond ; vide pour une bobine (sans unité).
+            "unit": mapping.register.unit or None,
         }
         for mapping in mappings
     ]

@@ -218,6 +218,8 @@ def run(
                         measured_at=now,
                         origin="measured",
                         source=source,
+                        # l'unité du registre, jamais devinée : l'API la compare à celle du point
+                        unit=register.unit or None,
                     )
                     for point_id, register in mappings
                 ]
@@ -229,6 +231,15 @@ def run(
                     )
                     buffer.clear()
                     renvoi = f", {len(pending)} mesure(s) en tampon renvoyée(s)" if pending else ""
+                    refused = summary.get("rejected", 0) + summary.get("conflicts", 0)
+                    if refused:
+                        # L'API a répondu : renvoyer ne changerait rien (unité, valeur, point).
+                        # Mais un refus ne se présente jamais comme une relève réussie.
+                        for error in summary.get("errors", []):
+                            logger.error(
+                                f"mesure refusée par l'API ({error['code']}) : "
+                                f"{error.get('reason', error['params'])}"
+                            )
                     logger.info(f"relève effectuée{renvoi} : {summary}")
                 except httpx.HTTPError as exc:
                     for reading in new_readings:

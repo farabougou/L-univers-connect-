@@ -17,3 +17,4 @@ Un fichier par décision.
 - [016 — BACnet, future capacité d'écriture/commande : spécification, pas d'activation](./016-bacnet-ecriture-commande-specification.md)
 - [017 — Virtual Commissioning Lab et validation découplée du matériel](./017-virtual-commissioning-lab-et-validation-decouplee-du-materiel.md)
 - [018 — Synchronisation incrémentale du mobile pour les connexions faibles](./018-synchronisation-incrementale-du-mobile.md)
+- [020 — Unités déclarées : l'API refuse un désaccord et ne convertit jamais](./020-unites-declarees-refus-sans-conversion.md)

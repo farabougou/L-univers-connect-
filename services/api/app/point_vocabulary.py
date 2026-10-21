@@ -13,6 +13,7 @@ pas de migration, seulement une nouvelle version de ce fichier.
 
 import math
 from dataclasses import dataclass
+from decimal import Decimal
 
 from app.errors import DomainError
 
@@ -34,6 +35,23 @@ UNITS: dict[str, tuple[str, str]] = {
     "[ppm]": ("ppm", "concentration"),
     "m3/h": ("m³/h", "volume_flow"),
     "kg": ("kg", "mass"),
+}
+
+
+# Facteur vers l'unité de référence de la grandeur, pour les seules unités liées par une
+# conversion linéaire. Absentes volontairement : °C et K (décalage, pas un simple facteur) ;
+# toute autre paire reste « pas convertible » et n'est jamais devinée.
+LINEAR_UNIT_FACTORS: dict[str, float] = {
+    "W": 1.0,
+    "kW": 1000.0,
+    "Pa": 1.0,
+    "kPa": 1000.0,
+    "bar": 100_000.0,
+    "kW.h": 1.0,
+    "%": 1.0,
+    "[ppm]": 1.0,
+    "m3/h": 1.0,
+    "kg": 1.0,
 }
 
 
@@ -216,3 +234,49 @@ def check_value(value: float, *, value_type: str, states: dict[str, str] | None)
     if value_type == "multistate":
         if value != int(value) or str(int(value)) not in (states or {}):
             raise PointVocabularyError("VALUE_STATE_UNKNOWN", value=value)
+
+
+def conversion_factor(declared: str, expected: str) -> float | None:
+    """Facteur à appliquer à une valeur exprimée en `declared` pour l'exprimer en `expected`
+    (W vers kW : 0,001). None si les deux unités ne sont pas liées par un simple facteur."""
+    if declared in LINEAR_UNIT_FACTORS and expected in LINEAR_UNIT_FACTORS:
+        if UNITS[declared][1] == UNITS[expected][1]:
+            return LINEAR_UNIT_FACTORS[declared] / LINEAR_UNIT_FACTORS[expected]
+    return None
+
+
+def _plain_number(value: float) -> str:
+    """Un facteur est lu par une personne : « 0.001 », jamais « 1e-03 » ni « 1000.0 »."""
+    return format(Decimal(repr(value)).normalize(), "f")
+
+
+def check_declared_unit(declared: str, point_unit: str | None) -> None:
+    """Refuse une mesure dont l'émetteur déclare une autre unité que celle du point.
+
+    Une plateforme qui convertirait d'elle-même cacherait l'erreur la plus coûteuse de la
+    télémétrie (des watts lus comme des kilowatts, facteur 1000) : elle **ne convertit jamais**.
+    L'émetteur doit convertir volontairement, puis déclarer l'unité du point. Le refus dit
+    laquelle des situations est en cause :
+
+    - `MEASUREMENT_UNIT_CONVERSION_REQUIRED` : même grandeur, liée par un simple facteur ; le
+      facteur à appliquer est donné (W vers kW : multiplier par 0.001) ;
+    - `MEASUREMENT_UNIT_MISMATCH` : grandeur différente, ou conversion qui n'est pas un simple
+      facteur (°C et K) ;
+    - `MEASUREMENT_UNIT_NOT_EXPECTED` : une unité est déclarée pour un point qui n'en a pas ;
+    - `UNIT_UNKNOWN` : l'unité déclarée n'est pas un code UCUM du vocabulaire.
+    """
+    if declared not in UNITS:
+        raise PointVocabularyError("UNIT_UNKNOWN", unit=declared)
+    if declared == point_unit:
+        return
+    if point_unit is None:
+        raise PointVocabularyError("MEASUREMENT_UNIT_NOT_EXPECTED", declared=declared)
+    factor = conversion_factor(declared, point_unit)
+    if factor is not None:
+        raise PointVocabularyError(
+            "MEASUREMENT_UNIT_CONVERSION_REQUIRED",
+            declared=declared,
+            expected=point_unit,
+            factor=_plain_number(factor),
+        )
+    raise PointVocabularyError("MEASUREMENT_UNIT_MISMATCH", declared=declared, expected=point_unit)

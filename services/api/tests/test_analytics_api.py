@@ -452,10 +452,12 @@ def test_simulate_refuses_a_config_type_that_is_not_a_rule(two_tenants) -> None:
             "config_type": "modbus_device_mapping",
             "subject_key": str(tenant_a["ahu"]),
             "content": {
-                "device_type": "sdm120",
+                "device_type": "simulated_relay",
                 "host": "127.0.0.1",
                 "port": 502,
-                "points": [{"point_id": str(tenant_a["sensor"]), "register_name": "voltage"}],
+                "points": [
+                    {"point_id": str(tenant_a["run_status"]), "register_name": "relay_state"}
+                ],
             },
             "reason": "test",
         },

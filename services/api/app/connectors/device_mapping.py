@@ -24,6 +24,7 @@ from app.connectors.ingest import PointModbusMapping
 from app.connectors.modbus import find_register_by_name
 from app.connectors.sdm120 import SDM120_POINTS
 from app.connectors.simulated_relay import SIMULATED_RELAY_POINTS
+from app.point_vocabulary import PointVocabularyError, check_declared_unit
 from app.points import get_point
 
 MODBUS_DEVICE_MAPPING = "modbus_device_mapping"
@@ -35,6 +36,17 @@ DEVICE_REGISTER_CATALOGS = {"sdm120": SDM120_POINTS, "simulated_relay": SIMULATE
 # jamais le sdm120, jamais un futur type qui représenterait un vrai appareil
 # (CLAUDE.md, exception à la règle non négociable 1).
 SIMULATED_DEVICE_TYPES = frozenset({"simulated_relay"})
+
+
+# Refus d'unité de la validation, traduits pour la configuration (codes littéraux : un test
+# vérifie que chacun a son message). UNIT_UNKNOWN : l'unité du registre est inconnue de la
+# plateforme, comme la tension, le courant et la fréquence du SDM120.
+_MODBUS_UNIT_ERRORS = {
+    "MEASUREMENT_UNIT_CONVERSION_REQUIRED": "MODBUS_UNIT_CONVERSION_REQUIRED",
+    "MEASUREMENT_UNIT_MISMATCH": "MODBUS_UNIT_MISMATCH",
+    "MEASUREMENT_UNIT_NOT_EXPECTED": "MODBUS_UNIT_NOT_EXPECTED",
+    "UNIT_UNKNOWN": "MODBUS_REGISTER_UNIT_UNKNOWN",
+}
 
 
 class PointMapping(BaseModel):
@@ -81,6 +93,23 @@ def _validate_modbus_device_mapping(
             raise ConfigInvalid("MODBUS_POINT_NOT_FOUND", point_id=str(entry.point_id))
         if point["mapping_status"] != "validated":
             raise ConfigInvalid("MODBUS_POINT_NOT_VALIDATED", point_id=str(entry.point_id))
+
+        # Unité du registre contre unité du point : refusée dès la création de la
+        # configuration, jamais constatée après coup sur des mesures déjà enregistrées.
+        # Rien n'est converti ici : un point en kW ne reçoit pas les watts d'un registre.
+        register = find_register_by_name(
+            DEVICE_REGISTER_CATALOGS[mapping.device_type], entry.register_name
+        )
+        if register.unit:
+            try:
+                check_declared_unit(register.unit, point["unit"])
+            except PointVocabularyError as exc:
+                raise ConfigInvalid(
+                    _MODBUS_UNIT_ERRORS[exc.code],
+                    register=entry.register_name,
+                    point_id=str(entry.point_id),
+                    **exc.params,
+                ) from exc
 
     return mapping.model_dump(mode="json")
 

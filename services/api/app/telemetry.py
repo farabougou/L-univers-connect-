@@ -22,7 +22,7 @@ from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
 from app.errors import DomainError
-from app.point_vocabulary import PointVocabularyError, check_value
+from app.point_vocabulary import PointVocabularyError, check_declared_unit, check_value
 from app.points import get_point
 from app.quality_flags import (
     FLAG_CLOCK_SUSPECT,
@@ -75,12 +75,22 @@ def record_measurement(
     origin: str,
     source: str,
     received_at: datetime,
+    unit: str | None = None,
 ) -> str:
-    """Enregistre un relevé. Renvoie « inserted » ou « duplicate »."""
+    """Enregistre un relevé. Renvoie « inserted » ou « duplicate ».
+
+    `unit` : l'unité (code UCUM) dans laquelle l'émetteur exprime `value`. Quand il la
+    déclare, elle doit être celle du point, sinon la mesure est refusée, jamais convertie
+    (voir `check_declared_unit`) : c'est ce qui empêche des watts d'entrer silencieusement
+    dans un point en kilowatts. Sans déclaration, la valeur est prise telle quelle, comme
+    avant : seule une valeur hors plage est alors signalée, après coup, par son drapeau
+    `out_of_range`."""
     if point["mapping_status"] == "rejected":
         raise MeasurementRejected("POINT_REJECTED")
     try:
         check_value(value, value_type=point["value_type"], states=point["states"])
+        if unit is not None:
+            check_declared_unit(unit, point["unit"])
     except PointVocabularyError as exc:
         raise MeasurementRejected.from_error(exc) from exc
 
@@ -166,6 +176,7 @@ def ingest_measurements(
                 origin=item["origin"],
                 source=source,
                 received_at=received_at,
+                unit=item.get("unit"),
             )
         except (MeasurementRejected, MeasurementConflict) as exc:
             summary["conflicts" if isinstance(exc, MeasurementConflict) else "rejected"] += 1

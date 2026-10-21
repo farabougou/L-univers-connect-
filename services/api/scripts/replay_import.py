@@ -78,6 +78,18 @@ def _parse_column_mapping(pairs: list[str]) -> dict[str, str]:
     return mapping
 
 
+def _parse_column_units(pairs: list[str], known_columns: set[str]) -> dict[str, str]:
+    units = {}
+    for pair in pairs:
+        if "=" not in pair:
+            raise SystemExit(f"--unit attend COLONNE_CSV=UNITE_UCUM, reçu : {pair!r}")
+        column, unit = pair.split("=", 1)
+        if column not in known_columns:
+            raise SystemExit(f"--unit : la colonne {column!r} n'a pas de --column correspondant.")
+        units[column] = unit
+    return units
+
+
 def run(
     *,
     tenant_id: uuid.UUID,
@@ -88,6 +100,7 @@ def run(
     timezone: ZoneInfo | None,
     source: str,
     dry_run: bool,
+    column_units: dict[str, str] | None = None,
 ) -> dict[str, int]:
     with csv_path.open(encoding="utf-8-sig", newline="") as file:
         rows = parse_replay_csv(
@@ -103,6 +116,14 @@ def run(
         print(f"[dry-run] {len(rows)} relevé(s) traduit(s), rien écrit en base.")
         return summary
 
+    # Unité déclarée par point : un export de GTB peut être en W alors que le point est en kW.
+    # Déclarée, elle est vérifiée ligne à ligne (refus, jamais conversion silencieuse) ;
+    # non déclarée, le risque est dit, pas tu.
+    unit_by_point_code = {
+        point_code: (column_units or {})[column]
+        for column, point_code in column_to_point_code.items()
+        if column in (column_units or {})
+    }
     received_at = datetime.now(UTC)
     with engine.begin() as connection:
         set_tenant_context(connection, tenant_id)
@@ -111,6 +132,12 @@ def run(
             if row.point_code not in point_cache:
                 point_id = _resolve_point_id(connection, row.point_code)
                 point_cache[row.point_code] = get_point(connection, point_id)
+                if point_cache[row.point_code]["unit"] and row.point_code not in unit_by_point_code:
+                    print(
+                        f"attention : unité des valeurs de {row.point_code!r} non déclarée "
+                        f"(--unit) ; le point est en {point_cache[row.point_code]['unit']!r} et "
+                        "aucune vérification d'unité n'est possible pour cette colonne."
+                    )
             point = point_cache[row.point_code]
             try:
                 status = record_measurement(
@@ -122,6 +149,7 @@ def run(
                     origin="measured",
                     source=source,
                     received_at=received_at,
+                    unit=unit_by_point_code.get(row.point_code),
                 )
                 summary[status] += 1
             except (MeasurementRejected, MeasurementConflict) as exc:
@@ -152,6 +180,17 @@ def _parse_args() -> argparse.Namespace:
         default=None,
         help="Fuseau d'un horodatage naïf (ex. Europe/Paris) — UTC par défaut",
     )
+    parser.add_argument(
+        "--unit",
+        action="append",
+        dest="units",
+        default=[],
+        metavar="COLONNE_CSV=UNITE_UCUM",
+        help=(
+            "Unité (code UCUM : W, kW, kW.h, Cel...) des valeurs d'une colonne ; refusée si elle "
+            "diffère de celle du point. Répétable. Fortement recommandé."
+        ),
+    )
     parser.add_argument("--source", default="replay_import")
     parser.add_argument(
         "--dry-run", action="store_true", help="Valide et traduit sans rien écrire en base"
@@ -168,6 +207,7 @@ def main() -> None:
             timestamp_column=args.timestamp_column,
             timestamp_format=args.timestamp_format,
             column_to_point_code=_parse_column_mapping(args.columns),
+            column_units=_parse_column_units(args.units, set(_parse_column_mapping(args.columns))),
             timezone=args.timezone,
             source=f"{args.source}:{args.csv.name}",
             dry_run=args.dry_run,
