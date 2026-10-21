@@ -41,9 +41,8 @@ SHAPES = {'circle': sample(lambda th: 190),
           'star': sample(lambda th: ray_poly(poly(5, 235, inner=100), th)),
           'square': sample(lambda th: ray_poly(poly(4, 215, a0=-135), th))}
 
-# ── étoile de la marque (fin) : 10 branches de longueurs un peu irrégulières ──
-ARMS = ''.join(f'<line x1="0" y1="0" x2="{round(math.cos(math.radians(k * 36 + 8)) * L, 1)}" y2="{round(math.sin(math.radians(k * 36 + 8)) * L, 1)}"/>'
-               for k, L in enumerate([92, 78, 96, 84, 90, 80, 95, 76, 88, 86]))
+# ── logo de la marque (fin) : le M d'un seul trait du masque de l'avatar (videos/_studio/avatar/logo-m.svg) ──
+M_PATH = 'M 6 88 L 22 41 C 25 32, 33 30, 38 38 L 46 52 C 50 59, 56 59, 61 53 L 91 15 C 96 9, 102 11, 102 18 L 104 89'
 HEART = 'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'
 CURSOR = f'<svg width="32" height="42" viewBox="0 0 32 42"><path d="M2 2 L2 34 L11 25 L17 39 L23 36 L17 23 L29 23 Z" fill="{INK}" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></svg>'
 
@@ -143,7 +142,8 @@ HTML = f'''<!doctype html>
       .pill {{ position: absolute; left: 56px; top: 318px; height: 82px; padding: 0 34px; border-radius: 41px; background: {CREAM}; display: flex; align-items: center; gap: 16px; font: 800 34px "Inter"; color: #111; }}
       .pill i {{ width: 18px; height: 18px; border-radius: 9px; background: {ORANGE}; }}
       .me {{ position: absolute; right: 56px; top: 308px; width: 420px; height: 102px; border-radius: 24px; background: {CREAM}; display: flex; align-items: center; gap: 18px; padding: 0 20px; }}
-      .me b {{ width: 66px; height: 66px; border-radius: 33px; background: {ORANGE}; color: #fff; font: 400 34px "Archivo Black"; display: flex; align-items: center; justify-content: center; }}
+      .me b {{ width: 66px; height: 66px; border-radius: 33px; overflow: hidden; box-shadow: 0 0 0 3px {ORANGE}; }}
+      .me b img, #cav img {{ width: 100%; height: 100%; object-fit: cover; }}
       .me div {{ display: flex; flex-direction: column; gap: 2px; }}
       .me strong {{ font: 800 32px "Inter"; color: #111; }}
       .me span {{ font: 600 23px "Inter"; color: #5F5A54; }}
@@ -268,8 +268,8 @@ HTML = f'''<!doctype html>
       .word {{ font: 400 232px/1 "Archivo Black"; letter-spacing: -0.03em; white-space: nowrap; }}
       /* 15 · fin */
       #s14 {{ background: {ORANGE}; color: {INK}; }}
-      #mark {{ position: absolute; left: 218px; top: 290px; overflow: visible; }}
-      #mark line {{ stroke: {INK}; stroke-width: 30; stroke-linecap: round; }}
+      #mark {{ position: absolute; left: 202px; top: 307px; overflow: visible; }}
+      #mark path {{ fill: none; stroke: {INK}; stroke-width: 22; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 100 100; stroke-dashoffset: 100; }}
       #nm {{ position: absolute; left: 438px; top: 252px; font: 400 290px/1 "Archivo Black"; letter-spacing: -0.03em; white-space: nowrap; }}
       #nm span {{ display: inline-block; }}
       #md {{ position: absolute; left: 450px; top: 548px; font: italic 400 96px/1 "Instrument Serif"; white-space: nowrap; }}
@@ -277,7 +277,7 @@ HTML = f'''<!doctype html>
       #fine {{ position: absolute; left: 200px; right: 200px; top: 700px; display: flex; justify-content: space-between; font: 500 15px "Plex Mono"; letter-spacing: 0.14em; }}
       /* 16 · contact */
       #s15 {{ background: #111114; color: {CREAM}; }}
-      #cav {{ position: absolute; left: 740px; top: 150px; width: 120px; height: 120px; border-radius: 60px; background: {ORANGE}; color: #fff; font: 400 60px "Archivo Black"; display: flex; align-items: center; justify-content: center; }}
+      #cav {{ position: absolute; left: 740px; top: 150px; width: 120px; height: 120px; border-radius: 60px; overflow: hidden; box-shadow: 0 0 0 5px {ORANGE}; }}
       #hdl {{ position: absolute; left: 0; right: 0; top: 304px; text-align: center; font: 400 150px/1 "Archivo Black"; letter-spacing: -0.03em; white-space: nowrap; }}
       #ctal {{ position: absolute; left: 0; right: 0; top: 486px; text-align: center; color: #A8A197; }}
       #fol {{ position: absolute; left: 630px; top: 560px; width: 340px; height: 100px; border-radius: 50px; background: {ORANGE}; }}
@@ -303,7 +303,7 @@ HTML = f'''<!doctype html>
       <div id="frame" class="clip" data-start="0" data-duration="{TOTAL}" data-track-index="0" style="position:absolute; inset:0">
         <div id="glow"></div>
         <div class="pill" id="pill"><i></i>Showreel · Motion design</div>
-        <div class="me" id="me"><b>M</b><div><strong>Mams</strong><span>TikTok · @kofamali</span></div></div>
+        <div class="me" id="me"><b><img src="assets/images/profil.jpg" alt="Mams" /></b><div><strong>Mams</strong><span>TikTok · @kofamali</span></div></div>
         <div id="card"><div id="stage">
           <div class="sec" id="s0"><h2>Six façons d'aller de A à B.</h2><div class="mono note">MÊME DISTANCE · MÊME DURÉE (1,2 S)</div>
             <div class="ab" style="left:420px">A</div><div class="ab" style="right:92px">B</div>{rows}
@@ -356,11 +356,11 @@ HTML = f'''<!doctype html>
           <div class="sec" id="s12"><canvas id="liq" width="800" height="450"></canvas><div class="mono lbl">LIQUIDE · 7 MÉTABALLES</div></div>
           <div class="sec" id="s13">{words}
           </div>
-          <div class="sec" id="s14"><svg id="mark" width="200" height="200" viewBox="0 0 200 200"><g id="mk" transform="translate(100 100)">{ARMS}</g></svg>
+          <div class="sec" id="s14"><svg id="mark" width="230" height="197" viewBox="-12 -12 140 120"><path d="{M_PATH}" pathLength="100"/></svg>
             <div id="nm">{name}</div><div id="md">motion designer</div><div id="rule"></div>
             <div id="fine"><span>SHOWREEL 2026</span><span>32 SECONDES</span><span>CHAQUE IMAGE CRÉÉE EN CODE</span><span>DISPONIBLE POUR VOS PROJETS</span></div>
           </div>
-          <div class="sec" id="s15"><div id="cav">M</div><div id="hdl">@kofamali</div><div class="mono" id="ctal">TIKTOK · SITES · APPLIS · PUBS VIDÉO</div>
+          <div class="sec" id="s15"><div id="cav"><img src="assets/images/profil.jpg" alt="Mams" /></div><div id="hdl">@kofamali</div><div class="mono" id="ctal">TIKTOK · SITES · APPLIS · PUBS VIDÉO</div>
             <div id="fol"><span id="foff">Suivre</span><span id="fon">Abonné ✓</span></div>{hearts("h2")}
             <div id="cur2">{CURSOR}</div>
           </div>
@@ -675,10 +675,10 @@ JS = r'''
           tl.fromTo("#w" + i, { scaleX: 1.35, scaleY: 0.25, y: 80, opacity: 0 }, { scaleX: 1, scaleY: 1, y: 0, opacity: 1, duration: 0.28, ease: S.ease.overshoot }, at(13, i));
         }
 
-        // ── 15 · fin : l'étoile tourne et se pose, MAMS se décode lettre par lettre ──
-        const mk = S.spring({ response: 0.5, damping: 0.6 });
-        tl.fromTo("#mark", { scale: 0, rotation: -160 }, { scale: 1, rotation: 0, duration: mk.duration, ease: mk.ease }, at(14));
-        tl.fromTo("#mark", { rotation: 0 }, { rotation: 40, duration: BAR - 0.6, ease: "none", immediateRender: false }, at(14, 1.2));
+        // ── 15 · fin : le logo M se dessine d'un seul trait, MAMS se décode lettre par lettre ──
+        const mk = S.spring({ response: 0.5, damping: 0.7 });
+        tl.fromTo("#mark path", { strokeDashoffset: 100 }, { strokeDashoffset: 0, duration: 0.7, ease: S.ease.glide }, at(14));
+        tl.fromTo("#mark", { scale: 0.85 }, { scale: 1, duration: mk.duration, ease: mk.ease }, at(14));
         const GL = "ABCDEFGHJKLMNPRSTUVWXYZ#%&*", letters = $$("#nm span"), FINAL = "MAMS";
         const decode = (t) => {
           letters.forEach((el, i) => {
