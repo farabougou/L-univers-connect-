@@ -2,6 +2,14 @@ import * as SQLite from "expo-sqlite";
 
 import type { ClosureBody } from "./closure";
 import { migrateLocalDatabase } from "./localSchema";
+import type { FeedName } from "./syncFeed";
+import {
+  createFeedStore,
+  getLastSyncedAt,
+  listCachedInterventions,
+  type CachedIntervention,
+  type SqlDatabase,
+} from "./syncStore";
 
 /**
  * Stockage local des interventions créées hors ligne (voir ADR 010). Une
@@ -81,21 +89,26 @@ export async function insertPendingIntervention(input: {
   );
 }
 
-export async function replaceFunctionalLocationsCache(
-  locations: CachedFunctionalLocation[],
-): Promise<void> {
-  const db = await getDb();
-  await db.withExclusiveTransactionAsync(async (txn) => {
-    await txn.execAsync("DELETE FROM functional_locations_cache");
-    for (const location of locations) {
-      await txn.runAsync(
-        "INSERT INTO functional_locations_cache (id, code, name) VALUES (?, ?, ?)",
-        location.id,
-        location.code,
-        location.name,
-      );
-    }
-  });
+/**
+ * Stockage de la synchronisation incrémentale (voir syncFeed.ts). La liste des
+ * équipements et l'historique des interventions sont mis à jour ligne à ligne,
+ * jamais remplacés en bloc.
+ */
+export async function getFeedStore() {
+  return createFeedStore((await getDb()) as SqlDatabase);
+}
+
+export type { CachedIntervention };
+
+export async function listInterventionHistory(args: {
+  limit: number;
+  before?: { startedAt: string; id: string };
+}): Promise<CachedIntervention[]> {
+  return listCachedInterventions((await getDb()) as SqlDatabase, args);
+}
+
+export async function lastSyncedAt(feed: FeedName): Promise<string | null> {
+  return getLastSyncedAt((await getDb()) as SqlDatabase, feed);
 }
 
 export async function listCachedFunctionalLocations(): Promise<CachedFunctionalLocation[]> {

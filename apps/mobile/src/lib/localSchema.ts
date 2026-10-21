@@ -40,6 +40,26 @@ export const LOCAL_MIGRATIONS: string[] = [
   // app/schemas.py::InterventionCreate.work_order_id, mais aucun écran ne
   // le proposait — trouvé par l'audit de bout en bout du 02/10/2026).
   `ALTER TABLE pending_interventions ADD COLUMN work_order_id TEXT;`,
+  // 5 — synchronisation incrémentale (21/10/2026, syncFeed.ts) : l'historique
+  // des interventions est gardé sur le téléphone (lisible hors ligne, page par
+  // page) au lieu d'être retéléchargé en entier à chaque ouverture, et un point
+  // de reprise par flux évite de tout redemander après une coupure.
+  `CREATE TABLE IF NOT EXISTS interventions_cache (
+     id TEXT PRIMARY KEY,
+     intervention_type TEXT NOT NULL,
+     started_at TEXT NOT NULL,
+     ended_at TEXT,
+     summary TEXT,
+     functional_location_id TEXT,
+     work_order_id TEXT
+   );
+   CREATE INDEX IF NOT EXISTS ix_interventions_cache_started
+     ON interventions_cache (started_at DESC, id DESC);
+   CREATE TABLE IF NOT EXISTS sync_state (
+     feed TEXT PRIMARY KEY,
+     cursor TEXT,
+     synced_at TEXT NOT NULL
+   );`,
 ];
 
 export type LocalDatabase = {

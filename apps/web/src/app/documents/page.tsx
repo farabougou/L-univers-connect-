@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
+import { Pager } from "@/components/Pager";
 import { apiFetch, requireAccessToken } from "@/lib/api";
 import {
   cardStyle,
@@ -14,6 +16,14 @@ import {
   tableScrollStyle,
 } from "@/lib/formStyles";
 import { getLocale, getTranslator } from "@/lib/i18n";
+import {
+  DEFAULT_PAGE_SIZE,
+  lastPage,
+  pageOffset,
+  pageWindow,
+  parsePage,
+  totalCount,
+} from "@/lib/pagination";
 import { formatDateTime } from "@/i18n/translator";
 
 import { uploadDocument } from "./actions";
@@ -57,18 +67,37 @@ const CATEGORIES = [
   "other",
 ] as const;
 
-export default async function DocumentsPage() {
+export default async function DocumentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   const accessToken = await requireAccessToken();
   const { t } = await getTranslator();
   const locale = await getLocale();
+  const page = parsePage((await searchParams).page);
 
+  // Une page à la fois (consolidation V5, 21/10/2026) : la bibliothèque grossit
+  // sans fin, la télécharger en entier ralentit l'écran et pèse sur le réseau.
   const [documentsResponse, locationsResponse] = await Promise.all([
-    apiFetch("/documents/portfolio", accessToken),
+    apiFetch(
+      `/documents/portfolio?limit=${DEFAULT_PAGE_SIZE}&offset=${pageOffset(page)}`,
+      accessToken,
+    ),
     apiFetch("/functional-locations", accessToken),
   ]);
   const documents: PortfolioDocument[] = documentsResponse.ok
     ? await documentsResponse.json()
     : [];
+  const total = totalCount(documentsResponse);
+  // Adresse trop loin (page supprimée, lien ancien) : on ramène à la dernière page.
+  if (documents.length === 0 && total !== null && total > 0 && page > 1) {
+    redirect(`/documents?page=${lastPage(total)}`);
+  }
+  const window =
+    total !== null
+      ? pageWindow({ page, total, returned: documents.length })
+      : null;
   const locations: FunctionalLocation[] = locationsResponse.ok
     ? await locationsResponse.json()
     : [];
@@ -167,6 +196,7 @@ export default async function DocumentsPage() {
               </tbody>
             </table>
           </div>
+          {window && <Pager window={window} basePath="/documents" t={t} />}
         </section>
       )}
 

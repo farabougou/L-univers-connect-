@@ -167,8 +167,12 @@
     },
     "history": {
       "empty": "No intervention sent yet.",
+      "last_sync": "Last synchronization: {date}.",
       "load_failed": "The history could not be loaded. Check the network connection.",
-      "title": "Interventions sent to the server"
+      "never_synced": "This history has not been synchronized yet. Connect to the network to load it.",
+      "sync_incomplete": "Synchronization is not finished. It will resume at the next connection.",
+      "title": "Interventions sent to the server",
+      "window_note": "History limited to the last {days} days."
     },
     "home": {
       "history": "History",
@@ -684,6 +688,12 @@
       "submission_requires_ready": "Mark the declaration \"Ready\" before you can record its transmission.",
       "summary_title": "Figures to enter on the OPERAT portal",
       "title": "OPERAT compliance"
+    },
+    "pagination": {
+      "label": "Pagination",
+      "next": "Next page",
+      "previous": "Previous page",
+      "range": "{from} to {to} of {total}"
     },
     "passport_page": {
       "title": "Passport",

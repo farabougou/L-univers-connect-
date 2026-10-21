@@ -167,8 +167,12 @@
     },
     "history": {
       "empty": "Aucune intervention envoyée pour le moment.",
+      "last_sync": "Dernière synchronisation : {date}.",
       "load_failed": "L’historique n’a pas pu être chargé. Vérifiez la connexion au réseau.",
-      "title": "Interventions envoyées au serveur"
+      "never_synced": "Cet historique n’a pas encore été synchronisé. Connectez-vous au réseau pour le charger.",
+      "sync_incomplete": "La synchronisation n’est pas terminée. Elle reprendra à la prochaine connexion.",
+      "title": "Interventions envoyées au serveur",
+      "window_note": "Historique limité aux {days} derniers jours."
     },
     "home": {
       "history": "Historique",
@@ -684,6 +688,12 @@
       "submission_requires_ready": "Passez la déclaration à « Prête » avant de pouvoir enregistrer sa transmission.",
       "summary_title": "Résumé à saisir sur le portail OPERAT",
       "title": "Conformité OPERAT"
+    },
+    "pagination": {
+      "label": "Pagination",
+      "next": "Page suivante",
+      "previous": "Page précédente",
+      "range": "{from} à {to} sur {total}"
     },
     "passport_page": {
       "title": "Passeport",

@@ -11,7 +11,7 @@
  * l'invente pas non plus.
  */
 
-type RawFunctionalLocation = { id: string; code: string; name: string };
+import { loadEquipmentLabels } from "./equipmentLabels";
 
 type RawMeter = {
   point_id: string;
@@ -36,21 +36,16 @@ export async function fetchEnergyPortfolio(
   apiUrl: string,
   accessToken: string,
 ): Promise<{ referenceDate: string | null; meters: EnergyMeter[] }> {
-  const [summaryResponse, locationsResponse] = await Promise.all([
+  const [summaryResponse, locationList] = await Promise.all([
     fetch(`${apiUrl}/energy/portfolio-summary`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     }),
-    fetch(`${apiUrl}/functional-locations`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    }),
+    loadEquipmentLabels(apiUrl, accessToken),
   ]);
   if (!summaryResponse.ok) {
     return { referenceDate: null, meters: [] };
   }
   const summary = (await summaryResponse.json()) as RawPortfolioSummary;
-  const locationList: RawFunctionalLocation[] = locationsResponse.ok
-    ? await locationsResponse.json()
-    : [];
   const locationById = new Map(locationList.map((location) => [location.id, location]));
 
   const meters: EnergyMeter[] = summary.meters.map((meter) => {

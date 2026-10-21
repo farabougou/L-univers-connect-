@@ -27,14 +27,10 @@ describe("base locale versionnée", () => {
   it("un téléphone déjà installé ne reçoit que les étapes manquantes", async () => {
     const db = fakeDb(1);
     await migrateLocalDatabase(db);
-    expect(db.executed).toEqual([
-      LOCAL_MIGRATIONS[1],
-      "PRAGMA user_version = 2",
-      LOCAL_MIGRATIONS[2],
-      "PRAGMA user_version = 3",
-      LOCAL_MIGRATIONS[3],
-      "PRAGMA user_version = 4",
-    ]);
+    // Toutes les étapes après la première, dans l'ordre, chacune suivie de son numéro de version.
+    expect(db.executed).toEqual(
+      LOCAL_MIGRATIONS.slice(1).flatMap((step, index) => [step, `PRAGMA user_version = ${index + 2}`]),
+    );
   });
 
   it("un téléphone à jour ne change rien", async () => {

@@ -1,18 +1,35 @@
 import {
   deletePendingIntervention,
+  getFeedStore,
   listPendingInterventions,
   markClosureSent,
   markFgasSent,
   markInterventionCreated,
   markPhotoUploaded,
-  replaceFunctionalLocationsCache,
   type PendingIntervention,
 } from "./db";
+import {
+  CursorRejectedError,
+  pullFeed,
+  type FeedName,
+  type FeedPage,
+  type PullResult,
+} from "./syncFeed";
+import type { FeedItem } from "./syncStore";
 
 export type SyncResult = {
   synced: number;
   failed: number;
+  /**
+   * Vrai si la récupération des données du serveur n'est pas allée à son terme
+   * (plafond de pages atteint, ou erreur de réseau) : la suite viendra à la
+   * prochaine synchronisation, au point où elle s'est arrêtée.
+   */
+  incomplete?: boolean;
 };
+
+/** Fenêtre d'historique chargée au premier parcours : le téléphone n'a pas besoin des années passées. */
+export const HISTORY_WINDOW_DAYS = 30;
 
 let inFlightSync: Promise<SyncResult> | null = null;
 
@@ -38,11 +55,81 @@ export function synchronize(apiUrl: string, accessToken: string): Promise<SyncRe
 
 async function runSynchronize(apiUrl: string, accessToken: string): Promise<SyncResult> {
   const result = await syncPendingInterventions(apiUrl, accessToken);
-  await refreshFunctionalLocationsCache(apiUrl, accessToken).catch((error) => {
-    // eslint-disable-next-line no-console -- diagnostic terrain (voir plus bas).
-    console.error("Échec du rafraîchissement du cache des équipements", error);
+  // Les deux flux sont indépendants : l'échec de l'un n'empêche pas l'autre, et
+  // chacun reprend à son propre point de reprise à la synchronisation suivante.
+  let incomplete = false;
+  for (const feed of FEEDS) {
+    const pulled = await pullFromServer(apiUrl, accessToken, feed).catch((error) => {
+      // eslint-disable-next-line no-console -- diagnostic terrain (voir plus bas).
+      console.error(`Échec de la synchronisation du flux ${feed}`, error);
+      return null;
+    });
+    if (!pulled?.complete) incomplete = true;
+  }
+  return { ...result, incomplete };
+}
+
+const FEEDS: FeedName[] = ["functional_locations", "interventions"];
+
+const FEED_PATH: Record<FeedName, string> = {
+  functional_locations: "/sync/functional-locations",
+  interventions: "/sync/interventions",
+};
+
+/** Pages courtes : sur une connexion faible, une coupure ne perd que la page en cours. */
+const FEED_PAGE_SIZE = 100;
+/** Une requête qui n'aboutit pas dans ce délai est abandonnée (sinon la synchronisation resterait bloquée). */
+const FEED_REQUEST_TIMEOUT_MS = 20_000;
+
+/**
+ * Récupère ce qui a changé sur le serveur depuis le dernier point de reprise
+ * (équipements, puis historique des interventions), par pages. Remplace le
+ * téléchargement intégral de ces listes à chaque synchronisation.
+ */
+export async function pullFromServer(
+  apiUrl: string,
+  accessToken: string,
+  feed: FeedName,
+): Promise<PullResult> {
+  return pullFeed<FeedItem>({
+    feed,
+    store: await getFeedStore(),
+    fetchPage: (after) => fetchFeedPage(apiUrl, accessToken, feed, after),
   });
-  return result;
+}
+
+async function fetchFeedPage(
+  apiUrl: string,
+  accessToken: string,
+  feed: FeedName,
+  after: string | null,
+): Promise<FeedPage<FeedItem>> {
+  // Premier parcours de l'historique : seulement la fenêtre récente, pas les années passées.
+  const since =
+    !after && feed === "interventions"
+      ? `&since=${encodeURIComponent(
+          new Date(Date.now() - HISTORY_WINDOW_DAYS * 86_400_000).toISOString(),
+        )}`
+      : "";
+  const query = `limit=${FEED_PAGE_SIZE}${after ? `&after=${encodeURIComponent(after)}` : since}`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FEED_REQUEST_TIMEOUT_MS);
+  try {
+    const response = await fetch(`${apiUrl}${FEED_PATH[feed]}?${query}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      if (response.status === 400) {
+        const body = await response.json().catch(() => null);
+        if (body?.code === "SYNC_CURSOR_INVALID") throw new CursorRejectedError();
+      }
+      throw new Error(`flux ${feed} : ${response.status}`);
+    }
+    return (await response.json()) as FeedPage<FeedItem>;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /**
@@ -86,31 +173,6 @@ export async function syncPendingInterventions(
   }
 
   return { synced, failed };
-}
-
-/**
- * Rafraîchit la liste des positions fonctionnelles (équipements) disponibles
- * hors ligne, pour que le technicien puisse choisir sur quel équipement il
- * intervient même sans réseau au moment de créer l'intervention.
- */
-export async function refreshFunctionalLocationsCache(
-  apiUrl: string,
-  accessToken: string,
-): Promise<void> {
-  const response = await fetch(`${apiUrl}/functional-locations`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  if (!response.ok) {
-    throw new Error(`liste des équipements : ${response.status}`);
-  }
-  const locations = await response.json();
-  await replaceFunctionalLocationsCache(
-    locations.map((location: { id: string; code: string; name: string }) => ({
-      id: location.id,
-      code: location.code,
-      name: location.name,
-    })),
-  );
 }
 
 async function ensureInterventionCreated(

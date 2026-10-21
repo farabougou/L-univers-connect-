@@ -220,6 +220,7 @@
     "SPACE_PLACEMENT_FORBIDDEN": "A space of type “{space_type}” cannot be placed in a space of type “{parent_type}”.",
     "SPACE_PLACEMENT_UNDER_SITE_FORBIDDEN": "A space of type “{space_type}” cannot be placed directly under the site.",
     "SPACE_TYPE_UNKNOWN": "Unknown space type: “{space_type}”.",
+    "SYNC_CURSOR_INVALID": "The synchronization resume point is not valid. Please run a full synchronization.",
     "TAG_ALREADY_REVOKED": "This tag has already been revoked.",
     "TAG_REVOKED": "This tag has been revoked ({reason}): scan the new tag on the equipment.",
     "TAG_TYPE_UNKNOWN": "Unknown tag type: “{tag_type}”.",

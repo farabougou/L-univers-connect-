@@ -11,6 +11,8 @@
  * 02/10/2026 (le passeport ne se consultait jusqu'ici que par étiquette).
  */
 
+import { loadEquipmentLabels } from "./equipmentLabels";
+
 export type Alert = {
   id: string;
   kind: "alarm" | "finding";
@@ -48,8 +50,6 @@ type RawFinding = {
   last_seen_at: string;
 };
 
-type FunctionalLocation = { id: string; code: string; name: string };
-
 // Même ordre de priorité que web (apps/web/src/lib/portfolio.ts,
 // SEVERITY_RANK) : une alerte critique toujours avant une majeure, même
 // plus ancienne.
@@ -72,16 +72,11 @@ async function fetchOpenSignals<T>(
 }
 
 export async function fetchOpenAlerts(apiUrl: string, accessToken: string): Promise<Alert[]> {
-  const [alarms, findings, locationsResponse] = await Promise.all([
+  const [alarms, findings, locationList] = await Promise.all([
     fetchOpenSignals<RawAlarm>(apiUrl, accessToken, "/alarms"),
     fetchOpenSignals<RawFinding>(apiUrl, accessToken, "/findings"),
-    fetch(`${apiUrl}/functional-locations`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    }),
+    loadEquipmentLabels(apiUrl, accessToken),
   ]);
-  const locationList: FunctionalLocation[] = locationsResponse.ok
-    ? await locationsResponse.json()
-    : [];
   const locationById = new Map(locationList.map((location) => [location.id, location]));
 
   const alerts: Alert[] = [

@@ -220,6 +220,7 @@
     "SPACE_PLACEMENT_FORBIDDEN": "Un espace de type « {space_type} » ne peut pas être placé dans un espace de type « {parent_type} ».",
     "SPACE_PLACEMENT_UNDER_SITE_FORBIDDEN": "Un espace de type « {space_type} » ne peut pas être placé directement sous le site.",
     "SPACE_TYPE_UNKNOWN": "Type d’espace inconnu : « {space_type} ».",
+    "SYNC_CURSOR_INVALID": "Le point de reprise de la synchronisation n’est pas valide. Veuillez relancer une synchronisation complète.",
     "TAG_ALREADY_REVOKED": "Cette étiquette est déjà révoquée.",
     "TAG_REVOKED": "Cette étiquette a été révoquée ({reason}) : scannez la nouvelle étiquette de l’équipement.",
     "TAG_TYPE_UNKNOWN": "Type d’étiquette inconnu : « {tag_type} ».",

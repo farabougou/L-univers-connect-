@@ -1,6 +1,7 @@
 from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, Response
+from fastapi.middleware.gzip import GZipMiddleware
 from slowapi.middleware import SlowAPIMiddleware
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
@@ -33,12 +34,21 @@ from app.routers.providers import router as providers_router
 from app.routers.regulatory import router as regulatory_router
 from app.routers.search import router as search_router
 from app.routers.spatial import router as spatial_router
+from app.routers.sync import router as sync_router
 from app.routers.telemetry import router as telemetry_router
 
 configure_logging(settings.log_level)
 
 app = FastAPI(title="Enoryx API")
 install_rate_limiting(app)
+# Compression (consolidation V5 du 21/10/2026) : sur une connexion faible, un
+# JSON de liste se compresse d'un facteur 5 à 10. Réponses de 1 Kio et plus
+# seulement, et seulement si le client l'accepte (Accept-Encoding: gzip).
+# Ajoutée EN PREMIER, donc la plus interne : elle voit la réponse complète de la
+# route (seuil de taille respecté, longueur annoncée). Plus à l'extérieur, la
+# journalisation (BaseHTTPMiddleware) transforme toute réponse en flux, et la
+# compression s'appliquerait à des réponses de quelques octets.
+app.add_middleware(GZipMiddleware, minimum_size=1024)
 app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(
     AdmissionControlMiddleware,
@@ -79,6 +89,7 @@ app.include_router(documents_router)
 app.include_router(providers_router)
 app.include_router(regulatory_router)
 app.include_router(search_router)
+app.include_router(sync_router)
 
 
 @app.get("/health")

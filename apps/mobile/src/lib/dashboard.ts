@@ -7,8 +7,9 @@
  * les alarmes et constats ouverts (même filtre que src/lib/alerts.ts).
  */
 
+import { loadEquipmentLabels } from "./equipmentLabels";
+
 type RawSite = { id: string; archived_at: string | null };
-type RawFunctionalLocation = { id: string; archived_at: string | null };
 type RawSpace = { id: string; space_type: string };
 type RawActivity = {
   kind: "intervention" | "work_order" | "alarm" | "finding" | "event";
@@ -17,7 +18,6 @@ type RawActivity = {
   reference_id: string;
   title: string | null;
 };
-type RawFunctionalLocationLabel = { id: string; code: string; name: string };
 
 export type DashboardCounts = {
   sites: number;
@@ -40,13 +40,29 @@ async function fetchJson<T>(url: string, accessToken: string): Promise<T[]> {
   return response.ok ? ((await response.json()) as T[]) : [];
 }
 
+/**
+ * Nombre de signalements ouverts, SANS télécharger la liste : `limit=1` ne rend
+ * qu'une ligne et l'en-tête `X-Total-Count` donne le total (app/pagination.py).
+ * Pendant une tempête d'alarmes, la liste complète pèserait des mégaoctets pour
+ * afficher un seul nombre.
+ */
 async function countOpenSignals(apiUrl: string, accessToken: string, path: string): Promise<number> {
-  const results = await Promise.all(
-    ["open", "in_progress"].map((handlingStatus) =>
-      fetchJson<{ id: string }>(`${apiUrl}${path}?handling_status=${handlingStatus}`, accessToken),
-    ),
+  const totals = await Promise.all(
+    ["open", "in_progress"].map(async (handlingStatus) => {
+      const url = `${apiUrl}${path}?handling_status=${handlingStatus}`;
+      const response = await fetch(`${url}&limit=1`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!response.ok) return 0;
+      const header = response.headers.get("X-Total-Count");
+      // Number(null) vaut 0 : sans cette précaution, un en-tête absent afficherait « 0 alerte ».
+      const total = header === null ? Number.NaN : Number(header);
+      if (Number.isInteger(total) && total >= 0) return total;
+      // Serveur sans pagination : repli sur la liste complète, plutôt qu'un faux nombre.
+      return (await fetchJson<{ id: string }>(url, accessToken)).length;
+    }),
   );
-  return results.reduce((total, batch) => total + batch.length, 0);
+  return totals.reduce((total, count) => total + count, 0);
 }
 
 export async function fetchDashboardCounts(
@@ -55,7 +71,7 @@ export async function fetchDashboardCounts(
 ): Promise<DashboardCounts> {
   const [sites, locations, spaces, alarmCount, findingCount] = await Promise.all([
     fetchJson<RawSite>(`${apiUrl}/sites`, accessToken),
-    fetchJson<RawFunctionalLocation>(`${apiUrl}/functional-locations`, accessToken),
+    loadEquipmentLabels(apiUrl, accessToken),
     fetchJson<RawSpace>(`${apiUrl}/spaces`, accessToken),
     countOpenSignals(apiUrl, accessToken, "/alarms"),
     countOpenSignals(apiUrl, accessToken, "/findings"),
@@ -63,7 +79,8 @@ export async function fetchDashboardCounts(
   return {
     sites: sites.filter((site) => site.archived_at === null).length,
     buildings: spaces.filter((space) => space.space_type === "building").length,
-    equipment: locations.filter((location) => location.archived_at === null).length,
+    // La liste des équipements exclut déjà les archivés (serveur et liste locale).
+    equipment: locations.length,
     openAlerts: alarmCount + findingCount,
   };
 }
@@ -74,7 +91,7 @@ export async function fetchRecentActivity(
 ): Promise<ActivityItem[]> {
   const [entries, locations] = await Promise.all([
     fetchJson<RawActivity>(`${apiUrl}/activity/recent`, accessToken),
-    fetchJson<RawFunctionalLocationLabel>(`${apiUrl}/functional-locations`, accessToken),
+    loadEquipmentLabels(apiUrl, accessToken),
   ]);
   const locationById = new Map(locations.map((location) => [location.id, location]));
   return entries.map((entry) => {
