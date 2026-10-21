@@ -1,0 +1,64 @@
+{
+  "statuses": {
+    "PASS": "Passed",
+    "FAIL": "Failed",
+    "NOT_EVALUATED": "Not evaluated",
+    "INCOMPLETE": "Incomplete"
+  },
+  "checks": {
+    "DIRECT_READS_COMPLETE": "T1 — Direct meter reading: three complete readings",
+    "DIRECT_VALUES_PLAUSIBLE": "T2 — Plausible values (voltage, frequency, current, power, energy)",
+    "POWER_UNIT_COHERENT": "T2 — Power unit consistent with voltage and current",
+    "DISPLAY_CONCORDANCE": "T3 — Agreement with the meter display",
+    "POWER_EQUALS_V_TIMES_I": "T4 — Active power equals voltage multiplied by current",
+    "POINT_UNITS_MATCH_METER": "T7 — Platform point units: W for power, kW.h for energy",
+    "NO_SAMPLES": "T5 — Measurements recorded by the platform",
+    "NO_MISSING_SAMPLES": "T5 — No missing measurement outside a declared outage",
+    "NO_DOUBLE_SAMPLING": "T5 — No double measurement (two measurements too close together)",
+    "INTERVAL_RESPECTED": "T5 — Interval between two measurements respected",
+    "QUALITY_FLAGS_CLEAN": "T6 — Quality flags empty",
+    "ENERGY_NEVER_DECREASES": "T7 — Energy never decreasing",
+    "ENERGY_MATCHES_POWER": "T7 — Energy consistent with power multiplied by duration",
+    "NO_LOSS_DURING_API_OUTAGE": "T8 — No measurement lost during the API outage",
+    "GATEWAY_OUTAGE_HANDLED": "T9 — Gateway outage: no invented value, resumed on return",
+    "RESTART_RESUMED": "Daemon restart: resumed without duplicate and without energy going backwards"
+  },
+  "details": {
+    "DIRECT_READS_COMPLETE": "{count} reading(s), {incomplete} of them incomplete; {required} complete readings are expected.",
+    "DIRECT_VALUES_PLAUSIBLE": "Quantities out of limits: {violations}. Nominal voltage used: {nominal_voltage} V.",
+    "POWER_UNIT_COHERENT": "Ratio of active power to (voltage × current) between {ratio_min} and {ratio_max}; it must stay between 0.02 and 1.05.",
+    "DISPLAY_CONCORDANCE": "Quantities compared: {compared}. Deviations out of tolerance: {deviations}.",
+    "POWER_EQUALS_V_TIMES_I": "Largest deviation: {worst_deviation} (tolerance {tolerance}).",
+    "POINT_UNITS_MATCH_METER": "Power: class {power_class}, unit {power_unit}; energy: class {energy_class}, unit {energy_unit}. Mismatches: {mismatches}.",
+    "NO_SAMPLES": "{power} power measurement(s) and {energy} energy measurement(s) in the period.",
+    "NO_MISSING_SAMPLES": "Missing measurements: {missing_power} power, {missing_energy} energy.",
+    "NO_DOUBLE_SAMPLING": "{count} pair(s) of measurements less than half an interval apart.",
+    "INTERVAL_RESPECTED": "Median interval: {median_seconds} s (expected: {expected_seconds} s).",
+    "QUALITY_FLAGS_CLEAN": "Unexpected flags: {unexpected}.",
+    "ENERGY_NEVER_DECREASES": "{decreases} decrease(s) of the cumulative energy.",
+    "ENERGY_MATCHES_POWER": "Measured energy: {measured_kwh} kW.h; expected from power: {expected_kwh} kW.h.",
+    "NO_LOSS_DURING_API_OUTAGE": "{lost} measurement(s) lost; {replayed} measurement(s) dated during the outage sent afterwards (about {expected} expected).",
+    "GATEWAY_OUTAGE_HANDLED": "{invented} measurement(s) recorded during the outage; {not_resumed} outage(s) without resumption within the next two intervals.",
+    "RESTART_RESUMED": "{not_resumed} restart(s) without resumption within the next two intervals; {energy_dropped} energy decrease(s) around the restart."
+  },
+  "notes": {
+    "verdict": "Verdict",
+    "gaps": "Gaps found in the measurements (compare with your outage notes)",
+    "no_gap": "No gap longer than two intervals.",
+    "not_covered": "Not covered by this verdict: visual agreement with the meter display (human entry), \"stale\" display in the console during the gateway outage, 30-day endurance, several meters, other model, other site. This verdict is not a field validation.",
+    "readonly": "Read-only: only Modbus function code 04 is used; nothing is ever written to the meter."
+  },
+  "reasons": {
+    "LOAD_NOT_DECLARED_RESISTIVE": "The load was not declared resistive: this check is meaningless otherwise.",
+    "DISPLAY_NOT_PROVIDED": "The display values were not entered: comparison impossible.",
+    "READS_INCOMPLETE": "The direct readings are incomplete: check impossible.",
+    "NO_LOAD": "No load strong enough to conclude (voltage × current below 100 VA).",
+    "TOO_FEW_SAMPLES": "Too few measurements to conclude.",
+    "ENERGY_TOO_SMALL": "The expected energy is too close to the meter resolution: extend the test or increase the load.",
+    "ENERGY_FROZEN": "Energy did not change although power is not zero (frozen meter or simulator).",
+    "UNIT_FACTOR_SUSPECTED": "The ratio is close to 1000 or 1/1000: probable unit confusion (W and kW, or W.h and kW.h).",
+    "OUT_OF_TOLERANCE": "The deviation exceeds the tolerance.",
+    "NO_OUTAGE_DECLARED": "No outage of this type was declared: test not performed.",
+    "NO_RESTART_DECLARED": "No daemon restart was declared: test not performed."
+  }
+}

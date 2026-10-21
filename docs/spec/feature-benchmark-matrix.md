@@ -2066,6 +2066,69 @@ Modbus 1 fixe dans le démon, vocabulaire des points limité à la puissance et 
 `scripts/modbus_poll.py` limité au secret partagé (**REFACTOR** possible : accepter la
 clé d'appareil comme le démon), et scripts à lancer avec `PYTHONPATH=.`.
 
+### V5 — consolidation et préparation de la validation terrain, 21/10/2026
+
+Aucune fonctionnalité métier ajoutée : durcissement, mesure, et préparation de l'essai sur un
+compteur réel. **Un jalon n'est clos que si la CI GitHub est verte sur le commit poussé.**
+Cette consolidation en a donné la preuve par la négative : le commit `6fd2e2a` (lot
+« déploiement ») a fait passer la CI au rouge (un test de cohérence des catalogues), alors que
+son lot passait en local parce que la suite complète n'avait pas été relancée ; corrigé dans
+`ca09207` (CI verte). Les tests de ce lot ont ensuite tous été lancés avec la suite complète.
+
+| Piste | Décision | Ce qui a changé | Preuve |
+| --- | --- | --- | --- |
+| Vulnérabilités (3 API, 5 web, 29 mobile) | REFACTOR `vite` mobile ; **DEFER** le reste, avec raison | `vite` 8.3.5 (outil de test). Aucune correction compatible n'existe pour les autres ; aucune n'est exploitable en production. Test de confusion d'algorithme sur `python-jose` | `docs/security/registre-vulnerabilites.md` (gravité, dépendance, exposition, correction, par avis) ; `tests/test_token_algorithm_confusion.py` |
+| Pagination et synchronisation mobile | ADD flux incrémental (`/sync/*`), REFACTOR écrans | Plus de téléchargement complet des interventions : 52,1 Mo → 0,91 Mo au premier parcours (0,10 Mo compressé), 0,1 Ko quand rien ne change ; reprise exacte après interruption ; équipements archivés propagés, rien d'effacé ; documents web paginés | ADR 018 ; `tests/test_sync_feed.py` ; tests mobiles sur SQLite réel (155 tests mobiles au total) |
+| Configuration de déploiement | REFACTOR (vérification au démarrage) | Réel constaté : 1 réplique, 1 processus, pool 30, requêtes en cours 30 ≤ pool ; quotas en mémoire exacts à une instance ; `RATE_LIMIT_STORAGE_URI` et `EXPECTED_REPLICAS` prêts pour plusieurs instances | `app/capacity.py`, `tests/test_capacity.py`, `infra/RAILWAY_STAGING.md` |
+| Test de charge | ADD outil borné ; **DEFER** la mesure authentifiée sur Railway | Montée par paliers, arrêt au premier critère franchi, retour à la normale | `docs/performance/test-de-charge.md` ; `tests/test_load_probe.py` (32) |
+| Préparation SDM120 | ADD vérificateur + 2 commandes ; REFACTOR démon et tampon | Procédure hors ligne ; lecture directe, vérification des unités, cohérence, coupures, redémarrage, reprise sans perte ni doublon | `docs/terrain/test-terrain-sdm120.md` ; `tests/test_sdm120_check.py` (53), `tests/test_sdm120_scripts.py` (17), 5 tests du démon |
+
+**Défauts trouvés et corrigés pendant la préparation du SDM120** (chacun avec un test qui
+échoue sur l'ancien code) :
+
+1. **Le démon Modbus perdait des mesures pendant une vraie coupure de l'API** : il demandait sa
+   configuration à l'API avant chaque lecture, donc ne lisait plus le compteur. L'ancien test
+   « API injoignable » ne faisait échouer que l'envoi, ce qui ne se produit jamais seul. Sur la
+   chaîne réelle (processus séparés, coupure de 27 s) : **18 mesures perdues, 0 renvoyée** avant ;
+   **0 perdue, 9 renvoyées** après (deux passages). Le critère T8 « 0 mesure perdue » du guide
+   aurait échoué sur le vrai matériel.
+2. **Le démon plantait au démarrage si l'API était coupée.**
+3. **Un tampon tronqué par une coupure de courant faisait planter le démon à chaque tour,
+   définitivement** (`UnicodeDecodeError`). Les lignes illisibles sont désormais mises de côté
+   dans `<tampon>.corrupt` (rien n'est effacé) et signalées.
+4. Vérificateur : une heure de fin de coupure notée à la main, un peu en retard, était prise pour
+   « une valeur inventée » (vu pendant la répétition réelle) ; tolérance d'un intervalle à
+   chaque borne.
+
+**Constat à décider (non corrigé, hors périmètre)** : l'unité d'un point n'est jamais comparée à
+celle du registre du compteur. Le vocabulaire accepte `kW` pour une puissance : un point créé en
+`kW` afficherait des watts comme des kilowatts (×1000) sans alerte, et un point validé ne se
+modifie plus. Le vérificateur le détecte ; l'interdire à l'activation de la configuration
+(REFACTOR, changement de comportement de l'API) reste à décider. Les démons BACnet, OPC UA et
+MQTT ont la structure qu'avait le démon Modbus avant correction : **REFACTOR à faire avant leur
+propre essai**.
+
+**Matrice de validation mise à jour** (statuts de l'ADR 017 ; « — » : sans objet ou non fait) :
+
+| Capacité | UNIT | SIMULATOR | INTEGRATION | FAILURE | FIELD |
+| --- | --- | --- | --- | --- | --- |
+| Flux de synchronisation incrémental (API + mobile) | Fait | — | Fait (vraie base, SQLite réel) | Fait (reprise, curseur refusé, archivage, écritures tardives) | **BLOCKED_EXTERNAL** (téléphone et connexion faible réels) |
+| Capacité, quotas, requêtes en cours / pool | Fait | — | Fait (serveur dans un processus séparé) | Fait (saturation, 503, retour à la normale) | **DEFERRED_EXTERNAL_DEPLOYMENT** (Railway : nouveau commit non déployé) |
+| Test de charge, local | Fait (outil) | — | Fait (mesuré) | Fait | — |
+| Test de charge, staging anonyme (`/health`, `/health/db`) | — | — | Fait (mesuré) | Fait | — |
+| Test de charge, staging authentifié | — | — | **BLOCKED_EXTERNAL** (aucun compte de test ; `/sync/*` non déployé) | — | — |
+| Démon Modbus : coupures API / passerelle / démon, tampon | Fait | Fait (chaîne réelle, processus séparés) | Fait | Fait (4 défauts ci-dessus) | **BLOCKED_EXTERNAL** |
+| Vérificateur SDM120 | Fait (53) | Fait (17, simulateur et base réels) | Fait | Fait (8 mutations détectées) | **BLOCKED_EXTERNAL** |
+| **Connecteur Modbus / compteur SDM120 (ensemble)** | Fait | Fait | Fait | Fait | **`FIELD_TESTED: BLOCKED_EXTERNAL`** — inchangé, aucun essai matériel réel n'a eu lieu |
+
+**Limites restantes** : mesures de charge sur une machine de développement à 4 cœurs (un
+processus sature à environ 85 requêtes par seconde sur `/sync/interventions`, ordre de grandeur
+non transposable à Railway) ; Redis non vérifié (aucune instance disponible) ; `CLIENT_IP_HEADER`
+non activé sur Railway (à faire après l'essai anti-usurpation décrit dans
+`infra/RAILWAY_STAGING.md`) ; essai en mode avion de la procédure SDM120 à faire une fois sur le
+poste de Mohamed ; images Docker `latest` (Keycloak, MinIO, Mosquitto) non épinglées, donc une
+répétition peut différer du site.
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente

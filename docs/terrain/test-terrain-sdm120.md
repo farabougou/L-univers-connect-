@@ -1,14 +1,16 @@
 # Guide de test terrain : compteur Eastron SDM120
 
-Document de travail rédigé le 21/10/2026 pour Mohamed. Il décrit, pas à pas, comment
-relever un vrai compteur Eastron SDM120 avec la plateforme, et comment décider
+Document de travail rédigé le 21/10/2026 pour Mohamed, mis à jour le même jour (consolidation
+V5 : procédure exécutable hors ligne, vérificateur automatique). Il décrit, pas à pas,
+comment relever un vrai compteur Eastron SDM120 avec la plateforme, et comment décider
 honnêtement si le test est réussi.
 
 Ce guide ne change aucun statut de validation. Seul un résultat obtenu sur le vrai
-matériel, consigné dans la fiche de la section 11, peut faire passer le connecteur
-Modbus/SDM120 à `FIELD_TESTED` (voir `docs/adr/017-*.md`).
+matériel, consigné dans la fiche de la section 12, peut faire passer le connecteur
+Modbus/SDM120 à `FIELD_TESTED` (voir `docs/adr/017-*.md`). **Tant qu'aucun essai matériel
+réel n'a eu lieu, ce statut reste `BLOCKED_EXTERNAL`.**
 
-## 1. À quoi sert ce test, et ce qu'il ne prouve pas
+## 1. À quoi sert ce test, et ce qu'il prouve ou non
 
 Jusqu'ici, toute la chaîne (compteur → Edge → API → console) a été vérifiée avec un
 simulateur (`SIMULATOR_TESTED`) et des tests automatiques. Un simulateur répond
@@ -16,13 +18,40 @@ toujours exactement comme nous l'avons écrit. Un vrai compteur peut répondre a
 autre adresse, autre vitesse, valeurs en retard, coupures du réseau. Ce test sert à le
 découvrir sur un cas réel et petit, avant d'engager un site client.
 
-Ce que ce test prouve s'il réussit : un SDM120 réel, relié par une passerelle réseau,
-est relevé correctement et sans perte pendant une courte durée, et la plateforme
-affiche les valeurs avec la bonne qualité.
+### 1.1 Ce que le pilote validera, s'il réussit
 
-Ce qu'il ne prouve pas : la tenue sur 30 jours, plusieurs compteurs, un autre modèle
-de compteur, un autre site, ni la sécurité du réseau du site. Ne l'écrivez jamais
-comme « validé terrain » au-delà de ce périmètre.
+Un SDM120 réel, relié par une passerelle réseau à un ordinateur portable qui exécute le
+démon Edge et la pile locale, pendant un essai d'environ 45 minutes :
+
+- les 5 grandeurs (tension, courant, puissance, fréquence, énergie) sont lues sans erreur
+  et concordent avec l'afficheur du compteur (T1 à T4) ;
+- les unités sont cohérentes de bout en bout : registre du compteur, valeurs, unité des deux
+  points de la plateforme (puissance en W, énergie en kW.h) ;
+- la plateforme enregistre une mesure par intervalle, sans mesure manquante ni double
+  mesure, sans indicateur de qualité inattendu (T5, T6) ;
+- l'énergie ne recule jamais et correspond à la puissance multipliée par la durée (T7) ;
+- une coupure de l'API ne fait perdre aucune mesure : elles sont mises en tampon et renvoyées
+  (T8) ;
+- une coupure de la passerelle n'invente aucune valeur et la relève reprend d'elle-même (T9) ;
+- l'arrêt puis le redémarrage du démon reprennent sans doublon et sans retour en arrière de
+  l'énergie.
+
+### 1.2 Ce qu'il ne validera pas (à tester séparément)
+
+| Hors périmètre | Pourquoi / comment le tester |
+| --- | --- |
+| Tenue sur 30 jours, fuites de ressources | L'essai dure moins d'une heure. Prévoir un essai de longue durée distinct. |
+| Plusieurs compteurs, adresses Modbus autres que 1 | Le démon interroge l'adresse 1 uniquement (section 5). |
+| Un autre modèle de compteur ou un autre constructeur | La carte de registres est celle du SDM120. |
+| Liaison série directe (sans passerelle) | Non implémentée : décision séparée. |
+| Tension, courant et fréquence **dans la plateforme** | Le vocabulaire ne les connaît pas encore : ils sont contrôlés par la lecture directe seulement. |
+| Affichage « donnée périmée » dans la console pendant la coupure de la passerelle | À regarder à l'écran (étape 7.2) ; le vérificateur ne lit pas l'interface. |
+| Redémarrage du démon **pendant** une coupure de l'API | Sans configuration connue, le démon ne peut rien lire avant le retour de l'API (section 5, limite 8). |
+| Sécurité du réseau du site (Modbus TCP n'est ni chiffré ni authentifié) | Audit réseau distinct. |
+| Matériel Edge définitif (PC industriel, alimentation de secours, coupures de courant) | L'essai utilise un ordinateur portable. |
+| Comportement sur Railway / hébergement | L'essai utilise la pile locale, volontairement. |
+
+Ne l'écrivez jamais comme « validé terrain » au-delà du périmètre 1.1.
 
 ## 2. Sécurité : à lire avant de toucher au matériel
 
@@ -47,10 +76,11 @@ comme « validé terrain » au-delà de ce périmètre.
 | Passerelle RS-485 vers Ethernet, en mode Modbus RTU vers Modbus TCP | Obligatoire avec le logiciel actuel (voir section 5). Un simple adaptateur USB-RS485 ne suffit pas. |
 | Alimentation de la passerelle | Selon sa notice. |
 | Câble de liaison RS-485 (paire torsadée, A et B) vers le compteur | À raccorder hors tension. |
-| Charge de test connue | Idéalement résistive (radiateur, bouilloire) dont vous connaissez la puissance indiquée sur la plaque. |
-| Ordinateur portable | Il fait tourner l'API locale, la console et le démon Edge. |
+| Charge de test connue | Idéalement résistive (radiateur, bouilloire) d'au moins 500 W, dont vous connaissez la puissance indiquée sur la plaque. Il faut au moins 0,1 kW.h consommés pendant l'essai pour comparer l'énergie à la puissance (12 minutes à 500 W). |
+| Ordinateur portable | Il fait tourner l'API locale, la base et le démon Edge. |
 | Câble réseau (et routeur ou commutateur de test si besoin) | Réseau isolé. |
 | Appareil photo ou téléphone | Pour photographier l'afficheur du compteur (preuve du test). |
+| Une montre ou l'horloge de l'ordinateur | Pour noter l'heure de chaque coupure (section 8.2). |
 
 À vérifier sur la notice de votre exemplaire, et à noter dans la fiche de résultats : adresse
 Modbus du compteur, vitesse (baud), parité et bits d'arrêt. Ne vous fiez pas à la mémoire
@@ -62,12 +92,15 @@ des valeurs d'usine : lisez-les dans le menu du compteur.
 Compteur SDM120 --RS-485--> Passerelle --Ethernet--> Ordinateur portable
                             (Modbus TCP)              |- démon Edge (scripts/modbus_daemon.py)
                                                       |- API locale (localhost:8000)
-                                                      |- console web (localhost:3000)
+                                                      |- base PostgreSQL (docker, localhost:5432)
+                                                      |- Keycloak (docker, localhost:8080)
+                                                      |- vérificateur (scripts/sdm120_verify.py)
 ```
 
 Le démon lit le compteur par la passerelle, puis envoie les mesures à l'API par HTTP avec
 l'identité de l'appareil Edge. Si l'API est injoignable, il garde les mesures dans un
-fichier tampon et les renvoie ensuite.
+fichier tampon et les renvoie ensuite. La console web (`localhost:3000`) est facultative
+pour cet essai, sauf pour l'affichage « donnée périmée » (étape 7.2).
 
 ## 5. Limites connues du logiciel (à connaître avant d'arriver sur place)
 
@@ -85,9 +118,9 @@ test, mais elles en fixent le périmètre.
    (`electric_power_sensor`, unité `W`) et l'énergie (`energy_meter_reading`, unité
    `kW.h`). Il ne connaît pas encore la tension, le courant ni la fréquence. Le test
    enregistre donc `active_power` et `total_active_energy` dans la plateforme ; la
-   tension, le courant et la fréquence sont contrôlés par une lecture directe du compteur
-   (étape 2), qui reste une vérification réelle du compteur. Ajouter ces trois grandeurs
-   demande une décision séparée (vocabulaire, glossaire, textes, tests).
+   tension, le courant et la fréquence sont contrôlés par la lecture directe (étape 2).
+   Ajouter ces trois grandeurs demande une décision séparée (vocabulaire, glossaire,
+   textes, tests).
 4. **Le script de relève manuelle `modbus_poll.py` ne s'authentifie qu'avec un secret
    partagé** (mode ancien, déconseillé). Avec une clé d'appareil (modèle cible), utilisez
    directement le démon : il fait le même chemin et affiche le résultat du premier tour.
@@ -98,8 +131,45 @@ test, mais elles en fixent le périmètre.
 7. **Les scripts se lancent avec `PYTHONPATH=.`** depuis `services/api` (sinon Python
    répond `No module named 'app'`). Sous Windows PowerShell : `$env:PYTHONPATH="."` puis la
    commande sans le préfixe.
+8. **Démarrage du démon pendant une coupure de l'API.** Le démon relit sa configuration
+   auprès de l'API à chaque tour. Il garde la dernière reçue pour continuer à relever (et
+   mettre en tampon) quand l'API tombe. S'il est lancé alors que l'API est déjà coupée, il
+   n'a aucune configuration connue : il attend le retour de l'API et ne relève rien d'ici
+   là (il ne plante plus et n'invente rien). Une copie de la configuration sur disque
+   résoudrait ce cas : **DEFER**, à décider avant un déploiement sur un site sans
+   alimentation de secours.
+9. **L'unité d'un point n'est pas comparée à celle du registre.** Le vocabulaire accepte
+   `kW` comme unité d'une puissance ; un point créé en `kW` afficherait des watts comme des
+   kilowatts (facteur 1000), et un point validé ne se modifie plus (rien n'est écrasé).
+   Créez le point en `W`. Le vérificateur contrôle l'unité des deux points ; l'interdire à
+   l'activation de la configuration est une correction recommandée, à décider.
+10. **Les démons BACnet, OPC UA et MQTT ont la même structure que celle du démon Modbus
+    avant correction** (configuration demandée à l'API à chaque tour, sans mémoire). Ils
+    n'ont pas été modifiés : hors périmètre de ce pilote, à corriger avant leur propre essai.
 
-## 6. Étape 0 : répétition à blanc avec le simulateur
+## 6. Préparation hors ligne (à faire AVANT, avec Internet)
+
+L'essai doit pouvoir se dérouler sans Internet. Tout ce qui se télécharge se prépare à la
+maison :
+
+1. Dépôt à jour : `git pull`, puis dans `services/api` un environnement Python avec les
+   dépendances installées (`pip install -r requirements.txt -r requirements-dev.txt`, comme la
+   CI). Vérifiez : `PYTHONPATH=. python -c "import app.main"`.
+2. Images Docker téléchargées : `cd infra && docker compose pull db keycloak`. Les images
+   de Keycloak, MinIO et Mosquitto sont étiquetées `latest` : **ne faites pas de
+   `docker compose pull` sur le site**, vous obtiendriez peut-être une version différente de
+   celle de votre répétition. Seuls `db` et `keycloak` servent à ce pilote.
+3. Base prête : `docker compose up -d db keycloak`, puis dans `services/api` :
+   `alembic upgrade head`.
+4. **Essai en mode avion** : coupez le Wi-Fi et le réseau, relancez les étapes 3 à 5 ci-dessous
+   avec le simulateur. Si une étape échoue sans réseau, c'est qu'elle dépend d'Internet :
+   notez laquelle et corrigez-la ici, pas sur le site. (Cet essai en mode avion n'a pas pu
+   être fait dans l'environnement de rédaction : à faire une fois chez vous.)
+5. Imprimez ou copiez ce guide, et la fiche de la section 12, sur le portable.
+6. Fuseau horaire : toutes les heures de ce guide sont en UTC (`...Z`). Bamako est à UTC+0
+   toute l'année : l'heure locale et l'heure UTC sont les mêmes.
+
+## 7. Étape 0 : répétition à blanc avec le simulateur
 
 Faites tout le guide une première fois avec le simulateur, chez vous, avant d'aller sur
 place. Ce n'est pas un test terrain (statut `SIMULATOR_TESTED`) : cela sert à repérer ici
@@ -109,13 +179,11 @@ une erreur de saisie plutôt que devant le compteur.
 
    ```bash
    cd infra
-   docker compose up -d
+   docker compose up -d db keycloak
    cd ../services/api
    alembic upgrade head
    uvicorn app.main:app --no-access-log
    ```
-
-   Dans un autre terminal, la console : `cd apps/web && npm run dev` (voir `apps/web/README.md`).
 
 2. Démarrer le simulateur dans un autre terminal :
 
@@ -124,15 +192,35 @@ une erreur de saisie plutôt que devant le compteur.
    PYTHONPATH=. python scripts/modbus_simulator.py 5020
    ```
 
-   Il affiche les valeurs fictives : 231,4 V, 2,37 A, 548 W, 50 Hz, 1284,6 kWh.
+   Il affiche les valeurs fictives : 231,4 V, 2,37 A, 548 W, 50 Hz, 1284,6 kWh. **Ces valeurs
+   ne changent jamais** : l'énergie reste figée.
 
-3. Déroulez les étapes 2 à 7 ci-dessous en remplaçant l'adresse de la passerelle par
-   `127.0.0.1` et le port par `5020`.
+3. Déroulez les étapes 1 à 8 en remplaçant l'adresse de la passerelle par `127.0.0.1` et
+   le port par `5020`.
 
-Résultat attendu de la répétition : toutes les vérifications passent, et vous savez où
-cliquer. Notez ce qui vous a arrêté : c'est ce qu'il faut corriger dans ce guide.
+Résultat attendu de la répétition : toutes les vérifications passent, **sauf une** :
+`T7 — Énergie cohérente avec la puissance multipliée par la durée`. Elle est « non évaluée »
+si l'essai dure moins de 12 minutes (énergie attendue sous 0,1 kW.h), et « échec » avec la
+raison « compteur ou simulateur figé » au-delà. C'est normal et utile : le vérificateur
+sait détecter une énergie qui ne bouge pas. Le verdict global ne peut donc pas être « Réussi »
+avec le simulateur ; il le peut sur le vrai compteur.
 
-## 7. Procédure sur le matériel
+### Ce que la répétition réelle du 21/10/2026 a montré
+
+Chaîne complète en processus séparés (API, simulateur, démon, base), intervalle de 3 s,
+trois coupures provoquées (API 27 s, passerelle 21 s, démon 7 s), puis le vérificateur :
+
+| Démon | Coupure de l'API (T8) | Passerelle (T9) | Redémarrage du démon | Verdict |
+| --- | --- | --- | --- | --- |
+| **Avant correction** | **18 mesures perdues**, 0 renvoyée | réussi | réussi | **Échec** |
+| **Corrigé** (2 passages) | 0 perdue, 9 renvoyées par le tampon | réussi | réussi | « Incomplet » (énergie trop faible pour conclure) |
+
+La correction : le démon ne relevait plus rien pendant une coupure de l'API, car il demandait
+sa configuration à l'API avant chaque lecture (voir `scripts/modbus_daemon.py`, tests dans
+`tests/test_modbus_daemon.py`). Ces chiffres viennent du simulateur : ils ne valent pas
+validation terrain.
+
+## 8. Procédure sur le matériel
 
 ### Étape 1 : câbler et régler le réseau
 
@@ -149,22 +237,29 @@ cliquer. Notez ce qui vous a arrêté : c'est ce qu'il faut corriger dans ce gui
 ### Étape 2 : lecture directe du compteur, sans la plateforme
 
 C'est la vérification la plus précieuse : elle isole le compteur et la passerelle de tout
-le reste. Depuis `services/api` :
+le reste. Depuis `services/api`, avec la charge branchée et **l'afficheur du compteur sous les
+yeux** (relevez ses valeurs pendant les trois lectures) :
 
 ```bash
-PYTHONPATH=. python -c "
-from app.connectors.sdm120 import SDM120_POINTS
-from app.connectors.modbus import read_modbus_points
-print(read_modbus_points('192.168.1.200', 502, SDM120_POINTS))
-"
+PYTHONPATH=. python scripts/sdm120_preflight.py --host 192.168.1.200 \
+  --resistive-load \
+  --display voltage=231,2 --display current=2,38 --display active_power=549 \
+  --display frequency=50 \
+  --json-out ~/sdm120-lecture-directe.json
 ```
 
-Ce que vous devez obtenir : un dictionnaire avec `voltage`, `current`, `active_power`,
-`frequency`, `total_active_energy`. Relevez au même moment l'afficheur du compteur et
-photographiez-le. Répétez trois fois à quelques secondes d'intervalle. Cette commande ne
-fait que lire (code de fonction Modbus 04).
+Remplacez les valeurs par celles de **votre** afficheur. Retirez `--resistive-load` si la
+charge n'est pas résistive (le contrôle T4 devient « non évalué »). Ajoutez
+`--nominal-voltage 220` si la tension nominale locale est 220 V.
 
-Si la commande échoue, passez à la section 9 (dépannage) avant d'aller plus loin.
+Ce que le script fait : trois lectures (code de fonction Modbus 04, lecture seule), puis les
+contrôles T1 à T4 : lectures complètes, valeurs plausibles, **unité de la puissance
+cohérente avec tension × courant** (détecte un W lu comme un kW), concordance avec ce que
+vous avez saisi de l'afficheur, puissance égale à tension × courant sous charge résistive.
+Il écrit une preuve (`--json-out`) que le vérificateur final reprend.
+
+Code de sortie : 0 aucun échec, 1 au moins un échec, 2 compteur injoignable. Photographiez
+l'afficheur. Si la commande échoue, passez à la section 10 (dépannage) avant d'aller plus loin.
 
 ### Étape 3 : préparer la plateforme
 
@@ -179,14 +274,17 @@ TOKEN=$(curl -s -X POST http://localhost:8080/realms/paios/protocol/openid-conne
 curl -s http://localhost:8000/me -H "Authorization: Bearer $TOKEN"
 ```
 
-Notez `tenant_id` dans la réponse : c'est l'identifiant à donner au démon (`<TENANT_ID>`).
+Notez `tenant_id` dans la réponse : c'est l'identifiant à donner au démon et au vérificateur
+(`<TENANT_ID>`).
 
 **3.2 Site et équipement (console web, écran Registre).** Créez un site (fuseau
 `Africa/Bamako`) puis un équipement de test (par exemple « Compteur SDM120 test »).
 Ouvrez la fiche de l'équipement et notez son identifiant (dans l'adresse de la page) :
 c'est `<ID_EQUIPEMENT>`.
 
-**3.3 Les deux points.** Remplacez `<ID_EQUIPEMENT>` :
+**3.3 Les deux points.** Remplacez `<ID_EQUIPEMENT>`. **Vérifiez l'unité avant de
+valider : un point validé ne se modifie plus.** La puissance est en `W` (pas `kW`), l'énergie
+en `kW.h` :
 
 ```bash
 curl -s -X POST http://localhost:8000/points \
@@ -241,6 +339,8 @@ un motif, puis enregistrez. La version est créée en brouillon : cliquez sur «
 
 ### Étape 4 : lancer le démon Edge
 
+Notez l'heure de début : `date -u +%Y-%m-%dT%H:%M:%SZ` (c'est `<DEBUT>`).
+
 ```bash
 cd services/api
 PYTHONPATH=. python scripts/modbus_daemon.py \
@@ -278,72 +378,130 @@ l'afficheur du compteur et notez dans la fiche la valeur affichée, l'heure, et 
 valeur reçue par la plateforme. Une puissance qui varie entre la photo et la dernière
 relève provoque un petit écart naturel : comparez de préférence sous charge stable.
 
-### Étape 7 : épreuves de panne (15 à 20 minutes)
+### Étape 7 : épreuves de panne (environ 25 minutes)
 
-1. **Coupure de l'API.** Arrêtez `uvicorn` (Ctrl+C) pendant 5 minutes, puis relancez-le. Le
-   démon doit continuer, mettre les mesures en tampon (voir le journal), puis les renvoyer
-   au retour de l'API. Aucune relève ne doit manquer dans l'historique.
-2. **Coupure de la passerelle.** Débranchez l'alimentation de la passerelle 5 minutes, puis
-   rebranchez-la. Le démon doit journaliser « lecture impossible » sans s'arrêter, la donnée
-   doit être signalée périmée (comptez 3 intervalles, soit 3 minutes), puis rétablie au
-   retour des relevés.
-3. **Arrêt et reprise du démon.** Arrêtez le démon (Ctrl+C) 2 minutes, relancez-le : il
-   reprend sans intervention.
+**Règle d'or : notez l'heure exacte du début et de la fin de chaque coupure**, avec
+`date -u +%Y-%m-%dT%H:%M:%SZ` dans un second terminal, ou sur papier avec l'horloge de
+l'ordinateur (en UTC). Le vérificateur tolère un intervalle (60 s) d'imprécision à chaque borne,
+pas davantage. Laissez le démon tourner **10 minutes avant la première coupure** (référence
+sans panne), et **5 minutes entre deux coupures** (retour à la normale).
 
-## 8. Critères de réussite
+**7.1 Coupure de l'API (5 minutes).** Notez `<API_DEBUT>`, arrêtez `uvicorn` (Ctrl+C) 5
+minutes, relancez-le, notez `<API_FIN>` dès que `curl localhost:8000/health` répond. Le démon
+doit continuer, relever le compteur, mettre les mesures en tampon (le journal le dit : « mise(s)
+en tampon local »), puis les renvoyer au retour de l'API. Aucune relève ne doit manquer.
+
+**7.2 Coupure de la passerelle (5 minutes).** Notez `<GW_DEBUT>`, débranchez l'alimentation
+de la passerelle 5 minutes, rebranchez-la, notez `<GW_FIN>`. Le démon doit journaliser
+« lecture impossible » sans s'arrêter ; aucune valeur ne doit être enregistrée pendant la
+coupure. **À l'écran** (console, écran Télémétrie ou Edge) : au bout de 3 intervalles (3 minutes)
+la donnée doit être signalée **périmée** avec sa dernière valeur et sa date, puis rétablie au
+retour des relevés. Notez-le dans la fiche : le vérificateur ne peut pas le voir.
+
+**7.3 Arrêt et reprise du démon (2 minutes).** Notez `<DEMON_DEBUT>`, arrêtez le démon
+(Ctrl+C), attendez 2 minutes, relancez-le, notez `<DEMON_FIN>`. Il reprend sans intervention,
+sans doublon.
+
+Laissez ensuite le démon tourner encore 5 minutes, puis notez `<FIN>` et arrêtez-le (Ctrl+C).
+Durée totale : environ 45 minutes.
+
+### Étape 8 : vérification automatique
+
+Depuis `services/api`, avec la pile locale encore démarrée (la base suffit, l'API n'est plus
+nécessaire) :
+
+```bash
+PYTHONPATH=. python scripts/sdm120_verify.py \
+  --tenant <TENANT_ID> \
+  --power-point <ID_POINT_PUISSANCE> --energy-point <ID_POINT_ENERGIE> \
+  --start <DEBUT> --end <FIN> --interval 60 \
+  --outage api=<API_DEBUT>,<API_FIN> \
+  --outage gateway=<GW_DEBUT>,<GW_FIN> \
+  --outage daemon=<DEMON_DEBUT>,<DEMON_FIN> \
+  --direct-json ~/sdm120-lecture-directe.json \
+  --json-out ~/sdm120-rapport.json
+```
+
+Les heures s'écrivent avec fuseau (`2026-10-21T09:10:00Z`) : une heure sans fuseau est
+refusée. Le script lit la base locale (lecture seule, sous la sécurité par client) : il ne
+demande ni jeton ni Internet. Si la base n'est pas sur `localhost`, définissez
+`DATABASE_URL`.
+
+Il affiche un constat par contrôle, la liste des **trous** trouvés dans les mesures (à
+rapprocher de vos notes), et un verdict :
+
+| Verdict | Code de sortie | Sens |
+| --- | --- | --- |
+| Réussi | 0 | Tous les contrôles requis sont évalués et réussis. |
+| Échec | 1 | Au moins un contrôle échoue : lisez-le, il dit quoi et combien. |
+| Incomplet | 3 | Aucun échec, mais un contrôle requis n'a pas pu être évalué (épreuve non faite, énergie trop faible, afficheur non saisi). **Ce n'est pas un succès.** |
+| (erreur) | 2 | Point introuvable pour ce client. |
+
+Le rapport JSON (`--json-out`) ne contient que des codes et des nombres. Joignez-le à la fiche.
+
+## 9. Critères de réussite
 
 Ces seuils sont une proposition de ma part, à relire et à ajuster par Mohamed avant le
-test. Fixez-les avant de mesurer, jamais après avoir vu les résultats.
+test. Fixez-les avant de mesurer, jamais après avoir vu les résultats. Ils sont codés dans
+`app/sdm120_check.py` (constantes en tête de fichier).
 
-| N° | Vérification | Seuil proposé |
-| --- | --- | --- |
-| T1 | Lecture directe (étape 2) | 3 essais sur 3 renvoient les 5 valeurs, sans erreur |
-| T2 | Plausibilité | Tension à ±10 % de la tension nominale du réseau local, fréquence à 50 Hz ±1 Hz |
-| T3 | Concordance avec l'afficheur | Écart de 1 % au plus (ou 1 unité du dernier chiffre affiché) pour V, A, W, Hz ; kWh identique au pas d'affichage |
-| T4 | Cohérence interne sous charge résistive | Puissance active égale à tension × courant à 5 % près |
-| T5 | Enregistrement | Sur 30 minutes à 60 s, chaque tour insère 2 mesures : 0 relève manquante, 0 refus |
-| T6 | Qualité des données | Champ `quality_flags` vide sur toutes les mesures (hors épreuves de panne) |
-| T7 | Énergie | Jamais décroissante ; l'augmentation sur 30 minutes correspond à la puissance × durée à 10 % près |
-| T8 | Coupure de l'API | 0 mesure perdue, tampon vidé au retour de l'API |
-| T9 | Coupure de la passerelle | Le démon ne s'arrête pas ; donnée signalée périmée puis rétablie |
-| T10 | Lecture seule | Optionnel mais recommandé : avec Wireshark sur l'ordinateur (filtre `mbtcp`), tous les codes de fonction observés valent 4 |
+| N° | Vérification | Seuil proposé | Qui l'évalue |
+| --- | --- | --- | --- |
+| T1 | Lecture directe (étape 2) | 3 essais sur 3 renvoient les 5 valeurs, sans erreur | `sdm120_preflight.py` |
+| T2 | Plausibilité et unités | Tension à ±10 % de la nominale, fréquence 50 Hz ±1 Hz, puissance active ≤ tension × courant × 1,05 (sinon unité suspecte) | `sdm120_preflight.py` |
+| T3 | Concordance avec l'afficheur | Écart de 1 % au plus (ou le pas d'affichage) pour les grandeurs saisies | Vous saisissez, le script compare |
+| T4 | Cohérence interne sous charge résistive | Puissance active égale à tension × courant à 5 % près | `sdm120_preflight.py` |
+| T5 | Enregistrement | 0 mesure manquante hors coupure déclarée, 0 double mesure, intervalle médian à ±20 % de celui configuré | `sdm120_verify.py` |
+| T6 | Qualité des données | Champ `quality_flags` vide (seule `late_arrival` est admise, pour une mesure rejouée après coupure de l'API) | `sdm120_verify.py` |
+| T7 | Énergie et unités des points | Jamais décroissante ; augmentation = puissance × durée à 10 % près (au moins 0,1 kW.h) ; point de puissance en W, d'énergie en kW.h ; un facteur proche de 1000 est signalé comme confusion d'unité | `sdm120_verify.py` |
+| T8 | Coupure de l'API | 0 mesure perdue, mesures rejouées | `sdm120_verify.py` |
+| T9 | Coupure de la passerelle | Aucune valeur enregistrée pendant la coupure, reprise sous 2 intervalles | `sdm120_verify.py` ; affichage « périmé » : **vous** |
+| T9b | Redémarrage du démon | Reprise sous 2 intervalles, sans doublon, énergie jamais en arrière | `sdm120_verify.py` |
+| T10 | Lecture seule | Optionnel mais recommandé : avec Wireshark sur l'ordinateur (filtre `mbtcp`), tous les codes de fonction observés valent 4 | **Vous** |
 
-Verdict : **PASS** seulement si T1 à T9 sont tous réussis. Un seul échec donne **FAIL**
-et une ligne dans la fiche qui dit pourquoi. Un critère non mesuré est « non évalué », jamais
-« réussi ».
+Verdict : **PASS** seulement si T1 à T9b sont tous réussis (verdict « Réussi » du script **et**
+vos propres constats : concordance de l'afficheur sur les photos, affichage « périmé »). Un
+seul échec donne **FAIL** et une ligne dans la fiche qui dit pourquoi. Un critère non mesuré
+est « non évalué », jamais « réussi ».
 
-## 9. Dépannage
+## 10. Dépannage
 
 | Symptôme | Cause probable | Que faire |
 | --- | --- | --- |
 | `No module named 'app'` | Commande lancée sans `PYTHONPATH=.` | Ajouter `PYTHONPATH=.` et lancer depuis `services/api` |
-| `Connexion impossible à ...:502` | Mauvaise adresse, câble, pare-feu, passerelle éteinte | `ping` de la passerelle ; vérifier le port 502 ; vérifier l'adresse IP de l'ordinateur |
+| `Lecture impossible (…:502)` | Mauvaise adresse, câble, pare-feu, passerelle éteinte | `ping` de la passerelle ; vérifier le port 502 ; vérifier l'adresse IP de l'ordinateur |
 | `Appareil en erreur pour « voltage »` | Mauvaise adresse Modbus du compteur ou paramètres série différents | Régler le compteur sur l'adresse 1 ; aligner vitesse, parité, bits d'arrêt avec la passerelle |
 | Valeurs absurdes (très grandes ou nulles) | Mauvais ordre des octets ou mauvais registre | Ne pas corriger au hasard ; noter les valeurs brutes, comparer à la notice, me les transmettre |
+| `Unité de la puissance cohérente` en échec | Puissance en kW ou en mW, ou tension/courant mal lus | Comparer avec l'afficheur ; ne pas corriger sans comprendre |
+| `T7 — Unités des points` en échec | Point créé avec une autre unité que `W` / `kW.h` | Créer un nouveau point correct (un point validé ne se modifie pas), refaire l'essai |
+| `T8` en échec avec « 0 renvoyée » | Le démon a été arrêté ou relancé pendant la coupure, ou n'a pas pu lire le compteur | Regarder le journal du démon ; noter, ne pas supposer |
 | `401` de l'API | Jeton expiré | Redemander le jeton (étape 3.1) |
 | Rejet `POINT_NOT_FOUND` | Mauvais `point_id` dans la connexion Modbus | Reprendre la configuration dans la console |
 | `quality_flags` contient `unvalidated_point` | Point pas validé | Valider le point (étape 3.3) |
-| `quality_flags` contient `clock_suspect` | Horloge de l'ordinateur décalée | Mettre l'ordinateur à l'heure (synchronisation réseau) |
+| `quality_flags` contient `clock_suspect` | Horloge de l'ordinateur décalée | Mettre l'ordinateur à l'heure (synchronisation réseau, avant d'être hors ligne) |
 | « Aucune configuration Modbus active » au démarrage | Version laissée en brouillon | Cliquer sur « Activer » (étape 3.5) |
+| `heure sans fuseau` | Heure saisie sans `Z` | Ajouter `Z` (UTC) |
+| Lignes mises de côté dans `…jsonl.corrupt` | Le tampon a été coupé net (coupure de courant) | Normal : les lignes illisibles sont conservées, les autres sont renvoyées |
 
 Règle : si un blocage persiste après deux tentatives, notez ce que vous avez essayé et
 arrêtez-vous pour en discuter, plutôt que de modifier plusieurs réglages à la fois.
 
-## 10. Après le test
+## 11. Après le test
 
 1. Arrêtez le démon, coupez la charge, remettez le matériel dans l'état d'origine.
 2. Supprimez ou archivez les données de test dans la plateforme locale si elles ne servent
    plus (la clé privée de test peut être supprimée de votre dossier personnel).
-3. Remplissez la fiche ci-dessous, avec les photos de l'afficheur.
+3. Remplissez la fiche ci-dessous, avec les photos de l'afficheur et le rapport JSON.
 4. Mettez à jour `docs/spec/feature-benchmark-matrix.md` : le statut du connecteur
    Modbus/SDM120 passe à `FIELD_TESTED` uniquement si le verdict est PASS, avec la date
-   et le périmètre exact de la section 1. En cas de FAIL, ajoutez les défauts trouvés
+   et le périmètre exact de la section 1.1. En cas de FAIL, ajoutez les défauts trouvés
    comme travaux à planifier.
 5. Ne décidez pas seul(e) d'étendre le périmètre : tension, courant, fréquence dans le
-   vocabulaire, connecteur série direct, autres adresses Modbus et correction de
-   `modbus_poll.py` sont des étapes séparées, à ouvrir après ce test.
+   vocabulaire, connecteur série direct, autres adresses Modbus, contrôle d'unité à l'activation,
+   copie de configuration sur disque, correction des autres démons et de `modbus_poll.py` sont
+   des étapes séparées, à ouvrir après ce test.
 
-## 11. Fiche de résultats (à copier et remplir)
+## 12. Fiche de résultats (à copier et remplir)
 
 ```
 Date et heure de début / fin :
@@ -352,21 +510,26 @@ Compteur : modèle, numéro de série, version du micrologiciel affichée :
 Passerelle : modèle, réglages série (vitesse / parité / bits d'arrêt), adresse IP :
 Charge de test : type, puissance indiquée sur la plaque :
 Version du code (commit) :
+Intervalle de relève (s) :
+Heures notées (UTC) : API ___ → ___   Passerelle ___ → ___   Démon ___ → ___
 
 T1  Lecture directe 3/3 :           PASS / FAIL / non évalué   Notes :
-T2  Plausibilité :                  PASS / FAIL / non évalué   Notes :
+T2  Plausibilité et unités :        PASS / FAIL / non évalué   Notes :
 T3  Concordance afficheur :         PASS / FAIL / non évalué
       V : afficheur ___ / plateforme ___     A : ___ / ___
       W : afficheur ___ / plateforme ___     Hz : ___ / ___
       kWh : afficheur ___ / plateforme ___
 T4  Cohérence P = V x I :           PASS / FAIL / non évalué   Écart : ___ %
-T5  Enregistrement 30 min :         PASS / FAIL / non évalué   Insérées ___ / attendues ___
+T5  Enregistrement :                PASS / FAIL / non évalué   Manquantes ___ Doubles ___
 T6  Qualité des données :           PASS / FAIL / non évalué
-T7  Énergie :                       PASS / FAIL / non évalué   Écart : ___ %
-T8  Coupure de l'API :              PASS / FAIL / non évalué   Perdues : ___
+T7  Énergie et unités des points :  PASS / FAIL / non évalué   Écart : ___ %
+T8  Coupure de l'API :              PASS / FAIL / non évalué   Perdues : ___ Renvoyées : ___
 T9  Coupure de la passerelle :      PASS / FAIL / non évalué
+      Affichage « périmé » observé à l'écran après ___ min : oui / non
+T9b Redémarrage du démon :          PASS / FAIL / non évalué
 T10 Lecture seule (Wireshark) :     PASS / FAIL / non évalué / non fait
 
+Verdict du script sdm120_verify.py : Réussi / Échec / Incomplet   (rapport joint)
 Verdict : PASS / FAIL
 Défauts observés (un par ligne, avec la preuve) :
 Ce qui n'a PAS été vérifié :

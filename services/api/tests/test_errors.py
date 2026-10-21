@@ -218,17 +218,26 @@ def test_every_code_used_in_the_code_has_a_message_and_none_is_orphaned() -> Non
     # app.connectors.executors) est déjà traduit, pas un code orphelin au
     # sens du catalogue générique d'erreurs ci-dessus.
     command_failure_reason_codes = set(load_catalog("fr", "ui")["command_failure_reason"])
+    sdm120_check_codes = set(load_catalog("fr", "sdm120_check")["checks"]) | set(
+        load_catalog("fr", "sdm120_check")["reasons"]
+    )
     # Chaînes au même format qui ne sont pas des codes de message (noms de variables
     # d'environnement).
     used = _codes_used_in_code() - {"I18N_DIR", "WEB_CONCURRENCY"} - EVENT_TYPES
 
     known = (
-        error_codes | finding_codes | bacnet_discovery_reason_codes | command_failure_reason_codes
+        error_codes
+        | finding_codes
+        | bacnet_discovery_reason_codes
+        | command_failure_reason_codes
+        | sdm120_check_codes
+        | set(load_catalog("fr", "sdm120_check")["statuses"])
     )
     assert used - known == set(), "codes sans message"
     assert error_codes - used == set(), "messages d'erreur jamais utilisés"
     assert finding_codes - used == set(), "messages de constat jamais utilisés"
     assert bacnet_discovery_reason_codes - used == set(), "raisons de découverte jamais utilisées"
+    assert sdm120_check_codes - used == set(), "contrôles SDM120 jamais utilisés"
 
 
 def test_finding_catalogs_are_consistent_and_typographically_correct() -> None:

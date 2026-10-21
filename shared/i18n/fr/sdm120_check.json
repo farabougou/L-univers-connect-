@@ -1,0 +1,64 @@
+{
+  "statuses": {
+    "PASS": "Réussi",
+    "FAIL": "Échec",
+    "NOT_EVALUATED": "Non évalué",
+    "INCOMPLETE": "Incomplet"
+  },
+  "checks": {
+    "DIRECT_READS_COMPLETE": "T1 — Lecture directe du compteur : trois lectures complètes",
+    "DIRECT_VALUES_PLAUSIBLE": "T2 — Valeurs plausibles (tension, fréquence, courant, puissance, énergie)",
+    "POWER_UNIT_COHERENT": "T2 — Unité de la puissance cohérente avec la tension et le courant",
+    "DISPLAY_CONCORDANCE": "T3 — Concordance avec l'afficheur du compteur",
+    "POWER_EQUALS_V_TIMES_I": "T4 — Puissance active égale à la tension multipliée par le courant",
+    "POINT_UNITS_MATCH_METER": "T7 — Unités des points de la plateforme : W pour la puissance, kW.h pour l'énergie",
+    "NO_SAMPLES": "T5 — Mesures enregistrées par la plateforme",
+    "NO_MISSING_SAMPLES": "T5 — Aucune mesure manquante hors coupure déclarée",
+    "NO_DOUBLE_SAMPLING": "T5 — Aucune double mesure (deux mesures trop rapprochées)",
+    "INTERVAL_RESPECTED": "T5 — Intervalle entre deux mesures respecté",
+    "QUALITY_FLAGS_CLEAN": "T6 — Indicateurs de qualité vides",
+    "ENERGY_NEVER_DECREASES": "T7 — Énergie jamais décroissante",
+    "ENERGY_MATCHES_POWER": "T7 — Énergie cohérente avec la puissance multipliée par la durée",
+    "NO_LOSS_DURING_API_OUTAGE": "T8 — Aucune mesure perdue pendant la coupure de l'API",
+    "GATEWAY_OUTAGE_HANDLED": "T9 — Coupure de la passerelle : aucune valeur inventée, reprise au retour",
+    "RESTART_RESUMED": "Redémarrage du démon : reprise sans doublon ni retour de l'énergie en arrière"
+  },
+  "details": {
+    "DIRECT_READS_COMPLETE": "{count} lecture(s), dont {incomplete} incomplète(s) ; {required} lectures complètes sont attendues.",
+    "DIRECT_VALUES_PLAUSIBLE": "Grandeurs hors limites : {violations}. Tension nominale retenue : {nominal_voltage} V.",
+    "POWER_UNIT_COHERENT": "Rapport puissance active sur (tension × courant) compris entre {ratio_min} et {ratio_max} ; il doit rester entre 0,02 et 1,05.",
+    "DISPLAY_CONCORDANCE": "Grandeurs comparées : {compared}. Écarts hors tolérance : {deviations}.",
+    "POWER_EQUALS_V_TIMES_I": "Écart le plus grand : {worst_deviation} (tolérance {tolerance}).",
+    "POINT_UNITS_MATCH_METER": "Puissance : classe {power_class}, unité {power_unit} ; énergie : classe {energy_class}, unité {energy_unit}. Écarts : {mismatches}.",
+    "NO_SAMPLES": "{power} mesure(s) de puissance et {energy} mesure(s) d'énergie dans la période.",
+    "NO_MISSING_SAMPLES": "Mesures manquantes : {missing_power} de puissance, {missing_energy} d'énergie.",
+    "NO_DOUBLE_SAMPLING": "{count} paire(s) de mesures séparées de moins d'un demi-intervalle.",
+    "INTERVAL_RESPECTED": "Intervalle médian : {median_seconds} s (attendu : {expected_seconds} s).",
+    "QUALITY_FLAGS_CLEAN": "Indicateurs inattendus : {unexpected}.",
+    "ENERGY_NEVER_DECREASES": "{decreases} baisse(s) de l'énergie cumulée.",
+    "ENERGY_MATCHES_POWER": "Énergie mesurée : {measured_kwh} kW.h ; attendue d'après la puissance : {expected_kwh} kW.h.",
+    "NO_LOSS_DURING_API_OUTAGE": "{lost} mesure(s) perdue(s) ; {replayed} mesure(s) datée(s) de la coupure renvoyée(s) ensuite (environ {expected} attendues).",
+    "GATEWAY_OUTAGE_HANDLED": "{invented} mesure(s) enregistrée(s) pendant la coupure ; {not_resumed} coupure(s) sans reprise dans les deux intervalles suivants.",
+    "RESTART_RESUMED": "{not_resumed} redémarrage(s) sans reprise dans les deux intervalles suivants ; {energy_dropped} baisse(s) d'énergie autour du redémarrage."
+  },
+  "notes": {
+    "verdict": "Verdict",
+    "gaps": "Trous détectés dans les mesures (à rapprocher de vos notes de coupure)",
+    "no_gap": "Aucun trou de plus de deux intervalles.",
+    "not_covered": "Non couvert par ce verdict : concordance visuelle avec l'afficheur (saisie humaine), affichage « périmé » dans la console pendant la coupure de la passerelle, tenue sur 30 jours, plusieurs compteurs, autre modèle, autre site. Ce verdict ne vaut pas validation sur le terrain.",
+    "readonly": "Lecture seule : seul le code de fonction Modbus 04 est utilisé ; aucune écriture vers le compteur."
+  },
+  "reasons": {
+    "LOAD_NOT_DECLARED_RESISTIVE": "La charge n'a pas été déclarée résistive : ce contrôle n'a pas de sens sinon.",
+    "DISPLAY_NOT_PROVIDED": "Les valeurs de l'afficheur n'ont pas été saisies : comparaison impossible.",
+    "READS_INCOMPLETE": "Les lectures directes sont incomplètes : contrôle impossible.",
+    "NO_LOAD": "Aucune charge assez forte pour conclure (tension × courant sous 100 VA).",
+    "TOO_FEW_SAMPLES": "Trop peu de mesures pour conclure.",
+    "ENERGY_TOO_SMALL": "L'énergie attendue est trop proche de la résolution du compteur : prolonger l'essai ou augmenter la charge.",
+    "ENERGY_FROZEN": "L'énergie n'a pas varié alors que la puissance n'est pas nulle (compteur ou simulateur figé).",
+    "UNIT_FACTOR_SUSPECTED": "Le rapport est proche de 1000 ou de 1/1000 : confusion probable d'unité (W et kW, ou W.h et kW.h).",
+    "OUT_OF_TOLERANCE": "L'écart dépasse la tolérance.",
+    "NO_OUTAGE_DECLARED": "Aucune coupure de ce type n'a été déclarée : épreuve non réalisée.",
+    "NO_RESTART_DECLARED": "Aucun redémarrage du démon n'a été déclaré : épreuve non réalisée."
+  }
+}

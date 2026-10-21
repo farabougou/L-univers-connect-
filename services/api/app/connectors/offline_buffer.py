@@ -8,11 +8,15 @@ reste sur disque et repart au retour de la connexion.
 """
 
 import json
+import logging
+import os
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger("paios.offline_buffer")
 
 
 @dataclass(frozen=True)
@@ -70,11 +74,45 @@ class OfflineBuffer:
         with self.path.open("a", encoding="utf-8") as handle:
             handle.write(reading.to_json() + "\n")
 
+    @property
+    def corrupt_path(self) -> Path:
+        return self.path.with_name(self.path.name + ".corrupt")
+
     def pending(self) -> list[BufferedReading]:
+        """Mesures en attente. Une ligne illisible (écriture interrompue par une coupure de
+        courant : ligne coupée, octets nuls ou invalides) ne doit jamais empêcher le
+        démon de repartir, sinon il tomberait à chaque tour sans jamais se rétablir.
+        Elle est écartée de la liste, copiée telle quelle dans `<tampon>.corrupt` (rien
+        n'est effacé) et signalée dans le journal."""
         if not self.path.exists():
             return []
-        with self.path.open(encoding="utf-8") as handle:
-            return [BufferedReading.from_json(line) for line in handle if line.strip()]
+        readings: list[BufferedReading] = []
+        unreadable: list[str] = []
+        with self.path.open(encoding="utf-8", errors="replace") as handle:
+            for line in handle:
+                if not line.strip():
+                    continue
+                try:
+                    readings.append(BufferedReading.from_json(line))
+                except (ValueError, KeyError, TypeError):
+                    unreadable.append(line if line.endswith("\n") else line + "\n")
+        if unreadable:
+            with self.corrupt_path.open("a", encoding="utf-8") as sidecar:
+                sidecar.writelines(unreadable)
+            # Réécrit le tampon sans ces lignes : elles ne sont ni renvoyées ni recopiées
+            # à chaque tour.
+            temporary = self.path.with_name(self.path.name + ".tmp")
+            temporary.write_text("".join(r.to_json() + "\n" for r in readings), encoding="utf-8")
+            os.replace(temporary, self.path)
+            logger.error(
+                f"{len(unreadable)} ligne(s) illisible(s) du tampon mise(s) de côté dans "
+                f"{self.corrupt_path.name}",
+                extra={
+                    "event": "offline_buffer.corrupt_lines",
+                    "detail": {"count": len(unreadable)},
+                },
+            )
+        return readings
 
     def clear(self) -> None:
         if self.path.exists():

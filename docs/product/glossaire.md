@@ -104,6 +104,9 @@ n'apparaissaient encore à l'écran nulle part ; ce tableau les nomme avant leur
 | Autorisation de marche | Enable status | `enable_status` | Indique si le fonctionnement est autorisé (1) ou désactivé (0). |
 | Consigne de température | Temperature setpoint | `temperature_setpoint` | Valeur de température visée par la régulation. Lue seulement (niveau C0). |
 | Commande marche/arrêt | On/off command | `on_off_command` | Déclarable pour documenter une installation ; jamais inscriptible tant que la règle non négociable 1 s'applique. |
+| Tampon local | Local buffer | `offline_buffer` | Fichier où l'Edge garde les mesures qui n'ont pas pu être envoyées pendant une coupure de l'API, puis les renvoie à son retour. Une mesure déjà acquise n'y est jamais perdue. | File d'attente, cache | — |
+| Passerelle | Gateway | — | Boîtier qui relie un compteur à liaison série (RS-485) au réseau local (Modbus TCP). | Convertisseur, routeur | — |
+| Coupure | Outage | — | Interruption de la communication, provoquée ou subie : de l'API, de la passerelle ou du démon Edge. Distincte de l'état « Hors ligne », qui en est la conséquence affichée. | Panne (réservé à un défaut d'équipement) | — |
 
 ## 5. États d'un équipement (deux axes distincts)
 

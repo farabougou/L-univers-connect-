@@ -13,6 +13,7 @@ lancé en continu sur site, juste borné pour le test.
 
 import threading
 import time
+from datetime import UTC, datetime, timedelta
 
 import httpx
 import pytest
@@ -22,7 +23,7 @@ from starlette.testclient import TestClient
 
 import scripts.modbus_daemon as daemon
 from app.connectors.edge_client import EdgeApiClient, PrivateKeyCredential
-from app.connectors.offline_buffer import OfflineBuffer
+from app.connectors.offline_buffer import BufferedReading, OfflineBuffer
 from app.db import engine
 from app.main import app
 from app.tenancy import set_tenant_context
@@ -323,3 +324,195 @@ def test_api_injoignable_met_en_tampon_puis_transmet_tout_au_retour(tenant, tmp_
     assert cycles == 1
     assert _measurement_count(tenant["tenant_id"]) == 3
     assert buffer.pending() == []
+
+
+# --- Coupures de communication, redémarrage, reprise (préparation du test SDM120) ---
+
+
+def _simulate_api_outage(api, monkeypatch, *, down_after_cycle: int | None, up_after_cycle: int):
+    """Coupure COMPLÈTE de l'API (configuration, authentification et envoi échouent
+    ensemble), comme une vraie panne réseau : l'ancien test ne faisait échouer que
+    l'envoi, ce qui ne peut pas se produire seul. `down_after_cycle=None` : l'API est
+    déjà coupée au démarrage. Les tours sont comptés par les pauses entre deux tours."""
+    state = {"cycle": 0, "down": down_after_cycle is None}
+    real_request = api._authorized_request
+
+    def request(*args, **kwargs):
+        if state["down"]:
+            raise httpx.ConnectError("API injoignable (coupure simulée)")
+        return real_request(*args, **kwargs)
+
+    real_sleep = time.sleep
+
+    def sleep(seconds):
+        state["cycle"] += 1
+        if down_after_cycle is not None and state["cycle"] == down_after_cycle:
+            state["down"] = True
+        if state["cycle"] == up_after_cycle:
+            state["down"] = False
+        real_sleep(min(seconds, 0.01))
+
+    monkeypatch.setattr(api, "_authorized_request", request)
+    monkeypatch.setattr(time, "sleep", sleep)
+    return state
+
+
+def test_vraie_coupure_de_l_api_le_demon_continue_de_relever_et_ne_perd_rien(
+    tenant, tmp_path, monkeypatch
+):
+    buffer = OfflineBuffer(tmp_path / "buffer.jsonl")
+
+    with _api(tenant) as api:
+        _simulate_api_outage(api, monkeypatch, down_after_cycle=1, up_after_cycle=4)
+        cycles = run(
+            api=api,
+            equipment_id=tenant["location_id"],
+            interval_seconds=0.05,
+            buffer=buffer,
+            max_cycles=5,
+        )
+
+    # Tour 1 : envoyé. Tours 2 à 4 : API coupée, compteur relevé quand même et mis en
+    # tampon. Tour 5 : API revenue, les 3 mesures en attente repartent avec la nouvelle.
+    assert cycles == 5
+    assert _measurement_count(tenant["tenant_id"]) == 5
+    assert buffer.pending() == []
+
+
+def test_demarrage_pendant_une_coupure_de_l_api_n_arrete_pas_le_demon(
+    tenant, tmp_path, monkeypatch
+):
+    buffer = OfflineBuffer(tmp_path / "buffer.jsonl")
+
+    with _api(tenant) as api:
+        _simulate_api_outage(api, monkeypatch, down_after_cycle=None, up_after_cycle=1)
+        cycles = run(
+            api=api,
+            equipment_id=tenant["location_id"],
+            interval_seconds=0.05,
+            buffer=buffer,
+            max_cycles=3,
+        )
+
+    # Sans configuration connue, rien n'est à relever (et rien n'est inventé) : tour 1
+    # sans mesure. Dès le retour de l'API (tours 2 et 3), la relève reprend.
+    assert cycles == 3
+    assert _measurement_count(tenant["tenant_id"]) == 2
+    assert buffer.pending() == []
+
+
+def test_configuration_retiree_pendant_une_coupure_n_est_plus_relevee_au_retour(
+    tenant, tmp_path, monkeypatch
+):
+    """La configuration en mémoire sert seulement tant que l'API ne répond pas ; une
+    configuration retirée (réponse 404) ne doit jamais être relevée sur la foi du cache."""
+    calls = {"n": 0}
+    real_load_config = daemon._load_config
+
+    def load_config(api, equipment_id):
+        calls["n"] += 1
+        if calls["n"] == 3:  # tour 2 : la console vient de retirer la configuration
+            return None
+        if calls["n"] == 4:  # tour 3 : l'API est coupée
+            raise httpx.ConnectError("API injoignable (coupure simulée)")
+        return real_load_config(api, equipment_id)
+
+    monkeypatch.setattr(daemon, "_load_config", load_config)
+    with _api(tenant) as api:
+        run(
+            api=api,
+            equipment_id=tenant["location_id"],
+            interval_seconds=0.02,
+            buffer=OfflineBuffer(tmp_path / "buffer.jsonl"),
+            max_cycles=3,
+        )
+
+    assert _measurement_count(tenant["tenant_id"]) == 1
+
+
+def test_arret_entre_l_envoi_et_le_vidage_du_tampon_ne_cree_aucun_doublon(
+    tenant, tmp_path, monkeypatch
+):
+    buffer = OfflineBuffer(tmp_path / "buffer.jsonl")
+
+    with _api(tenant) as api:
+        real_post = api.post_measurements
+        monkeypatch.setattr(
+            api,
+            "post_measurements",
+            lambda *a, **k: (_ for _ in ()).throw(httpx.ConnectError("envoi impossible (simulé)")),
+        )
+        run(
+            api=api,
+            equipment_id=tenant["location_id"],
+            interval_seconds=0.02,
+            buffer=buffer,
+            max_cycles=2,
+        )
+        assert len(buffer.pending()) == 2
+
+        # Tour 3 : l'envoi réussit (3 mesures en base), puis le processus est tué avant
+        # le vidage du tampon.
+        monkeypatch.setattr(api, "post_measurements", real_post)
+
+        def killed():
+            raise KeyboardInterrupt("processus tué avant le vidage du tampon (simulé)")
+
+        monkeypatch.setattr(buffer, "clear", killed)
+        with pytest.raises(KeyboardInterrupt):
+            run(
+                api=api,
+                equipment_id=tenant["location_id"],
+                interval_seconds=0.02,
+                buffer=buffer,
+                max_cycles=1,
+            )
+        assert _measurement_count(tenant["tenant_id"]) == 3
+        assert len(buffer.pending()) == 2, "les deux anciennes mesures sont encore au tampon"
+
+        # Redémarrage : le tampon est renvoyé une seconde fois, l'API les reconnaît.
+        monkeypatch.undo()
+        run(
+            api=api,
+            equipment_id=tenant["location_id"],
+            interval_seconds=0.02,
+            buffer=buffer,
+            max_cycles=1,
+        )
+
+    assert _measurement_count(tenant["tenant_id"]) == 4, (
+        "2 anciennes + 1 + 1 nouvelle, sans doublon"
+    )
+    assert buffer.pending() == []
+
+
+def test_tampon_tronque_par_une_coupure_de_courant_ne_bloque_pas_le_demon(tenant, tmp_path):
+    buffer = OfflineBuffer(tmp_path / "buffer.jsonl")
+    with _api(tenant) as api:
+        valid = BufferedReading(
+            tenant_id=tenant["tenant_id"],
+            point_id=tenant["point_id"],
+            value=1.5,
+            measured_at=datetime.now(UTC) - timedelta(minutes=5),
+            origin="measured",
+            source="sdm120",
+        )
+        buffer.append(valid)
+        # Écriture interrompue : ligne coupée en plein milieu, puis octets nuls et non UTF-8.
+        with buffer.path.open("ab") as handle:
+            handle.write(b'{"tenant_id": "' + str(tenant["tenant_id"]).encode() + b'", "point_i')
+            handle.write(b"\n\x00\x00\x00\xff\xfe\n")
+
+        cycles = run(
+            api=api,
+            equipment_id=tenant["location_id"],
+            interval_seconds=0.02,
+            buffer=buffer,
+            max_cycles=1,
+        )
+
+    assert cycles == 1
+    assert _measurement_count(tenant["tenant_id"]) == 2, "la mesure valide du tampon est renvoyée"
+    assert buffer.pending() == []
+    sidecar = buffer.path.with_name(buffer.path.name + ".corrupt")
+    assert sidecar.exists(), "les lignes illisibles sont conservées, jamais effacées"
