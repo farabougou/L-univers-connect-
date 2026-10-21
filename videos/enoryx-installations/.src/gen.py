@@ -186,12 +186,12 @@ HTML = f'''<!doctype html>
       /* tableau de bord */
       #dash {{ position: absolute; inset: 0; background: radial-gradient(ellipse 90% 60% at 50% 30%, #0C1A3A, {NAVY} 70%); }}
       #dash::before {{ content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(56,189,248,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(56,189,248,0.06) 1px, transparent 1px); background-size: 60px 60px; }}
-      .dk {{ position: absolute; left: 70px; top: 270px; font-size: 22px; color: {CYAN}; }}
-      #tot {{ position: absolute; left: 70px; top: 310px; font: 900 150px/1 "Inter"; letter-spacing: -0.05em; font-variant-numeric: tabular-nums; }}
+      .dk {{ position: absolute; left: 70px; top: 350px; font-size: 22px; color: {CYAN}; }}
+      #tot {{ position: absolute; left: 70px; top: 392px; font: 900 150px/1 "Inter"; letter-spacing: -0.05em; font-variant-numeric: tabular-nums; }}
       #tot small {{ font-size: 60px; color: {MUTED}; margin-left: 14px; letter-spacing: 0; }}
-      .dk2 {{ position: absolute; left: 74px; top: 470px; font-size: 20px; color: {MUTED}; }}
-      #tiles {{ position: absolute; left: 70px; top: 540px; width: 940px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }}
-      .tile {{ position: relative; height: 196px; border-radius: 24px; padding: 22px 24px; background: rgba(12,23,48,0.85); border: 1.5px solid {LINE}; }}
+      .dk2 {{ position: absolute; left: 74px; top: 552px; font-size: 20px; color: {MUTED}; }}
+      #tiles {{ position: absolute; left: 70px; top: 610px; width: 940px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }}
+      .tile {{ position: relative; height: 180px; border-radius: 24px; padding: 22px 24px; background: rgba(12,23,48,0.85); border: 1.5px solid {LINE}; }}
       .tn {{ font: 600 23px "Inter"; color: {MUTED}; }} .tv {{ font: 900 52px/1.2 "Inter"; letter-spacing: -0.03em; margin-top: 8px; white-space: nowrap; }}
       .tdot {{ position: absolute; right: 24px; top: 26px; width: 14px; height: 14px; border-radius: 7px; background: {GREEN}; box-shadow: 0 0 12px {GREEN}; }}
       .tile svg {{ position: absolute; right: 18px; bottom: 16px; }} .tile polyline {{ stroke: {CYAN}; stroke-width: 3; opacity: 0.8; }}
@@ -318,7 +318,7 @@ JS = r'''
         const totv = $("#totv"), tsp = $$(".tile polyline");
         const dash = (t) => {
           if (t < 23.3 || t > 26.5) return;
-          totv.textContent = (28.7 * S.ease.silk(cl((t - 23.5) / 1.2)) + 0.15 * Math.sin(t * 2.3)).toFixed(1).replace(".", ",");
+          totv.textContent = (28.7 * S.ease.silk(cl((t - 23.5) / 1.2))).toFixed(1).replace(".", ",");  // égal au compteur général
           tsp.forEach((pl, i) => { const p = []; for (let j = 0; j < 24; j++) { const u = t - (23 - j) * 0.08; p.push((j * 7.6).toFixed(1) + "," + (22 + 9 * Math.sin(u * 3.1 + i * 1.7) + 4 * Math.sin(u * 9.3 + i)).toFixed(1)); } pl.setAttribute("points", p.join(" ")); });
         };
 
