@@ -2041,6 +2041,19 @@ alertes restantes concernent uniquement l'outillage de build et de lint.
 **Après V5** : évolution continue, sans V6 automatique. La suite logique reste la
 validation sur un équipement réel, qui dépend de matériel physique.
 
+**Correction du 21/10/2026 — CI GitHub et journaux Railway** : la déclaration « V5
+SOFTWARE COMPLETE: YES » reposait sur les tests lancés en local (1079/1079), jamais sur
+la CI GitHub, qui était **rouge depuis au moins le 07/10/2026** : l'étape
+`ruff format --check .` échouait (14 fichiers non formatés), ce qui sautait les
+migrations et les tests du job `api`. Corrigé (commit `0603e12`) : formatage seul, puis CI
+entièrement verte (web, mobile, api avec les tests). Leçon appliquée : un jalon n'est
+déclaré clos qu'une fois la CI GitHub verte sur le commit poussé, pas seulement les tests
+locaux. Côté Railway, aucun déploiement n'avait échoué (staging en ligne) ; ce qui
+apparaissait en rouge, c'étaient les messages d'information d'uvicorn et d'alembic, écrits
+sur la sortie d'erreur que Railway classe « error » (`app/log_streams.py`,
+`scripts/uvicorn-logging.json`, `alembic.ini` ; vérifié en staging : ces lignes sont
+désormais `info`).
+
 **Guide de test terrain SDM120 (21/10/2026)** : `docs/terrain/test-terrain-sdm120.md`
 décrit la procédure (répétition à blanc avec le simulateur, lecture directe du compteur,
 chaîne complète, épreuves de panne), des critères PASS/FAIL proposés (à valider par
