@@ -69,7 +69,7 @@ Idée de signature vidéo : le masque n'a pas de lèvres, donc le M s'allume au 
 > Vous êtes cinquante-cinq mille à me suivre… et vous n'avez jamais vu mon visage.
 > Et ça ne va pas changer.
 > Moi, c'est Mams. Je crée des pubs vidéo, des sites internet et des applis mobiles. Cent pour cent en code.
-> Votre prochaine pub… c'est peut-être moi qui la fais. Écrivez-moi en message.
+> Votre prochaine pub ? C'est peut-être moi qui la ferai. Écrivez-moi en message.
 
 Montage prévu : l'avatar en plan poitrine dans la carte du reel, habillage du motion reel (HUD, sous-titres
 mot à mot, extraits du mur de pubs pendant « pubs vidéo, sites, applis »), fin sur @kofamali.
