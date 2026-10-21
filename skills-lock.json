@@ -175,6 +175,12 @@
       "skillPath": "skills/talking-head-recut/SKILL.md",
       "computedHash": "83df91f488236abbc53d3c817f31b4554de8e772c2e8a17a15c0a72664da9eca"
     },
+    "task-observer": {
+      "source": "rebelytics/one-skill-to-rule-them-all",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "a91f051a337027cc61868132407b24098bc0859a4a3e4357740a15dc7334145f"
+    },
     "text-to-speech": {
       "source": "elevenlabs/skills",
       "sourceType": "github",

@@ -1,5 +1,10 @@
 # Mémoire du projet (lue par Claude à chaque session)
 
+**Task Observer** : charger le skill `task-observer` avant le premier appel d'outil de chaque session.
+- Son dossier de travail est `.claude/observations/`, à la racine du dépôt.
+- À la fin de chaque session, faire un commit et un push de ce dossier : c'est ce qui le conserve d'une session à
+  l'autre, sur le cloud comme sur le PC.
+
 ## Qui
 Mohamed, dit **Mams**. Motion designer et développeur débutant. Il crée des pubs vidéo, des sites internet et des
 applis mobiles. Il est sur TikTok sous **@kofamali** (55 000 abonnés).
