@@ -1,0 +1,24 @@
+/* Studio — finitions : texte découpé, ombres multicouches, liserés, lueurs, grain, vignette, reflets, scène 2.5D. */
+.st-word { display: inline-block; white-space: nowrap; }
+.st-char { display: inline-block; }
+/* fenêtre de révélation : la marge négative compense le padding pour ne pas couper accents ni jambages (À, Ç, g, p) */
+.st-mask { display: inline-block; overflow: hidden; vertical-align: top; padding: 0.14em 0.06em 0.2em; margin: -0.14em -0.06em -0.2em; }
+
+/* élévation : une ombre courte et nette + une moyenne + une longue et diffuse, jamais une seule ombre grise */
+.st-elev-1 { box-shadow: 0 1px 2px rgba(0,0,0,0.25), 0 4px 12px rgba(0,0,0,0.18); }
+.st-elev-2 { box-shadow: 0 2px 4px rgba(0,0,0,0.22), 0 12px 28px rgba(0,0,0,0.26), 0 32px 64px rgba(0,0,0,0.28); }
+.st-elev-3 { box-shadow: 0 3px 6px rgba(0,0,0,0.2), 0 20px 44px rgba(0,0,0,0.3), 0 64px 128px rgba(0,0,0,0.42); }
+/* liseré de lumière : bord supérieur éclairé, contour à peine visible (verre, métal, appareil) */
+.st-rim { outline: 1px solid rgba(255,255,255,0.08); outline-offset: -1px; }
+/* lueur de texte en trois couches : cœur net, halo moyen, diffusion large (couleur via --st-glow) */
+.st-glow { text-shadow: 0 0 2px rgba(255,255,255,0.35), 0 0 18px var(--st-glow, rgba(255,120,50,0.5)), 0 0 64px var(--st-glow, rgba(255,120,50,0.3)); }
+
+.st-grain { position: absolute; left: 0; top: 0; pointer-events: none; mix-blend-mode: overlay; opacity: 0.08; }
+.st-vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(120% 85% at 50% 45%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.55) 100%); }
+.st-sheen-host { position: relative; overflow: hidden; }
+.st-sheen { position: absolute; top: -10%; bottom: -10%; left: 0; width: 55%; pointer-events: none; mix-blend-mode: screen;
+  background: linear-gradient(105deg, rgba(255,255,255,0) 20%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 80%); }
+
+/* scène 2.5D : une perspective, des calques plein cadre pilotés par STUDIO.camera */
+.st-stage { position: absolute; inset: 0; overflow: hidden; perspective: 1800px; perspective-origin: 50% 45%; }
+.st-layer { position: absolute; inset: 0; transform-style: preserve-3d; }
