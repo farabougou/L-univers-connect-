@@ -82,9 +82,7 @@ def _ready_declaration(tenant) -> dict:
         },
     )
     assert updated.status_code == 200, updated.text
-    ready = _call(
-        "POST", f"/operat-declarations/{declaration_id}/mark-ready", _manager(tenant)
-    )
+    ready = _call("POST", f"/operat-declarations/{declaration_id}/mark-ready", _manager(tenant))
     assert ready.status_code == 200, ready.text
     return ready.json()
 
@@ -126,9 +124,7 @@ def test_full_workflow_from_draft_to_submission(two_tenants) -> None:
     ready = _ready_declaration(tenant_a)
     assert ready["status"] == "ready"
 
-    summary = _call(
-        "GET", f"/operat-declarations/{ready['id']}/summary", _manager(tenant_a)
-    )
+    summary = _call("GET", f"/operat-declarations/{ready['id']}/summary", _manager(tenant_a))
     assert summary.status_code == 200
     assert summary.json()["surface_m2"] == 500.0
 

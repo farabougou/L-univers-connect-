@@ -261,9 +261,7 @@ def test_api_never_lets_a_tenant_compare_against_another_tenants_equipment() -> 
 def test_api_rejects_a_point_that_does_not_exist() -> None:
     tenant = _create_fleet_tenant("ClientComparisonMissing", equipment_count=1)
     try:
-        response = _call(
-            "GET", f"/points/{uuid.uuid4()}/compare", _headers(tenant, ["technicien"])
-        )
+        response = _call("GET", f"/points/{uuid.uuid4()}/compare", _headers(tenant, ["technicien"]))
     finally:
         cleanup_tenant(tenant)
     assert response.status_code == 404

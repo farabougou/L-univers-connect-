@@ -117,9 +117,7 @@ def test_creates_a_fgas_record(two_tenants) -> None:
     tenant_a, _ = two_tenants
     intervention_id = _intervention(tenant_a)
 
-    created = _call(
-        "POST", f"/interventions/{intervention_id}/fgas", _tech(tenant_a), json=_FGAS
-    )
+    created = _call("POST", f"/interventions/{intervention_id}/fgas", _tech(tenant_a), json=_FGAS)
 
     assert created.status_code == 201, created.text
     body = created.json()
@@ -198,15 +196,16 @@ def test_fgas_vocabulary_is_published(two_tenants) -> None:
     vocabulary = _call("GET", "/fgas-vocabulary", _tech(tenant_a)).json()
     assert vocabulary["nature_of_intervention"]["maintenance"] == "Maintenance de l’équipement"
     assert set(vocabulary["waste_classification"]) == {
-        "un1078_non_flammable", "other_non_flammable", "un3161_flammable", "other_flammable",
+        "un1078_non_flammable",
+        "other_non_flammable",
+        "un3161_flammable",
+        "other_flammable",
     }
 
 
 def test_fgas_vocabulary_follows_the_requested_language(two_tenants) -> None:
     tenant_a, _ = two_tenants
-    english = _call(
-        "GET", "/fgas-vocabulary", {**_tech(tenant_a), "Accept-Language": "en"}
-    ).json()
+    english = _call("GET", "/fgas-vocabulary", {**_tech(tenant_a), "Accept-Language": "en"}).json()
     assert english["nature_of_intervention"]["maintenance"] == "Maintenance of the equipment"
 
 
@@ -277,7 +276,5 @@ def test_cerfa_pdf_download_is_tenant_isolated(two_tenants) -> None:
     intervention_id = _intervention(tenant_a)
     _call("POST", f"/interventions/{intervention_id}/fgas", _tech(tenant_a), json=_FGAS)
 
-    response = _call(
-        "GET", f"/interventions/{intervention_id}/fgas/cerfa.pdf", _tech(tenant_b)
-    )
+    response = _call("GET", f"/interventions/{intervention_id}/fgas/cerfa.pdf", _tech(tenant_b))
     assert response.status_code == 404

@@ -729,9 +729,7 @@ def evaluate_after_measurement(
             reason_params={
                 **point_code,
                 **{
-                    k: v
-                    for k, v in evidence.items()
-                    if k not in ("desired_state_id", "confidence")
+                    k: v for k, v in evidence.items() if k not in ("desired_state_id", "confidence")
                 },
             },
             title=rule["title"],

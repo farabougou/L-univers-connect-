@@ -18,4 +18,7 @@ fi
 
 alembic upgrade head
 
-exec uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-8000}"
+# --log-config : les messages d'information sur la sortie standard, les
+# avertissements et erreurs sur la sortie d'erreur (voir app/log_streams.py).
+exec uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-8000}" \
+  --log-config "$(dirname "$0")/uvicorn-logging.json"

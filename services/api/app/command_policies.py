@@ -63,9 +63,7 @@ def _validate_command_point_policy(
     if parsed.allowed_roles is not None:
         unknown = sorted(set(parsed.allowed_roles) - set(COMMAND_ROLES))
         if unknown:
-            raise ConfigInvalid(
-                "COMMAND_POINT_POLICY_UNKNOWN_ROLE", roles=", ".join(unknown)
-            )
+            raise ConfigInvalid("COMMAND_POINT_POLICY_UNKNOWN_ROLE", roles=", ".join(unknown))
     return parsed.model_dump(mode="json")
 
 

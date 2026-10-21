@@ -112,7 +112,9 @@ def test_records_a_complete_fiche_and_returns_it(tenant) -> None:
     with engine.begin() as connection:
         set_tenant_context(connection, tenant["tenant_id"])
         record_id, created = record(
-            connection, tenant_id=tenant["tenant_id"], intervention_id=tenant["intervention"],
+            connection,
+            tenant_id=tenant["tenant_id"],
+            intervention_id=tenant["intervention"],
             **_payload(),
         )
         assert created is True
@@ -126,11 +128,15 @@ def test_resending_the_same_fiche_is_idempotent(tenant) -> None:
     with engine.begin() as connection:
         set_tenant_context(connection, tenant["tenant_id"])
         first_id, first_created = record(
-            connection, tenant_id=tenant["tenant_id"], intervention_id=tenant["intervention"],
+            connection,
+            tenant_id=tenant["tenant_id"],
+            intervention_id=tenant["intervention"],
             **_payload(),
         )
         second_id, second_created = record(
-            connection, tenant_id=tenant["tenant_id"], intervention_id=tenant["intervention"],
+            connection,
+            tenant_id=tenant["tenant_id"],
+            intervention_id=tenant["intervention"],
             **_payload(),
         )
         assert second_id == first_id
@@ -142,12 +148,16 @@ def test_resending_a_different_fiche_is_refused(tenant) -> None:
     with engine.begin() as connection:
         set_tenant_context(connection, tenant["tenant_id"])
         record(
-            connection, tenant_id=tenant["tenant_id"], intervention_id=tenant["intervention"],
+            connection,
+            tenant_id=tenant["tenant_id"],
+            intervention_id=tenant["intervention"],
             **_payload(),
         )
         with pytest.raises(FgasConflict) as excinfo:
             record(
-                connection, tenant_id=tenant["tenant_id"], intervention_id=tenant["intervention"],
+                connection,
+                tenant_id=tenant["tenant_id"],
+                intervention_id=tenant["intervention"],
                 **_payload(observations="Deuxième version, jamais acceptée"),
             )
         assert excinfo.value.code == "FGAS_ALREADY_RECORDED"
@@ -158,7 +168,9 @@ def test_unknown_nature_code_is_rejected(tenant) -> None:
         set_tenant_context(connection, tenant["tenant_id"])
         with pytest.raises(FgasError) as excinfo:
             record(
-                connection, tenant_id=tenant["tenant_id"], intervention_id=tenant["intervention"],
+                connection,
+                tenant_id=tenant["tenant_id"],
+                intervention_id=tenant["intervention"],
                 **_payload(nature_of_intervention=["invented_code"]),
             )
         assert excinfo.value.code == "FGAS_CODE_UNKNOWN"
@@ -169,7 +181,9 @@ def test_empty_nature_is_rejected(tenant) -> None:
         set_tenant_context(connection, tenant["tenant_id"])
         with pytest.raises(FgasError) as excinfo:
             record(
-                connection, tenant_id=tenant["tenant_id"], intervention_id=tenant["intervention"],
+                connection,
+                tenant_id=tenant["tenant_id"],
+                intervention_id=tenant["intervention"],
                 **_payload(nature_of_intervention=[]),
             )
         assert excinfo.value.code == "FGAS_NATURE_REQUIRED"
@@ -180,13 +194,17 @@ def test_other_nature_requires_detail(tenant) -> None:
         set_tenant_context(connection, tenant["tenant_id"])
         with pytest.raises(FgasError) as excinfo:
             record(
-                connection, tenant_id=tenant["tenant_id"], intervention_id=tenant["intervention"],
+                connection,
+                tenant_id=tenant["tenant_id"],
+                intervention_id=tenant["intervention"],
                 **_payload(nature_of_intervention=["other"], nature_other_detail=None),
             )
         assert excinfo.value.code == "FGAS_OTHER_DETAIL_REQUIRED"
 
         record_id, created = record(
-            connection, tenant_id=tenant["tenant_id"], intervention_id=tenant["intervention"],
+            connection,
+            tenant_id=tenant["tenant_id"],
+            intervention_id=tenant["intervention"],
             **_payload(nature_of_intervention=["other"], nature_other_detail="Transfert de fluide"),
         )
         assert created is True
@@ -198,7 +216,9 @@ def test_other_waste_classification_requires_detail(tenant) -> None:
         set_tenant_context(connection, tenant["tenant_id"])
         with pytest.raises(FgasError) as excinfo:
             record(
-                connection, tenant_id=tenant["tenant_id"], intervention_id=tenant["intervention"],
+                connection,
+                tenant_id=tenant["tenant_id"],
+                intervention_id=tenant["intervention"],
                 **_payload(
                     waste_classification=["other_non_flammable"],
                     waste_classification_other_non_flammable=None,
@@ -212,7 +232,9 @@ def test_negative_quantity_is_rejected(tenant) -> None:
         set_tenant_context(connection, tenant["tenant_id"])
         with pytest.raises(FgasError) as excinfo:
             record(
-                connection, tenant_id=tenant["tenant_id"], intervention_id=tenant["intervention"],
+                connection,
+                tenant_id=tenant["tenant_id"],
+                intervention_id=tenant["intervention"],
                 **_payload(total_charge_kg=-1.0),
             )
         assert excinfo.value.code == "FGAS_QUANTITY_NEGATIVE"
@@ -223,7 +245,9 @@ def test_leak_without_location_is_rejected(tenant) -> None:
         set_tenant_context(connection, tenant["tenant_id"])
         with pytest.raises(FgasError) as excinfo:
             record(
-                connection, tenant_id=tenant["tenant_id"], intervention_id=tenant["intervention"],
+                connection,
+                tenant_id=tenant["tenant_id"],
+                intervention_id=tenant["intervention"],
                 **_payload(leaks_found=True, leaks=[{"location": "", "repaired": False}]),
             )
         assert excinfo.value.code == "FGAS_LEAK_LOCATION_REQUIRED"
@@ -233,7 +257,9 @@ def test_charged_and_recovered_totals_are_computed_not_trusted(tenant) -> None:
     with engine.begin() as connection:
         set_tenant_context(connection, tenant["tenant_id"])
         record(
-            connection, tenant_id=tenant["tenant_id"], intervention_id=tenant["intervention"],
+            connection,
+            tenant_id=tenant["tenant_id"],
+            intervention_id=tenant["intervention"],
             **_payload(
                 charged_virgin_kg=2.0,
                 charged_recycled_kg=1.0,
@@ -252,7 +278,9 @@ def test_unknown_intervention_is_not_found(tenant) -> None:
         set_tenant_context(connection, tenant["tenant_id"])
         with pytest.raises(FgasNotFound):
             record(
-                connection, tenant_id=tenant["tenant_id"], intervention_id=uuid.uuid4(),
+                connection,
+                tenant_id=tenant["tenant_id"],
+                intervention_id=uuid.uuid4(),
                 **_payload(),
             )
 
@@ -268,7 +296,9 @@ def test_isolation_between_tenants(two_tenants) -> None:
     with engine.begin() as connection:
         set_tenant_context(connection, tenant_a["tenant_id"])
         record(
-            connection, tenant_id=tenant_a["tenant_id"], intervention_id=tenant_a["intervention"],
+            connection,
+            tenant_id=tenant_a["tenant_id"],
+            intervention_id=tenant_a["intervention"],
             **_payload(),
         )
     with engine.begin() as connection:

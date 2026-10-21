@@ -268,9 +268,7 @@ def get_fgas_intervention(
 ) -> dict[str, Any] | None:
     row = (
         connection.execute(
-            text(
-                f"SELECT {_COLUMNS} FROM fgas_intervention_records WHERE intervention_id = :id"
-            ),
+            text(f"SELECT {_COLUMNS} FROM fgas_intervention_records WHERE intervention_id = :id"),
             {"id": intervention_id},
         )
         .mappings()

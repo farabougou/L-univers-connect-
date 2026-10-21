@@ -83,9 +83,7 @@ def test_activer_un_nouveau_tarif_remplace_l_ancien_sans_le_detruire(tenant) -> 
         first = _create_tariff(connection, tenant, price_per_kwh=0.20)
         activate_version(connection, version_id=first, activated_by="responsable", activated_at=T0)
         second = _create_tariff(connection, tenant, price_per_kwh=0.30)
-        activate_version(
-            connection, version_id=second, activated_by="responsable", activated_at=T0
-        )
+        activate_version(connection, version_id=second, activated_by="responsable", activated_at=T0)
         active = get_active_tariff(connection, tenant["site"])
     assert active["price_per_kwh"] == 0.30
 

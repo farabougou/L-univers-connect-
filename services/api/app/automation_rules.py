@@ -107,7 +107,9 @@ def _validate_automation_rule(connection: Connection, content: dict[str, Any]) -
 
 
 register_config_type(
-    AUTOMATION_RULE, AUTOMATION_RULE_SCHEMA, _validate_automation_rule,
+    AUTOMATION_RULE,
+    AUTOMATION_RULE_SCHEMA,
+    _validate_automation_rule,
     requires_second_person=True,
 )
 

@@ -43,9 +43,7 @@ class PointControlModeContent(BaseModel):
     mode: Literal["manual", "automatic"]
 
 
-def _validate_point_control_mode(
-    connection: Connection, content: dict[str, Any]
-) -> dict[str, Any]:
+def _validate_point_control_mode(connection: Connection, content: dict[str, Any]) -> dict[str, Any]:
     try:
         parsed = PointControlModeContent(**content)
     except ValidationError as exc:
@@ -55,7 +53,9 @@ def _validate_point_control_mode(
 
 
 register_config_type(
-    POINT_CONTROL_MODE, POINT_CONTROL_MODE_SCHEMA, _validate_point_control_mode,
+    POINT_CONTROL_MODE,
+    POINT_CONTROL_MODE_SCHEMA,
+    _validate_point_control_mode,
     requires_second_person=True,
 )
 

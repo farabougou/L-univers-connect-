@@ -53,9 +53,7 @@ class AdmissionControlMiddleware:
         try:
             await asyncio.wait_for(self._slots.acquire(), timeout=self._queue_timeout)
         except TimeoutError:
-            response = problem_response(
-                Request(scope, receive), status=503, code="SERVICE_BUSY"
-            )
+            response = problem_response(Request(scope, receive), status=503, code="SERVICE_BUSY")
             response.headers["Retry-After"] = str(RETRY_AFTER_SECONDS)
             await response(scope, receive, send)
             return

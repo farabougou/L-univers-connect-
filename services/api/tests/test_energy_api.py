@@ -290,9 +290,7 @@ def test_comparer_deux_resultats_du_meme_equipement_est_accepte(tenant) -> None:
         # Un nouvel appel pour la même période crée une nouvelle ligne
         # (jamais une mise à jour) : deux résultats distincts pour le même
         # point, exactement ce qu'une comparaison légitime met en regard.
-        reference = client.post(
-            "/energy/normalized-results", json=body, headers=_headers(tenant)
-        )
+        reference = client.post("/energy/normalized-results", json=body, headers=_headers(tenant))
         analyzed = client.post("/energy/normalized-results", json=body, headers=_headers(tenant))
         assert reference.status_code == 201, reference.text
         assert analyzed.status_code == 201, analyzed.text

@@ -50,8 +50,11 @@ def tenant():
 
 def _ready_declaration(connection, tenant, **overrides) -> dict:
     declaration = create_draft_declaration(
-        connection, tenant_id=tenant["tenant_id"], site_id=tenant["site"],
-        reference_year=2026, created_by="Mohamed",
+        connection,
+        tenant_id=tenant["tenant_id"],
+        site_id=tenant["site"],
+        reference_year=2026,
+        created_by="Mohamed",
     )
     update_declaration(
         connection,
@@ -69,8 +72,11 @@ def test_creates_a_draft_declaration(tenant) -> None:
     with engine.begin() as connection:
         set_tenant_context(connection, tenant["tenant_id"])
         declaration = create_draft_declaration(
-            connection, tenant_id=tenant["tenant_id"], site_id=tenant["site"],
-            reference_year=2026, created_by="Mohamed",
+            connection,
+            tenant_id=tenant["tenant_id"],
+            site_id=tenant["site"],
+            reference_year=2026,
+            created_by="Mohamed",
         )
         assert declaration["status"] == "draft"
         assert declaration["reference_year"] == 2026
@@ -80,13 +86,19 @@ def test_a_second_declaration_for_the_same_site_and_year_is_refused(tenant) -> N
     with engine.begin() as connection:
         set_tenant_context(connection, tenant["tenant_id"])
         create_draft_declaration(
-            connection, tenant_id=tenant["tenant_id"], site_id=tenant["site"],
-            reference_year=2026, created_by="Mohamed",
+            connection,
+            tenant_id=tenant["tenant_id"],
+            site_id=tenant["site"],
+            reference_year=2026,
+            created_by="Mohamed",
         )
         with pytest.raises(OperatDeclarationConflict):
             create_draft_declaration(
-                connection, tenant_id=tenant["tenant_id"], site_id=tenant["site"],
-                reference_year=2026, created_by="Mohamed",
+                connection,
+                tenant_id=tenant["tenant_id"],
+                site_id=tenant["site"],
+                reference_year=2026,
+                created_by="Mohamed",
             )
 
 
@@ -95,8 +107,11 @@ def test_declaration_for_an_unknown_site_is_refused(tenant) -> None:
         set_tenant_context(connection, tenant["tenant_id"])
         with pytest.raises(OperatDeclarationNotFound):
             create_draft_declaration(
-                connection, tenant_id=tenant["tenant_id"], site_id=uuid.uuid4(),
-                reference_year=2026, created_by="Mohamed",
+                connection,
+                tenant_id=tenant["tenant_id"],
+                site_id=uuid.uuid4(),
+                reference_year=2026,
+                created_by="Mohamed",
             )
 
 
@@ -104,14 +119,19 @@ def test_mark_ready_requires_surface_activity_and_at_least_one_consumption(tenan
     with engine.begin() as connection:
         set_tenant_context(connection, tenant["tenant_id"])
         declaration = create_draft_declaration(
-            connection, tenant_id=tenant["tenant_id"], site_id=tenant["site"],
-            reference_year=2026, created_by="Mohamed",
+            connection,
+            tenant_id=tenant["tenant_id"],
+            site_id=tenant["site"],
+            reference_year=2026,
+            created_by="Mohamed",
         )
         with pytest.raises(OperatError) as excinfo:
             mark_ready(connection, declaration_id=declaration["id"])
         assert excinfo.value.code == "OPERAT_DECLARATION_INCOMPLETE"
         assert set(excinfo.value.params["fields"]) == {
-            "activity_category", "consumption", "floor_area_m2",
+            "activity_category",
+            "consumption",
+            "floor_area_m2",
         }
 
 
@@ -135,12 +155,17 @@ def test_a_draft_cannot_be_recorded_as_submitted(tenant) -> None:
     with engine.begin() as connection:
         set_tenant_context(connection, tenant["tenant_id"])
         declaration = create_draft_declaration(
-            connection, tenant_id=tenant["tenant_id"], site_id=tenant["site"],
-            reference_year=2026, created_by="Mohamed",
+            connection,
+            tenant_id=tenant["tenant_id"],
+            site_id=tenant["site"],
+            reference_year=2026,
+            created_by="Mohamed",
         )
         with pytest.raises(OperatError) as excinfo:
             record_manual_submission(
-                connection, declaration_id=declaration["id"], submitted_by="Mohamed",
+                connection,
+                declaration_id=declaration["id"],
+                submitted_by="Mohamed",
                 submitted_at=T0,
             )
         assert excinfo.value.code == "OPERAT_DECLARATION_NOT_READY"
@@ -151,7 +176,10 @@ def test_records_a_manual_submission_and_freezes_the_declaration(tenant) -> None
         set_tenant_context(connection, tenant["tenant_id"])
         ready = _ready_declaration(connection, tenant)
         submitted = record_manual_submission(
-            connection, declaration_id=ready["id"], submitted_by="Mohamed", submitted_at=T0,
+            connection,
+            declaration_id=ready["id"],
+            submitted_by="Mohamed",
+            submitted_at=T0,
             submission_reference="OPERAT-2026-000123",
         )
         assert submitted["status"] == "submitted"
@@ -170,13 +198,19 @@ def test_a_negative_quantity_is_rejected(tenant) -> None:
     with engine.begin() as connection:
         set_tenant_context(connection, tenant["tenant_id"])
         declaration = create_draft_declaration(
-            connection, tenant_id=tenant["tenant_id"], site_id=tenant["site"],
-            reference_year=2026, created_by="Mohamed",
+            connection,
+            tenant_id=tenant["tenant_id"],
+            site_id=tenant["site"],
+            reference_year=2026,
+            created_by="Mohamed",
         )
         with pytest.raises(OperatError) as excinfo:
             update_declaration(
-                connection, declaration_id=declaration["id"], electricity_kwh=-1.0,
-                updated_by="Mohamed", updated_at=T0,
+                connection,
+                declaration_id=declaration["id"],
+                electricity_kwh=-1.0,
+                updated_by="Mohamed",
+                updated_at=T0,
             )
         assert excinfo.value.code == "OPERAT_QUANTITY_NEGATIVE"
 
@@ -204,8 +238,11 @@ def test_isolation_between_tenants() -> None:
         with engine.begin() as connection:
             set_tenant_context(connection, tenant_a["tenant_id"])
             declaration = create_draft_declaration(
-                connection, tenant_id=tenant_a["tenant_id"], site_id=tenant_a["site"],
-                reference_year=2026, created_by="Mohamed",
+                connection,
+                tenant_id=tenant_a["tenant_id"],
+                site_id=tenant_a["site"],
+                reference_year=2026,
+                created_by="Mohamed",
             )
         with engine.begin() as connection:
             set_tenant_context(connection, tenant_b["tenant_id"])

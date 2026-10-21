@@ -626,9 +626,7 @@ def list_alarms(
     )
     rows = connection.execute(text(sql), bound).mappings().all()
     count_sql = f"SELECT count(*) FROM alarms {where}"
-    announce_total(
-        response, page, lambda: connection.execute(text(count_sql), params).scalar_one()
-    )
+    announce_total(response, page, lambda: connection.execute(text(count_sql), params).scalar_one())
     return [AlarmOut(**row) for row in rows]
 
 
