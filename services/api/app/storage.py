@@ -8,6 +8,7 @@ module.
 
 import uuid
 from datetime import timedelta
+from functools import lru_cache
 
 import boto3
 from botocore.client import Config
@@ -17,13 +18,14 @@ from app.config import settings
 _PRESIGNED_URL_EXPIRY_SECONDS = int(timedelta(minutes=15).total_seconds())
 
 
-def _client():
+@lru_cache(maxsize=4)
+def _build_client(endpoint_url: str, access_key: str, secret_key: str, region: str):
     return boto3.client(
         "s3",
-        endpoint_url=settings.storage_endpoint_url,
-        aws_access_key_id=settings.storage_access_key,
-        aws_secret_access_key=settings.storage_secret_key,
-        region_name=settings.storage_region,
+        endpoint_url=endpoint_url,
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key,
+        region_name=region,
         # "path" impose des URL de la forme endpoint/bucket/clé plutôt que
         # bucket.endpoint/clé (style "virtual-hosted"). boto3 choisit ce
         # dernier par défaut dès que le nom du panier est compatible DNS (ex.
@@ -34,6 +36,21 @@ def _client():
         # soient les identifiants — d'où "SignatureDoesNotMatch" même avec un
         # jeton d'accès valide. Sans effet sur MinIO (compatible aussi).
         config=Config(signature_version="s3v4", s3={"addressing_style": "path"}),
+    )
+
+
+def _client():
+    """Construire un client boto3 coûte environ 5 ms (chargement des modèles de
+    service, résolution du point d'accès) : une liste de 2 000 documents, qui
+    signe une URL par ligne, mettait ~10 s rien qu'à reconstruire 2 000
+    clients (audit V5 du 20/10/2026). Un client est sûr entre fils d'exécution ;
+    la mémoïsation est indexée par la configuration, donc un changement de
+    réglage (tests, rotation des clés) produit un nouveau client."""
+    return _build_client(
+        settings.storage_endpoint_url,
+        settings.storage_access_key,
+        settings.storage_secret_key,
+        settings.storage_region,
     )
 
 

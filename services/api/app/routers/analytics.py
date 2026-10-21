@@ -2,7 +2,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Request, Response, status
 from sqlalchemy.engine import Connection
 
 from app.audit import append_audit_entry
@@ -19,9 +19,10 @@ from app.desired_states import (
     list_portfolio_active_desired_states,
 )
 from app.errors import ApiError, api_error
-from app.findings import confirm_finding, displayed, get_finding, list_findings
+from app.findings import confirm_finding, count_findings, displayed, get_finding, list_findings
 from app.i18n import negotiate_locale
 from app.monitoring import evaluate_data_freshness
+from app.pagination import Page, announce_total, page_params
 from app.points import PointInvalid, PointNotFound, get_point
 from app.schemas import (
     DesiredStateCreate,
@@ -162,22 +163,25 @@ def _locale(request: Request) -> str:
 @router.get("/findings", response_model=list[FindingOut])
 def list_findings_route(
     request: Request,
+    response: Response,
     connection: Annotated[Connection, Depends(get_tenant_connection)],
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+    page: Annotated[Page, Depends(page_params)],
     handling_status: Literal["open", "in_progress", "closed", "false_positive"] | None = None,
     condition_state: Literal["active", "cleared"] | None = None,
     ack_state: Literal["unacknowledged", "acknowledged"] | None = None,
     kind: Literal["data_quality", "commissioning", "anomaly", "fault", "prediction"] | None = None,
     subject_node_id: uuid.UUID | None = None,
 ) -> list[FindingOut]:
-    rows = list_findings(
-        connection,
-        handling_status=handling_status,
-        condition_state=condition_state,
-        ack_state=ack_state,
-        kind=kind,
-        subject_node_id=subject_node_id,
-    )
+    filters = {
+        "handling_status": handling_status,
+        "condition_state": condition_state,
+        "ack_state": ack_state,
+        "kind": kind,
+        "subject_node_id": subject_node_id,
+    }
+    rows = list_findings(connection, page=page, **filters)
+    announce_total(response, page, lambda: count_findings(connection, **filters))
     locale = _locale(request)
     return [FindingOut(**displayed(row, locale)) for row in rows]
 

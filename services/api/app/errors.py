@@ -16,6 +16,7 @@ from fastapi import FastAPI, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import TimeoutError as PoolTimeoutError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.i18n import negotiate_locale, render, title
@@ -100,6 +101,14 @@ async def _validation_handler(request: Request, exc: RequestValidationError) -> 
     return problem_response(request, status=422, code="VALIDATION_ERROR", extra={"errors": errors})
 
 
+async def _pool_exhausted_handler(request: Request, exc: PoolTimeoutError) -> JSONResponse:
+    """Plus aucune connexion disponible dans le délai : refus explicite et
+    réessayable (audit V5 du 20/10/2026), jamais une erreur 500 « non gérée »."""
+    response = problem_response(request, status=503, code="SERVICE_BUSY")
+    response.headers["Retry-After"] = "2"
+    return response
+
+
 _HTTP_CODES = {404: "ROUTE_NOT_FOUND", 405: "METHOD_NOT_ALLOWED"}
 
 
@@ -116,3 +125,4 @@ def install_error_handlers(app: FastAPI) -> None:
     app.add_exception_handler(DomainError, _domain_error_handler)
     app.add_exception_handler(RequestValidationError, _validation_handler)
     app.add_exception_handler(StarletteHTTPException, _http_handler)
+    app.add_exception_handler(PoolTimeoutError, _pool_exhausted_handler)

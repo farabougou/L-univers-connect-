@@ -203,6 +203,7 @@
     "SCHEDULED_COMMAND_IN_THE_PAST": "L’instant choisi est déjà passé : une commande planifiée doit viser un moment futur.",
     "SCHEDULED_COMMAND_NOT_CANCELLABLE": "Cette commande planifiée ne peut plus être annulée : statut actuel {status}.",
     "SCHEDULED_COMMAND_NOT_FOUND": "Commande planifiée introuvable : {scheduled_command_id}.",
+    "SERVICE_BUSY": "Le service est momentanément très sollicité. Veuillez réessayer dans quelques secondes.",
     "SEVERITY_UNKNOWN": "Gravité inconnue : « {severity} ».",
     "SIGNAL_ALREADY_CLEARED": "Ce signalement est déjà revenu à la normale.",
     "SIGNAL_CONDITION_STILL_ACTIVE": "Ce signalement ne peut pas être clos tant que sa condition est active. Attendez le retour à la normale ou déclarez un faux positif.",

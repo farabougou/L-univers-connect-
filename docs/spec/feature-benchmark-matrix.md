@@ -1954,46 +1954,66 @@ Décidée explicitement par Mohamed (« rends le projet plus performant, ou pass
 en V5 directement — fais tout, sans me redemander »), comme l'exigeait la
 clôture de V4. Aucune fonctionnalité métier : un audit d'architecte,
 cybersécurité et performance du code existant, puis uniquement les défauts
-**confirmés**. Même discipline que l'audit du 16/10/2026 : chaque correction
-est prouvée par un test qui échoue sur l'ancien code (contrôle négatif), et
-rien n'est déployé (le déploiement reste `DEFERRED_EXTERNAL_DEPLOYMENT`).
+**confirmés par une mesure**. Même discipline que l'audit du 16/10/2026 :
+chaque correction est prouvée par un test qui échoue sur l'ancien code
+(contrôle négatif), et rien n'est déployé (le déploiement reste
+`DEFERRED_EXTERNAL_DEPLOYMENT`). Les mesures de performance ont été faites sur
+une base jetable (40 clients, 160 000 lignes par table, puis un client de
+100 000 lignes par liste), avec le rôle applicatif soumis à la sécurité par
+ligne ; elles reflètent une machine de développement à 4 cœurs, pas la
+production.
 
 | Lot | Constat confirmé | Décision | Preuve |
 |---|---|---|---|
-| V5-1 `apps/web` | Next.js 16.3.5 : exécution de code à distance (`next/og`, GHSA-vcvr-r3jv-pc5j) et six autres avis (empoisonnement de cache, fuite d'informations, SSRF) — le code qui sert réellement le trafic web | REFACTOR (dépendance) : `next` et `eslint-config-next` en 16.4.2, `sharp` et `source-map-js` corrigés | `npm audit --omit=dev` : 0 vulnérabilité ; `tsc`, ESLint, 198/198 tests, `next build` |
-| V5-2 `app/db.py` | Aucune vérification des connexions du pool : une connexion coupée côté Postgres devenait une erreur 500 pour la personne | REFACTOR : `pool_pre_ping`, taille/dépassement/délai/recyclage configurables (`app/config.py`) | `tests/test_db_engine.py` (4) : connexion réellement terminée par `pg_terminate_backend` puis reprise transparente ; témoin négatif sans `pre_ping` qui échoue ; contexte tenant jamais conservé entre deux transactions du pool |
-| V5-3 `app/routers/energy.py` | `GET /energy/normalized-results` : 2 x N requêtes identiques (site et tarif redemandés à chaque résultat d'un même équipement) | REFACTOR : une recherche par équipement distinct | test qui compte les requêtes SQL (4 résultats : 1 recherche au lieu de 4), échoue sur l'ancien code |
-| V5-4 `app/rate_limit.py` | Clé de limitation par adresse IP, alors que le serveur Next.js appelle l'API au nom de **toutes** les personnes connectées sans transmettre leur adresse : tous les utilisateurs de tous les clients partageaient un seul quota de 120 requêtes/minute (déni de service involontaire, un client bruyant privait les autres) | REFACTOR : clé = identité **vérifiée** (appareil ou personne), repli sur l'IP pour un jeton non vérifiable ; `POST /devices/auth` (force brute) reste par IP ; vérification des jetons par les clés déjà en cache uniquement, sans appel réseau dans le middleware | `tests/test_rate_limit.py` (4) + 1 test d'intégration `/devices/auth` ; contrôles négatifs : ancienne clé IP (3 échecs), `/devices/auth` sans clé IP (1 échec) |
-| V5-5 `apps/mobile` | `shell-quote` (injection de commande, critique) dans l'outillage de build Expo | REFACTOR ciblé : 5 mises à jour de correctif (`shell-quote`, `ws`, `postcss`, `nanoid`, `source-map-js`) | `tsc` propre, 121/121 tests ; 31 alertes → 29, plus aucune critique |
+| V5-1 `apps/web` | Next.js 16.3.5 : exécution de code à distance (`next/og`, GHSA-vcvr-r3jv-pc5j) et six autres avis — le code qui sert réellement le trafic web | REFACTOR (dépendance) : `next` et `eslint-config-next` en 16.4.2, `sharp` et `source-map-js` corrigés | `npm audit --omit=dev` : 0 vulnérabilité ; `tsc`, ESLint, 198/198 tests, `next build` |
+| V5-2 `app/db.py` | Aucune vérification des connexions du pool : une connexion coupée côté Postgres devenait une erreur 500 | REFACTOR : `pool_pre_ping`, taille/dépassement/délai/recyclage configurables | `tests/test_db_engine.py` (4) : connexion réellement terminée puis reprise transparente, témoin négatif, contexte tenant jamais conservé entre deux transactions du pool |
+| V5-3 `app/routers/energy.py` | `GET /energy/normalized-results` : 2 x N requêtes identiques (site et tarif redemandés à chaque ligne) | REFACTOR : une recherche par équipement | test qui compte les requêtes SQL (1 au lieu de 4) |
+| V5-4 `app/rate_limit.py` | Clé de limitation par adresse IP, alors que le serveur Next.js appelle l'API au nom de **toutes** les personnes connectées : un seul quota de 120 requêtes/minute pour tous les utilisateurs de tous les clients | REFACTOR : clé = identité **vérifiée** (appareil ou personne), repli sur l'IP ; `/devices/auth` reste par IP ; aucune requête réseau dans le middleware | `tests/test_rate_limit.py` (5) + test d'intégration `/devices/auth` ; contrôles négatifs |
+| V5-4b `app/main.py` | `/health` était soumise à la limitation de débit : un excès de trafic anonyme aurait fait répondre 429 à la sonde de la plateforme, qui aurait pu redémarrer un service sain | REFACTOR : `/health` exemptée (aucun accès à la base) ; trouvé par la mesure de charge | test : 150 appels à `/health` tous en 200, alors que `/health/db` reçoit 429 ; contrôle négatif |
+| V5-5 `apps/mobile` | `shell-quote` (injection de commande, critique) dans l'outillage de build Expo | REFACTOR ciblé : 5 mises à jour de correctif | `tsc` propre, 121/121 tests ; 31 alertes -> 29, plus aucune critique |
+| V5-6a index (migration `c8e5a2f94b16`) | 22 des 44 tables multi-clients sans index commençant par `tenant_id` ; `alarms`, `work_orders` et les trois historiques de statut n'avaient que leur clé primaire. La sécurité par ligne filtre sur `tenant_id` : Postgres parcourait la table de **tous** les clients, et le coût croît avec leur nombre total | ADD 9 index (`CREATE INDEX CONCURRENTLY`, additif, réversible). **Pas** d'index pour les constats ouverts : l'index partiel existant les sert déjà (gain mesuré x0,9) | alarmes ouvertes x201, alarmes d'un équipement x75, historique d'un ordre de travail x766, historique d'une alarme x910, historique des constats x85, chronologie d'OT x60, documents x33, interventions d'un OT x26 ; migration appliquée en 2 s sur ~1 million de lignes, aller-retour vérifié ; `tests/test_index_coverage.py` (10) : toute nouvelle table multi-clients doit avoir un index ou une exemption justifiée |
+| V5-6b `app/storage.py` | `_client()` reconstruisait un client S3 complet (~5 ms) à **chaque** URL signée : `/documents/portfolio` mettait 9,6 s pour 2 000 documents alors que sa requête SQL en prend 3 ms (touchait aussi plans et photos) | REFACTOR : client mémoïsé, indexé par la configuration (une rotation de clés produit un nouveau client) | 9,6 s -> 1,0 s (x9,5) ; 2 tests, contrôle négatif |
+| V5-6c pagination (`app/pagination.py`) | `/work-orders`, `/interventions`, `/alarms`, `/findings`, `/documents/portfolio` : aucune borne possible. Mesuré : 4 000 lignes = 0,1 à 0,2 s et 1,3 à 1,6 Mo ; 100 000 lignes = 3 à 4 s et 33 à 39 Mo | ADD paramètres **facultatifs** `limit` (1 à 1000) et `offset` + en-tête `X-Total-Count`, additifs (politique de stabilité). Sans `limit`, réponse identique à avant : plafonner d'office aurait masqué sans prévenir des alarmes | `tests/test_pagination.py` (37) : pages disjointes, complètes, ordre stable, total qui ne compte jamais un autre client, bornes refusées, combinaison avec les filtres |
+| V5-8 `app/admission.py` | **Interblocage** entre le pool de fils d'exécution (40) et le pool de connexions (30) : `get_connection` est un générateur synchrone ; sa connexion est prise dans un fil, puis la route attend un autre fil en la tenant. Au-delà d'environ 30 requêtes simultanées, tous les fils attendent une connexion détenue par une requête qui attend un fil | ADD contrôle d'admission : requêtes en cours bornées à la capacité du pool ; les suivantes patientent 5 s au plus puis reçoivent `503 SERVICE_BUSY` + `Retry-After` ; filet : l'épuisement du pool donne aussi un 503, jamais un 500 | **A/B sur l'API réelle (`uvicorn`, un processus)** : avec contrôle, 91 / 89 / 86 / 82 req/s à 10 / 50 / 150 / 300 clients, **0 erreur** ; sans contrôle (ancien comportement), 87 / 96 / **7** / **0** req/s, 300 requêtes sur 300 en délai dépassé à 300 clients. `tests/test_admission.py` (7) : le témoin négatif reproduit l'interblocage sans base |
 
-**Choix volontairement prudent côté mobile** : `npm audit fix` complet
-modifiait 63 paquets d'exécution et d'outillage (dont `expo-router`,
-`react-native-screens`) sans qu'aucun test sur téléphone ne soit possible ici
-— rejeté au profit de la mise à jour ciblée du seul paquet critique.
+**Pistes vérifiées qui ne sont PAS des défauts** (mesure faite, aucun changement) :
+
+- Chemin d'ingestion `POST /edge/measurements` : 6 requêtes SQL et 1,6 ms par
+  mesure, soit ~640 mesures/s par processus ; la recherche des règles actives
+  coûte 0,8 ms même avec 2 000 règles actives, et un index GIN n'apporte rien
+  (0,68 ms). La mémoïsation des règles par lot (6 -> 3 requêtes) est DEFER :
+  pas de falaise, capacité suffisante pour le stade actuel.
+- Authentification : la vérification de signature RS256 coûte 0,1 ms, y compris
+  la seconde faite pour la clé de limitation (V5-4).
+- Latence serveur à un client : 1,2 ms pour `/health`, 6 à 15 ms pour une liste
+  de 50 lignes ; **capacité d'environ 85 requêtes/s par processus**.
 
 **DEFER, avec raison** :
 
 - Mobile, 29 alertes restantes (outillage Expo/Metro, jamais embarqué dans
   l'application livrée) : leur correction exige `npm audit fix --force`, donc
   une montée de version du SDK Expo — à traiter avec un essai sur téléphone.
-- Web, 5 alertes « high » toutes issues d'une seule dépendance de lint
-  (`braces` via `eslint-config-next`), absente du code livré : le correctif
-  exige `--force` (risque de régression du lint).
+  Un `npm audit fix` complet modifiait 63 paquets sans test possible sur
+  téléphone : rejeté au profit de la mise à jour ciblée du seul paquet critique.
+- Web, 5 alertes « high » issues d'une seule dépendance de lint (`braces` via
+  `eslint-config-next`), absente du code livré : correctif par `--force` risqué.
 - Limitation de débit des requêtes anonymes derrière le proxy Railway :
-  `FORWARDED_ALLOW_IPS` documenté (`infra/RAILWAY_STAGING.md`, jamais `*`),
-  à renseigner avec la plage réelle du proxy après vérification sur un
-  déploiement de l'API — non vérifiable avant (`DEFERRED_EXTERNAL_DEPLOYMENT`).
+  `FORWARDED_ALLOW_IPS` documenté (jamais `*`), à renseigner après vérification
+  sur un déploiement réel de l'API.
+- Adoption de la pagination par les écrans web et mobile, et plafond par défaut :
+  décision d'interface distincte. Le mobile télécharge `/interventions` en
+  entier à chaque synchronisation (39 Mo à 100 000 lignes) : une synchronisation
+  incrémentale (`since`) est à concevoir avant qu'un client atteigne ce volume.
+- Compteur de limitation de débit partagé entre processus (Redis) : avec N
+  processus (`WEB_CONCURRENCY`), les quotas sont comptés par processus.
+- 58 clés étrangères sans index dont ~40 restent après V5 : sur des tables
+  parentes jamais supprimées (archivage, jamais de suppression) ; un index par
+  clé « au cas où » coûterait en écriture sans bénéfice mesuré.
 
-**Pistes repérées mais NON vérifiées** (à auditer avant toute décision, pas à
-traiter comme des défauts) : pagination systématique des routes de liste,
-mise en cache des politiques/tarifs actifs relus à chaque requête, routes
-synchrones (fils d'exécution) face à une charge réelle mesurée.
-
-**Vérification exécutée le 20/10/2026** : 1022/1022 tests backend (1012 + 10
-nouveaux, vraie base PostgreSQL), `ruff check` propre ; web : `tsc`, ESLint,
-198/198 tests, `next build` ; mobile : `tsc`, 121/121 tests. Aucune
-migration, aucune table nouvelle (donc pas de nouveau test d'isolation), aucun
-texte visible nouveau (catalogues i18n inchangés).
+**Vérification exécutée le 21/10/2026** : 1079/1079 tests backend (vraie base
+PostgreSQL), `ruff check` propre ; web : `tsc`, ESLint, 198/198 tests, `next
+build` ; mobile : `tsc`, 121/121 tests. Une migration additive (index), aucune
+table nouvelle, un code d'erreur traduit ajouté (`SERVICE_BUSY`, fr/en).
 
 ## Mise à jour de ce document
 

@@ -100,3 +100,19 @@ def test_sans_cle_en_cache_le_jeton_retombe_sur_l_adresse_sans_appel_reseau(
     _exhaust(client, make_token(sub="alice"))
 
     assert _statuses(client, make_token(sub="bob"), 1) == [429]
+
+
+def test_la_sonde_de_sante_n_est_jamais_limitee_en_debit() -> None:
+    """Audit V5 du 20/10/2026 : `/health` est appelée sans jeton, donc sur le quota
+    de l'adresse IP — partagé par tout le trafic anonyme derrière un proxy. Limitée,
+    elle répondrait 429 sous un excès de trafic, et la plateforme pourrait
+    redémarrer un service en bonne santé."""
+    from app.main import app as real_app
+
+    real = TestClient(real_app)
+
+    health = {real.get("/health").status_code for _ in range(150)}
+    other = [real.get("/health/db").status_code for _ in range(130)]
+
+    assert health == {200}
+    assert 429 in other

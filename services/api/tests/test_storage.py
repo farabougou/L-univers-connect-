@@ -150,3 +150,40 @@ def test_build_remplace_les_separateurs_du_nom_de_fichier():
         last_segment = key.rsplit("/", 1)[-1]
         assert "/" not in last_segment
         assert belongs_to(key, tenant_id=tenant_id, **{resource_kwarg: resource_id})
+
+
+def test_le_client_s3_est_construit_une_seule_fois_pour_de_nombreuses_urls() -> None:
+    """Audit V5 du 20/10/2026 : `/documents/portfolio` signe une URL par ligne et
+    reconstruisait un client boto3 complet (~5 ms) à chaque ligne, soit ~10 s pour
+    2 000 documents alors que la requête SQL en prend 3."""
+    from unittest.mock import patch
+
+    from app.storage import _build_client, create_presigned_download_url
+
+    _build_client.cache_clear()
+    with patch("app.storage.boto3.client") as factory:
+        factory.return_value.generate_presigned_url.return_value = "https://stockage/x"
+        for _ in range(50):
+            assert create_presigned_download_url("tenant/doc.pdf") == "https://stockage/x"
+
+    assert factory.call_count == 1
+    _build_client.cache_clear()
+
+
+def test_un_changement_de_configuration_de_stockage_produit_un_nouveau_client(monkeypatch) -> None:
+    """La mémoïsation est indexée par la configuration : tourner les clés d'accès
+    ou changer de fournisseur ne doit jamais réutiliser l'ancien client."""
+    from unittest.mock import patch
+
+    from app.config import settings
+    from app.storage import _build_client, create_presigned_download_url
+
+    _build_client.cache_clear()
+    with patch("app.storage.boto3.client") as factory:
+        create_presigned_download_url("a")
+        monkeypatch.setattr(settings, "storage_access_key", "autre-cle")
+        create_presigned_download_url("a")
+        create_presigned_download_url("b")
+
+    assert factory.call_count == 2
+    _build_client.cache_clear()

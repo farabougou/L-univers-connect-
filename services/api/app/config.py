@@ -22,6 +22,13 @@ class Settings(BaseSettings):
     # proxy réseau intermédiaire ne les coupe de son côté.
     db_pool_recycle_seconds: int = 1800
 
+    # Contrôle d'admission (app/admission.py) : requêtes HTTP traitées en même
+    # temps par processus. 0 = la capacité du pool de connexions, ce qui rend
+    # impossible l'attente d'une connexion (interblocage fils/connexions). Les
+    # requêtes en trop patientent au plus ce délai, puis reçoivent un 503.
+    max_in_flight_requests: int = 0
+    admission_queue_timeout_seconds: float = 5.0
+
     # Fournisseur OpenID Connect (Keycloak, voir docs/adr/002). L'API ne fait
     # jamais confiance à un jeton sans vérifier sa signature auprès de
     # l'émetteur déclaré ici.

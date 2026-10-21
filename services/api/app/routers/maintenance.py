@@ -45,6 +45,7 @@ from app.maintenance import (
     record_photo,
     record_photo_once,
 )
+from app.pagination import Page, announce_total, page_params, paginate
 from app.points import get_point
 from app.schemas import (
     AlarmCreate,
@@ -223,19 +224,23 @@ def create_work_order_from_finding_route(
 
 @router.get("/work-orders", response_model=list[WorkOrderOut])
 def list_work_orders(
+    response: Response,
     connection: Annotated[Connection, Depends(get_tenant_connection)],
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+    page: Annotated[Page, Depends(page_params)],
 ) -> list[WorkOrderOut]:
-    rows = (
-        connection.execute(
-            text(
-                "SELECT id, functional_location_id, physical_unit_id, title, description, "
-                "work_order_type, priority, status, created_by, created_at "
-                "FROM work_orders ORDER BY created_at"
-            )
-        )
-        .mappings()
-        .all()
+    sql, params = paginate(
+        "SELECT id, functional_location_id, physical_unit_id, title, description, "
+        "work_order_type, priority, status, created_by, created_at "
+        "FROM work_orders ORDER BY created_at, id",
+        {},
+        page,
+    )
+    rows = connection.execute(text(sql), params).mappings().all()
+    announce_total(
+        response,
+        page,
+        lambda: connection.execute(text("SELECT count(*) FROM work_orders")).scalar_one(),
     )
     return [WorkOrderOut(**row) for row in rows]
 
@@ -403,15 +408,19 @@ def create_intervention(
 
 @router.get("/interventions", response_model=list[InterventionOut])
 def list_interventions(
+    response: Response,
     connection: Annotated[Connection, Depends(get_tenant_connection)],
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+    page: Annotated[Page, Depends(page_params)],
 ) -> list[InterventionOut]:
-    rows = (
-        connection.execute(
-            text(f"SELECT {_INTERVENTION_COLUMNS} FROM interventions ORDER BY started_at")
-        )
-        .mappings()
-        .all()
+    sql, params = paginate(
+        f"SELECT {_INTERVENTION_COLUMNS} FROM interventions ORDER BY started_at, id", {}, page
+    )
+    rows = connection.execute(text(sql), params).mappings().all()
+    announce_total(
+        response,
+        page,
+        lambda: connection.execute(text("SELECT count(*) FROM interventions")).scalar_one(),
     )
     return [InterventionOut(**row) for row in rows]
 
@@ -594,13 +603,15 @@ _ALARM_COLUMNS = (
 
 @router.get("/alarms", response_model=list[AlarmOut])
 def list_alarms(
+    response: Response,
     connection: Annotated[Connection, Depends(get_tenant_connection)],
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+    page: Annotated[Page, Depends(page_params)],
     handling_status: HandlingStatus | None = None,
     condition_state: Literal["active", "cleared"] | None = None,
     ack_state: Literal["unacknowledged", "acknowledged"] | None = None,
 ) -> list[AlarmOut]:
-    query = f"SELECT {_ALARM_COLUMNS} FROM alarms WHERE true"
+    where = "WHERE true"
     params: dict[str, Any] = {}
     for column, value in (
         ("handling_status", handling_status),
@@ -608,9 +619,16 @@ def list_alarms(
         ("ack_state", ack_state),
     ):
         if value is not None:
-            query += f" AND {column} = :{column}"
+            where += f" AND {column} = :{column}"
             params[column] = value
-    rows = connection.execute(text(query + " ORDER BY raised_at"), params).mappings().all()
+    sql, bound = paginate(
+        f"SELECT {_ALARM_COLUMNS} FROM alarms {where} ORDER BY raised_at, id", params, page
+    )
+    rows = connection.execute(text(sql), bound).mappings().all()
+    count_sql = f"SELECT count(*) FROM alarms {where}"
+    announce_total(
+        response, page, lambda: connection.execute(text(count_sql), params).scalar_one()
+    )
     return [AlarmOut(**row) for row in rows]
 
 

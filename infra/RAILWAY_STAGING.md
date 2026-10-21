@@ -74,6 +74,9 @@ partagé entre deux environnements.
      connexions Postgres, valeurs par défaut prudentes (audit V5 du
      20/10/2026) ; à ne changer que si les journaux montrent une attente.
    - Facultatif : `FORWARDED_ALLOW_IPS` — voir « Limitation de débit » ci-dessous.
+   - Facultatif : `MAX_IN_FLIGHT_REQUESTS` (0 = capacité du pool) et
+     `ADMISSION_QUEUE_TIMEOUT_SECONDS` (5) — voir « Capacité et plusieurs
+     processus » ci-dessous.
 4. Déployer. Railway assigne un domaine public (`*.up.railway.app`) — c'est
    ton **URL API**.
 
@@ -108,6 +111,35 @@ du proxy — un quota commun, plus strict que voulu mais jamais plus permissif).
   Railway, **après l'avoir vérifiée sur un déploiement réel** (je ne l'ai pas
   vérifiée ici : aucun déploiement de l'API n'existe encore, voir
   `DEFERRED_EXTERNAL_DEPLOYMENT`).
+
+### Capacité et plusieurs processus (audit V5 du 20/10/2026)
+
+Mesuré sur un processus `uvicorn` unique, base de 800 000 lignes, requêtes
+authentifiées sur des listes de 50 lignes : **environ 85 requêtes par seconde
+par processus**, constantes de 10 à 300 clients simultanés, sans aucune erreur.
+
+Le **contrôle d'admission** (`app/admission.py`) borne les requêtes traitées en
+même temps à la capacité du pool de connexions (`DB_POOL_SIZE` +
+`DB_MAX_OVERFLOW`, soit 30 par défaut). Sans lui, au-delà d'environ 30 requêtes
+simultanées, les fils d'exécution se bloquaient tous à attendre une connexion
+détenue par une requête qui attendait elle-même un fil : le débit s'effondrait
+et les requêtes finissaient en erreur 500 après 15 secondes. Les requêtes en
+trop patientent au plus `ADMISSION_QUEUE_TIMEOUT_SECONDS`, puis reçoivent un
+`503` (`SERVICE_BUSY`) avec `Retry-After: 2`, que les agents Edge réessayent.
+`/health` n'y est jamais soumise.
+
+Pour augmenter la capacité, lancer plusieurs processus avec la variable
+`WEB_CONCURRENCY` (reconnue par `uvicorn`). Chaque processus a son propre pool,
+sa propre limite d'admission **et son propre compteur de limitation de débit** :
+
+- Connexions Postgres totales = `WEB_CONCURRENCY` x (`DB_POOL_SIZE` +
+  `DB_MAX_OVERFLOW`). Rester sous `max_connections` de Postgres (100 par
+  défaut), avec de la marge pour les tâches planifiées et les outils : par
+  exemple `WEB_CONCURRENCY=2` avec les valeurs par défaut (60 connexions).
+- Les quotas de la limitation de débit (120 par minute et par identité, 10 par
+  minute pour `/devices/auth`) sont comptés par processus : avec N processus, la
+  limite effective est jusqu'à N fois plus large. Un compteur partagé (Redis)
+  est différé tant qu'aucun besoin réel ne le justifie.
 
 ## Étape 4 — Service Web (`apps/web`)
 

@@ -12,6 +12,7 @@ from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
 from app.errors import DomainError
+from app.pagination import Page, paginate
 
 _DOCUMENT_COLUMNS = (
     "id, functional_location_id, category, storage_key, content_type, filename, "
@@ -105,20 +106,31 @@ def list_documents(
     return [dict(row) for row in rows]
 
 
-def list_portfolio_documents(connection: Connection) -> list[dict[str, Any]]:
+def list_portfolio_documents(
+    connection: Connection, *, page: Page | None = None
+) -> list[dict[str, Any]]:
     """Tous les documents du tenant, avec le nom et le code de l'équipement
     visé — pour l'écran Documents (bibliothèque de tout le portefeuille),
     sans jamais demander à la personne de connaître l'équipement d'avance."""
-    rows = connection.execute(
+    sql, params = paginate(
+        f"""
+        SELECT {", ".join(f"d.{col}" for col in _DOCUMENT_COLUMNS.split(", "))},
+               fl.code AS functional_location_code,
+               fl.name AS functional_location_name
+        FROM documents d
+        JOIN functional_locations fl ON fl.id = d.functional_location_id
+        ORDER BY d.uploaded_at DESC, d.id
+        """,
+        {},
+        page or Page(),
+    )
+    return [dict(row) for row in connection.execute(text(sql), params).mappings()]
+
+
+def count_portfolio_documents(connection: Connection) -> int:
+    return connection.execute(
         text(
-            f"""
-            SELECT {", ".join(f"d.{col}" for col in _DOCUMENT_COLUMNS.split(", "))},
-                   fl.code AS functional_location_code,
-                   fl.name AS functional_location_name
-            FROM documents d
-            JOIN functional_locations fl ON fl.id = d.functional_location_id
-            ORDER BY d.uploaded_at DESC
-            """
+            "SELECT count(*) FROM documents d "
+            "JOIN functional_locations fl ON fl.id = d.functional_location_id"
         )
-    ).mappings()
-    return [dict(row) for row in rows]
+    ).scalar_one()

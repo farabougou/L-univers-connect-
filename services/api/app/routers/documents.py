@@ -7,7 +7,7 @@ confirmation), voir app/routers/floor_plans.py.
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.engine import Connection
 
 from app.audit import append_audit_entry
@@ -15,6 +15,7 @@ from app.auth import require_any_role
 from app.deps import get_tenant_connection, get_tenant_id
 from app.documents import (
     DocumentInvalid,
+    count_portfolio_documents,
     get_document,
     list_documents,
     list_portfolio_documents,
@@ -22,6 +23,7 @@ from app.documents import (
 )
 from app.errors import ApiError, api_error
 from app.graph import get_node
+from app.pagination import Page, announce_total, page_params
 from app.schemas import (
     DocumentCreate,
     DocumentOut,
@@ -165,12 +167,18 @@ def list_documents_route(
 
 @router.get("/documents/portfolio", response_model=list[PortfolioDocumentOut])
 def list_portfolio_documents_route(
+    response: Response,
     connection: Annotated[Connection, Depends(get_tenant_connection)],
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
+    page: Annotated[Page, Depends(page_params)],
 ) -> list[PortfolioDocumentOut]:
     """Bibliothèque de tout le portefeuille (page Documents, section 36,
-    point 10) : tous les documents du tenant, avec l'équipement visé."""
-    return [_to_portfolio_out(row) for row in list_portfolio_documents(connection)]
+    point 10) : tous les documents du tenant, avec l'équipement visé.
+
+    Une URL de téléchargement est signée par ligne renvoyée : borner la page
+    borne aussi ce travail."""
+    announce_total(response, page, lambda: count_portfolio_documents(connection))
+    return [_to_portfolio_out(row) for row in list_portfolio_documents(connection, page=page)]
 
 
 @router.get("/documents/{document_id}", response_model=DocumentOut)

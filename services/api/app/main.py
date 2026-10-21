@@ -5,6 +5,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
+from app.admission import AdmissionControlMiddleware
 from app.auth import get_current_claims, require_role
 from app.config import settings
 from app.db import engine
@@ -12,7 +13,7 @@ from app.deps import get_tenant_connection
 from app.errors import ApiError, install_error_handlers
 from app.metrics import render_latest
 from app.observability import RequestLoggingMiddleware, configure_logging
-from app.rate_limit import install_rate_limiting
+from app.rate_limit import install_rate_limiting, limiter
 from app.routers.analytics import router as analytics_router
 from app.routers.assets import router as asset_registry_router
 from app.routers.bacnet_discovery import router as bacnet_discovery_router
@@ -39,6 +40,13 @@ configure_logging(settings.log_level)
 app = FastAPI(title="Enoryx API")
 install_rate_limiting(app)
 app.add_middleware(SlowAPIMiddleware)
+app.add_middleware(
+    AdmissionControlMiddleware,
+    max_in_flight=settings.max_in_flight_requests
+    or settings.db_pool_size + settings.db_max_overflow,
+    queue_timeout_seconds=settings.admission_queue_timeout_seconds,
+    exempt_paths=frozenset({"/health"}),
+)
 app.add_middleware(RequestLoggingMiddleware)
 install_error_handlers(app)
 
@@ -74,7 +82,13 @@ app.include_router(search_router)
 
 
 @app.get("/health")
+@limiter.exempt
 def health() -> dict[str, str]:
+    """Sonde de la plateforme (Railway, supervision) : jamais limitée en débit.
+    Sans cette exemption, un excès de trafic anonyme — qui partage le quota de
+    l'adresse IP du proxy — ferait répondre 429 à la sonde, et la plateforme
+    pourrait juger le service en panne et le redémarrer en plein incident
+    (audit V5 du 20/10/2026). Aucun accès à la base : coût nul."""
     return {"status": "ok"}
 
 

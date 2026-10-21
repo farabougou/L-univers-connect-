@@ -27,6 +27,7 @@ from sqlalchemy.engine import Connection
 
 from app.errors import DomainError
 from app.i18n import DEFAULT_LOCALE, load_catalog, render_text
+from app.pagination import Page, paginate
 from app.signal_vocabulary import HANDLING_OPEN
 from app.signals import SignalConflict, clear_condition, reactivate, record_change
 
@@ -261,16 +262,32 @@ def get_finding(connection: Connection, finding_id: uuid.UUID) -> dict[str, Any]
 _FILTERS = ("handling_status", "condition_state", "ack_state", "kind", "subject_node_id")
 
 
-def list_findings(connection: Connection, **filters: Any) -> list[dict[str, Any]]:
-    query = f"SELECT {FINDING_COLUMNS} FROM findings WHERE true"
+def _findings_where(filters: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+    where = "WHERE true"
     params: dict[str, Any] = {}
     for column in _FILTERS:
         value = filters.get(column)
         if value is not None:
-            query += f" AND {column} = :{column}"
+            where += f" AND {column} = :{column}"
             params[column] = value
-    query += " ORDER BY last_seen_at DESC"
-    return [dict(row) for row in connection.execute(text(query), params).mappings()]
+    return where, params
+
+
+def list_findings(
+    connection: Connection, *, page: Page | None = None, **filters: Any
+) -> list[dict[str, Any]]:
+    where, params = _findings_where(filters)
+    sql, bound = paginate(
+        f"SELECT {FINDING_COLUMNS} FROM findings {where} ORDER BY last_seen_at DESC, id",
+        params,
+        page or Page(),
+    )
+    return [dict(row) for row in connection.execute(text(sql), bound).mappings()]
+
+
+def count_findings(connection: Connection, **filters: Any) -> int:
+    where, params = _findings_where(filters)
+    return connection.execute(text(f"SELECT count(*) FROM findings {where}"), params).scalar_one()
 
 
 def displayed(finding: dict[str, Any], locale: str = DEFAULT_LOCALE) -> dict[str, Any]:

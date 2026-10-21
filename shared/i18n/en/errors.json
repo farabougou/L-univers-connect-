@@ -203,6 +203,7 @@
     "SCHEDULED_COMMAND_IN_THE_PAST": "The chosen time is already in the past: a scheduled command must target a future time.",
     "SCHEDULED_COMMAND_NOT_CANCELLABLE": "This scheduled command can no longer be cancelled: current status {status}.",
     "SCHEDULED_COMMAND_NOT_FOUND": "Scheduled command not found: {scheduled_command_id}.",
+    "SERVICE_BUSY": "The service is temporarily very busy. Please try again in a few seconds.",
     "SEVERITY_UNKNOWN": "Unknown severity: “{severity}”.",
     "SIGNAL_ALREADY_CLEARED": "This signal has already returned to normal.",
     "SIGNAL_CONDITION_STILL_ACTIVE": "This signal cannot be closed while its condition is active. Wait for the return to normal or declare a false positive.",
