@@ -34,15 +34,9 @@ CAP_END[6] = 12.70
 CARDS = [('pubs', 'Nessa Paris', 'L', 8.62, 10.40), ('site', 'KTF Shipping', 'R', 9.51, 12.55), ('appli', 'KOFA', 'L', 10.50, 12.60)]
 
 def cap_html(i, words):
-    out, j = [], 0
-    while j < len(words):
-        if len(words[j]) > 2:  # mots clés consécutifs dans une seule boîte
-            k = j
-            while k < len(words) and len(words[k]) > 2: k += 1
-            out.append('<span class="kw">' + ' '.join(f'<span class="w" data-t="{w[1]}">{html.escape(w[0])}</span>' for w in words[j:k]) + '</span>')
-            j = k
-        else:
-            out.append(f'<span class="w" data-t="{words[j][1]}">{html.escape(words[j][0])}</span>'); j += 1
+    # un mot clé = sa propre boîte, qui arrive avec lui (une boîte commune resterait à moitié vide entre deux mots)
+    out = [(f'<span class="kw"><span class="w" data-t="{w[1]}">{html.escape(w[0])}</span></span>' if len(w) > 2
+            else f'<span class="w" data-t="{w[1]}">{html.escape(w[0])}</span>') for w in words]
     return f'<div class="cap" id="cp{i}">' + ' '.join(out) + '</div>'
 caps = '\n        '.join(cap_html(i, c) for i, c in enumerate(CAPS))
 cards = ''.join(f'''
