@@ -128,6 +128,24 @@ Activation sur Railway, **dans cet ordre** :
 3. Essai complémentaire : deux postes (ou deux réseaux) différents doivent chacun
    disposer de leur propre quota de 10 par minute.
 
+**Outil et état de l'essai (21/10/2026).** L'essai est automatisé :
+`PYTHONPATH=. python scripts/spoof_test.py --api-url https://<API_STAGING> --allow-remote
+--json-out preuve-x-real-ip.json` (depuis `services/api`). Il envoie les 12 requêtes
+(adresses de la plage de test 198.18.0.0/15, secret bidon, rien n'est créé), rend le
+verdict `NOT_SPOOFABLE` (code 0), `SPOOFABLE` (code 1, **remettre `CLIENT_IP_HEADER` à vide
+aussitôt**) ou `INCONCLUSIVE` (code 3 : attendre une minute et recommencer), et écrit une
+preuve sans secret. Testé contre la vraie application avec et sans proxy qui écrase l'en-tête
+(`tests/test_spoof_test.py`, 19 tests).
+
+**Cet essai n'a PAS été exécuté.** Raisons : (1) le staging exécute encore le commit
+`301451f`, sans la prise en charge de `CLIENT_IP_HEADER` (coupure de Railway, voir
+`docs/performance/test-de-charge.md`) ; (2) l'essai suppose le réglage actif : sans lui, tous
+les envois partagent l'adresse du proxy et le résultat est « sain » quoi que fasse le proxy,
+donc il ne prouverait rien. `CLIENT_IP_HEADER` reste vide tant que Mohamed n'a pas autorisé la
+fenêtre d'essai : réglage activé quelques minutes **sur le staging seulement**, essai, puis
+retiré si le verdict n'est pas `NOT_SPOOFABLE`. Le réglage n'est conservé qu'avec la preuve
+jointe ici.
+
 Pourquoi ne pas simplement mettre `FORWARDED_ALLOW_IPS` : **ne jamais** mettre
 `FORWARDED_ALLOW_IPS=*` (uvicorn retiendrait la première adresse de
 `X-Forwarded-For`, que le client contrôle), et la plage d'adresses du proxy n'est
@@ -193,6 +211,47 @@ locaux et staging, limites et commandes : `docs/performance/test-de-charge.md`. 
 locale d'un seul processus : plafond d'environ 85 requêtes par seconde sur
 `/sync/interventions`, saturé dès 5 clients simultanés ; pour dépasser ce plafond, il faut
 plusieurs processus (donc plus de connexions, voir le calcul ci-dessus), pas un pool plus grand.
+
+### Compte de test authentifié (staging)
+
+Pour mesurer les routes authentifiées (par exemple `/sync/*`) sans utiliser un compte de
+démonstration. Aucun secret ne passe par le dépôt, une conversation ou un journal.
+
+1. **Créer le compte** (une fois), par la personne qui détient le mot de passe administrateur de
+   Keycloak (variable du service Keycloak sur Railway, masquée pour les assistants) :
+
+   ```bash
+   cd services/api
+   PYTHONPATH=. python scripts/staging_account.py create \
+     --keycloak-url https://virtuous-communication-staging.up.railway.app
+   ```
+
+   Le mot de passe administrateur est demandé sans affichage (ou lu dans
+   `KEYCLOAK_ADMIN_PASSWORD`). Le script crée `loadtest.staging` avec le seul rôle
+   `technicien`, rattaché au client indiqué par `--tenant-id` (**ce client doit exister dans
+   la base du staging** ; sinon l'API répondra sans données), et écrit un mot de passe
+   aléatoire dans `~/.config/paios/staging-loadtest.env` (droits 0600). Rien n'est affiché.
+   `--rotate` renouvelle le mot de passe.
+2. **Mesurer** : `scripts/staging_probe.py` lit ce fichier (refusé s'il est lisible par
+   d'autres), demande un jeton de courte durée à Keycloak, et le passe à `load_probe.py`
+   **uniquement par l'environnement du processus enfant** (jamais en argument, jamais
+   enregistré ni affiché) :
+
+   ```bash
+   PYTHONPATH=. python scripts/staging_probe.py --api-url https://<API_STAGING> --allow-remote -- \
+     --path "/sync/interventions?limit=50" --levels 1,2,4 --step-seconds 10 --label staging
+   ```
+
+   Le quota de 120 requêtes par minute et par utilisateur s'applique : la montée s'arrête à la
+   première limitation, voulu.
+3. **Désactiver les comptes de démonstration** (leur mot de passe est publié dans
+   `infra/README.md`, et le staging est sur Internet) :
+   `scripts/staging_account.py disable-demo-users --yes --keycloak-url ...` (réversible depuis
+   la console Keycloak).
+
+État au 21/10/2026 : outils écrits et testés contre un faux Keycloak (15 tests, mutations
+vérifiées) ; **compte non créé** (mot de passe administrateur inaccessible à l'assistant), donc
+aucune mesure authentifiée du staging.
 
 ## Étape 4 — Service Web (`apps/web`)
 

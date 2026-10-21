@@ -167,10 +167,11 @@ maison :
    celle de votre répétition. Seuls `db` et `keycloak` servent à ce pilote.
 3. Base prête : `docker compose up -d db keycloak`, puis dans `services/api` :
    `alembic upgrade head`.
-4. **Essai en mode avion** : coupez le Wi-Fi et le réseau, relancez les étapes 3 à 5 ci-dessous
-   avec le simulateur. Si une étape échoue sans réseau, c'est qu'elle dépend d'Internet :
-   notez laquelle et corrigez-la ici, pas sur le site. (Cet essai en mode avion n'a pas pu
-   être fait dans l'environnement de rédaction : à faire une fois chez vous.)
+4. **Essai en mode avion** : suivez `docs/terrain/essai-mode-avion-sdm120.md` (commandes
+   exactes, résultat attendu à chaque ligne, fiche à remplir). Si une étape échoue sans réseau,
+   c'est qu'elle dépend d'Internet : notez laquelle et corrigez-la ici, pas sur le site. Cet
+   essai n'a pas pu être fait dans l'environnement de rédaction : **non validé** tant que vous
+   ne l'avez pas exécuté chez vous.
 5. Imprimez ou copiez ce guide, et la fiche de la section 12, sur le portable.
 6. Fuseau horaire : toutes les heures de ce guide sont en UTC (`...Z`). Bamako est à UTC+0
    toute l'année : l'heure locale et l'heure UTC sont les mêmes.

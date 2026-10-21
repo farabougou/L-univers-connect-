@@ -147,7 +147,7 @@ fermeture d'une connexion persistante inactive par le point d'entrée de Railway
 
 | Limite | État |
 | --- | --- |
-| Saturation de l'API **authentifiée** sur Railway (route avec base, jeton, 30 requêtes en cours) | **BLOCKED_EXTERNAL** : aucun compte ni jeton de test pour le staging, et le staging exécute encore le commit `301451f` (les routes `/sync/*` y répondent 404 : les trois derniers commits n'y sont pas déployés). |
+| Saturation de l'API **authentifiée** sur Railway (route avec base, jeton, 30 requêtes en cours) | **BLOCKED_EXTERNAL** : l'outillage du compte de test existe (`scripts/staging_account.py`, `scripts/staging_probe.py`) mais le compte n'est pas créé (mot de passe administrateur de Keycloak inaccessible à l'assistant), et le staging exécute encore le commit `301451f` (les routes `/sync/*` y répondent 404 : les trois derniers commits n'y sont pas déployés). |
 | Débit d'un processus **sur la machine Railway** (processeur différent du bac à sable) | non mesuré ; le plafond local de ~85 req/s n'est pas transposable tel quel. |
 | Plusieurs processus ou répliques | non mesuré ; chaque processus a son pool, sa file et ses quotas (voir « Configuration de déploiement »). |
 | Cause de la montée de latence à 80 clients au-delà de la file d'admission | hypothèse (contention de l'interpréteur), non instrumentée. |
@@ -162,11 +162,13 @@ LOAD_PROBE_TOKEN=... PYTHONPATH=. python scripts/load_probe.py \
   --base-url http://127.0.0.1:8000 --path "/sync/interventions?limit=100" \
   --levels 1,5,10,20,30,40,80,150 --step-seconds 8 --label "LOCAL" --json-out local.json
 
-# Sur le staging, une fois un compte de test fourni et le dernier commit déployé
-LOAD_PROBE_TOKEN=... PYTHONPATH=. python scripts/load_probe.py \
-  --base-url https://l-univers-connect-staging.up.railway.app \
-  --path "/sync/interventions?limit=100" --levels 1,5,10,20,30,40 \
-  --step-seconds 8 --max-total-requests 3000 --allow-remote --label "STAGING Railway"
+# Sur le staging, une fois le compte de test créé (infra/RAILWAY_STAGING.md, « Compte de test
+# authentifié ») et le dernier commit déployé. Le lanceur obtient lui-même le jeton et le passe
+# au processus enfant par l'environnement : il n'apparaît ni en argument ni dans la sortie.
+PYTHONPATH=. python scripts/staging_probe.py \
+  --api-url https://l-univers-connect-staging.up.railway.app --allow-remote -- \
+  --path "/sync/interventions?limit=50" --levels 1,2,4 --step-seconds 10 \
+  --max-total-requests 300 --label "STAGING Railway"
 ```
 
 Avec un quota de 120 requêtes par minute et par personne, une mesure authentifiée sur le

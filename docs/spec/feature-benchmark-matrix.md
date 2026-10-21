@@ -2129,6 +2129,23 @@ non activé sur Railway (à faire après l'essai anti-usurpation décrit dans
 poste de Mohamed ; images Docker `latest` (Keycloak, MinIO, Mosquitto) non épinglées, donc une
 répétition peut différer du site.
 
+## Suites de la consolidation V5 (21/10/2026, décisions de Mohamed)
+
+| Piste | Décision | Ce qui a changé | Preuve |
+| --- | --- | --- | --- |
+| Incohérences d'unités (W/kW) | ADD refus explicite, sans conversion ; **DEFER** la déclaration d'unité pour BACnet, OPC UA, MQTT | Un point en kW ne reçoit plus des watts : refus à l'activation d'une connexion Modbus, à l'ingestion et dans le démon, avec le facteur de conversion dans l'erreur. Points validés immuables, historique jamais réécrit. Le SDM120 : tension, courant et fréquence restent hors vocabulaire (`UNIT_UNKNOWN`) | ADR 020 ; `tests/test_unit_enforcement.py` (71) ; CI verte sur `151e1d6` |
+| Démons BACnet, OPC UA, MQTT | REFACTOR (même correctif que Modbus) | Dernière configuration conservée pendant une coupure de l'API, démarrage sans API sans plantage, refus de l'API journalisé en erreur | `tests/daemon_resilience.py`, 18 tests contre les simulateurs réels (9 échouent sur l'ancien code) ; commit `cf1b442` |
+| Essai anti-usurpation `X-Real-IP` | ADD outil et preuve ; **DEFER** l'exécution (staging non redéployé) ; `CLIENT_IP_HEADER` **non activé** | Verdict `NOT_SPOOFABLE` / `SPOOFABLE` / `INCONCLUSIVE`, preuve JSON sans secret ; l'essai suppose le réglage actif, d'où une fenêtre d'essai à autoriser | `scripts/spoof_test.py`, `tests/test_spoof_test.py` (19, 2 mutations détectées) ; `infra/RAILWAY_STAGING.md` |
+| Compte de test du staging | ADD outillage ; **BLOCKED_EXTERNAL** pour la création | Compte `loadtest.staging` (rôle `technicien`), mot de passe aléatoire dans un fichier 0600 hors dépôt, jeton passé au seul processus enfant, désactivation des comptes de démonstration | `scripts/staging_account.py`, `scripts/staging_probe.py`, `tests/test_staging_account.py` (15, 4 mutations détectées) |
+| Essai en mode avion SDM120 | ADD procédure ; **non validé** | Commandes exactes, résultat attendu par ligne, preuve de coupure du réseau, fiche à remplir | `docs/terrain/essai-mode-avion-sdm120.md` |
+| Remplacement de `python-jose` | REPLACE (branche `claude/pyjwt-migration`, non fusionnée) | PyJWT 2.15.1 ; mêmes algorithmes, validations et erreurs, 45 jetons forgés sur 49 traités à l'identique et 4 durcissements voulus ; les trois avis de l'API disparaissent de la résolution complète de `requirements.txt` | ADR 019 (sur la branche) ; `tests/test_token_verification.py` (48) |
+
+**Limites restantes** : la fusion de la branche PyJWT attend la décision de Mohamed (dont la
+correspondance d'audience dans Keycloak : les jetons du staging n'ont pas de revendication
+`aud`) ; Railway est en panne de plateforme (constructions suspendues), donc `/sync/*`,
+l'essai `X-Real-IP` et toute mesure authentifiée du staging restent à faire ; la
+déclaration d'unité n'existe pas pour BACnet, OPC UA et MQTT.
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente
