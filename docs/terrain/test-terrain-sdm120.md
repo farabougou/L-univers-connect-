@@ -147,9 +147,11 @@ test, mais elles en fixent le périmètre.
    chaque refus en erreur. Enfin le vérificateur contrôle l'unité des deux points. Limite : un
    émetteur qui ne déclare pas son unité (BACnet, OPC UA, MQTT aujourd'hui) n'est pas contrôlé ; seul
    le drapeau `out_of_range` signale alors après coup une valeur hors plage.
-10. **Les démons BACnet, OPC UA et MQTT ont la même structure que celle du démon Modbus
-    avant correction** (configuration demandée à l'API à chaque tour, sans mémoire). Ils
-    n'ont pas été modifiés : hors périmètre de ce pilote, à corriger avant leur propre essai.
+10. **Les démons BACnet, OPC UA et MQTT avaient le même défaut que le démon Modbus avant
+    correction** (configuration demandée à l'API à chaque tour, sans mémoire : une coupure de
+    l'API arrêtait la relève). Corrigés le 21/10/2026 (V5.1), avec les mêmes garanties et les
+    mêmes scénarios de test que Modbus, contre des simulateurs réels. Aucun n'a été essayé sur un
+    équipement réel : ce guide ne concerne que le SDM120 en Modbus.
 
 ## 6. Préparation hors ligne (à faire AVANT, avec Internet)
 

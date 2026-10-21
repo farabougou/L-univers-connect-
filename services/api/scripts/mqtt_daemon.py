@@ -77,11 +77,23 @@ def run(
 ) -> int:
     """Boucle de sondage. `max_cycles` (réservé aux tests) arrête après N
     tours au lieu d'attendre Ctrl+C ; renvoie le nombre de tours effectués."""
-    if _load_config(api, equipment_id) is None:
-        raise SystemExit(
-            f"Aucune configuration MQTT active pour l'équipement {equipment_id} "
-            "(POST /configs puis /activate, config_type mqtt_device_mapping)."
+    # Dernière configuration reçue de l'API. Elle sert tant que l'API ne répond pas : sans
+    # elle, une coupure de l'API arrêterait aussi la relève (la configuration est demandée à
+    # l'API à chaque tour) et les mesures de la coupure seraient perdues au lieu d'être mises
+    # en tampon. Une configuration retirée (réponse 404) l'efface.
+    last_config = None
+    try:
+        last_config = _load_config(api, equipment_id)
+    except httpx.HTTPError as exc:
+        logger.error(
+            f"API injoignable au démarrage, la configuration sera redemandée à chaque tour : {exc}"
         )
+    else:
+        if last_config is None:
+            raise SystemExit(
+                f"Aucune configuration MQTT active pour l'équipement {equipment_id} "
+                "(POST /configs puis /activate, config_type mqtt_device_mapping)."
+            )
     logger.info(f"démon MQTT démarré, toutes les {interval_seconds:g}s")
 
     cycles_done = 0
@@ -91,11 +103,15 @@ def run(
         try:
             resolved = _load_config(api, equipment_id)
         except httpx.HTTPError as exc:
-            logger.error(
-                f"API injoignable pour la configuration, "
-                f"nouvelle tentative au prochain tour : {exc}"
+            resolved = last_config
+            suite = (
+                "dernière configuration connue utilisée"
+                if last_config is not None
+                else "aucune configuration connue, rien à relever"
             )
+            logger.error(f"API injoignable pour la configuration, {suite} : {exc}")
         else:
+            last_config = resolved
             if resolved is None:
                 logger.error(
                     "aucune configuration MQTT active pour cet équipement, "
@@ -129,6 +145,14 @@ def run(
                     )
                     buffer.clear()
                     renvoi = f", {len(pending)} mesure(s) en tampon renvoyée(s)" if pending else ""
+                    if summary.get("rejected", 0) + summary.get("conflicts", 0):
+                        # L'API a répondu : renvoyer ne changerait rien (valeur, point).
+                        # Mais un refus ne se présente jamais comme une relève réussie.
+                        for error in summary.get("errors", []):
+                            logger.error(
+                                f"mesure refusée par l'API ({error['code']}) : "
+                                f"{error.get('reason', error['params'])}"
+                            )
                     logger.info(f"relève effectuée{renvoi} : {summary}")
                 except httpx.HTTPError as exc:
                     for reading in new_readings:

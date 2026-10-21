@@ -15,12 +15,14 @@ import pytest
 from sqlalchemy import text
 from starlette.testclient import TestClient
 
+import scripts.mqtt_daemon as daemon
 from app.connectors.edge_client import EdgeApiClient
 from app.connectors.offline_buffer import OfflineBuffer
 from app.db import engine
 from app.main import app
 from app.tenancy import set_tenant_context
 from scripts.mqtt_daemon import run
+from tests import daemon_resilience as resilience
 from tests.modbus_fixtures import (
     activate_mqtt_device_mapping,
     cleanup_tenant,
@@ -192,3 +194,69 @@ def test_un_tour_rate_n_arrete_pas_le_demon(tenant, tmp_path):
 
     assert cycles == 2
     assert _measurement_count(tenant["tenant_id"]) == 0
+
+
+# --- Résilience commune aux démons (V5.1) : mêmes garanties que le démon Modbus ---------
+
+
+def _kwargs(tenant, tmp_path):
+    return dict(
+        run=run,
+        daemon=daemon,
+        make_api=_api,
+        tenant=tenant,
+        count=_measurement_count,
+        tmp_path=tmp_path,
+    )
+
+
+def test_vraie_coupure_de_l_api_le_demon_continue_de_relever_et_ne_perd_rien(
+    tenant, tmp_path, monkeypatch
+):
+    resilience.check_real_outage_loses_nothing(**_kwargs(tenant, tmp_path), monkeypatch=monkeypatch)
+
+
+def test_demarrage_pendant_une_coupure_de_l_api_n_arrete_pas_le_demon(
+    tenant, tmp_path, monkeypatch
+):
+    resilience.check_start_during_outage_does_not_crash(
+        **_kwargs(tenant, tmp_path), monkeypatch=monkeypatch
+    )
+
+
+def test_configuration_retiree_pendant_une_coupure_n_est_plus_relevee_au_retour(
+    tenant, tmp_path, monkeypatch
+):
+    resilience.check_removed_config_is_not_read_from_memory(
+        **_kwargs(tenant, tmp_path), monkeypatch=monkeypatch
+    )
+
+
+def test_arret_entre_l_envoi_et_le_vidage_du_tampon_ne_cree_aucun_doublon(
+    tenant, tmp_path, monkeypatch
+):
+    resilience.check_kill_before_buffer_clear_creates_no_duplicate(
+        **_kwargs(tenant, tmp_path), monkeypatch=monkeypatch
+    )
+
+
+def test_tampon_tronque_par_une_coupure_de_courant_ne_bloque_pas_le_demon(tenant, tmp_path):
+    resilience.check_truncated_buffer_does_not_block_the_daemon(
+        run=run,
+        source="mqtt",
+        make_api=_api,
+        tenant=tenant,
+        count=_measurement_count,
+        tmp_path=tmp_path,
+    )
+
+
+def test_un_refus_de_l_api_est_journalise_en_erreur(tenant, tmp_path, monkeypatch, caplog):
+    resilience.check_api_refusal_is_logged_as_an_error(
+        run=run,
+        make_api=_api,
+        tenant=tenant,
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+        caplog=caplog,
+    )
