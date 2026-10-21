@@ -54,6 +54,16 @@ logo de Claude : le remplacer par un monogramme à lui (M lumineux d'un seul tra
 
 Pas de lèvres visibles : vidéos en voix off (ElevenLabs), l'avatar animé sans parler (gestes, respiration, regard).
 
+**Avatar final : `avatar/mams-masque-m.png`** (masque noir, M néon orange d'un seul trait).
+
+Kit de marque tiré du masque (dans `avatar/`) :
+- `logo-m.svg` / `logo-m.png` : logo plein, pour le filigrane, les petites tailles et les fonds clairs.
+- `logo-m-neon.svg` / `logo-m-neon.png` : version néon du masque (tube qui suit le contour d'un M épais), pour les fonds
+  sombres.
+- `profil-tiktok.png` : photo de profil 1080 × 1080 centrée sur le masque.
+
+Idée de signature vidéo : le masque n'a pas de lèvres, donc le M s'allume au rythme de la voix off (ElevenLabs).
+
 ## Premier script (≈ 20 s, présentation)
 
 > Vous êtes cinquante-cinq mille à me suivre… et vous n'avez jamais vu mon visage.
