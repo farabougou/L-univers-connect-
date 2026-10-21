@@ -2015,6 +2015,32 @@ PostgreSQL), `ruff check` propre ; web : `tsc`, ESLint, 198/198 tests, `next
 build` ; mobile : `tsc`, 121/121 tests. Une migration additive (index), aucune
 table nouvelle, un code d'erreur traduit ajouté (`SERVICE_BUSY`, fr/en).
 
+### V5 Software Complete — 21/10/2026
+
+**V5 SOFTWARE COMPLETE: YES** (périmètre : durcissement et performance du code
+V1 à V4, aucune fonctionnalité métier).
+
+Toute piste de l'audit a été soit **corrigée avec une preuve qui échoue sur
+l'ancien code**, soit **mesurée et classée « pas un défaut »** avec ses
+chiffres, soit **différée avec sa raison** (listes ci-dessus). Aucune piste n'est
+restée « non vérifiée ». Aucun défaut Critical/High connu ne reste dans le code
+livré : la faille d'exécution à distance de Next.js est corrigée, les
+alertes restantes concernent uniquement l'outillage de build et de lint.
+
+**Ce qui n'est PAS prouvé** (à ne jamais présenter comme tel) :
+
+- Les débits et latences ont été mesurés sur une machine de développement à 4
+  cœurs, client de charge et base sur la même machine, jamais sur
+  l'hébergement réel : ce sont des ordres de grandeur et des **comparaisons
+  avant/après**, pas des garanties de capacité en production.
+- Le comportement derrière le proxy de Railway (adresse IP réelle des clients,
+  nombre de connexions Postgres autorisées) n'est pas vérifié : l'API n'est pas
+  déployée (`DEFERRED_EXTERNAL_DEPLOYMENT`).
+- Aucune validation terrain (`FIELD_TESTED: BLOCKED_EXTERNAL`) n'a changé.
+
+**Après V5** : évolution continue, sans V6 automatique. La suite logique reste la
+validation sur un équipement réel, qui dépend de matériel physique.
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente
