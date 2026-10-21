@@ -54,7 +54,7 @@ def test_une_valeur_au_dessus_du_pool_est_ramenee_a_la_capacite_du_pool() -> Non
 
     assert effective_max_in_flight(settings) == 30
     findings = evaluate_capacity(settings, max_connections=100, workers=1)
-    assert "ADMISSION_ABOVE_POOL" in _codes(findings)
+    assert "admission_above_pool" in _codes(findings)
 
 
 def test_une_configuration_coherente_ne_signale_rien() -> None:
@@ -68,7 +68,7 @@ def test_le_total_des_connexions_de_toutes_les_instances_doit_tenir_dans_postgre
     # 30 connexions x 4 processus = 120 > 100 - 10.
     findings = evaluate_capacity(_settings(), max_connections=100, workers=4)
 
-    (finding,) = [f for f in findings if f.code == "CONNECTIONS_OVER_BUDGET"]
+    (finding,) = [f for f in findings if f.code == "connections_over_budget"]
     assert finding.detail["required"] == 120
     assert finding.detail["available"] == 100 - CONNECTION_RESERVE
 
@@ -76,33 +76,33 @@ def test_le_total_des_connexions_de_toutes_les_instances_doit_tenir_dans_postgre
 def test_les_repliques_comptent_comme_des_processus() -> None:
     findings = evaluate_capacity(_settings(expected_replicas=4), max_connections=100, workers=1)
 
-    assert "CONNECTIONS_OVER_BUDGET" in _codes(findings)
+    assert "connections_over_budget" in _codes(findings)
 
 
 def test_exactement_a_la_limite_du_budget_est_accepte() -> None:
     # 3 instances x 30 = 90 = 100 - 10.
     findings = evaluate_capacity(_settings(expected_replicas=3), max_connections=100, workers=1)
 
-    assert "CONNECTIONS_OVER_BUDGET" not in _codes(findings)
+    assert "connections_over_budget" not in _codes(findings)
 
 
 def test_sans_valeur_lue_sur_la_base_le_budget_n_est_pas_evalue() -> None:
     findings = evaluate_capacity(_settings(expected_replicas=50), max_connections=None, workers=1)
 
-    assert "CONNECTIONS_OVER_BUDGET" not in _codes(findings)
+    assert "connections_over_budget" not in _codes(findings)
 
 
 # --- Quotas de débit ----------------------------------------------------
 
 
 def test_des_quotas_en_memoire_ne_sont_exacts_qu_avec_une_seule_instance() -> None:
-    assert "RATE_LIMIT_NOT_SHARED" not in _codes(
+    assert "rate_limit_not_shared" not in _codes(
         evaluate_capacity(_settings(), max_connections=100, workers=1)
     )
-    assert "RATE_LIMIT_NOT_SHARED" in _codes(
+    assert "rate_limit_not_shared" in _codes(
         evaluate_capacity(_settings(), max_connections=100, workers=2)
     )
-    assert "RATE_LIMIT_NOT_SHARED" in _codes(
+    assert "rate_limit_not_shared" in _codes(
         evaluate_capacity(_settings(expected_replicas=2), max_connections=100, workers=1)
     )
 
@@ -110,7 +110,7 @@ def test_des_quotas_en_memoire_ne_sont_exacts_qu_avec_une_seule_instance() -> No
 def test_un_stockage_partage_leve_l_avertissement() -> None:
     settings = _settings(expected_replicas=2, rate_limit_storage_uri="redis://cache:6379")
 
-    assert "RATE_LIMIT_NOT_SHARED" not in _codes(
+    assert "rate_limit_not_shared" not in _codes(
         evaluate_capacity(settings, max_connections=100, workers=1)
     )
 

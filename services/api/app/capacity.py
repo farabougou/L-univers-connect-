@@ -71,7 +71,7 @@ def evaluate_capacity(
     if settings.max_in_flight_requests > capacity:
         findings.append(
             CapacityFinding(
-                "ADMISSION_ABOVE_POOL",
+                "admission_above_pool",
                 {
                     "configured": settings.max_in_flight_requests,
                     "applied": effective_max_in_flight(settings),
@@ -85,7 +85,7 @@ def evaluate_capacity(
     if max_connections is not None and required > max_connections - CONNECTION_RESERVE:
         findings.append(
             CapacityFinding(
-                "CONNECTIONS_OVER_BUDGET",
+                "connections_over_budget",
                 {
                     "required": required,
                     "available": max_connections - CONNECTION_RESERVE,
@@ -99,7 +99,7 @@ def evaluate_capacity(
     if settings.rate_limit_storage_uri.startswith("memory:") and instances > 1:
         findings.append(
             CapacityFinding(
-                "RATE_LIMIT_NOT_SHARED",
+                "rate_limit_not_shared",
                 {"instances": instances, "storage": "memory"},
             )
         )
@@ -139,7 +139,7 @@ def report_capacity(engine: Engine, settings: Settings) -> list[CapacityFinding]
         for finding in findings:
             logger.warning(
                 f"capacité incohérente : {finding.code}",
-                extra={"event": f"capacity.{finding.code.lower()}", "detail": finding.detail},
+                extra={"event": f"capacity.{finding.code}", "detail": finding.detail},
             )
         return findings
     except Exception:

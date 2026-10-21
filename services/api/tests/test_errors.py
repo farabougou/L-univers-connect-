@@ -218,8 +218,9 @@ def test_every_code_used_in_the_code_has_a_message_and_none_is_orphaned() -> Non
     # app.connectors.executors) est déjà traduit, pas un code orphelin au
     # sens du catalogue générique d'erreurs ci-dessus.
     command_failure_reason_codes = set(load_catalog("fr", "ui")["command_failure_reason"])
-    # Chaînes au même format qui ne sont pas des codes de message.
-    used = _codes_used_in_code() - {"I18N_DIR"} - EVENT_TYPES
+    # Chaînes au même format qui ne sont pas des codes de message (noms de variables
+    # d'environnement).
+    used = _codes_used_in_code() - {"I18N_DIR", "WEB_CONCURRENCY"} - EVENT_TYPES
 
     known = (
         error_codes | finding_codes | bacnet_discovery_reason_codes | command_failure_reason_codes

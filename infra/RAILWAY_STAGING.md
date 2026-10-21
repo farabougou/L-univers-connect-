@@ -186,6 +186,14 @@ stockage des quotas), plus un avertissement par incohérence
 `capacity.admission_above_pool`). Elle ne bloque jamais le démarrage. Après chaque
 changement de configuration, lire cette ligne dans les journaux Railway.
 
+**Mesure de la capacité** : `services/api/scripts/load_probe.py` monte la charge par
+paliers, s'arrête au premier critère franchi (erreurs, refus 503, limitation 429,
+latence p99, bornes de requêtes et de durée) et vérifie le retour à la normale. Résultats
+locaux et staging, limites et commandes : `docs/performance/test-de-charge.md`. Mesure
+locale d'un seul processus : plafond d'environ 85 requêtes par seconde sur
+`/sync/interventions`, saturé dès 5 clients simultanés ; pour dépasser ce plafond, il faut
+plusieurs processus (donc plus de connexions, voir le calcul ci-dessus), pas un pool plus grand.
+
 ## Étape 4 — Service Web (`apps/web`)
 
 1. "New" → "GitHub Repo" → le même dépôt.
