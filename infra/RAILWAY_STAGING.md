@@ -99,18 +99,39 @@ signature pas encore en cache) retombe sur le quota de l'adresse IP.
 
 Seules les requêtes **sans jeton** (dont `POST /devices/auth`, limité à 10 par
 minute, cible possible d'une force brute) dépendent de l'adresse IP du client.
-Derrière le proxy de Railway, uvicorn ne la lit dans `X-Forwarded-For` que pour
-les proxys listés dans `FORWARDED_ALLOW_IPS` (par défaut `127.0.0.1` : le proxy
-de Railway n'en fait pas partie, donc toutes ces requêtes partagent l'adresse
-du proxy — un quota commun, plus strict que voulu mais jamais plus permissif).
 
-- **Ne jamais mettre `FORWARDED_ALLOW_IPS=*`** : uvicorn retient alors la
-  première adresse de `X-Forwarded-For`, que le client contrôle — il pourrait
-  contourner la limite à volonté.
-- Pour obtenir la vraie adresse, y mettre la plage d'adresses du proxy de
-  Railway, **après l'avoir vérifiée sur un déploiement réel** (je ne l'ai pas
-  vérifiée ici : aucun déploiement de l'API n'existe encore, voir
-  `DEFERRED_EXTERNAL_DEPLOYMENT`).
+**Correction du 21/10/2026.** La version précédente de ce paragraphe supposait
+que le proxy de Railway renseigne `X-Forwarded-For`. La documentation de
+Railway (« Specs & Limits », en-têtes de requête) ne garantit que **`X-Real-IP`**
+(adresse du client), `X-Forwarded-Proto`, `X-Forwarded-Host`. Et uvicorn ne lit
+`X-Forwarded-For` que pour les proxys de `FORWARDED_ALLOW_IPS` (par défaut
+`127.0.0.1`). Conséquence tant que rien n'est configuré : **toutes** les requêtes
+anonymes de la plateforme partagent l'adresse du proxy, donc un seul quota de 10
+authentifications d'appareil par minute pour toute la flotte, qu'une seule
+personne peut épuiser. C'est strict, jamais permissif, mais c'est une fragilité de
+disponibilité.
+
+Réponse : la variable **`CLIENT_IP_HEADER`** (vide par défaut = comportement
+inchangé). Renseignée, l'application lit l'adresse dans cet en-tête, seulement
+si c'est **une seule adresse IP valide**, sinon elle retombe sur la connexion.
+
+Activation sur Railway, **dans cet ordre** :
+
+1. `CLIENT_IP_HEADER=X-Real-IP` sur le service API, redéployer.
+2. **Essai anti-usurpation** (obligatoire) : depuis un même poste, envoyer 12 fois
+   `POST /devices/auth` avec un en-tête `X-Real-IP` différent à chaque envoi
+   (`1.1.1.1`, `1.1.1.2`, ...). Si Railway écrase bien l'en-tête par la vraie
+   adresse, les envois partagent un seul quota et le 11e répond **429**. Si au
+   contraire aucun 429 n'apparaît, Railway laisse passer l'en-tête du client : un
+   client peut se fabriquer des quotas à volonté. **Dans ce cas, remettre
+   `CLIENT_IP_HEADER` à vide immédiatement.**
+3. Essai complémentaire : deux postes (ou deux réseaux) différents doivent chacun
+   disposer de leur propre quota de 10 par minute.
+
+Pourquoi ne pas simplement mettre `FORWARDED_ALLOW_IPS` : **ne jamais** mettre
+`FORWARDED_ALLOW_IPS=*` (uvicorn retiendrait la première adresse de
+`X-Forwarded-For`, que le client contrôle), et la plage d'adresses du proxy n'est
+pas documentée par Railway, donc pas vérifiable ici.
 
 ### Capacité et plusieurs processus (audit V5 du 20/10/2026)
 
@@ -128,18 +149,42 @@ trop patientent au plus `ADMISSION_QUEUE_TIMEOUT_SECONDS`, puis reçoivent un
 `503` (`SERVICE_BUSY`) avec `Retry-After: 2`, que les agents Edge réessayent.
 `/health` n'y est jamais soumise.
 
-Pour augmenter la capacité, lancer plusieurs processus avec la variable
-`WEB_CONCURRENCY` (reconnue par `uvicorn`). Chaque processus a son propre pool,
-sa propre limite d'admission **et son propre compteur de limitation de débit** :
+**Configuration réelle constatée le 21/10/2026** (lecture de l'environnement
+`staging` de Railway) : **1 réplique** (région `ams`), **1 processus** (aucune
+variable `WEB_CONCURRENCY`), aucune variable de pool ni de requêtes en cours :
+donc les valeurs par défaut (pool 10 + 20 = **30 connexions**, **30 requêtes
+simultanées**), compteurs de débit **en mémoire**. Avec une seule instance, des
+compteurs en mémoire sont exacts : aucun stockage partagé n'est nécessaire
+aujourd'hui.
 
-- Connexions Postgres totales = `WEB_CONCURRENCY` x (`DB_POOL_SIZE` +
-  `DB_MAX_OVERFLOW`). Rester sous `max_connections` de Postgres (100 par
-  défaut), avec de la marge pour les tâches planifiées et les outils : par
-  exemple `WEB_CONCURRENCY=2` avec les valeurs par défaut (60 connexions).
-- Les quotas de la limitation de débit (120 par minute et par identité, 10 par
-  minute pour `/devices/auth`) sont comptés par processus : avec N processus, la
-  limite effective est jusqu'à N fois plus large. Un compteur partagé (Redis)
-  est différé tant qu'aucun besoin réel ne le justifie.
+Pour augmenter la capacité, lancer plusieurs processus avec la variable
+`WEB_CONCURRENCY` (reconnue par `uvicorn`) et/ou plusieurs répliques. Chaque
+processus a son propre pool, sa propre limite d'admission **et son propre
+compteur de limitation de débit** :
+
+- Connexions Postgres totales = processus x répliques x (`DB_POOL_SIZE` +
+  `DB_MAX_OVERFLOW`). Rester sous `max_connections` de Postgres, **moins 10** de
+  réserve (administration, migrations, sauvegardes). Par exemple
+  `WEB_CONCURRENCY=2` avec les valeurs par défaut : 60 connexions.
+- Railway n'indique pas le nombre de répliques à l'application : le déclarer avec
+  **`EXPECTED_REPLICAS`** pour que la vérification ci-dessous les compte.
+- `MAX_IN_FLIGHT_REQUESTS` peut être **abaissé**, jamais relevé au-dessus de la
+  capacité du pool : une valeur plus haute est ramenée à cette capacité (au-dessus,
+  on retrouve l'interblocage décrit plus haut).
+- Dès que `WEB_CONCURRENCY` x `EXPECTED_REPLICAS` dépasse 1, les quotas de débit
+  en mémoire sont multipliés par ce nombre : passer à un stockage partagé avec
+  **`RATE_LIMIT_STORAGE_URI=redis://...`** et ajouter la bibliothèque `redis` aux
+  dépendances de l'API (non installée aujourd'hui, car inutile avec une seule
+  instance). Le comportement avec un vrai Redis **n'a pas pu être vérifié ici**
+  (aucun Redis disponible) : à essayer sur le staging avant de s'y fier.
+
+**Vérification automatique au démarrage** (`app/capacity.py`) : l'API lit
+`max_connections` sur la vraie base et écrit une ligne `capacity.checked` dans le
+journal (pool, requêtes en cours, processus, répliques, `max_connections`,
+stockage des quotas), plus un avertissement par incohérence
+(`capacity.connections_over_budget`, `capacity.rate_limit_not_shared`,
+`capacity.admission_above_pool`). Elle ne bloque jamais le démarrage. Après chaque
+changement de configuration, lire cette ligne dans les journaux Railway.
 
 ## Étape 4 — Service Web (`apps/web`)
 

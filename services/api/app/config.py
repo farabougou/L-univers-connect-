@@ -29,6 +29,22 @@ class Settings(BaseSettings):
     max_in_flight_requests: int = 0
     admission_queue_timeout_seconds: float = 5.0
 
+    # Capacité déclarée (app/capacity.py). Railway n'expose pas le nombre de
+    # répliques à l'application : on le déclare ici pour que la vérification de
+    # démarrage compte le total de connexions à la base de TOUTES les instances.
+    expected_replicas: int = 1
+
+    # Limitation de débit (app/rate_limit.py). `memory://` : compteurs propres à
+    # chaque processus, exacts tant qu'il n'y a qu'un processus et une instance
+    # (cas actuel). Au-delà, les quotas seraient multipliés par le nombre
+    # d'instances : passer à un stockage partagé, par exemple `redis://...`
+    # (voir infra/RAILWAY_STAGING.md).
+    rate_limit_storage_uri: str = "memory://"
+    # En-tête portant l'adresse réelle du client, posé et écrasé par le proxy de
+    # l'hébergeur (Railway : `X-Real-IP`). Vide : on n'en lit aucun (défaut sûr,
+    # un client pourrait sinon se fabriquer autant de quotas qu'il veut).
+    client_ip_header: str = ""
+
     # Fournisseur OpenID Connect (Keycloak, voir docs/adr/002). L'API ne fait
     # jamais confiance à un jeton sans vérifier sa signature auprès de
     # l'émetteur déclaré ici.

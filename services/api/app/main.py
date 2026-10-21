@@ -1,6 +1,8 @@
+from contextlib import asynccontextmanager
 from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, Response
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.gzip import GZipMiddleware
 from slowapi.middleware import SlowAPIMiddleware
 from sqlalchemy import text
@@ -8,6 +10,7 @@ from sqlalchemy.engine import Connection
 
 from app.admission import AdmissionControlMiddleware
 from app.auth import get_current_claims, require_role
+from app.capacity import effective_max_in_flight, report_capacity
 from app.config import settings
 from app.db import engine
 from app.deps import get_tenant_connection
@@ -39,7 +42,16 @@ from app.routers.telemetry import router as telemetry_router
 
 configure_logging(settings.log_level)
 
-app = FastAPI(title="Enoryx API")
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # Vérification de capacité au démarrage (app/capacity.py) : écrit dans le
+    # journal ce qui est réellement configuré et lu sur la base ; ne bloque jamais.
+    await run_in_threadpool(report_capacity, engine, settings)
+    yield
+
+
+app = FastAPI(title="Enoryx API", lifespan=lifespan)
 install_rate_limiting(app)
 # Compression (consolidation V5 du 21/10/2026) : sur une connexion faible, un
 # JSON de liste se compresse d'un facteur 5 à 10. Réponses de 1 Kio et plus
@@ -52,8 +64,7 @@ app.add_middleware(GZipMiddleware, minimum_size=1024)
 app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(
     AdmissionControlMiddleware,
-    max_in_flight=settings.max_in_flight_requests
-    or settings.db_pool_size + settings.db_max_overflow,
+    max_in_flight=effective_max_in_flight(settings),
     queue_timeout_seconds=settings.admission_queue_timeout_seconds,
     exempt_paths=frozenset({"/health"}),
 )

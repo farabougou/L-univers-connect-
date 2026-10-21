@@ -21,19 +21,45 @@ lit dans `X-Forwarded-For` que pour les proxys déclarés par
 déclaration, toutes les requêtes anonymes partagent l'adresse du proxy.
 """
 
+import ipaddress
+
 from fastapi import FastAPI, Request
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from app.auth import decode_device_token, decode_token_with_cached_keys
+from app.config import settings
 from app.errors import ApiError, problem_response
+
+
+def client_ip(request: Request) -> str:
+    """Adresse du client. Par défaut, celle de la connexion (que uvicorn
+    remplace par `X-Forwarded-For` pour les proxys de `FORWARDED_ALLOW_IPS`).
+
+    Si `CLIENT_IP_HEADER` est renseigné (Railway : `X-Real-IP`, posé et écrasé
+    par son proxy), on lit cet en-tête. Chez l'hébergeur, la connexion vue par
+    l'application est celle du proxy : sans cette lecture, tous les clients
+    anonymes de la plateforme partageraient UN quota, et n'importe qui pourrait
+    l'épuiser pour tous (par exemple celui de `/devices/auth`).
+
+    Ne retenir que ce que l'on peut vérifier : une seule adresse IP valide, sinon
+    repli sur la connexion. À n'activer que derrière un proxy qui écrase cet
+    en-tête et si le service n'est pas joignable autrement (voir
+    infra/RAILWAY_STAGING.md, qui décrit l'essai à faire avant l'activation)."""
+    header = settings.client_ip_header.strip()
+    if header:
+        try:
+            return str(ipaddress.ip_address(request.headers.get(header, "").strip()))
+        except ValueError:
+            pass
+    return get_remote_address(request)
 
 
 def ip_rate_limit_key(request: Request) -> str:
     """Clé par adresse IP, pour les routes ouvertes à tous (avant toute
     authentification) où une identité ne peut pas exister."""
-    return get_remote_address(request)
+    return client_ip(request)
 
 
 def _bearer_token(request: Request) -> str | None:
@@ -59,7 +85,11 @@ def rate_limit_key(request: Request) -> str:
     return f"ip:{ip_rate_limit_key(request)}"
 
 
-limiter = Limiter(key_func=rate_limit_key, default_limits=["120/minute"])
+limiter = Limiter(
+    key_func=rate_limit_key,
+    default_limits=["120/minute"],
+    storage_uri=settings.rate_limit_storage_uri,
+)
 
 
 async def _rate_limit_handler(request: Request, exc: RateLimitExceeded):

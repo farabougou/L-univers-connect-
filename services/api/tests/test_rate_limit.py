@@ -20,7 +20,7 @@ from starlette.responses import JSONResponse
 
 from app import auth
 from app.auth import issue_device_token
-from app.rate_limit import rate_limit_key
+from app.rate_limit import ip_rate_limit_key, rate_limit_key
 from tests.jwt_helpers import JWKS, generate_keypair, make_token
 
 LIMIT = 3
@@ -116,3 +116,79 @@ def test_la_sonde_de_sante_n_est_jamais_limitee_en_debit() -> None:
 
     assert health == {200}
     assert 429 in other
+
+
+# --- Adresse du client derrière le proxy de l'hébergeur ------------------
+#
+# Constat du 21/10/2026 : Railway transmet l'adresse du client dans `X-Real-IP`
+# (documentation Railway, « Specs & Limits »). Sans lecture de cet en-tête, tous
+# les clients anonymes partagent l'adresse du proxy, donc UN quota : n'importe qui
+# peut épuiser celui de `/devices/auth` pour toute la flotte d'appareils.
+
+
+@pytest.fixture
+def ip_client(monkeypatch):
+    """Application minimale dont la clé est la clé par adresse (route ouverte)."""
+
+    def build(header: str) -> TestClient:
+        monkeypatch.setattr("app.rate_limit.settings.client_ip_header", header)
+        probe = Limiter(key_func=ip_rate_limit_key, default_limits=[f"{LIMIT}/minute"])
+        app = FastAPI()
+        app.state.limiter = probe
+        app.add_exception_handler(
+            RateLimitExceeded,
+            lambda request, exc: JSONResponse({"code": "RATE_LIMITED"}, status_code=429),
+        )
+        app.add_middleware(SlowAPIMiddleware)
+
+        @app.get("/ouvert")
+        def ouvert() -> dict:
+            return {"ok": True}
+
+        return TestClient(app)
+
+    return build
+
+
+def _from(client: TestClient, header: str, value: str | None, count: int) -> list[int]:
+    headers = {header: value} if value is not None else {}
+    return [client.get("/ouvert", headers=headers).status_code for _ in range(count)]
+
+
+def test_sans_configuration_l_en_tete_est_ignore_et_ne_fabrique_aucun_quota(ip_client) -> None:
+    """Défaut sûr : un client qui invente des adresses ne multiplie pas son quota."""
+    client = ip_client("")
+
+    assert _from(client, "X-Real-IP", "198.51.100.1", LIMIT) == [200] * LIMIT
+    assert _from(client, "X-Real-IP", "198.51.100.2", 1) == [429]
+
+
+def test_configure_chaque_adresse_reelle_a_son_propre_quota(ip_client) -> None:
+    client = ip_client("X-Real-IP")
+    _from(client, "X-Real-IP", "198.51.100.1", LIMIT)
+
+    assert _from(client, "X-Real-IP", "198.51.100.1", 1) == [429]
+    assert _from(client, "X-Real-IP", "198.51.100.2", LIMIT) == [200] * LIMIT
+
+
+@pytest.mark.parametrize("value", ["pas-une-adresse", "198.51.100.1, 203.0.113.9", "", "999.1.1.1"])
+def test_une_valeur_invalide_retombe_sur_la_connexion(ip_client, value) -> None:
+    client = ip_client("X-Real-IP")
+
+    # Toutes ces valeurs partagent le quota de la connexion : aucune n'en ouvre un neuf.
+    assert _from(client, "X-Real-IP", value, LIMIT) == [200] * LIMIT
+    assert _from(client, "X-Real-IP", "also-bad", 1) == [429]
+
+
+def test_sans_l_en_tete_configure_repli_sur_la_connexion(ip_client) -> None:
+    client = ip_client("X-Real-IP")
+
+    assert _from(client, "X-Real-IP", None, LIMIT) == [200] * LIMIT
+    assert _from(client, "X-Real-IP", None, 1) == [429]
+
+
+def test_une_adresse_ipv6_valide_est_acceptee(ip_client) -> None:
+    client = ip_client("X-Real-IP")
+
+    assert _from(client, "X-Real-IP", "2001:db8::1", LIMIT) == [200] * LIMIT
+    assert _from(client, "X-Real-IP", "2001:db8::2", LIMIT) == [200] * LIMIT
