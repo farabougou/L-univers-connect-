@@ -24,6 +24,26 @@ Coller la description dans HeyGen (Avatars → Créer un avatar → générer av
 
 TikTok : pour l'avatar réaliste, cocher « Contenu généré par l'IA » à la publication.
 
+## Version retenue : l'avatar porte une cagoule
+
+Référence (avatar réaliste généré sur HeyGen, sans masque) : `avatar/mams-reference.png`. Dans HeyGen, ouvrir cet
+avatar → ajouter un nouveau look → coller la description, pour garder le même personnage.
+
+**A · Cagoule ouverte (recommandée : la bouche reste visible, la synchro des lèvres marche)**
+
+> The same man from the reference image, same pose, same orange overshirt and black t-shirt, same creative studio with
+> orange and blue lights, now wearing a fitted streetwear knitted balaclava in cobalt blue (#2340FF) with three
+> openings, two for the eyes and one for the mouth, his nose, hair, ears and neck fully covered, a small embroidered
+> orange asterisk logo (#FF4F1F) on the forehead, friendly confident expression, mouth clearly visible, photorealistic,
+> chest-up framing, looking straight at the camera, vertical 9:16, high detail.
+
+**B · Masque intégral (mystère total, mais pas de lèvres : vidéos en voix off, l'avatar bouge sans parler)**
+
+> The same man from the reference image, same pose, same orange overshirt and black t-shirt, same creative studio with
+> orange and blue lights, now wearing a smooth matte black full-face mask that hides his whole face, with a softly
+> glowing orange asterisk logo (#FF4F1F) in the center and a black hood over his head, calm confident posture,
+> photorealistic, chest-up framing, facing the camera, vertical 9:16, high detail.
+
 ## Premier script (≈ 20 s, présentation)
 
 > Vous êtes cinquante-cinq mille à me suivre… et vous n'avez jamais vu mon visage.
