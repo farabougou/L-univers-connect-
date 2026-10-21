@@ -6,14 +6,15 @@
 # Inter 900 en minuscules, IBM Plex Mono en capitales. Musique : score.py.
 import os, json, re
 P = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-W, H, FPS, TOTAL, BEAT = 1080, 1920, 60, 30.0, 0.6
+W, H, FPS, TOTAL, BEAT = 1080, 1920, 60, 33.0, 0.6
+FLICK = json.load(open(f'{P}/.src/flick.json'))['on']   # allumage du néon du masque (même motif que videos/mams-avatar)
 NAVY, NAVY2, CYAN, BLUE, ORANGE, GREEN, CREAM, MUTED, LINE = '#050B1A', '#0C1730', '#38BDF8', '#1D4ED8', '#EA580C', '#16A34A', '#F8FAFC', '#94A3B8', '#1E2A44'
 
 # plans : id, photo, début, fin, zoom de départ, zoom d'arrivée, flou (téléphone par-dessus)
 SC = [('s1', 'hk', 0.0, 3.0, 1.0, 1.08, 0), ('s2', 'fns', 3.0, 6.0, 1.02, 1.1, 0), ('s3', 'chiller', 6.0, 8.4, 1.0, 1.07, 0),
       ('s4', 'chiller', 8.4, 13.8, 1.07, 1.13, 1), ('s6', 'valve', 13.8, 16.2, 1.0, 1.06, 0), ('s7', 'fns', 16.2, 18.6, 1.1, 1.03, 0),
       ('s8a', 'rooftop', 18.6, 19.8, 1.0, 1.05, 0), ('s8b', 'dctower', 19.8, 21.0, 1.0, 1.05, 0), ('s8c', 'genset', 21.0, 22.2, 1.0, 1.05, 0),
-      ('s8d', 'chiller', 22.2, 23.4, 1.0, 1.05, 0), ('s9', None, 23.4, 26.4, 1, 1, 0), ('s10', None, 26.4, TOTAL, 1, 1, 0)]
+      ('s8d', 'chiller', 22.2, 23.4, 1.0, 1.05, 0), ('s9', None, 23.4, 26.4, 1, 1, 0), ('s10', None, 26.4, 29.4, 1, 1, 0), ('s11', None, 29.4, TOTAL, 1, 1, 0)]
 # titres : plan, temps, lignes (<em> cyan, <em class=o> orange), petite ligne au-dessus
 HL = {'s1': (0.6, ['tout le monde dort.'], 'MARDI · 03:12'), 's2': (3.2, ['sauf votre', '<em class="o">chambre froide.</em>'], None),
       's3': (6.2, ['elle dérive.', 'personne ne le voit.'], None), 's4': (8.6, ['<em>enoryx</em> le voit.'], 'ALERTE EN DIRECT'),
@@ -97,6 +98,11 @@ for sid, ph, t0, t1, z0, z1, blur in SC:
     if sid == 's10':
         inner += f'''<div id="logo">{atom(420, 'L')}</div><div id="word">ENORYX</div>
               <div id="tag">chaque <em>kilowattheure</em> compte.</div><div id="cta">demandez votre démo →</div>
+'''
+    if sid == 's11':  # signature : l'avatar masqué de Mams, son M s'allume comme un néon
+        inner += f'''<div id="av"><img src="assets/avatar/bg.jpg" alt="" id="avbg" /><img src="assets/avatar/subject.png" alt="" id="avsub" />
+              <img src="assets/avatar/mlit.png" alt="" id="avlit" /><img src="assets/avatar/mbloom.jpg" alt="" id="avbloom" /></div><div class="tint"></div>
+              <div class="hlz" id="sig"><div class="kick mono">ENORYX · UNE CRÉATION DE</div><div class="hl" id="signame">Mams</div><div id="handle">@kofamali</div></div>
               <div id="cred" class="mono">{CREDITS}</div>'''
     for i, a in enumerate(AR):
         if a[0] == sid: inner += ar_html(i, *a)
@@ -205,7 +211,12 @@ HTML = f'''<!doctype html>
       #tag {{ position: absolute; left: 0; right: 0; top: 1100px; text-align: center; font: 900 60px "Inter"; letter-spacing: -0.02em; white-space: nowrap; }}
       #tag em {{ font-style: normal; color: {CYAN}; }}
       #cta {{ position: absolute; left: 50%; top: 1240px; transform: translateX(-50%); padding: 24px 48px; border-radius: 50px; border: 2px solid {CYAN}; color: {CYAN}; font: 800 36px "Inter"; white-space: nowrap; }}
-      #cred {{ position: absolute; left: 90px; right: 90px; top: 1430px; text-align: center; font-size: 15px; line-height: 1.6; color: #64748B; letter-spacing: 0.08em; }}
+      #av {{ position: absolute; inset: 0; transform-origin: 505px 600px; }}
+      #av img {{ position: absolute; left: 0; top: 0; width: {W}px; height: {H}px; }}
+      #avbg {{ filter: brightness(0.38); }} #avsub {{ filter: brightness(0.7); }} #avbloom {{ mix-blend-mode: screen; }}
+      #sig {{ top: 1120px; }} #signame {{ font-size: 150px; }}
+      #handle {{ font: 800 58px "Inter"; color: #FF4F1F; margin-top: 10px; letter-spacing: -0.01em; }}
+      #cred {{ position: absolute; left: 90px; right: 90px; top: 1560px; text-align: center; font-size: 15px; line-height: 1.6; color: #A5B4C8; letter-spacing: 0.08em; }}
     </style>
   </head>
   <body>
@@ -218,13 +229,14 @@ HTML = f'''<!doctype html>
         <canvas id="grain" class="st-grain" width="{W}" height="{H}" style="opacity:0.07"></canvas>
       </div>
       <audio id="music" src="assets/music.wav" data-start="0" data-duration="{TOTAL}" data-track-index="10" data-volume="1"></audio>
+      <audio id="sfxon" src="assets/sfx/neon-on.wav" data-start="29.45" data-duration="1.0" data-track-index="11" data-volume="0.5"></audio>
     </div>
     <script>
       window.__timelines = window.__timelines || {{}};
       (function () {{
         const S = STUDIO, $ = (q) => document.querySelector(q), $$ = (q) => Array.from(document.querySelectorAll(q));
         const tl = gsap.timeline({{ paused: true }}), cl = (x) => Math.min(1, Math.max(0, x)), once = {{ immediateRender: false }};
-        const TOTAL = {TOTAL}, BEAT = {BEAT}, SC = {json.dumps(SC)}, AR = {json.dumps(AR, ensure_ascii=False)}, HL = {json.dumps({k: v[0] for k, v in HL.items()})};
+        const TOTAL = {TOTAL}, BEAT = {BEAT}, FLICK = {json.dumps(FLICK)}, SC = {json.dumps(SC)}, AR = {json.dumps(AR, ensure_ascii=False)}, HL = {json.dumps({k: v[0] for k, v in HL.items()})};
 %%JS%%
         tl.to({{}}, {{ duration: TOTAL }}, 0);
         window.__timelines["main"] = tl;
@@ -330,11 +342,25 @@ JS = r'''
         S.converge(tl, S.split($("#word")), 26.9, { spread: 50, duration: 0.9, stagger: 0.04 });
         S.maskUp(tl, S.split($("#tag"), { by: "words", mask: true }), 27.5, { duration: 0.7, stagger: 0.07 });
         S.pop(tl, "#cta", 28.1, { from: 0.8, damping: 0.75 });
-        S.rise(tl, "#cred", 28.4, { y: 8, blur: 4, duration: 0.6 });
+
+        // ── signature : noir, le M du masque s'allume, le studio apparaît à peine, « une création de Mams » ──
+        tl.fromTo("#av", { scale: 1.0 }, { scale: 1.06, duration: TOTAL - 29.4, ease: S.ease.glide }, 29.4);
+        tl.fromTo(["#avbg", "#avsub"], { opacity: 0 }, { opacity: 1, duration: 0.9, ease: S.ease.silk }, 30.0);
+        S.rise(tl, "#sig .kick", 30.2, { y: 12, blur: 6, duration: 0.5 });
+        S.converge(tl, S.split($("#signame")), 30.35, { spread: 40, duration: 0.8, stagger: 0.04 });
+        S.rise(tl, "#handle", 30.8, { y: 16, blur: 6, duration: 0.6 });
+        S.rise(tl, "#cred", 31.1, { y: 8, blur: 4, duration: 0.6 });
+        const avlit = $("#avlit"), avbloom = $("#avbloom");
+        const neon = (t) => {
+          if (t < 29.35) return;
+          const u = t - 29.45, on = FLICK.some(([a, b]) => u >= a && u < b) ? 1 : 0.05;
+          const lit = u < 1.0 ? on : 0.88 + 0.12 * Math.sin(u * 3.2);
+          avlit.style.opacity = lit.toFixed(3); avbloom.style.opacity = Math.min(1.1, lit * 1.05).toFixed(3);
+        };
         const els = [0, 1, 2].map((k) => $("#elL" + k));
         const electrons = (t) => { if (t < 26.3) return; els.forEach((e, k) => { const a = (t - 26.4) * (2.2 + k * 0.4) + k * 2.1, r = (k * 60) * Math.PI / 180, x = 100 * Math.cos(a), y = 36 * Math.sin(a); e.setAttribute("cx", (x * Math.cos(r) - y * Math.sin(r)).toFixed(1)); e.setAttribute("cy", (x * Math.sin(r) + y * Math.cos(r)).toFixed(1)); e.setAttribute("opacity", cl((t - 26.9) / 0.4).toFixed(2)); }); };
 
-        S.drive(tl, 0, TOTAL, [clk, ...live, phoneLine, dash, electrons, S.grain($("#grain"), { fps: 60, seed: 8 })]);
+        S.drive(tl, 0, TOTAL, [clk, ...live, phoneLine, dash, electrons, neon, S.grain($("#grain"), { fps: 60, seed: 8 })]);
 '''
 open(f'{P}/index.html', 'w').write(HTML.replace('%%JS%%', JS))
 print('ok', TOTAL)

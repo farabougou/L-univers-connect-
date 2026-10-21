@@ -6,7 +6,7 @@
 #   26,4 s    le logo : impact, nappe qui brille, fin en fondu
 import os, numpy as np, soundfile as sf
 P = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SR, DUR = 48000, 30.6
+SR, DUR = 48000, 33.4
 N = int(SR * DUR); L = np.zeros(N); R = np.zeros(N)
 rng = np.random.default_rng(12)
 BEAT = 0.6
@@ -73,6 +73,9 @@ add(riser(1.2), 25.2, g=0.18)
 add(boom(), 26.4, g=0.55)
 add(pad([hz(48), hz(55), hz(60), hz(64), hz(67)], 4.2, bright=0.6), 26.4, g=0.22)
 add(chime([hz(84), hz(91)]), 26.5, g=0.08)
+# ── la signature (29,4 s) : le néon s'allume, une nappe chaude tient jusqu'à la fin ──
+add(pad([hz(45), hz(52), hz(57), hz(60), hz(64)], 4.0, bright=0.3), 29.4, g=0.16)
+add(kick() * 0.6, 29.4, g=0.3)
 
 def verb(x, seed):
     ir = np.random.default_rng(seed).standard_normal(int(1.6 * SR)) * np.exp(-np.arange(int(1.6 * SR)) / SR * 3.5)
