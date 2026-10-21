@@ -47,7 +47,7 @@ avatar → ajouter un nouveau look → coller la description, pour garder le mê
 ## Premier script (≈ 20 s, présentation)
 
 > Vous êtes cinquante-cinq mille à me suivre… et vous n'avez jamais vu mon visage.
-> Alors je m'en suis créé un.
+> Et ça ne va pas changer.
 > Moi, c'est Mams. Je crée des pubs vidéo, des sites internet et des applis mobiles. Cent pour cent en code.
 > Votre prochaine pub… c'est peut-être moi qui la fais. Écrivez-moi en message.
 
