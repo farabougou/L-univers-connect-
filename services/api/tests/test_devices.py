@@ -9,10 +9,10 @@ pour la seule compatibilité — voir le module."""
 import uuid
 from datetime import UTC, datetime, timedelta
 
+import jwt
 import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec
-from jose import jwt
 from sqlalchemy import text
 
 from app.db import engine

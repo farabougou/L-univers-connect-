@@ -3,9 +3,9 @@ d'authentification (app.auth) sans dépendre d'un vrai serveur Keycloak."""
 
 import time
 
+import jwt
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from jose import jwk, jwt
 
 from app.config import settings
 
@@ -20,12 +20,8 @@ def generate_keypair() -> tuple[bytes, dict]:
         format=serialization.PrivateFormat.PKCS8,
         encryption_algorithm=serialization.NoEncryption(),
     )
-    public_pem = private_key.public_key().public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo,
-    )
-    public_jwk = jwk.construct(public_pem, algorithm="RS256").to_dict()
-    public_jwk["kid"] = KEY_ID
+    public_jwk = jwt.algorithms.RSAAlgorithm.to_jwk(private_key.public_key(), as_dict=True)
+    public_jwk.update({"kid": KEY_ID, "use": "sig", "alg": "RS256"})
     return private_pem, {"keys": [public_jwk]}
 
 

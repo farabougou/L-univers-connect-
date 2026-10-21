@@ -31,7 +31,7 @@ from datetime import UTC, datetime
 from typing import Any, Protocol
 
 import httpx
-from jose import jwt
+import jwt
 
 from app.devices import ASSERTION_ALGORITHM, MAX_ASSERTION_TTL
 

@@ -15,7 +15,7 @@ majeure, qui n'est pas une correction).
 
 | Composant | Avant | Après | Corrigé | Reporté (justifié ci-dessous) |
 | --- | --- | --- | --- | --- |
-| API (Python) | 3 | 3 | 0 (aucune version corrigée n'existe) | 3, dont 1 neutralisé par un test |
+| API (Python) | 3 | **0** | 3, par remplacement de `python-jose` par PyJWT (21/10/2026, ADR 019) | 0 |
 | Web | 5 | 5 | 0 (aucune version corrigée n'existe) | 5, outils de développement seulement |
 | Mobile | 30 | 29 | 1 paquet (`vite`, outil de test) | 29, dont 1 présent dans l'application |
 
@@ -24,34 +24,56 @@ l'état actuel du code.
 
 ## API (Python) — `pip-audit`
 
-| Avis | Paquet | Gravité | Exposition | Correction |
-| --- | --- | --- | --- | --- |
-| CVE-2026-85394 / PYSEC-2026-4298 | `python-jose` 3.5.0 | Non fournie par l'outil. L'avis décrit la falsification de jetons : impact élevé s'il était exploitable. | **Production, mais non exploitable chez nous** (voir ci-dessous). | Aucune version corrigée publiée. |
-| CVE-2024-23342 / PYSEC-2026-1325 | `ecdsa` 0.19.2 (dépendance de `python-jose`) | Non fournie par l'outil. Attaque par mesure du temps de **signature** ECDSA. | **Aucune** : le module n'est pas chargé. | Aucune : le mainteneur considère ces attaques hors périmètre. |
+**Résolu le 21/10/2026** par le remplacement de `python-jose` par PyJWT (décision de Mohamed,
+ADR 019, branche `claude/pyjwt-migration`). Preuve : `pip-audit` sur la résolution complète de
+`requirements.txt` :
 
-(`ecdsa` est listé deux fois par l'outil, pour la même fiche : un seul avis.)
+| | Avant (`python-jose` 3.5.0) | Après (`PyJWT[crypto]` 2.15.1) |
+| --- | --- | --- |
+| Résultat | 3 vulnérabilités dans 2 paquets : `python-jose` PYSEC-2026-4298 ; `ecdsa` PYSEC-2026-1325 (listé deux fois) | **Aucune vulnérabilité connue** |
+| Paquets retirés | — | `python-jose`, `ecdsa`, `rsa` (dépendances de `python-jose`) |
 
-**`python-jose` — pourquoi ce n'est pas exploitable chez nous.** L'avis suppose qu'on laisse
-le jeton choisir son algorithme de vérification. Notre code le fixe toujours
-(`app/auth.py`) : `algorithms=["RS256"]` pour le fournisseur d'identité, `algorithms=["HS256"]`
-avec un **secret** (jamais une clé publique) pour les jetons d'appareil. Preuve par l'attaque :
-`tests/test_token_algorithm_confusion.py` forge un jeton HS256 signé avec la clé publique
-sous quatre formes (PEM, DER SPKI, DER PKCS#1, module JWK), un jeton sans signature, et
-croise les deux chemins (un jeton d'appareil n'ouvre pas le chemin OIDC et inversement) : tout
-est refusé, avec un jeton légitime comme témoin.
+Historique de l'analyse (conservé, car il justifie le choix) : l'avis CVE-2026-85394 /
+PYSEC-2026-4298 supposait qu'on laisse le jeton choisir son algorithme de vérification.
+Notre code le fixait déjà (`algorithms=["RS256"]`, `["HS256"]`), et
+`tests/test_token_algorithm_confusion.py` le prouve par l'attaque (clé publique sous quatre formes
+utilisée comme secret HMAC, jeton sans signature, croisement des deux chemins). `ecdsa` n'était
+jamais chargé à l'exécution. Le risque était donc surtout celui d'une bibliothèque non maintenue,
+sans correctif à attendre.
 
-**`ecdsa` — pourquoi aucune exposition.** `python-jose[cryptography]` délègue toutes les
-opérations à la bibliothèque `cryptography` (vérifié : `ecdsa` n'est pas importé à
-l'exécution). Nous ne signons de toute façon aucun jeton ECDSA côté serveur : les
-assertions d'appareil sont seulement **vérifiées** (`app/devices.py`), et l'attaque vise la
-signature.
+### Audience — constat à décider (non corrigé)
 
-**Décision proposée, non exécutée** (changement de dépendance dans le noyau
-d'authentification, à valider par Mohamed, voir `CLAUDE.md` section 1) : remplacer
-`python-jose` par `PyJWT` + `cryptography`. Cela supprime les trois avis d'un coup,
-`python-jose` n'étant plus maintenu. Périmètre : `app/auth.py` et
-`tests/jwt_helpers.py` ; les tests d'authentification et de sécurité machine existants servent
-de filet. Estimation : une demi-journée.
+Les jetons réels de Keycloak **n'ont aucune revendication `aud`** : constaté le 21/10/2026 sur
+le staging (`aud` absent, `azp` = `paios-api`, revendications `iss`, `exp`, `iat`, `sub`,
+`tenant_id`, `realm_access`…). `python-jose` ne contrôlait l'audience que si elle était présente ;
+la connexion fonctionnait donc, mais **le contrôle d'audience de l'API (`OIDC_AUDIENCE`) n'était
+en réalité jamais effectif** pour les jetons Keycloak. PyJWT, lui, exige `aud` dès qu'une audience
+est attendue : une migration naïve aurait mis toute l'authentification en échec (401 partout). La
+sémantique d'avant est donc conservée à l'identique (`app/auth.py::_check_audience`, testée).
+
+Conséquence : un jeton émis par un autre client du même royaume est accepté par l'API tant que
+`aud` est absent. Correction recommandée, en deux temps (décision de Mohamed) : (1) ajouter dans le
+royaume un mapper d'audience (`oidc-audience-mapper`, `included.client.audience = paios-api`) au
+client `paios-api` ; (2) une fois le staging vérifié, exiger `aud` (option PyJWT `require`). Tant
+qu'un jeton sans `aud` doit rester valable, ne pas exiger `aud`.
+
+### Différences de comportement assumées (banc de comparaison de 49 jetons, 45 identiques)
+
+| Cas | Avant | Après | Pourquoi |
+| --- | --- | --- | --- |
+| Jeton sans `exp` (OIDC ou appareil) | accepté | **refusé** | un jeton qui n'expire jamais ; aucun jeton légitime n'en est dépourvu |
+| `kid` inconnu du JWKS, ou désignant une clé de chiffrement | accepté (essayait toutes les clés) | **refusé** | le `kid` désigne la clé ; une signature valide d'une clé de confiance reste exigée |
+
+Tout le reste est identique : algorithmes (RS256 fixé ; HS256 pour les jetons d'appareil ; ES256
+pour les preuves), émetteur, expiration, `nbf`, audience quand elle est présente, format de
+`iat` (jamais comparé à l'horloge, pour tolérer l'écart entre machines), codes d'erreur (401
+`TOKEN_INVALID` / `DEVICE_TOKEN_INVALID`, 503 fournisseur indisponible). Tests :
+`tests/test_token_verification.py` (58 avec `test_token_algorithm_confusion.py`).
+
+**Point d'exploitation** : PyJWT émet un avertissement quand un secret HMAC fait moins de 32
+octets (RFC 7518 §3.2). Le secret `DEVICE_TOKEN_SECRET` de staging est masqué pour moi : s'il est
+plus court, les journaux afficheront `InsecureKeyLengthWarning` sans aucun refus. Utiliser un
+secret d'au moins 32 octets aléatoires.
 
 ## Web (`apps/web`) — `npm audit`, 5 paquets
 

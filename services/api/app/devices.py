@@ -59,10 +59,9 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+import jwt
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec
-from jose import jwt
-from jose.exceptions import JOSEError
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 from sqlalchemy.exc import IntegrityError
@@ -274,6 +273,20 @@ def authenticate_device(connection: Connection, *, device_id: str, secret: str) 
     return dict(row)
 
 
+def _decode_assertion(assertion: str, public_key_pem: str) -> dict[str, Any]:
+    """Vérifie la signature d'une preuve d'appareil (algorithme fixé, jamais lu dans la
+    preuve). L'expiration et l'heure d'émission sont vérifiées par l'appelant contre `at`, jamais
+    contre l'horloge réelle du serveur : seule la signature est demandée ici, pour un
+    résultat déterministe et testable comme le reste du module. (`nbf`, absent des
+    preuves légitimes, reste vérifié par la bibliothèque, comme avec python-jose.)"""
+    return jwt.decode(
+        assertion,
+        public_key_pem,
+        algorithms=[ASSERTION_ALGORITHM],
+        options={"verify_exp": False, "verify_iat": False},
+    )
+
+
 def authenticate_device_by_assertion(
     connection: Connection, *, device_id: str, assertion: str, at: datetime
 ) -> dict[str, Any]:
@@ -303,16 +316,8 @@ def authenticate_device_by_assertion(
         raise DeviceAuthInvalid("DEVICE_AUTH_INVALID")
 
     try:
-        # L'expiration est vérifiée nous-mêmes ci-dessous, contre `at` (jamais
-        # l'horloge réelle du serveur) : seule la signature est demandée ici,
-        # pour un résultat déterministe et testable comme le reste du module.
-        claims = jwt.decode(
-            assertion,
-            row["public_key_pem"],
-            algorithms=[ASSERTION_ALGORITHM],
-            options={"verify_exp": False},
-        )
-    except JOSEError:
+        claims = _decode_assertion(assertion, row["public_key_pem"])
+    except jwt.PyJWTError:
         raise DeviceAuthInvalid("DEVICE_AUTH_INVALID") from None
 
     if any(key not in claims for key in ("device_id", "tenant_id", "jti", "iat", "exp")):
