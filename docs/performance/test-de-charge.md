@@ -143,11 +143,35 @@ Un premier passage sur `/health` s'est arrêté à 2 clients sur **une** erreur 
 second passage n'en a eu aucune ; l'événement isolé reste **inexpliqué** (hypothèse non vérifiée :
 fermeture d'une connexion persistante inactive par le point d'entrée de Railway).
 
+## Première mesure authentifiée du staging (22/10/2026)
+
+Route `/sync/interventions?limit=50`, jeton réel obtenu auprès de Keycloak par
+`scripts/staging_probe.py` (jeton transmis au seul processus de mesure, absent du rapport).
+**Compte de démonstration** `demo.technicien`, le compte dédié n'existant pas encore.
+Déploiement `8d2c452` (PyJWT). Charge volontairement faible : 1, 2 puis 4 clients, 10 s par
+palier.
+
+| Clients | Requêtes | Req/s | p50 | p95 | p99 | Erreurs |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | 66 | 6,5 | 146 ms | 165 ms | 491 ms | 0 |
+| 2 | 135 | 13,5 | 146 ms | 156 ms | 188 ms | 0 |
+| 4 | 269 | 26,6 | 145 ms | 168 ms | 210 ms | 0 |
+| Reprise (1) | 69 | 6,8 | 145 ms | 162 ms | 190 ms | 0 |
+
+Retour à la normale : oui. La latence ne monte pas de 1 à 4 clients : la capacité n'est pas
+atteinte, ce qui n'est pas une mesure de saturation. **Aucun refus 429 sur 539 requêtes en
+environ 40 secondes, alors que le quota annoncé est de 120 par minute** : c'est ce qui a révélé
+que le quota par défaut ne couvre pas les routes des sous-routeurs (voir `infra/RAILWAY_STAGING.md`,
+correction du 22/10/2026). Les mesures ci-dessus portent donc sur l'API sans plafond de débit.
+
+Limites : une seule route, un compte de démonstration (peu de données dans son client), latence
+mesurée depuis le bac à sable d'exécution, pas depuis Bamako.
+
 ## Ce que ces mesures ne démontrent pas
 
 | Limite | État |
 | --- | --- |
-| Saturation de l'API **authentifiée** sur Railway (route avec base, jeton, 30 requêtes en cours) | **BLOCKED_EXTERNAL** : l'outillage du compte de test existe (`scripts/staging_account.py`, `scripts/staging_probe.py`) mais le compte n'est pas créé (mot de passe administrateur de Keycloak inaccessible à l'assistant), et le staging exécute encore le commit `301451f` (les routes `/sync/*` y répondent 404 : les trois derniers commits n'y sont pas déployés). |
+| Saturation de l'API **authentifiée** sur Railway (route avec base, jeton, 30 requêtes en cours) | **Partiel** : première mesure faite le 22/10/2026 jusqu'à 4 clients avec le compte de démonstration (voir ci-dessus), sans saturation ; la saturation à 30 requêtes simultanées reste à mesurer avec le compte dédié (non créé : mot de passe administrateur de Keycloak inaccessible à l'assistant) et après décision sur le plafond de débit. `/sync/*` est déployé depuis le 22/10/2026. |
 | Débit d'un processus **sur la machine Railway** (processeur différent du bac à sable) | non mesuré ; le plafond local de ~85 req/s n'est pas transposable tel quel. |
 | Plusieurs processus ou répliques | non mesuré ; chaque processus a son pool, sa file et ses quotas (voir « Configuration de déploiement »). |
 | Cause de la montée de latence à 80 clients au-delà de la file d'admission | hypothèse (contention de l'interpréteur), non instrumentée. |

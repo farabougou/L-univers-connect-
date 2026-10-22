@@ -151,6 +151,24 @@ Pourquoi ne pas simplement mettre `FORWARDED_ALLOW_IPS` : **ne jamais** mettre
 `X-Forwarded-For`, que le client contrôle), et la plage d'adresses du proxy n'est
 pas documentée par Railway, donc pas vérifiable ici.
 
+**Correction du 22/10/2026 : le quota par défaut ne couvre pas toutes les routes.** Mesuré sur
+le staging avec un jeton réel : environ 540 requêtes en moins d'une minute sur
+`/sync/interventions`, aucun refus 429. Reproduit en local : seules `/me` (définie sur
+l'application) et les routes décorées explicitement (`POST /devices/auth`, 10 par minute et par
+adresse) sont limitées ; les routes des sous-routeurs (`/sites`, `/points`, `/sync/*`...) ne
+le sont pas. Cause : FastAPI 0.141 range ces routes dans des objets internes sans attribut
+`endpoint`, donc l'intergiciel de `slowapi` ne retrouve pas la fonction à contrôler et ne
+contrôle rien, sans erreur ni journal. Ce que ce paragraphe affirmait plus haut (« 120 requêtes
+par minute et par personne ») ne vaut donc que pour ces deux familles de routes.
+
+Ce qui protège quand même : le contrôle d'admission (`app/admission.py`) borne les requêtes
+simultanées, et toutes ces routes exigent un jeton valide. Ce qui manque : un plafond de débit
+par personne ou par appareil sur le reste de l'API. Écart documenté par
+`tests/test_rate_limit_coverage.py` (témoin `/me` qui passe, trois routes de sous-routeurs en
+`xfail` strict : la CI échouera le jour où le mécanisme sera corrigé, pour forcer à retirer la
+marque). **Correction non faite : elle change le comportement de toute l'API et demande un choix
+de politique (voir la décision proposée à Mohamed).**
+
 ### Capacité et plusieurs processus (audit V5 du 20/10/2026)
 
 Mesuré sur un processus `uvicorn` unique, base de 800 000 lignes, requêtes

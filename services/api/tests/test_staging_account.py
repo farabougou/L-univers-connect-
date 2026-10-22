@@ -384,3 +384,38 @@ def test_child_environment_replaces_any_inherited_token(monkeypatch):
     environment = probe.child_environment("nouveau-jeton")
 
     assert environment["LOAD_PROBE_TOKEN"] == "nouveau-jeton"
+
+
+def test_une_option_inconnue_avant_le_separateur_est_refusee(tmp_path, capsys):
+    """`--json-out` appartient à load_probe : placé avant `--`, il doit être refusé net, pas
+    transmis de travers (le `--` restait alors dans les arguments et la mesure échouait de
+    façon obscure)."""
+    path = tmp_path / "creds.env"
+    _write_credentials(path)
+
+    with pytest.raises(SystemExit) as refus:
+        probe.main(
+            [
+                "--api-url",
+                "https://api.example.invalid",
+                "--credentials-file",
+                str(path),
+                "--json-out",
+                "rapport.json",
+                "--",
+                "--path",
+                "/health",
+            ]
+        )
+
+    assert refus.value.code == 2
+    assert "--json-out" in capsys.readouterr().err
+
+
+def test_tout_ce_qui_suit_le_separateur_est_transmis_tel_quel_sans_le_separateur() -> None:
+    args, passthrough = probe._parse_args(
+        ["--api-url", "https://a.example.invalid", "--", "--path", "/x", "--json-out", "r.json"]
+    )
+
+    assert args.api_url == "https://a.example.invalid"
+    assert passthrough == ["--path", "/x", "--json-out", "r.json"]

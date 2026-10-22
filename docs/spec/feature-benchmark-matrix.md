@@ -2138,12 +2138,15 @@ répétition peut différer du site.
 | Essai anti-usurpation `X-Real-IP` | ADD outil et preuve ; **DEFER** l'exécution (staging non redéployé) ; `CLIENT_IP_HEADER` **non activé** | Verdict `NOT_SPOOFABLE` / `SPOOFABLE` / `INCONCLUSIVE`, preuve JSON sans secret ; l'essai suppose le réglage actif, d'où une fenêtre d'essai à autoriser | `scripts/spoof_test.py`, `tests/test_spoof_test.py` (19, 2 mutations détectées) ; `infra/RAILWAY_STAGING.md` |
 | Compte de test du staging | ADD outillage ; **BLOCKED_EXTERNAL** pour la création | Compte `loadtest.staging` (rôle `technicien`), mot de passe aléatoire dans un fichier 0600 hors dépôt, jeton passé au seul processus enfant, désactivation des comptes de démonstration | `scripts/staging_account.py`, `scripts/staging_probe.py`, `tests/test_staging_account.py` (15, 4 mutations détectées) |
 | Essai en mode avion SDM120 | ADD procédure ; **non validé** | Commandes exactes, résultat attendu par ligne, preuve de coupure du réseau, fiche à remplir | `docs/terrain/essai-mode-avion-sdm120.md` |
-| Remplacement de `python-jose` | REPLACE (branche `claude/pyjwt-migration`, non fusionnée) | PyJWT 2.15.1 ; mêmes algorithmes, validations et erreurs, 45 jetons forgés sur 49 traités à l'identique et 4 durcissements voulus ; les trois avis de l'API disparaissent de la résolution complète de `requirements.txt` | ADR 019 (sur la branche) ; `tests/test_token_verification.py` (48) |
+| Remplacement de `python-jose` | REPLACE (fusionné et déployé sur le staging le 22/10/2026, commit `8d2c452`) | PyJWT 2.15.1 ; mêmes algorithmes, validations et erreurs, 45 jetons forgés sur 49 traités à l'identique et 4 durcissements voulus ; les trois avis de l'API disparaissent de la résolution complète de `requirements.txt` | ADR 019 ; `tests/test_token_verification.py` (48) ; contrôle avec un vrai jeton Keycloak sur le staging, six cas identiques avant et après le déploiement (200 sur `/me` et `/sync/*`, 401 `TOKEN_INVALID` pour signature altérée et jeton incohérent, 401 `TOKEN_MISSING`) |
+| Quota de débit par défaut | **Écart constaté, correction DEFER (décision de Mohamed)** | Le quota de 120 par minute ne couvre que `/me` et les routes décorées ; les routes des sous-routeurs ne sont pas limitées (FastAPI 0.141 : `_IncludedRouter` sans `endpoint`, `slowapi` ne les voit pas). Documents corrigés ; le contrôle d'admission et l'exigence d'un jeton valide restent en place | `tests/test_rate_limit_coverage.py` (témoin + 3 `xfail` stricts) ; mesure du 22/10/2026 : 539 requêtes sans refus |
+| Incident de sécurité Railway (21/10/2026) | Journal d'incident et plan de reprise ; **renouvellement des secrets : à faire par Mohamed** | Variables d'environnement potentiellement exposées ; déploiements suspendus puis rétablis ; staging redéployé le 22/10 (`6149ebe`, `8d2c452`) | `infra/RAILWAY_STAGING.md` (section « Incident de sécurité Railway ») |
 
-**Limites restantes** : la fusion de la branche PyJWT attend la décision de Mohamed (dont la
-correspondance d'audience dans Keycloak : les jetons du staging n'ont pas de revendication
-`aud`) ; Railway est en panne de plateforme (constructions suspendues), donc `/sync/*`,
-l'essai `X-Real-IP` et toute mesure authentifiée du staging restent à faire ; la
+**Limites restantes** : l'essai `X-Real-IP` attend la décision de Mohamed (activer le réglage
+quelques minutes sur le staging) ; la correspondance d'audience dans Keycloak reste une
+décision ouverte (les jetons du staging n'ont pas de revendication `aud`) ; la saturation
+authentifiée du staging reste à mesurer avec le compte dédié ; le compte de démonstration
+fonctionne sur le staging public avec le mot de passe publié dans le dépôt (à désactiver) ; la
 déclaration d'unité n'existe pas pour BACnet, OPC UA et MQTT.
 
 ## Mise à jour de ce document

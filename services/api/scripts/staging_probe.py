@@ -115,6 +115,10 @@ def child_environment(token: str) -> dict[str, str]:
 
 
 def _parse_args(argv: list[str] | None = None) -> tuple[argparse.Namespace, list[str]]:
+    """Avant le premier `--` : les options de ce lanceur, strictement (une option inconnue est
+    refusée plutôt que transmise par erreur). Après : tout est transmis à `load_probe.py`."""
+    argv = sys.argv[1:] if argv is None else list(argv)
+    split = argv.index("--") if "--" in argv else len(argv)
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--api-url", required=True)
     parser.add_argument("--credentials-file", type=Path, default=DEFAULT_CREDENTIALS)
@@ -123,10 +127,7 @@ def _parse_args(argv: list[str] | None = None) -> tuple[argparse.Namespace, list
         action="store_true",
         help="Confirme l'envoi de charge à un serveur distant (obligatoire pour le staging)",
     )
-    args, rest = parser.parse_known_args(argv)
-    if rest and rest[0] == "--":
-        rest = rest[1:]
-    return args, rest
+    return parser.parse_args(argv[:split]), argv[split + 1 :]
 
 
 def main(argv: list[str] | None = None, *, transport: httpx.BaseTransport | None = None) -> int:
