@@ -489,6 +489,43 @@ SMOKE TEST : OK / KO
 - Reste à faire ensuite : smoke test manuel complet, durcissement du compte
   admin temporaire Keycloak.
 
+## Incident de sécurité Railway du 21/10/2026
+
+Sources : `status.railway.com` et le billet « Security Disclosure: Wednesday October 21st »
+(`blog.railway.com`), lus le 21/10/2026.
+
+**Faits annoncés par Railway.** Une activité anormale a été détectée sur les systèmes qui
+stockent les variables d'environnement des clients. Un tiers non autorisé a pu accéder à des
+variables chiffrées et, pour certaines, en obtenir le contenu en clair. Railway recommande à
+tous ses clients, par précaution, de renouveler toutes les variables stockées chez lui (clés
+d'API, identifiants de bases de données et de registre) et de relire les journaux de leurs
+services. Les déploiements ont été suspendus le 21/10 : constructions rétablies pour
+Enterprise le 21/10 au soir, pour Pro le 22/10 à 06:29 UTC, puis pour Hobby ; Free et Trial
+n'étaient pas encore rouverts le 22/10 à 21:59 UTC. La suspension des déploiements du staging
+(dernier déploiement `301451f`, le 21/10 à 05:57 UTC) venait de cet incident.
+
+**Ce que Railway stocke pour ce staging** (d'après ce guide ; les valeurs ne sont pas
+lisibles par l'assistant) : l'adresse de connexion à la base de l'API (`DATABASE_URL`),
+`DEVICE_TOKEN_SECRET`, les identifiants administrateur de Keycloak et de sa base, les clés
+Cloudflare R2 du stockage des photos (`STORAGE_*`). Aucun secret n'est dans le dépôt
+(règle non négociable 5), vérifié par recherche le 21/10/2026.
+
+**Reprise : à confirmer par le propriétaire du compte** (état non connu de l'assistant au
+22/10/2026).
+
+| Action | Où | État |
+| --- | --- | --- |
+| Changer le mot de passe administrateur de Keycloak | Console Keycloak | à confirmer |
+| Désactiver `demo.technicien` et `demo.admin` (mot de passe public dans `infra/README.md`) | Console Keycloak, ou `scripts/staging_account.py disable-demo-users --yes` | à confirmer |
+| Révoquer le jeton R2 `paios-staging-photos` et en créer un nouveau | Cloudflare, puis variables `STORAGE_*` | à confirmer |
+| Renouveler `DEVICE_TOKEN_SECRET` (`openssl rand -hex 32`, 64 caractères) | Variable Railway, puis redéploiement ; les appareils redemandent un jeton | à confirmer |
+| Renouveler les mots de passe des bases (API et Keycloak) | Railway, puis redéploiement des deux services | à confirmer |
+| Vérifier qu'aucune base n'est exposée par un accès TCP public | Railway | à confirmer |
+| Relire les journaux de l'API et les événements d'administration de Keycloak | Railway, console Keycloak | à confirmer |
+
+Tant que le mot de passe administrateur de Keycloak n'est pas changé, ne pas créer le compte
+de test (`scripts/staging_account.py`) : il demande ce mot de passe.
+
 ## Point qui reste à ta décision
 
 **Exécution** : cette session n'a pas d'accès à ton compte Railway (ni à un
