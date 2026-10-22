@@ -4,10 +4,16 @@ from datetime import UTC, datetime, timedelta
 from typing import Annotated, Any
 
 import httpx
+import jwt
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import jwt
-from jose.exceptions import JOSEError
+from jwt.exceptions import (
+    InvalidAudienceError,
+    InvalidIssuedAtError,
+    InvalidSignatureError,
+    InvalidTokenError,
+    PyJWTError,
+)
 
 from app.config import settings
 from app.errors import ApiError
@@ -53,18 +59,92 @@ def decode_token(token: str) -> dict[str, Any]:
 
     try:
         return _verify_oidc_token(token, jwks)
-    except JOSEError as exc:
+    except PyJWTError as exc:
         raise ApiError(401, "TOKEN_INVALID") from exc
 
 
+# Algorithme du fournisseur d'identité : fixé ici, jamais lu dans le jeton (voir
+# tests/test_token_algorithm_confusion.py).
+OIDC_ALGORITHMS = ["RS256"]
+
+
+def _signing_keys(token: str, jwks: dict[str, Any]) -> list[Any]:
+    """Clés publiques du JWKS qui peuvent avoir signé ce jeton : celle de son `kid`, ou
+    toutes les clés de signature si le jeton n'en annonce pas. Les clés de chiffrement
+    (`use: enc`) ne servent jamais à vérifier une signature."""
+    if not isinstance(jwks, dict):
+        raise InvalidTokenError("JWKS illisible")
+    try:
+        key_set = jwt.PyJWKSet.from_dict(jwks)
+    except (KeyError, ValueError, TypeError, AttributeError) as exc:
+        # PyJWT laisse parfois passer l'erreur brute d'une clé mal formée (ex. « oct » sans « k »)
+        raise InvalidTokenError("JWKS illisible") from exc
+    kid = jwt.get_unverified_header(token).get("kid")
+    keys = [
+        key.key
+        for key in key_set.keys
+        if key.public_key_use in (None, "sig") and (kid is None or key.key_id == kid)
+    ]
+    if not keys:
+        raise InvalidTokenError("aucune clé de signature correspondante")
+    return keys
+
+
+def _check_issued_at_format(claims: dict[str, Any]) -> None:
+    """`iat`, s'il existe, doit être un nombre. Seul le format est contrôlé, comme avec
+    python-jose : l'heure d'émission n'est jamais comparée à l'horloge du serveur, car
+    deux machines (Keycloak, API) ont presque toujours quelques secondes d'écart."""
+    if "iat" in claims:
+        try:
+            int(claims["iat"])
+        except (TypeError, ValueError):
+            raise InvalidIssuedAtError("Issued At claim (iat) must be an integer.") from None
+
+
+def _check_audience(claims: dict[str, Any]) -> None:
+    """Contrôle l'audience **quand le jeton en porte une**.
+
+    Comportement hérité de python-jose, conservé volontairement : les jetons réels de
+    Keycloak (realm-export.json) n'ont aucune revendication `aud` (constaté le
+    21/10/2026 sur le staging : `aud` absent, `azp` = paios-api). Exiger `aud` comme le
+    fait PyJWT par défaut mettrait toute l'authentification en échec. Le contrôle ne
+    devient effectif qu'avec un mapper d'audience dans le royaume (voir
+    docs/security/registre-vulnerabilites.md, « Audience »)."""
+    if "aud" not in claims:
+        return
+    audience = claims["aud"]
+    if isinstance(audience, str):
+        accepted = audience == settings.oidc_audience
+    elif isinstance(audience, list) and all(isinstance(item, str) for item in audience):
+        accepted = settings.oidc_audience in audience
+    else:
+        raise InvalidAudienceError("Invalid claim format in token")
+    if not accepted:
+        raise InvalidAudienceError("Invalid audience")
+
+
 def _verify_oidc_token(token: str, jwks: dict[str, Any]) -> dict[str, Any]:
-    return jwt.decode(
-        token,
-        jwks,
-        algorithms=["RS256"],
-        audience=settings.oidc_audience,
-        issuer=settings.oidc_issuer,
-    )
+    """Signature (RS256 uniquement), émetteur, expiration — `exp` et `iss` obligatoires —,
+    audience si présente. Un jeton dont la signature ne correspond à aucune clé candidate
+    est refusé ; toute autre erreur (expiré, mauvais émetteur) l'est dès la première clé
+    dont la signature est valide."""
+    last_error: PyJWTError = InvalidSignatureError("Signature verification failed")
+    for key in _signing_keys(token, jwks):
+        try:
+            claims = jwt.decode(
+                token,
+                key,
+                algorithms=OIDC_ALGORITHMS,
+                issuer=settings.oidc_issuer,
+                options={"require": ["exp", "iss"], "verify_aud": False, "verify_iat": False},
+            )
+        except InvalidSignatureError as exc:
+            last_error = exc
+            continue
+        _check_issued_at_format(claims)
+        _check_audience(claims)
+        return claims
+    raise last_error
 
 
 def decode_token_with_cached_keys(token: str) -> dict[str, Any] | None:
@@ -82,7 +162,9 @@ def decode_token_with_cached_keys(token: str) -> dict[str, Any] | None:
         return None
     try:
         return _verify_oidc_token(token, keys)
-    except JOSEError:
+    except (PyJWTError, ValueError, KeyError, TypeError):
+        # « aucune exception » : un JWKS ou un jeton malformé ne doit jamais devenir une 500
+        # dans le middleware de limitation de débit.
         return None
 
 
@@ -143,8 +225,15 @@ def decode_device_token(token: str) -> dict[str, Any]:
     Algorithme fixé explicitement (HS256) : jamais laisser le jeton dicter
     son propre algorithme de vérification (attaque classique "alg=none")."""
     try:
-        return jwt.decode(token, settings.device_token_secret, algorithms=["HS256"])
-    except JOSEError as exc:
+        claims = jwt.decode(
+            token,
+            settings.device_token_secret,
+            algorithms=["HS256"],
+            options={"require": ["exp"], "verify_iat": False},
+        )
+        _check_issued_at_format(claims)
+        return claims
+    except PyJWTError as exc:
         raise ApiError(401, "DEVICE_TOKEN_INVALID") from exc
 
 

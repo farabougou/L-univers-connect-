@@ -21,7 +21,7 @@ import uuid
 
 import pytest
 from cryptography.hazmat.primitives import serialization
-from jose.exceptions import JOSEError
+from jwt.exceptions import PyJWTError
 
 from app import auth
 from app.config import settings
@@ -79,7 +79,7 @@ def test_un_jeton_hs256_forge_avec_la_cle_publique_est_refuse_par_le_chemin_oidc
 ) -> None:
     forged = _forge_hs256(_public_key_forms()[form])
 
-    with pytest.raises(JOSEError):
+    with pytest.raises(PyJWTError):
         auth._verify_oidc_token(forged, JWKS)
 
 
@@ -95,7 +95,7 @@ def test_un_jeton_sans_signature_est_refuse_par_le_chemin_oidc() -> None:
     payload = _b64(json.dumps(_claims()).encode())
     unsigned = (header + b"." + payload + b".").decode()
 
-    with pytest.raises(JOSEError):
+    with pytest.raises(PyJWTError):
         auth._verify_oidc_token(unsigned, JWKS)
 
 
@@ -124,7 +124,7 @@ def test_un_jeton_d_appareil_n_ouvre_pas_le_chemin_oidc() -> None:
         scopes=["telemetry:write"],
     )
 
-    with pytest.raises(JOSEError):
+    with pytest.raises(PyJWTError):
         auth._verify_oidc_token(device_token, JWKS)
 
 

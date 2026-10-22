@@ -5,8 +5,8 @@ import time
 import uuid
 from unittest.mock import patch
 
+import jwt
 import pytest
-from jose import jwt
 
 from app.auth import (
     DEVICE_TOKEN_TTL,
@@ -42,7 +42,9 @@ def test_jeton_sans_site_porte_site_id_nul():
 
 
 def test_jeton_signe_avec_un_autre_secret_est_refuse():
-    token = jwt.encode({"device_id": "x"}, "un-autre-secret", algorithm="HS256")
+    token = jwt.encode(
+        {"device_id": "x"}, "un-autre-secret-de-test-long-de-32-octets", algorithm="HS256"
+    )
     with pytest.raises(ApiError) as info:
         decode_device_token(token)
     assert info.value.status == 401

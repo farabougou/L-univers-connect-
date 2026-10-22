@@ -5,10 +5,10 @@ jetons d'appareil (V4, priorité « Sécurité » : secrets, rotation)."""
 
 import uuid
 
+import jwt
 import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec
-from jose import jwt
 from starlette.testclient import TestClient
 
 from app.config import settings
@@ -65,8 +65,8 @@ def test_private_key_credential_ne_reutilise_jamais_le_meme_jti():
     credential = PrivateKeyCredential(
         private_key_pem=_private_key_pem(), device_id="edge-01", tenant_id=uuid.uuid4()
     )
-    first = jwt.get_unverified_claims(credential.auth_payload()["assertion"])
-    second = jwt.get_unverified_claims(credential.auth_payload()["assertion"])
+    first = jwt.decode(credential.auth_payload()["assertion"], options={"verify_signature": False})
+    second = jwt.decode(credential.auth_payload()["assertion"], options={"verify_signature": False})
     assert first["jti"] != second["jti"]
 
 
@@ -104,7 +104,7 @@ def test_le_client_se_reauthentifie_seul_apres_rotation_du_secret_de_jeton():
             assert api.get_config(uuid.uuid4()) is None  # authentifie, met le jeton en cache
             token_before_rotation = api._token
 
-            settings.device_token_secret = "rotated-secret-for-test"
+            settings.device_token_secret = "rotated-secret-for-test-32-bytes-min"
 
             assert api.get_config(uuid.uuid4()) is None  # 401 sur l'ancien jeton, puis succès
             assert api._token != token_before_rotation

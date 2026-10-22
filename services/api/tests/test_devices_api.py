@@ -6,11 +6,11 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
+import jwt
 import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from fastapi.testclient import TestClient
-from jose import jwt
 from sqlalchemy import text
 
 from app.config_versions import activate_version, create_version
