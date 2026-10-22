@@ -6,7 +6,7 @@
 # (Fanta shop, 77 22 42 50, Fanta savon, 12,7 k abonnés, 68,1 k j'aime) et ce qui se voit sur les photos.
 # Signature visuelle : le plateau tressé bleu et paille des vidéos de la boutique. Ses anneaux tournent et se calent,
 # et chaque transition est un cercle qui s'ouvre. Les chiffres du numéro défilent sur des bandes masquées
-# (chiffres cachés marqués allow-occlusion / allow-overflow). Musique : score.py ; voix et mixage : mix.py ; photos : prep.py.
+# (chiffres cachés marqués allow-occlusion / allow-overflow). Signature discrète de Mams sur les 2 dernières secondes. Musique : score.py ; voix et mixage : mix.py ; photos : prep.py.
 import os, re, sys, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from timing import TOTAL, CUT, WORD, PAIRS
@@ -14,6 +14,7 @@ P = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FPS = 60
 INK, WINE, RED, GOLD, CREAM, SAND, BLUE = '#1A0806', '#4A0D08', '#C8261A', '#E8B04B', '#F6EAD7', '#F1E2C6', '#2F6BD0'
 NUM, FOLLOWERS, LIKES = '77 22 42 50', 12700, 68100
+M_PATH = 'M 6 88 L 22 41 C 25 32, 33 30, 38 38 L 46 52 C 50 59, 56 59, 61 53 L 91 15 C 96 9, 102 11, 102 18 L 104 89'   # logo de Mams (videos/_studio/avatar)
 
 # ── mises en page : vertical (TikTok, statut WhatsApp) et paysage (Facebook, YouTube) ──
 FMT = {
@@ -25,7 +26,7 @@ FMT = {
               h5=196, pol=(440, 412, 564), pA=(70, 560), pB=(560, 640),
               s6=dict(k=500, n=550, l=800, likes=975, chip=1100), hearts=(130, 950, 560),
               trayC=(-310, 70, 1700), glow6=(90, 380, 900), right=(0, 0), k6=214, brand=262, jar6=(420, 500, 240, 545),
-              k7=1124, num=1170, handle=1352, tag=1462,
+              k7=1124, num=1170, handle=1352, tag=1462, sig='left: 0; right: 0; margin: 0 auto; width: fit-content; top: 1556px;',
               iris=dict(s2=(540, 1100, 1240), s3=(540, 1540, 1650), s6=(540, 960, 1110), s7=(540, 960, 1110))),
     'h': dict(W=1920, H=1080, file='paysage/index.html', smoke=(960, 540),
               col=(100, 1020), h1=200, hd=150, hdsm=104, bon=300,
@@ -35,7 +36,7 @@ FMT = {
               h5=380, pol=(380, 352, 482), pA=(960, 200), pB=(1390, 250),
               s6=dict(k=190, n=240, l=490, likes=655, chip=770), hearts=(140, 1780, 200),
               trayC=(210, -210, 1500), glow6=(120, 140, 800), right=(760, 80), k6=200, brand=245, jar6=(388, 230, 264, 600),
-              k7=520, num=566, handle=745, tag=860,
+              k7=520, num=566, handle=745, tag=860, sig='right: 56px; top: 1004px;',
               iris=dict(s2=(960, 600, 1150), s3=(1340, 900, 1630), s6=(960, 540, 1110), s7=(960, 540, 1110))),
 }
 
@@ -129,13 +130,15 @@ def build(k):
           <div class="rc kick" id="k7">COMMANDE AU +223</div>
           <div id="num" class="st-sheen-host">{digits}<i class="st-sheen" id="sh6"></i></div>
           <div id="handle">@fantafofana61</div>
-          <div class="rc" id="tag7">{words("Ça sent bon <em>chez toi !</em>")}</div>'''
+          <div class="rc" id="tag7">{words("Ça sent bon <em>chez toi !</em>")}</div>
+          <div id="sig"><svg viewBox="-14 -14 140 120"><path d="{M_PATH}" pathLength="100"/></svg><span>MOTION DESIGN · <b>@kofamali</b></span></div>'''
     x2, y2, w2, h2 = f['jar2']; xf, yf, wf, hf, rf = f['fl']; pw, piw, pih = f['pol']; hw, hh = f['hex']
     x6, y6, w6, h6 = f['jar6']; rl, rr = f['right']; s6 = f['s6']
     css = f'''
       @font-face {{ font-family: "Instrument Serif"; font-style: normal; src: url("assets/fonts/instrument-serif-latin-400-normal.woff2") format("woff2"); }}
       @font-face {{ font-family: "Instrument Serif"; font-style: italic; src: url("assets/fonts/instrument-serif-latin-400-italic.woff2") format("woff2"); }}
       @font-face {{ font-family: "Montserrat"; font-weight: 500; src: url("assets/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }}
+      @font-face {{ font-family: "Plex Mono"; font-weight: 500; src: url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }}
       @font-face {{ font-family: "Montserrat"; font-weight: 600; src: url("assets/fonts/montserrat-latin-600-normal.woff2") format("woff2"); }}
       * {{ margin: 0; padding: 0; box-sizing: border-box; }}
       html, body {{ width: {W}px; height: {H}px; overflow: hidden; background: {INK}; }}
@@ -226,6 +229,11 @@ def build(k):
                  font: 600 44px "Montserrat"; color: {GOLD}; white-space: nowrap; background: rgba(26,8,6,0.25); }}
       #tag7 {{ top: {f["tag"]}px; font: 400 64px/1.1 "Instrument Serif"; color: {CREAM}; }}
       #tag7 em {{ font-style: italic; color: {GOLD}; }}
+      /* signature de Mams : le M d'un seul trait se dessine, puis « Motion design · @kofamali » */
+      #sig {{ position: absolute; {f["sig"]} display: flex; align-items: center; gap: 12px; font: 500 19px "Plex Mono"; letter-spacing: 0.14em; color: {CREAM}; white-space: nowrap; }}
+      #sig svg {{ width: 33px; height: 28px; overflow: visible; opacity: 0; }}
+      #sig path {{ fill: none; stroke: #FF4F1F; stroke-width: 15; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 100 100; stroke-dashoffset: 100; }}
+      #sig span {{ color: rgba(246,234,215,0.75); }} #sig b {{ font-weight: 500; letter-spacing: 0.04em; color: {CREAM}; }}
       /* transitions et finitions */
       .ring {{ position: absolute; opacity: 0; border-radius: 50%; border: 8px solid {GOLD}; pointer-events: none; }}
       #smoke {{ position: absolute; left: 0; top: 0; width: {W}px; height: {H}px; opacity: 0.5; mix-blend-mode: screen; pointer-events: none; }}'''
@@ -410,6 +418,10 @@ JS = r'''
         S.pop(tl, "#handle", Wd.fanta_shop + 0.25, { from: 0.7, damping: 0.75 });
         line("#tag7", Wd.sent_bon - 0.2, { duration: 0.7 });
         S.sweep(tl, "#sh6", 29.9, { duration: 1.1 });
+        // signature : le M se dessine quand la voix se tait, le texte suit
+        tl.set("#sig svg", { opacity: 1 }, 29.0);
+        tl.fromTo("#sig path", { strokeDashoffset: 100 }, { strokeDashoffset: 0, duration: 0.7, ease: S.ease.glide }, 29.0);
+        S.rise(tl, "#sig span", 29.3, { y: 10, blur: 6, duration: 0.6 });
         S.life(tl, $("#jar6 img"), C.s7 + 1.0, TOTAL, { y: 6, x: 2, rotate: 0.5, period: 4, seed: 9 });
         S.life(tl, $$("#brand, #tag7"), Wd.sent_bon + 0.6, TOTAL, { y: 3, x: 1, rotate: 0.1, period: 6, seed: 2 });
 
