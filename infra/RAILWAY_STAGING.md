@@ -128,23 +128,37 @@ Activation sur Railway, **dans cet ordre** :
 3. Essai complémentaire : deux postes (ou deux réseaux) différents doivent chacun
    disposer de leur propre quota de 10 par minute.
 
-**Outil et état de l'essai (21/10/2026).** L'essai est automatisé :
-`PYTHONPATH=. python scripts/spoof_test.py --api-url https://<API_STAGING> --allow-remote
---json-out preuve-x-real-ip.json` (depuis `services/api`). Il envoie les 12 requêtes
-(adresses de la plage de test 198.18.0.0/15, secret bidon, rien n'est créé), rend le
-verdict `NOT_SPOOFABLE` (code 0), `SPOOFABLE` (code 1, **remettre `CLIENT_IP_HEADER` à vide
-aussitôt**) ou `INCONCLUSIVE` (code 3 : attendre une minute et recommencer), et écrit une
-preuve sans secret. Testé contre la vraie application avec et sans proxy qui écrase l'en-tête
-(`tests/test_spoof_test.py`, 19 tests).
+**Outil de l'essai.** L'essai est automatisé : `PYTHONPATH=. python scripts/spoof_test.py
+--api-url https://<API_STAGING> --allow-remote --json-out preuve-x-real-ip.json` (depuis
+`services/api`). Deux phases de 12 envois de `POST /devices/auth` (adresses de la plage de test
+198.18.0.0/15, secret bidon, rien n'est créé). Phase témoin : le même `X-Real-IP` partout, le 11e
+envoi doit répondre 429, sinon la limite n'est pas observable et l'essai ne conclut pas. Phase
+d'usurpation : un `X-Real-IP` différent à chaque envoi. Verdicts : `NOT_SPOOFABLE` (code 0),
+`SPOOFABLE` (code 1, **remettre `CLIENT_IP_HEADER` à vide aussitôt**), `INCONCLUSIVE` (code 3).
+Preuve JSON sans secret. Testé contre la vraie application avec et sans proxy qui écrase
+l'en-tête (`tests/test_spoof_test.py`, 22 tests, mutations détectées).
 
-**Cet essai n'a PAS été exécuté.** Raisons : (1) le staging exécute encore le commit
-`301451f`, sans la prise en charge de `CLIENT_IP_HEADER` (coupure de Railway, voir
-`docs/performance/test-de-charge.md`) ; (2) l'essai suppose le réglage actif : sans lui, tous
-les envois partagent l'adresse du proxy et le résultat est « sain » quoi que fasse le proxy,
-donc il ne prouverait rien. `CLIENT_IP_HEADER` reste vide tant que Mohamed n'a pas autorisé la
-fenêtre d'essai : réglage activé quelques minutes **sur le staging seulement**, essai, puis
-retiré si le verdict n'est pas `NOT_SPOOFABLE`. Le réglage n'est conservé qu'avec la preuve
-jointe ici.
+**Résultat du 22/10/2026 sur le staging : `INCONCLUSIVE`, et ce n'est pas anodin.** La limite de
+10 par minute de `POST /devices/auth` n'est pas observable : 60 envois depuis la même source,
+avec le même `X-Real-IP`, ont tous été traités (401), sans aucun 429. En local, le même scénario
+donne 429 dès le 11e envoi. Le défaut vient donc du déploiement, pas du code. Une première
+version de l'outil, sans phase témoin, avait conclu `SPOOFABLE` à tort ; corrigé.
+
+Hypothèses, non tranchées (l'assistant n'a pas accès aux variables ni aux journaux de Railway) :
+1. plusieurs instances du service API, chacune avec ses compteurs en mémoire (le quota se
+   multiplie par le nombre d'instances) ;
+2. l'adresse de connexion vue par l'application change d'une requête à l'autre (plusieurs
+   proxys Railway), donc chaque requête tombe dans un compteur différent ;
+3. un réglage inattendu (`RATE_LIMIT_STORAGE_URI` ou autre).
+
+**À relever dans le tableau de bord Railway** (service API) : le nombre de réplicas, la présence
+de `CLIENT_IP_HEADER` et de `RATE_LIMIT_STORAGE_URI`, et la ligne `capacity.checked` du journal
+de démarrage (elle indique le nombre de réplicas attendu et l'en-tête configuré). Conséquence
+pratique : **la protection contre l'essai de secrets sur `POST /devices/auth` n'est pas
+effective sur le staging aujourd'hui.** Les secrets d'appareil sont aléatoires et comparés en
+temps constant, et le mode par clé publique n'a pas de secret à deviner, mais la défense en
+profondeur annoncée manque. `CLIENT_IP_HEADER` reste vide : l'activer ne règle pas ce point et
+l'essai ne pourrait pas conclure.
 
 Pourquoi ne pas simplement mettre `FORWARDED_ALLOW_IPS` : **ne jamais** mettre
 `FORWARDED_ALLOW_IPS=*` (uvicorn retiendrait la première adresse de
