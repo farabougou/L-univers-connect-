@@ -45,4 +45,6 @@ applis mobiles. Il est sur TikTok sous **@kofamali** (55 000 abonnés).
   - `videos/mams-avatar` : présentation de l'avatar ;
   - `videos/_studio/serie-avatar.md` : scripts des épisodes 2 à 6 ;
   - `videos/_studio/plan-tiktok.md` : plan de publication.
+  - `videos/fanta-shop` : pub de la boutique Fanta shop (@fantafofana61), voix off ElevenLabs « Anna », 9:16
+    (`index.html`) et 16:9 (`paysage/`, dont `assets` est un lien vers `../assets`).
 - Branche de travail : `claude/upbeat-noether-hso8ah`. Sur son PC : `Documents\Univers-videos`, puis `git pull`.

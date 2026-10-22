@@ -1,13 +1,17 @@
-# Musique de la pub Fanta shop (24 s, 100 BPM, 1 temps = 0,6 s, 1 mesure = 2,4 s), calée sur le montage :
+# Musique de la pub Fanta shop (31,2 s, 100 BPM, 1 temps = 0,6 s, 1 mesure = 2,4 s), calée sur timing.py :
 #   0–3 s     l'accroche : nappe chaude, shaker, quelques notes de balafon, souffle qui monte
 #   3,0 s     le pot arrive : impact doux, le groove démarre (djembé, grosse caisse, basse, balafon en doubles croches)
-#   7,2 s     la gamme : souffle de transition, accents sur les tuiles (7,2 / 7,8 / 8,4)
-#   11,4 s    le flacon : une mesure allégée, la pression du spray à 12,0
-#   14,4 s    la boutique : souffle, le groove repart
-#   18,0 s    l'appel : impact, accord majeur, petits clics sur les chiffres du numéro, fondu final
-import os, numpy as np, soundfile as sf
+#   7,8 s     la gamme : une note de balafon et un coup de djembé sur chaque tuile
+#   11,4 s    le flacon : groove allégé, la pression du spray sur le mot « spray »
+#   14,4 s    la boutique : deux coups sourds pour les deux photos
+#   18,6 s    les abonnés : petits clics du compteur, puis une cloche
+#   22,8 s    l'appel : impact, accord majeur, clics sur chaque paire de chiffres ; le groove s'arrête à 30 s
+# Le mixage avec la voix off (et l'atténuation de la musique sous la voix) est fait par mix.py.
+import os, sys, numpy as np, soundfile as sf
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from timing import TOTAL, CUT, WORD, PAIRS
 P = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SR, DUR = 48000, 24.0
+SR, DUR = 48000, TOTAL
 N = int(SR * DUR); L = np.zeros(N); R = np.zeros(N)
 rng = np.random.default_rng(7)
 BEAT, SX = 0.6, 0.15
@@ -57,6 +61,8 @@ def spray():
     return x * np.minimum(1, t / 0.02) * np.exp(-t * 6) * 0.7
 def tick():
     t = tt(0.04); return np.sin(2 * np.pi * 3200 * t) * np.exp(-t * 180)
+def chime(fs):
+    t = tt(1.2); return sum(np.sin(2 * np.pi * f * t) * np.exp(-t * 4) + 0.3 * np.sin(2 * np.pi * f * 2.01 * t) * np.exp(-t * 7) for f in fs)
 
 # grille harmonique : la mineur, fa, do, sol (une mesure chacun) ; gamme pentatonique de la mineur pour le balafon
 CH = [(45, [57, 60, 64]), (41, [57, 60, 65]), (48, [55, 60, 64]), (43, [55, 59, 62])]
@@ -69,12 +75,13 @@ add(pad([hz(45), hz(52), hz(57), hz(60)], 3.6), 0.0, g=0.30)
 for k in range(20): add(shaker(1.0 if k % 2 else 0.5), k * SX, pan=0.3, g=0.05)
 for t0, m in ((0.3, 69), (0.9, 72), (1.5, 76), (1.95, 74), (2.4, 72)): add(balafon(hz(m)), t0, pan=-0.2, g=0.16)
 add(whoosh(1.4), 1.6, g=0.35)
-# ── le groove (3,0 → 22,8) ──
+# ── le groove (3,0 → 30,0) ──
 add(impact(), 3.0, g=0.45)
-G0, G1 = 3.0, 22.8
+G0, G1 = 3.0, 30.0
+LIGHT = (CUT['s4'], CUT['s4'] + 2.4)
 for s in range(int(round((G1 - G0) / SX))):
     t0 = G0 + s * SX; pos = s % 16; root, chord = bar_of(t0 - G0)
-    light = 11.4 <= t0 < 13.8                                                  # la mesure du flacon : allégée
+    light = LIGHT[0] <= t0 < LIGHT[1]
     if pos in (0, 6, 8) and not light: add(kick(), t0, g=0.5)
     if pos in (0, 10) and not light: add(bass(hz(root - 12), 0.45), t0, g=0.28)
     if pos in (6, 14) and not light: add(bass(hz(root - 12 + 7)), t0, g=0.18)
@@ -88,12 +95,20 @@ for s in range(int(round((G1 - G0) / SX))):
         add(balafon(hz(m)), t0, pan=-0.25 + 0.5 * (pos % 2), g=0.10 if not light else 0.07)
     if pos == 0: add(pad([hz(m) for m in chord], 2.6), t0, g=0.09)
 # ── accents du montage ──
-add(whoosh(0.9), 6.4, g=0.3); add(whoosh(0.9), 13.6, g=0.3); add(whoosh(1.1), 17.0, g=0.32)
-for t0 in (7.2, 7.8, 8.4): add(balafon(hz(81)), t0, g=0.09); add(djembe('tone'), t0, g=0.1)
-add(spray(), 12.0, pan=0.15, g=0.22)
-add(impact(), 18.0, g=0.5)
-add(pad([hz(48), hz(55), hz(60), hz(64), hz(67)], 6.0, bright=0.5), 18.0, g=0.16)
-for k in range(8): add(tick(), 19.25 + k * 0.1, pan=0.2, g=0.07)       # les chiffres du numéro qui se posent
+for k in ('s3', 's4', 's5', 's6', 's7'): add(whoosh(0.9), CUT[k] - 0.8, g=0.3)
+for t0 in (7.95, 8.5, 9.1): add(balafon(hz(81)), t0, g=0.09); add(djembe('tone'), t0, g=0.1)
+add(spray(), WORD['spray'], pan=0.15, g=0.22)
+for t0 in (15.9, 16.7): add(djembe('bass'), t0, g=0.3); add(djembe('tone'), t0 + 0.02, g=0.08)
+for k in range(14): add(tick(), 18.9 + 0.9 * (1 - (1 - k / 13) ** 1.6), pan=0.2, g=0.06)   # le compteur qui monte
+add(chime([hz(88), hz(84)]), 19.85, g=0.08)
+add(impact(), CUT['s7'], g=0.5)
+add(pad([hz(48), hz(55), hz(60), hz(64), hz(67)], 6.0, bright=0.5), CUT['s7'], g=0.16)
+for t0 in PAIRS: add(tick(), t0 - 0.06, pan=0.2, g=0.07); add(tick(), t0 + 0.04, pan=-0.2, g=0.07)
+add(chime([hz(84), hz(91)]), WORD['fanta-shop'], g=0.07)
+# ── la fin : dernier accord tenu, quelques notes qui s'éteignent ──
+add(pad([hz(45), hz(52), hz(57), hz(60), hz(64)], 2.0, bright=0.4), 29.4, g=0.14)
+for t0, m in ((30.0, 76), (30.15, 72), (30.3, 69)): add(balafon(hz(m)), t0, pan=-0.2, g=0.12)
+add(impact() * 0.5, 30.0, g=0.3)
 
 def verb(x, seed):
     ir = np.random.default_rng(seed).standard_normal(int(1.3 * SR)) * np.exp(-np.arange(int(1.3 * SR)) / SR * 4)
@@ -101,6 +116,6 @@ def verb(x, seed):
     return np.fft.irfft(np.fft.rfft(x, n) * np.fft.rfft(ir, n), n)[:len(x)]
 L = L * 0.9 + verb(L, 3) * 0.22; R = R * 0.9 + verb(R, 4) * 0.22
 t = np.arange(N) / SR
-fade = np.minimum(1, t / 0.3) * np.clip((DUR - t) / 1.4, 0, 1)
+fade = np.minimum(1, t / 0.3) * np.clip((DUR - t) / 1.0, 0, 1)
 mix = np.tanh(1.1 * np.stack([L, R], 1)) * fade[:, None]; mix /= np.abs(mix).max() / 0.9
 sf.write(f'{P}/assets/music.wav', mix, SR); print('ok', DUR)
