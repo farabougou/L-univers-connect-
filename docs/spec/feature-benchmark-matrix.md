@@ -2150,6 +2150,24 @@ authentifiée du staging reste à mesurer avec le compte dédié ; le compte de 
 fonctionne sur le staging public avec le mot de passe publié dans le dépôt (à désactiver) ; la
 déclaration d'unité n'existe pas pour BACnet, OPC UA et MQTT.
 
+## Console web : refonte visuelle du tableau de bord (23/10/2026)
+
+Demande de Mohamed : voir le tableau de bord de la console Enoryx changer. **REFACTOR** de la
+vue Portfolio (accueil), sans nouvelle route ni nouvelle donnée : les mêmes appels à l'API,
+une présentation plus lisible d'un coup d'œil.
+
+| Ce qui change | Détail |
+| --- | --- |
+| Bandeau « Vue d'ensemble » | Cinq tuiles égales (sites, équipements, alarmes ouvertes, constats ouverts, ordres de travail ouverts) à la place de chiffres en texte simple dont le dernier passait seul sur une deuxième ligne. La barre d'une tuile d'alarmes ou de constats prend la couleur de la **gravité la plus élevée réellement ouverte** ; sans rien d'ouvert, couleur neutre (jamais un vert qui laisserait croire que tout va bien). Les pastilles de gravité et les nombres portent aussi le sens : la couleur seule ne le porte jamais |
+| Barre de santé des actifs | Une barre segmentée sous les tuiles, couleurs de l'état universel (`ASSET_STATUS_COLOR`), légende avec pastille et nombre, description complète pour les lecteurs d'écran, lien « Voir le détail par état » vers le détail existant. Seuls les équipements dont l'état est connu sont comptés : aucun score global inventé |
+| Disposition | Énergie et Santé des actifs côte à côte sur ordinateur, empilées sur téléphone ; tuiles sur deux colonnes sur téléphone. Les pastilles ne se coupent plus sur deux lignes |
+| Textes | Trois clés ajoutées en français et en anglais (`health_bar_item`, `health_bar_label`, `health_see_detail`) ; liste des états formée avec `Intl.ListFormat` dans la langue de la personne |
+
+**Grille produit (ADR 014)** : Backend N/A, API N/A, Web DONE, Mobile N/A, Edge N/A, Tests DONE
+(`apps/web/src/lib/situation.test.ts`, 7 tests ; catalogues ; 224 tests web, 155 mobile),
+Documentation DONE. Vérifié visuellement sur ordinateur (1280 px) et sur téléphone (390 px), en
+français et en anglais, avec des données de démonstration inventées.
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente

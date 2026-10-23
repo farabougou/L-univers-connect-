@@ -2,6 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { BrandMark } from "@/components/BrandMark";
+import { HealthBar } from "@/components/HealthBar";
+import { KpiTile } from "@/components/KpiTile";
 import { RecentActivityFeed } from "@/components/RecentActivityFeed";
 import {
   ASSET_STATUS_COLOR,
@@ -48,6 +50,7 @@ import {
   repeatingFailures,
 } from "@/lib/maintenance";
 import { type EquipmentStatus, statusMessage } from "@/lib/passport";
+import { healthSegments, highestSeverity } from "@/lib/situation";
 import { roleLabels } from "@/lib/roles";
 import {
   type Alarm,
@@ -258,6 +261,25 @@ export default async function PortfolioPage({
   // section 29). Ne déclenche aucune alerte : lecture pure, comme le
   // passeport équipement.
   const healthDistribution = distributeByAssetStatus(equipmentStatuses);
+  const healthBarSegments = healthSegments(healthDistribution).map(
+    (segment) => {
+      const label = t(`asset_status.${segment.status}`);
+      return {
+        ...segment,
+        label,
+        text: t("web.dashboard.health_bar_item", {
+          status: label,
+          count: String(segment.count),
+        }),
+      };
+    },
+  );
+  const healthBarLabel = t("web.dashboard.health_bar_label", {
+    details: new Intl.ListFormat(locale, {
+      style: "long",
+      type: "conjunction",
+    }).format(healthBarSegments.map((segment) => segment.text)),
+  });
 
   // Bloc « Activité récente » (directive UI/dashboard, section 16).
   // Chronologie fusionnée pour tout le portefeuille (interventions, ordres
@@ -399,35 +421,82 @@ export default async function PortfolioPage({
 
       <section style={{ ...cardStyle, marginBottom: 24 }}>
         <h2 style={sectionTitleStyle}>{t("web.dashboard.portfolio_title")}</h2>
-        <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
-          <Kpi
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+            gap: 16,
+          }}
+        >
+          <KpiTile
             label={t("web.dashboard.kpi_sites")}
             value={String(sites.length)}
+            accent={colors.accent}
             href="/registre"
           />
-          <Kpi
+          <KpiTile
             label={t("web.dashboard.kpi_equipment")}
             value={String(totals.equipmentCount)}
+            accent={colors.accent}
             href="/registre"
           />
-          <SeverityKpi
+          <KpiTile
             label={t("web.dashboard.kpi_alarms")}
-            counts={totals.alarmSeverity}
-            t={t}
+            value={String(severityTotal(totals.alarmSeverity))}
+            accent={severityAccent(totals.alarmSeverity)}
             href="/alarmes"
-          />
-          <SeverityKpi
+          >
+            <SeverityBadges counts={totals.alarmSeverity} t={t} />
+          </KpiTile>
+          <KpiTile
             label={t("web.dashboard.kpi_findings")}
-            counts={totals.findingSeverity}
-            t={t}
+            value={String(severityTotal(totals.findingSeverity))}
+            accent={severityAccent(totals.findingSeverity)}
             href="/alarmes"
-          />
-          <Kpi
+          >
+            <SeverityBadges counts={totals.findingSeverity} t={t} />
+          </KpiTile>
+          <KpiTile
             label={t("web.dashboard.kpi_work_orders")}
             value={String(totals.openWorkOrders)}
+            accent={colors.accent}
             href="/ordres-de-travail"
           />
         </div>
+        {healthBarSegments.length > 0 && (
+          <div
+            style={{
+              borderTop: `1px solid ${colors.border}`,
+              marginTop: 20,
+              paddingTop: 16,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
+                gap: 12,
+                flexWrap: "wrap",
+                marginBottom: 12,
+              }}
+            >
+              <h3 style={{ ...sectionTitleStyle, margin: 0 }}>
+                {t("web.dashboard.health_title")}
+              </h3>
+              <a
+                href="#sante"
+                style={{ color: colors.accent, fontSize: 13 }}
+              >
+                {t("web.dashboard.health_see_detail")}
+              </a>
+            </div>
+            <HealthBar
+              segments={healthBarSegments}
+              ariaLabel={healthBarLabel}
+            />
+          </div>
+        )}
       </section>
 
       <section
@@ -690,171 +759,180 @@ export default async function PortfolioPage({
         </div>
       </section>
 
-      <section style={{ ...cardStyle, marginBottom: 24 }}>
-        <h2 style={sectionTitleStyle}>{t("web.dashboard.energy_title")}</h2>
-        {energyMeters.length === 0 ? (
-          <p style={{ color: colors.textMuted }}>
-            {t("web.dashboard.energy_no_meters")}
-          </p>
-        ) : (
-          <>
-            <p
-              style={{
-                color: colors.textMuted,
-                fontSize: 13,
-                marginBottom: 16,
-              }}
-            >
-              {t("web.dashboard.energy_reference_date", {
-                date: energySummary
-                  ? formatDate(locale, energySummary.reference_date)
-                  : "",
-              })}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 420px), 1fr))",
+          gap: 24,
+          marginBottom: 24,
+        }}
+      >
+        <section style={{ ...cardStyle }}>
+          <h2 style={sectionTitleStyle}>{t("web.dashboard.energy_title")}</h2>
+          {energyMeters.length === 0 ? (
+            <p style={{ color: colors.textMuted }}>
+              {t("web.dashboard.energy_no_meters")}
             </p>
-            <div
-              style={{
-                display: "flex",
-                gap: 32,
-                flexWrap: "wrap",
-                marginBottom: 12,
-              }}
-            >
-              {energyByUnit.map((summary) => (
-                <div key={summary.unit} style={{ display: "flex", gap: 32 }}>
-                  <Kpi
-                    label={t("web.dashboard.energy_consumption_label", {
-                      unit: summary.unit,
-                    })}
-                    value={
-                      summary.totalConsumption === null
-                        ? t("web.dashboard.energy_unavailable")
-                        : formatNumber(locale, summary.totalConsumption)
-                    }
-                  />
-                  <Kpi
-                    label={t("web.dashboard.energy_trend_label")}
-                    value={
-                      summary.trendPercent === null
-                        ? t("web.dashboard.energy_trend_unavailable")
-                        : `${summary.trendPercent > 0 ? "+" : ""}${formatNumber(locale, summary.trendPercent, 1)} %`
-                    }
-                  />
-                </div>
-              ))}
-            </div>
-            {energyMetersWithoutData > 0 && (
-              <p style={{ color: colors.textMuted, fontSize: 12 }}>
-                {t("web.dashboard.energy_meters_without_data", {
-                  count: energyMetersWithoutData,
+          ) : (
+            <>
+              <p
+                style={{
+                  color: colors.textMuted,
+                  fontSize: 13,
+                  marginBottom: 16,
+                }}
+              >
+                {t("web.dashboard.energy_reference_date", {
+                  date: energySummary
+                    ? formatDate(locale, energySummary.reference_date)
+                    : "",
                 })}
               </p>
-            )}
-          </>
-        )}
-      </section>
-
-      <section style={{ ...cardStyle, marginBottom: 24 }}>
-        <h2 style={sectionTitleStyle}>{t("web.dashboard.health_title")}</h2>
-        {locations.length === 0 ? (
-          <p style={{ color: colors.textMuted }}>
-            {t("web.dashboard.no_equipment")}
-          </p>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            {ASSET_STATUS_ORDER.map((assetStatus) => {
-              const ids = healthDistribution[assetStatus];
-              const percent = locations.length
-                ? (ids.length / locations.length) * 100
-                : 0;
-              return (
-                <details key={assetStatus}>
-                  <summary
-                    style={{
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 12,
-                      padding: "6px 0",
-                    }}
-                  >
-                    <StatusBadge
-                      status={assetStatus}
-                      label={t(`asset_status.${assetStatus}`)}
+              <div
+                style={{
+                  display: "flex",
+                  gap: 32,
+                  flexWrap: "wrap",
+                  marginBottom: 12,
+                }}
+              >
+                {energyByUnit.map((summary) => (
+                  <div key={summary.unit} style={{ display: "flex", gap: 32 }}>
+                    <Kpi
+                      label={t("web.dashboard.energy_consumption_label", {
+                        unit: summary.unit,
+                      })}
+                      value={
+                        summary.totalConsumption === null
+                          ? t("web.dashboard.energy_unavailable")
+                          : formatNumber(locale, summary.totalConsumption)
+                      }
                     />
-                    <div
+                    <Kpi
+                      label={t("web.dashboard.energy_trend_label")}
+                      value={
+                        summary.trendPercent === null
+                          ? t("web.dashboard.energy_trend_unavailable")
+                          : `${summary.trendPercent > 0 ? "+" : ""}${formatNumber(locale, summary.trendPercent, 1)} %`
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+              {energyMetersWithoutData > 0 && (
+                <p style={{ color: colors.textMuted, fontSize: 12 }}>
+                  {t("web.dashboard.energy_meters_without_data", {
+                    count: energyMetersWithoutData,
+                  })}
+                </p>
+              )}
+            </>
+          )}
+        </section>
+
+        <section id="sante" style={{ ...cardStyle }}>
+          <h2 style={sectionTitleStyle}>{t("web.dashboard.health_title")}</h2>
+          {locations.length === 0 ? (
+            <p style={{ color: colors.textMuted }}>
+              {t("web.dashboard.no_equipment")}
+            </p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {ASSET_STATUS_ORDER.map((assetStatus) => {
+                const ids = healthDistribution[assetStatus];
+                const percent = locations.length
+                  ? (ids.length / locations.length) * 100
+                  : 0;
+                return (
+                  <details key={assetStatus}>
+                    <summary
                       style={{
-                        flex: 1,
-                        background: colors.border,
-                        borderRadius: 4,
-                        height: 8,
-                        overflow: "hidden",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        padding: "6px 0",
                       }}
                     >
+                      <StatusBadge
+                        status={assetStatus}
+                        label={t(`asset_status.${assetStatus}`)}
+                      />
                       <div
                         style={{
-                          width: `${percent}%`,
-                          background: ASSET_STATUS_COLOR[assetStatus],
-                          height: "100%",
+                          flex: 1,
+                          background: colors.border,
+                          borderRadius: 4,
+                          height: 8,
+                          overflow: "hidden",
                         }}
-                      />
-                    </div>
-                    <span
-                      style={{
-                        color: colors.textMuted,
-                        fontSize: 13,
-                        minWidth: 24,
-                        textAlign: "right",
-                      }}
-                    >
-                      {ids.length}
-                    </span>
-                  </summary>
-                  {ids.length === 0 ? (
-                    <p
-                      style={{
-                        color: colors.textMuted,
-                        fontSize: 13,
-                        padding: "4px 0 8px 28px",
-                      }}
-                    >
-                      {t("web.dashboard.health_category_empty")}
-                    </p>
-                  ) : (
-                    <ul
-                      style={{
-                        listStyle: "none",
-                        padding: "4px 0 8px 28px",
-                        margin: 0,
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 4,
-                      }}
-                    >
-                      {ids.map((id) => {
-                        const location = locationById.get(id);
-                        return (
-                          <li key={id} style={{ fontSize: 13 }}>
-                            {location ? (
-                              <Link
-                                href={`/registre/${id}`}
-                                style={{ color: colors.accent }}
-                              >
-                                {location.code} — {location.name}
-                              </Link>
-                            ) : (
-                              "—"
-                            )}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
-                </details>
-              );
-            })}
-          </div>
-        )}
-      </section>
+                      >
+                        <div
+                          style={{
+                            width: `${percent}%`,
+                            background: ASSET_STATUS_COLOR[assetStatus],
+                            height: "100%",
+                          }}
+                        />
+                      </div>
+                      <span
+                        style={{
+                          color: colors.textMuted,
+                          fontSize: 13,
+                          minWidth: 24,
+                          textAlign: "right",
+                        }}
+                      >
+                        {ids.length}
+                      </span>
+                    </summary>
+                    {ids.length === 0 ? (
+                      <p
+                        style={{
+                          color: colors.textMuted,
+                          fontSize: 13,
+                          padding: "4px 0 8px 28px",
+                        }}
+                      >
+                        {t("web.dashboard.health_category_empty")}
+                      </p>
+                    ) : (
+                      <ul
+                        style={{
+                          listStyle: "none",
+                          padding: "4px 0 8px 28px",
+                          margin: 0,
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 4,
+                        }}
+                      >
+                        {ids.map((id) => {
+                          const location = locationById.get(id);
+                          return (
+                            <li key={id} style={{ fontSize: 13 }}>
+                              {location ? (
+                                <Link
+                                  href={`/registre/${id}`}
+                                  style={{ color: colors.accent }}
+                                >
+                                  {location.code} — {location.name}
+                                </Link>
+                              ) : (
+                                "—"
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </details>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      </div>
 
       <section style={{ ...cardStyle, marginBottom: 24 }}>
         <h2 style={sectionTitleStyle}>{t("web.dashboard.activity_title")}</h2>
@@ -1121,46 +1199,16 @@ function Kpi({
   );
 }
 
-function SeverityKpi({
-  label,
-  counts,
-  t,
-  href,
-}: {
-  label: string;
-  counts: SeverityCounts;
-  t: (key: string, params?: Record<string, string>) => string;
-  href?: string;
-}) {
-  const total = SEVERITIES.reduce((sum, severity) => sum + counts[severity], 0);
-  const header = (
-    <>
-      <div style={{ fontSize: 28, fontWeight: 600, color: colors.textPrimary }}>
-        {total}
-      </div>
-      <div
-        style={{
-          color: href ? colors.accent : colors.textMuted,
-          fontSize: 13,
-          marginBottom: 4,
-        }}
-      >
-        {label}
-      </div>
-    </>
-  );
-  return (
-    <div style={{ minWidth: 160 }}>
-      {href ? (
-        <Link href={href} style={{ display: "block", textDecoration: "none" }}>
-          {header}
-        </Link>
-      ) : (
-        header
-      )}
-      <SeverityBadges counts={counts} t={t} />
-    </div>
-  );
+function severityTotal(counts: SeverityCounts): number {
+  return SEVERITIES.reduce((sum, severity) => sum + counts[severity], 0);
+}
+
+// La barre de la tuile prend la couleur de la gravité la plus élevée
+// réellement ouverte ; sans rien d'ouvert, la couleur neutre (jamais un vert
+// qui laisserait croire que tout va bien).
+function severityAccent(counts: SeverityCounts): string {
+  const severity = highestSeverity(counts);
+  return severity ? SEVERITY_COLOR[severity] : colors.accent;
 }
 
 function SeverityBadges({

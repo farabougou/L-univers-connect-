@@ -110,6 +110,9 @@ export const badgeStyle = (background: string) => ({
   padding: "2px 10px",
   fontSize: 12,
   fontWeight: 600,
+  // Une pastille ne se coupe jamais sur deux lignes (« 1 Avertissement » dans une
+  // tuile étroite de téléphone) : elle passe à la ligne entière suivante.
+  whiteSpace: "nowrap" as const,
 });
 
 /** État de communication d'une passerelle/d'un appareil Edge (distinct de
