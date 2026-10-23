@@ -1,0 +1,122 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Oswald"; font-weight: 400; src: url("assets/fonts/oswald-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 500; src: url("assets/fonts/oswald-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 600; src: url("assets/fonts/oswald-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 700; src: url("assets/fonts/oswald-latin-700-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Roboto"; font-weight: 400; src: url("assets/fonts/roboto-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Roboto"; font-weight: 500; src: url("assets/fonts/roboto-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Roboto"; font-weight: 700; src: url("assets/fonts/roboto-latin-700-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Roboto", sans-serif; color: #FFFFFF; }
+
+    .k02-abs { position: absolute; }
+    .k02-bgd { position: absolute; inset: 0; background: radial-gradient(90% 80% at 70% 40%, #0b1f36 0%, #06111F 70%); }
+    .k02-bgl { position: absolute; inset: 0; background: #F4F8FC; }
+    .k02-bgw { position: absolute; inset: 0; background: #FFFFFF; }
+    .k02-kick { display: flex; align-items: center; gap: 18px; font-family: "Roboto"; font-weight: 500; font-size: 24px; letter-spacing: 0.24em; color: #1EAAE2; white-space: nowrap; }
+    .k02-kick i { display: block; width: 56px; height: 3px; background: #1EAAE2; }
+    .k02-st { font-family: "Oswald"; font-weight: 600; font-size: 88px; line-height: 1.08; text-transform: uppercase; color: #FFFFFF; white-space: nowrap; }
+    .k02-st em { font-style: normal; color: #1EAAE2; }
+    .k02-st.dk { color: #152235; }
+    .k02-fil { display: flex; align-items: center; gap: 14px; }
+    .k02-fil i { display: block; width: 110px; height: 4px; border-radius: 2px; background: #1EAAE2; }
+    .k02-fil u { display: block; width: 14px; height: 14px; border-radius: 7px; background: #1EAAE2; }
+    .k02-fil u.o { background: #F07828; }
+    .k02-ex { font-family: "Roboto"; font-weight: 400; font-size: 34px; line-height: 1.45; color: #9FB3C8; }
+    .k02-ex.dk { color: #46586E; }
+    /* site components */
+    .k02-site { position: absolute; left: 0; top: 0; width: 1440px; background: #06111F; overflow: hidden; transform-origin: 0 0; }
+    .k02-hd { height: 96px; background: #FFFFFF; display: flex; align-items: center; padding: 0 56px; gap: 40px; }
+    .k02-hd img { display: block; height: 66px; }
+    .k02-hd nav { display: flex; gap: 34px; margin-left: auto; font-family: "Roboto"; font-weight: 500; font-size: 17px; letter-spacing: 0.08em; color: #152235; }
+    .k02-btn { display: inline-flex; align-items: center; gap: 12px; padding: 16px 28px; border-radius: 3px; font-family: "Roboto"; font-weight: 700; font-size: 17px; letter-spacing: 0.12em; text-transform: uppercase; color: #FFFFFF; background: #1EAAE2; white-space: nowrap; }
+    .k02-btn.ol { background: transparent; border: 2px solid #8a96a3; }
+    .k02-btn svg { display: block; }
+    .k02-bar { height: 6px; background: linear-gradient(90deg, #1EAAE2 0 33%, #D93A2B 33% 66%, #F07828 66% 100%); }
+    .k02-hero { position: relative; height: 700px; padding: 150px 80px 0; background:
+        radial-gradient(40% 55% at 82% 70%, rgba(240,120,40,0.22), rgba(240,120,40,0) 70%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0 2px, rgba(255,255,255,0) 2px 180px),
+        linear-gradient(180deg, #0a1a2c 0%, #06111F 100%); }
+    .k02-hk { display: flex; align-items: center; gap: 22px; font-family: "Roboto"; font-weight: 700; font-size: 20px; letter-spacing: 0.3em; color: #1EAAE2; }
+    .k02-hk i { display: block; width: 64px; height: 3px; background: #1EAAE2; }
+    .k02-ht { margin-top: 34px; font-family: "Oswald"; font-weight: 600; font-size: 84px; line-height: 1.08; color: #FFFFFF; white-space: nowrap; }
+    .k02-ht em { font-style: italic; color: #1EAAE2; }
+    .k02-hp { margin-top: 26px; font-family: "Roboto"; font-weight: 400; font-size: 24px; line-height: 1.6; color: #C9D3DE; }
+    .k02-hb { margin-top: 38px; display: flex; gap: 20px; }
+    /* browser chrome */
+    .k02-br { position: absolute; border-radius: 18px; overflow: hidden; background: #FFFFFF; box-shadow: 0 40px 90px rgba(0,0,0,0.45); }
+    .k02-brt { height: 44px; background: #EEF2F6; display: flex; align-items: center; gap: 10px; padding: 0 18px; }
+    .k02-brt u { display: block; width: 13px; height: 13px; border-radius: 7px; background: #c7d0da; }
+    .k02-brt b { display: block; margin-left: 24px; padding: 6px 22px; border-radius: 14px; background: #FFFFFF; font-family: "Roboto"; font-weight: 500; font-size: 17px; color: #46586E; }
+    .k02-brv { position: relative; overflow: hidden; }
+    /* cards */
+    .k02-card { position: absolute; border-radius: 18px; background: #FFFFFF; box-shadow: 0 24px 60px rgba(21,34,53,0.14); border: 1px solid #E3EAF2; }
+    .k02-ic { display: flex; width: 96px; height: 96px; border-radius: 18px; align-items: center; justify-content: center; background: #E6F5FC; }
+    .k02-ct { font-family: "Oswald"; font-weight: 600; font-size: 44px; color: #152235; text-transform: uppercase; white-space: nowrap; }
+    .k02-cp { font-family: "Roboto"; font-weight: 400; font-size: 26px; line-height: 1.45; color: #46586E; }
+    .k02-cl { display: flex; align-items: center; gap: 10px; font-family: "Roboto"; font-weight: 700; font-size: 20px; letter-spacing: 0.14em; color: #1EAAE2; }
+    .k02-cur { position: absolute; left: 0; top: 0; width: 40px; height: 40px; }
+
+
+    #k02-stage { position: absolute; left: 80px; top: 480px; width: 920px; height: 560px; perspective: 2200px; }
+    #k02-stk { position: absolute; inset: 0; transform-style: preserve-3d; }
+    .k02-ly { position: absolute; left: 0; }
+    #k02-ly0 { top: 0; } #k02-ly1 { top: 60px; } #k02-ly2 { top: 270px; } #k02-ly3 { top: 320px; } #k02-ly4 { top: 450px; }
+    #k02-ly1 .k02-ht { margin: 0; font-size: 92px; }
+    #k02-ly3 .k02-hp { margin: 0; font-size: 28px; }
+    #k02-ann { position: absolute; left: 80px; top: 1140px; display: flex; flex-direction: column; gap: 26px; }
+    .k02-an { display: flex; align-items: center; gap: 20px; }
+    .k02-an i { display: block; width: 70px; height: 3px; background: #1EAAE2; }
+    .k02-an b { display: block; font-family: "Oswald"; font-weight: 600; font-size: 40px; color: #FFFFFF; text-transform: uppercase; }
+    .k02-an span { display: block; font-family: "Roboto"; font-weight: 400; font-size: 30px; color: #9FB3C8; }
+    #k02-pal { position: absolute; left: 80px; top: 1150px; display: grid; grid-template-columns: repeat(4, 210px); gap: 26px 22px; }
+    .k02-sw u { display: block; width: 210px; height: 110px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.18); }
+    .k02-sw b { display: block; margin-top: 12px; font-family: "Oswald"; font-weight: 500; font-size: 30px; color: #FFFFFF; text-transform: uppercase; }
+    .k02-sw span { display: block; font-family: "Roboto"; font-weight: 500; font-size: 22px; letter-spacing: 0.06em; color: #9FB3C8; }
+    #k02-kx { left: 80px; top: 1090px; }
+
+  </style>
+  <div id="root" data-composition-id="02-reperes" data-start="0" data-duration="9.5" data-width="1080" data-height="1920">
+    <div id="k02-bgclip" class="clip" data-start="0" data-duration="9.5" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="k02-bgd"></div>
+    <div class="k02-abs" id="k02-sk" style="left:80px; top:150px"><div class="k02-kick"><i></i>02 — HIÉRARCHIE</div></div>
+    <div class="k02-abs k02-st" id="k02-s1" style="left:80px; top:202px">Des repères</div>
+    <div class="k02-abs k02-st" id="k02-s2" style="left:80px; top:297px"><em>visuels.</em></div>
+    <div id="k02-stage"><div id="k02-stk">
+      <div class="k02-ly" id="k02-ly0"><div class="k02-hk"><i></i>SOLUTIONS LOGISTIQUES — EUROPE &amp; AFRIQUE</div></div>
+      <div class="k02-ly" id="k02-ly1"><div class="k02-ht"><em>TRANSPORT</em> AÉRIEN,<br>MARITIME &amp; ROUTIER</div></div>
+      <div class="k02-ly" id="k02-ly2"><div class="k02-fil"><i></i><u></u></div></div>
+      <div class="k02-ly" id="k02-ly3"><div class="k02-hp">KTF Shipping, votre partenaire de confiance<br>entre l'Europe et toute l'Afrique de l'Ouest.</div></div>
+      <div class="k02-ly" id="k02-ly4"><div class="k02-hb" style="margin:0"><div class="k02-btn"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M3 10 H16 M11 5 L16 10 L11 15" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Nos services</div><div class="k02-btn ol"><svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="6.5" stroke="#fff" stroke-width="2.2" fill="none"/><circle cx="11" cy="11" r="2.4" fill="#fff"/><path d="M11 1 V4 M11 18 V21 M1 11 H4 M18 11 H21" stroke="#fff" stroke-width="2.2"/></svg>Suivre mon envoi</div></div></div>
+    </div></div>
+    <div class="k02-abs k02-kick" id="k02-kx"><i></i>PALETTE OBSERVÉE</div>
+    <div id="k02-ann"><div class="k02-an" id="k02-a0"><i></i><div><b>Titre</b><span>Oswald 600, capitales</span></div></div><div class="k02-an" id="k02-a1"><i></i><div><b>Accent</b><span>bleu #1EAAE2</span></div></div><div class="k02-an" id="k02-a2"><i></i><div><b>Texte</b><span>Roboto 400</span></div></div><div class="k02-an" id="k02-a3"><i></i><div><b>Boutons</b><span>capitales, arrondi 3 px</span></div></div></div>
+    <div id="k02-pal"><div class="k02-sw" id="k02-w0"><u style="background:#1EAAE2"></u><b>Bleu</b><span>#1EAAE2</span></div><div class="k02-sw" id="k02-w1"><u style="background:#06111F"></u><b>Fond</b><span>#06111F</span></div><div class="k02-sw" id="k02-w2"><u style="background:#D93A2B"></u><b>Rouge</b><span>#D93A2B</span></div><div class="k02-sw" id="k02-w3"><u style="background:#F07828"></u><b>Orange</b><span>#F07828</span></div><div class="k02-sw" id="k02-w4"><u style="background:#F5C800"></u><b>Jaune</b><span>#F5C800</span></div><div class="k02-sw" id="k02-w5"><u style="background:#FFFFFF"></u><b>Blanc</b><span>#FFFFFF</span></div><div class="k02-sw" id="k02-w6"><u style="background:#F4F8FC"></u><b>Clair</b><span>#F4F8FC</span></div><div class="k02-sw" id="k02-w7"><u style="background:#152235"></u><b>Texte</b><span>#152235</span></div></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="02-reperes"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="02-reperes"] ' + s);
+      tl.fromTo(R("#k02-sk"), { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, 0.2);
+      tl.fromTo(R("#k02-s1"), { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.30000000000000004);
+      tl.fromTo(R("#k02-s2"), { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.55);
+      const LY = [0, 1, 2, 3, 4].map((i) => R("#k02-ly" + i));
+      LY.forEach((el, i) => tl.fromTo(el, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 0.4 + i * 0.1));
+      tl.fromTo(R("#k02-stk"), { rotationY: 0, rotationX: 0 }, { rotationY: 16, rotationX: 6, duration: 1.2, ease: "power2.inOut" }, 1.4);
+      LY.forEach((el, i) => tl.fromTo(el, { z: 0, x: 0 }, { z: 160 - i * 80, x: i * 26, duration: 1.2, ease: "power2.inOut", immediateRender: false }, 1.4));
+      [0, 1, 2, 3].forEach((i) => tl.fromTo(R("#k02-a" + i), { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 0.45, ease: "power2.out" }, 2.0 + i * 0.35));
+      tl.to(R("#k02-ann"), { opacity: 0, y: -20, duration: 0.4, ease: "power2.in" }, 4.9);
+      tl.fromTo(R("#k02-kx"), { opacity: 0 }, { opacity: 1, duration: 0.4 }, 5.3);
+      [0, 1, 2, 3, 4, 5, 6, 7].forEach((i) => tl.fromTo(R("#k02-w" + i), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 5.4 + i * 0.1));
+      tl.to(R("#k02-stk"), { rotationY: 0, rotationX: 0, duration: 1.0, ease: "power2.inOut" }, 7.4);
+      LY.forEach((el) => tl.to(el, { z: 0, x: 0, duration: 1.0, ease: "power2.inOut" }, 7.4));
+
+      tl.to({}, { duration: 9.5 }, 0);
+      window.__timelines["02-reperes"] = tl;
+    })();
+  </script>
+</template>

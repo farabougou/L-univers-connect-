@@ -1,0 +1,58 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Playfair Display"; font-weight: 600; src: url("assets/fonts/playfair-display-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Playfair Display"; font-weight: 700; src: url("assets/fonts/playfair-display-latin-700-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 500; src: url("assets/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 600; src: url("assets/fonts/montserrat-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Great Vibes"; font-weight: 400; src: url("assets/fonts/greatvibes-400.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Montserrat", sans-serif; color: #F1E6D2; background: #140D08; }
+
+    .c05-a { position: absolute; }
+    .c05-c { left: 0; right: 0; text-align: center; }
+    .c05-bg { position: absolute; inset: 0; background: radial-gradient(90% 60% at 50% 45%, #3a2416 0%, #2A1A10 55%, #140D08 100%); }
+    .c05-kick { font-family: "Montserrat"; font-weight: 600; font-size: 26px; letter-spacing: 0.3em; color: #C9923F; white-space: nowrap; }
+    .c05-t1 { font-family: "Playfair Display"; font-weight: 700; font-size: 92px; line-height: 1.05; color: #F1E6D2; white-space: nowrap; }
+    .c05-t2 { font-family: "Playfair Display"; font-weight: 600; font-size: 80px; line-height: 1.05; color: #C9923F; white-space: nowrap; }
+    .c05-sc { font-family: "Great Vibes"; font-weight: 400; color: #F1E6D2; white-space: nowrap; line-height: 1; }
+    .c05-ph { position: absolute; overflow: hidden; }
+    .c05-ph img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
+    .c05-band { position: absolute; left: 0; width: 1080px; height: 90px; }
+    .c05-band svg { display: block; }
+
+
+    #c05-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(20,13,8,0.55) 0%, rgba(20,13,8,0) 20%, rgba(20,13,8,0) 48%, rgba(20,13,8,0.8) 63%, rgba(20,13,8,1) 69.5%); }
+    #c05-pm { top: 1330px; font-size: 140px; }
+    #c05-fr { border: 3px solid #C9923F; position: absolute; left: 40px; top: 40px; right: 40px; bottom: 40px; border-radius: 20px; }
+
+  </style>
+  <div id="root" data-composition-id="05-robe" data-start="0" data-duration="5.5" data-width="1080" data-height="1920">
+    <div id="c05-clip" class="clip" data-start="0" data-duration="5.5" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="c05-ph" id="c05-dress" style="left:0px; top:0px; width:1080px; height:1340px; border-radius:0; "><img id="c05-dressi" src="assets/images/robe-diaz.jpg" alt="" style="object-position:60% 18%"></div>
+    <div id="c05-shade"></div>
+    <div id="c05-fr"></div>
+    <div class="c05-a c05-kick c05-c" id="c05-k" style="top:120px; color:#F1E6D2">POUR ELLE</div>
+    <div class="c05-a c05-c c05-sc" id="c05-pm">Pour madame</div>
+    <div class="c05-a c05-c" style="top:1500px; overflow:hidden; height:100px"><span class="c05-t1" id="c05-s1" style="display:inline-block; font-size:78px">Robes en tissu Diaz</span></div>
+    <div class="c05-a c05-kick c05-c" id="c05-s2" style="top:1630px">FLUIDES · RAFFINÉES</div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="05-robe"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="05-robe"] ' + s);
+      tl.fromTo(R("#c05-dress"), { clipPath: "inset(0% 50% 0% 50%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 1.1, ease: "power3.inOut" }, 0);
+      tl.fromTo(R("#c05-dressi"), { scale: 1.2 }, { scale: 1.04, duration: 5.5, ease: "power1.out" }, 0);
+      tl.fromTo(R("#c05-fr"), { opacity: 0, scale: 1.04 }, { opacity: 0.85, scale: 1, duration: 0.9, ease: "power2.out" }, 0.8);
+      tl.fromTo(R("#c05-k"), { opacity: 0 }, { opacity: 1, duration: 0.6 }, 0.9);
+      tl.fromTo(R("#c05-pm"), { opacity: 0, clipPath: "inset(0% 100% 0% 0%)" }, { opacity: 1, clipPath: "inset(0% 0% 0% 0%)", duration: 1.0, ease: "power2.inOut" }, 0.9);
+      tl.fromTo(R("#c05-s1"), { yPercent: 110 }, { yPercent: 0, duration: 0.8, ease: "power3.out" }, 1.6);
+      tl.fromTo(R("#c05-s2"), { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 2.2);
+
+      tl.to({}, { duration: 5.5 }, 0);
+      window.__timelines["05-robe"] = tl;
+    })();
+  </script>
+</template>

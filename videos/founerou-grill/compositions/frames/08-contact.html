@@ -1,0 +1,78 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Anton"; src: url("assets/fonts/anton-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Black Ops One"; src: url("assets/fonts/black-ops-one-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Permanent Marker"; src: url("assets/fonts/permanent-marker-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 500; src: url("assets/fonts/oswald-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 700; src: url("assets/fonts/oswald-latin-700-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: #0B0908; }
+
+    .f08-a { position: absolute; }
+    .f08-c { left: 0; right: 0; text-align: center; }
+    .f08-full { position: absolute; inset: 0; }
+    .f08-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+    .f08-h { font-family: "Anton"; color: #F4E9D8; text-transform: uppercase; line-height: 0.92; white-space: nowrap; letter-spacing: 0.005em; }
+    .f08-st { font-family: "Black Ops One"; color: #F4E9D8; line-height: 1; white-space: nowrap; }
+    .f08-gr { padding: 0.22em 0.04em; margin-top: -0.22em; -webkit-mask-image: url(assets/images/grunge.png); -webkit-mask-size: 640px 640px; mask-image: url(assets/images/grunge.png); mask-size: 640px 640px; }
+    .f08-mk { font-family: "Permanent Marker"; color: #F4E9D8; white-space: nowrap; }
+    .f08-in { font-family: "Oswald"; font-weight: 500; color: #F4E9D8; white-space: nowrap; letter-spacing: 0.04em; }
+    .f08-kick { font-family: "Oswald"; font-weight: 700; font-size: 32px; letter-spacing: 0.34em; color: #FFB627; white-space: nowrap; text-transform: uppercase; }
+    .f08-coal { position: absolute; inset: 0; background: radial-gradient(70% 45% at 50% 62%, #2a140a 0%, #0B0908 70%); }
+    .f08-slate { position: absolute; inset: 0; background: url(assets/images/slate.jpg) center / cover; }
+    .f08-food { position: absolute; display: block; filter: drop-shadow(0 26px 30px rgba(0,0,0,0.55)); }
+    .f08-band { position: absolute; -webkit-mask: url(assets/images/brush.png) center / 100% 100% no-repeat; mask: url(assets/images/brush.png) center / 100% 100% no-repeat; }
+    .f08-band span { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; white-space: nowrap; }
+    .f08-m { position: absolute; overflow: hidden; box-sizing: content-box; padding-top: 70px; margin-top: -70px; }
+    .f08-m > * { display: inline-block; }
+
+
+    #f08-frame { position: absolute; left: 90px; top: 300px; width: 900px; height: 460px; border: 4px solid rgba(244,233,216,0.85); }
+    #f08-frame i { position: absolute; left: 50%; top: -24px; width: 220px; height: 44px; margin-left: -110px; background: #0B0908; }
+    .f08-ad { font-family: "Oswald"; font-weight: 500; color: #F4E9D8; letter-spacing: 0.06em; }
+
+  </style>
+  <div id="root" data-composition-id="08-contact" data-start="0" data-duration="6.0" data-width="1080" data-height="1920">
+    <div id="f08-clip" class="clip" data-start="0" data-duration="6.0" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="f08-coal"></div>
+    <canvas class="f08-cv" id="f08-fl" width="1080" height="1920"></canvas>
+    <canvas class="f08-cv" id="f08-emb" width="1080" height="1920"></canvas>
+    <div id="f08-shk" class="f08-full">
+      <div id="f08-frame"><i></i></div>
+      <div class="f08-a f08-c f08-st f08-gr" id="f08-b1" style="top:360px; font-size:150px">FOUNEROU</div>
+      <div class="f08-a f08-c f08-st f08-gr" id="f08-b2" style="top:530px; font-size:180px; color:#F26A1B">GRILL'S</div>
+      <div class="f08-a f08-c f08-ad" id="f08-a1" style="top:860px; font-size:54px">72 BD DE BRANDEBOURG</div>
+      <div class="f08-a f08-c f08-ad" id="f08-a2" style="top:940px; font-size:46px; opacity:0.85">94200 IVRY-SUR-SEINE</div>
+    <div class="f08-band" id="f08-tel" style="left:20px; top:1060px; width:1040px; height:250px; background:#F26A1B"><span style="font-family:Anton; font-size:112px; color:#0B0908; letter-spacing:0.03em">01 49 87 07 96</span></div>
+      <div class="f08-a f08-c f08-in" id="f08-h" style="top:1360px; font-size:44px; color:#FFB627">OUVERT 7J/7 · 11H – 2H · HALAL</div>
+    </div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="08-contact"] ' + s);
+      const __e = FG.embers(R("#f08-emb"), { n: 120, seed: 21 });
+      const __l = FG.flames(R("#f08-fl"), { y: 1990, height: 820, n: 280, size: 120, alpha: 0.19, seed: 9 });
+      const __f = { t: 0 };
+      tl.fromTo(__f, { t: 0 }, { t: 4.7, duration: 4.7, ease: "none", onUpdate: () => { __e(__f.t); __l(__f.t); } }, 0);
+      __e(__f.t); __l(__f.t);
+      tl.fromTo(R("#f08-frame"), { opacity: 0, scale: 1.15 }, { opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" }, 0.1);
+      tl.fromTo(R("#f08-b1"), { opacity: 0, scale: 1.7, filter: "blur(14px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.32, ease: "expo.out" }, 0.2);
+      tl.fromTo(R("#f08-b2"), { opacity: 0, scale: 1.9, filter: "blur(14px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.32, ease: "expo.out" }, 0.45);
+      tl.fromTo(R("#f08-shk"), { x: -19, y: 12 }, { x: 0, y: 0, duration: 0.45, ease: "elastic.out(1.2, 0.3)", immediateRender: false }, 0.5);
+      tl.fromTo([R("#f08-b1"), R("#f08-b2")], { opacity: 0.55 }, { opacity: 1, duration: 0.06, repeat: 5, yoyo: true, ease: "none", immediateRender: false }, 0.8);
+      tl.fromTo(R("#f08-a1"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 1.0);
+      tl.fromTo(R("#f08-a2"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 1.15);
+      tl.fromTo(R("#f08-tel"), { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.45, ease: "power3.inOut" }, 1.4);
+      tl.fromTo(R("#f08-tel span"), { opacity: 0, scale: 1.6, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.3, ease: "expo.out" }, 1.67);
+      tl.fromTo(R("#f08-shk"), { x: -21, y: 13 }, { x: 0, y: 0, duration: 0.45, ease: "elastic.out(1.2, 0.3)", immediateRender: false }, 1.7);
+      tl.fromTo(R("#f08-h"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 1.95);
+      tl.fromTo(R("#f08-tel span"), { scale: 1 }, { scale: 1.04, duration: 0.42, ease: "sine.inOut", yoyo: true, repeat: 3, immediateRender: false }, 2.5);
+
+      tl.to({}, { duration: 6.0 }, 0);
+      window.__timelines["08-contact"] = tl;
+    })();
+  </script>
+</template>

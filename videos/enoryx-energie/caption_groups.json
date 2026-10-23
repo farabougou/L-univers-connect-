@@ -1,0 +1,550 @@
+{
+  "total_duration_s": 30.33,
+  "width": 1080,
+  "height": 1920,
+  "groups": [
+    {
+      "id": "caption-group-0",
+      "frame": 1,
+      "start": 0.04,
+      "end": 0.428,
+      "text": "La nuit,",
+      "words": [
+        {
+          "id": "caption-word-0-0",
+          "text": "La",
+          "start": 0.04,
+          "end": 0.234
+        },
+        {
+          "id": "caption-word-0-1",
+          "text": "nuit,",
+          "start": 0.234,
+          "end": 0.428
+        }
+      ]
+    },
+    {
+      "id": "caption-group-1",
+      "frame": 1,
+      "start": 0.428,
+      "end": 1.551,
+      "text": "le chauffage tourne",
+      "words": [
+        {
+          "id": "caption-word-1-0",
+          "text": "le",
+          "start": 0.428,
+          "end": 0.732
+        },
+        {
+          "id": "caption-word-1-1",
+          "text": "chauffage",
+          "start": 0.732,
+          "end": 1.213
+        },
+        {
+          "id": "caption-word-1-2",
+          "text": "tourne",
+          "start": 1.214,
+          "end": 1.551
+        }
+      ]
+    },
+    {
+      "id": "caption-group-2",
+      "frame": 1,
+      "start": 1.551,
+      "end": 2.393,
+      "text": "encore.",
+      "words": [
+        {
+          "id": "caption-word-2-0",
+          "text": "encore.",
+          "start": 1.551,
+          "end": 2.392
+        }
+      ]
+    },
+    {
+      "id": "caption-group-3",
+      "frame": 1,
+      "start": 2.393,
+      "end": 3.693,
+      "text": "Le gaspillage d'énergie",
+      "words": [
+        {
+          "id": "caption-word-3-0",
+          "text": "Le",
+          "start": 2.393,
+          "end": 2.586
+        },
+        {
+          "id": "caption-word-3-1",
+          "text": "gaspillage",
+          "start": 2.587,
+          "end": 3.212
+        },
+        {
+          "id": "caption-word-3-2",
+          "text": "d'énergie",
+          "start": 3.212,
+          "end": 3.693
+        }
+      ]
+    },
+    {
+      "id": "caption-group-4",
+      "frame": 1,
+      "start": 3.693,
+      "end": 4.97,
+      "text": "est souvent invisible.",
+      "words": [
+        {
+          "id": "caption-word-4-0",
+          "text": "est",
+          "start": 3.693,
+          "end": 3.887
+        },
+        {
+          "id": "caption-word-4-1",
+          "text": "souvent",
+          "start": 3.887,
+          "end": 4.225
+        },
+        {
+          "id": "caption-word-4-2",
+          "text": "invisible.",
+          "start": 4.225,
+          "end": 4.85
+        }
+      ]
+    },
+    {
+      "id": "caption-group-5",
+      "frame": 2,
+      "start": 6.21,
+      "end": 7.591,
+      "text": "Le décret tertiaire",
+      "words": [
+        {
+          "id": "caption-word-5-0",
+          "text": "Le",
+          "start": 6.21,
+          "end": 6.434
+        },
+        {
+          "id": "caption-word-5-1",
+          "text": "décret",
+          "start": 6.434,
+          "end": 6.824
+        },
+        {
+          "id": "caption-word-5-2",
+          "text": "tertiaire",
+          "start": 6.824,
+          "end": 7.591
+        }
+      ]
+    },
+    {
+      "id": "caption-group-6",
+      "frame": 2,
+      "start": 7.591,
+      "end": 9.067,
+      "text": "impose moins quarante",
+      "words": [
+        {
+          "id": "caption-word-6-0",
+          "text": "impose",
+          "start": 7.591,
+          "end": 8.147
+        },
+        {
+          "id": "caption-word-6-1",
+          "text": "moins",
+          "start": 8.147,
+          "end": 8.371
+        },
+        {
+          "id": "caption-word-6-2",
+          "text": "quarante",
+          "start": 8.371,
+          "end": 9.067
+        }
+      ]
+    },
+    {
+      "id": "caption-group-7",
+      "frame": 2,
+      "start": 9.067,
+      "end": 9.516,
+      "text": "pour cent",
+      "words": [
+        {
+          "id": "caption-word-7-0",
+          "text": "pour",
+          "start": 9.067,
+          "end": 9.291
+        },
+        {
+          "id": "caption-word-7-1",
+          "text": "cent",
+          "start": 9.292,
+          "end": 9.516
+        }
+      ]
+    },
+    {
+      "id": "caption-group-8",
+      "frame": 2,
+      "start": 9.516,
+      "end": 10.36,
+      "text": "d'ici 2030.",
+      "words": [
+        {
+          "id": "caption-word-8-0",
+          "text": "d'ici",
+          "start": 9.516,
+          "end": 9.906
+        },
+        {
+          "id": "caption-word-8-1",
+          "text": "2030.",
+          "start": 9.906,
+          "end": 10.24
+        }
+      ]
+    },
+    {
+      "id": "caption-group-9",
+      "frame": 3,
+      "start": 11.71,
+      "end": 12.846,
+      "text": "Enoryx connecte vos",
+      "words": [
+        {
+          "id": "caption-word-9-0",
+          "text": "Enoryx",
+          "start": 11.71,
+          "end": 12.141
+        },
+        {
+          "id": "caption-word-9-1",
+          "text": "connecte",
+          "start": 12.141,
+          "end": 12.672
+        },
+        {
+          "id": "caption-word-9-2",
+          "text": "vos",
+          "start": 12.673,
+          "end": 12.846
+        }
+      ]
+    },
+    {
+      "id": "caption-group-10",
+      "frame": 3,
+      "start": 12.846,
+      "end": 13.934,
+      "text": "équipements et les",
+      "words": [
+        {
+          "id": "caption-word-10-0",
+          "text": "équipements",
+          "start": 12.846,
+          "end": 13.406
+        },
+        {
+          "id": "caption-word-10-1",
+          "text": "et",
+          "start": 13.406,
+          "end": 13.76
+        },
+        {
+          "id": "caption-word-10-2",
+          "text": "les",
+          "start": 13.76,
+          "end": 13.934
+        }
+      ]
+    },
+    {
+      "id": "caption-group-11",
+      "frame": 3,
+      "start": 13.934,
+      "end": 15.09,
+      "text": "surveille en continu.",
+      "words": [
+        {
+          "id": "caption-word-11-0",
+          "text": "surveille",
+          "start": 13.934,
+          "end": 14.365
+        },
+        {
+          "id": "caption-word-11-1",
+          "text": "en",
+          "start": 14.365,
+          "end": 14.539
+        },
+        {
+          "id": "caption-word-11-2",
+          "text": "continu.",
+          "start": 14.539,
+          "end": 14.97
+        }
+      ]
+    },
+    {
+      "id": "caption-group-12",
+      "frame": 4,
+      "start": 16.15,
+      "end": 17.206,
+      "text": "Il compare chaque",
+      "words": [
+        {
+          "id": "caption-word-12-0",
+          "text": "Il",
+          "start": 16.15,
+          "end": 16.325
+        },
+        {
+          "id": "caption-word-12-1",
+          "text": "compare",
+          "start": 16.326,
+          "end": 16.761
+        },
+        {
+          "id": "caption-word-12-2",
+          "text": "chaque",
+          "start": 16.761,
+          "end": 17.206
+        }
+      ]
+    },
+    {
+      "id": "caption-group-13",
+      "frame": 4,
+      "start": 17.206,
+      "end": 17.947,
+      "text": "consommation à",
+      "words": [
+        {
+          "id": "caption-word-13-0",
+          "text": "consommation",
+          "start": 17.206,
+          "end": 17.772
+        },
+        {
+          "id": "caption-word-13-1",
+          "text": "à",
+          "start": 17.772,
+          "end": 17.947
+        }
+      ]
+    },
+    {
+      "id": "caption-group-14",
+      "frame": 4,
+      "start": 17.947,
+      "end": 18.428,
+      "text": "la météo",
+      "words": [
+        {
+          "id": "caption-word-14-0",
+          "text": "la",
+          "start": 17.947,
+          "end": 18.123
+        },
+        {
+          "id": "caption-word-14-1",
+          "text": "météo",
+          "start": 18.123,
+          "end": 18.428
+        }
+      ]
+    },
+    {
+      "id": "caption-group-15",
+      "frame": 4,
+      "start": 18.428,
+      "end": 19.239,
+      "text": "et détecte",
+      "words": [
+        {
+          "id": "caption-word-15-0",
+          "text": "et",
+          "start": 18.428,
+          "end": 18.804
+        },
+        {
+          "id": "caption-word-15-1",
+          "text": "détecte",
+          "start": 18.804,
+          "end": 19.239
+        }
+      ]
+    },
+    {
+      "id": "caption-group-16",
+      "frame": 4,
+      "start": 19.239,
+      "end": 19.97,
+      "text": "les dérives.",
+      "words": [
+        {
+          "id": "caption-word-16-0",
+          "text": "les",
+          "start": 19.239,
+          "end": 19.414
+        },
+        {
+          "id": "caption-word-16-1",
+          "text": "dérives.",
+          "start": 19.415,
+          "end": 19.85
+        }
+      ]
+    },
+    {
+      "id": "caption-group-17",
+      "frame": 5,
+      "start": 21.04,
+      "end": 21.438,
+      "text": "Puis il",
+      "words": [
+        {
+          "id": "caption-word-17-0",
+          "text": "Puis",
+          "start": 21.04,
+          "end": 21.239
+        },
+        {
+          "id": "caption-word-17-1",
+          "text": "il",
+          "start": 21.239,
+          "end": 21.437
+        }
+      ]
+    },
+    {
+      "id": "caption-group-18",
+      "frame": 5,
+      "start": 21.438,
+      "end": 22.571,
+      "text": "déclenche l'intervention,",
+      "words": [
+        {
+          "id": "caption-word-18-0",
+          "text": "déclenche",
+          "start": 21.438,
+          "end": 21.931
+        },
+        {
+          "id": "caption-word-18-1",
+          "text": "l'intervention,",
+          "start": 21.931,
+          "end": 22.571
+        }
+      ]
+    },
+    {
+      "id": "caption-group-19",
+      "frame": 5,
+      "start": 22.571,
+      "end": 23.575,
+      "text": "avant que la",
+      "words": [
+        {
+          "id": "caption-word-19-0",
+          "text": "avant",
+          "start": 22.571,
+          "end": 22.917
+        },
+        {
+          "id": "caption-word-19-1",
+          "text": "que",
+          "start": 22.917,
+          "end": 23.376
+        },
+        {
+          "id": "caption-word-19-2",
+          "text": "la",
+          "start": 23.376,
+          "end": 23.575
+        }
+      ]
+    },
+    {
+      "id": "caption-group-20",
+      "frame": 5,
+      "start": 23.575,
+      "end": 24.99,
+      "text": "facture ne s'envole.",
+      "words": [
+        {
+          "id": "caption-word-20-0",
+          "text": "facture",
+          "start": 23.575,
+          "end": 24.178
+        },
+        {
+          "id": "caption-word-20-1",
+          "text": "ne",
+          "start": 24.178,
+          "end": 24.377
+        },
+        {
+          "id": "caption-word-20-2",
+          "text": "s'envole.",
+          "start": 24.377,
+          "end": 24.87
+        }
+      ]
+    },
+    {
+      "id": "caption-group-21",
+      "frame": 6,
+      "start": 26.04,
+      "end": 26.508,
+      "text": "Enoryx.",
+      "words": [
+        {
+          "id": "caption-word-21-0",
+          "text": "Enoryx.",
+          "start": 26.04,
+          "end": 26.507
+        }
+      ]
+    },
+    {
+      "id": "caption-group-22",
+      "frame": 6,
+      "start": 26.508,
+      "end": 28.12,
+      "text": "Chaque kilowattheure compte.",
+      "words": [
+        {
+          "id": "caption-word-22-0",
+          "text": "Chaque",
+          "start": 26.508,
+          "end": 26.835
+        },
+        {
+          "id": "caption-word-22-1",
+          "text": "kilowattheure",
+          "start": 26.836,
+          "end": 27.582
+        },
+        {
+          "id": "caption-word-22-2",
+          "text": "compte.",
+          "start": 27.582,
+          "end": 28
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,354 @@
+{
+  "bgm": {
+    "path": "assets/music.wav",
+    "source": "host"
+  },
+  "bgm_pending": false,
+  "voices": [
+    {
+      "frame": 1,
+      "path": "assets/voice/01.wav",
+      "duration_s": 1.25,
+      "words": [
+        {
+          "text": "Vous",
+          "start": 0.06,
+          "end": 0.211
+        },
+        {
+          "text": "avez",
+          "start": 0.211,
+          "end": 0.474
+        },
+        {
+          "text": "une",
+          "start": 0.474,
+          "end": 0.737
+        },
+        {
+          "text": "idée ?",
+          "start": 0.737,
+          "end": 1.0
+        }
+      ]
+    },
+    {
+      "frame": 2,
+      "path": "assets/voice/02.wav",
+      "duration_s": 2.1,
+      "words": [
+        {
+          "text": "SK",
+          "start": 0.2,
+          "end": 0.465
+        },
+        {
+          "text": "Print",
+          "start": 0.465,
+          "end": 0.729
+        },
+        {
+          "text": "lui",
+          "start": 0.73,
+          "end": 0.994
+        },
+        {
+          "text": "donne",
+          "start": 0.994,
+          "end": 1.455
+        },
+        {
+          "text": "vie.",
+          "start": 1.455,
+          "end": 1.72
+        }
+      ]
+    },
+    {
+      "frame": 3,
+      "path": "assets/voice/03.wav",
+      "duration_s": 4.1,
+      "words": [
+        {
+          "text": "T-shirts,",
+          "start": 0.24,
+          "end": 0.476
+        },
+        {
+          "text": "maillots,",
+          "start": 0.476,
+          "end": 0.978
+        },
+        {
+          "text": "casquettes :",
+          "start": 0.978,
+          "end": 1.564
+        },
+        {
+          "text": "nous",
+          "start": 1.564,
+          "end": 1.8
+        },
+        {
+          "text": "personnalisons",
+          "start": 2.08,
+          "end": 2.867
+        },
+        {
+          "text": "vos",
+          "start": 2.867,
+          "end": 3.103
+        },
+        {
+          "text": "textiles.",
+          "start": 3.104,
+          "end": 3.69
+        }
+      ]
+    },
+    {
+      "frame": 4,
+      "path": "assets/voice/04.wav",
+      "duration_s": 4.18,
+      "words": [
+        {
+          "text": "Flyers,",
+          "start": 0.26,
+          "end": 0.473
+        },
+        {
+          "text": "cartes",
+          "start": 0.473,
+          "end": 0.843
+        },
+        {
+          "text": "de",
+          "start": 0.843,
+          "end": 1.056
+        },
+        {
+          "text": "visite,",
+          "start": 1.056,
+          "end": 1.584
+        },
+        {
+          "text": "affiches,",
+          "start": 1.88,
+          "end": 2.211
+        },
+        {
+          "text": "bâches",
+          "start": 2.212,
+          "end": 2.752
+        },
+        {
+          "text": "et",
+          "start": 2.752,
+          "end": 2.964
+        },
+        {
+          "text": "autocollants.",
+          "start": 3.12,
+          "end": 3.77
+        }
+      ]
+    },
+    {
+      "frame": 5,
+      "path": "assets/voice/05.wav",
+      "duration_s": 4.17,
+      "words": [
+        {
+          "text": "Des",
+          "start": 0.26,
+          "end": 0.454
+        },
+        {
+          "text": "couleurs",
+          "start": 0.454,
+          "end": 0.791
+        },
+        {
+          "text": "éclatantes,",
+          "start": 0.791,
+          "end": 1.416
+        },
+        {
+          "text": "un",
+          "start": 1.55,
+          "end": 1.699
+        },
+        {
+          "text": "travail",
+          "start": 1.7,
+          "end": 2.037
+        },
+        {
+          "text": "soigné,",
+          "start": 2.037,
+          "end": 2.374
+        },
+        {
+          "text": "un",
+          "start": 2.374,
+          "end": 2.568
+        },
+        {
+          "text": "service",
+          "start": 2.77,
+          "end": 3.159
+        },
+        {
+          "text": "rapide.",
+          "start": 3.159,
+          "end": 3.82
+        }
+      ]
+    },
+    {
+      "frame": 6,
+      "path": "assets/voice/06.wav",
+      "duration_s": 3.55,
+      "words": [
+        {
+          "text": "Pour",
+          "start": 0.23,
+          "end": 0.431
+        },
+        {
+          "text": "les",
+          "start": 0.431,
+          "end": 0.632
+        },
+        {
+          "text": "particuliers,",
+          "start": 0.632,
+          "end": 1.28
+        },
+        {
+          "text": "les",
+          "start": 1.28,
+          "end": 1.481
+        },
+        {
+          "text": "entreprises",
+          "start": 1.482,
+          "end": 2.13
+        },
+        {
+          "text": "et",
+          "start": 2.13,
+          "end": 2.331
+        },
+        {
+          "text": "les",
+          "start": 2.331,
+          "end": 2.532
+        },
+        {
+          "text": "associations.",
+          "start": 2.532,
+          "end": 3.18
+        }
+      ]
+    },
+    {
+      "frame": 7,
+      "path": "assets/voice/07.wav",
+      "duration_s": 11.301,
+      "words": [
+        {
+          "text": "SK",
+          "start": 0.25,
+          "end": 0.474
+        },
+        {
+          "text": "Print,",
+          "start": 0.474,
+          "end": 0.698
+        },
+        {
+          "text": "nous",
+          "start": 0.698,
+          "end": 0.922
+        },
+        {
+          "text": "imprimons",
+          "start": 1.23,
+          "end": 1.618
+        },
+        {
+          "text": "vos",
+          "start": 1.618,
+          "end": 1.842
+        },
+        {
+          "text": "idées.",
+          "start": 1.842,
+          "end": 2.232
+        },
+        {
+          "text": "Appelez",
+          "start": 2.232,
+          "end": 3.388
+        },
+        {
+          "text": "le",
+          "start": 3.388,
+          "end": 3.612
+        },
+        {
+          "text": "quatre-vingt-trois,",
+          "start": 3.612,
+          "end": 4.453
+        },
+        {
+          "text": "soixante-cinq,",
+          "start": 4.454,
+          "end": 5.175
+        },
+        {
+          "text": "quatorze,",
+          "start": 5.175,
+          "end": 5.841
+        },
+        {
+          "text": "soixante-dix-huit.",
+          "start": 5.841,
+          "end": 6.729
+        },
+        {
+          "text": "Ou",
+          "start": 6.96,
+          "end": 7.653
+        },
+        {
+          "text": "le",
+          "start": 7.653,
+          "end": 7.877
+        },
+        {
+          "text": "quatre-vingt-quatorze,",
+          "start": 7.877,
+          "end": 8.93
+        },
+        {
+          "text": "soixante-dix-sept,",
+          "start": 8.931,
+          "end": 9.818
+        },
+        {
+          "text": "quarante-sept,",
+          "start": 10.01,
+          "end": 10.63
+        },
+        {
+          "text": "seize.",
+          "start": 10.63,
+          "end": 11.02
+        }
+      ]
+    }
+  ],
+  "sfx": []
+}

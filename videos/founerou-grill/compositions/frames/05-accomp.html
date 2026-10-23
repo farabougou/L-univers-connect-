@@ -1,0 +1,71 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Anton"; src: url("assets/fonts/anton-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Black Ops One"; src: url("assets/fonts/black-ops-one-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Permanent Marker"; src: url("assets/fonts/permanent-marker-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 500; src: url("assets/fonts/oswald-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 700; src: url("assets/fonts/oswald-latin-700-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: #0B0908; }
+
+    .f05-a { position: absolute; }
+    .f05-c { left: 0; right: 0; text-align: center; }
+    .f05-full { position: absolute; inset: 0; }
+    .f05-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+    .f05-h { font-family: "Anton"; color: #F4E9D8; text-transform: uppercase; line-height: 0.92; white-space: nowrap; letter-spacing: 0.005em; }
+    .f05-st { font-family: "Black Ops One"; color: #F4E9D8; line-height: 1; white-space: nowrap; }
+    .f05-gr { padding: 0.22em 0.04em; margin-top: -0.22em; -webkit-mask-image: url(assets/images/grunge.png); -webkit-mask-size: 640px 640px; mask-image: url(assets/images/grunge.png); mask-size: 640px 640px; }
+    .f05-mk { font-family: "Permanent Marker"; color: #F4E9D8; white-space: nowrap; }
+    .f05-in { font-family: "Oswald"; font-weight: 500; color: #F4E9D8; white-space: nowrap; letter-spacing: 0.04em; }
+    .f05-kick { font-family: "Oswald"; font-weight: 700; font-size: 32px; letter-spacing: 0.34em; color: #FFB627; white-space: nowrap; text-transform: uppercase; }
+    .f05-coal { position: absolute; inset: 0; background: radial-gradient(70% 45% at 50% 62%, #2a140a 0%, #0B0908 70%); }
+    .f05-slate { position: absolute; inset: 0; background: url(assets/images/slate.jpg) center / cover; }
+    .f05-food { position: absolute; display: block; filter: drop-shadow(0 26px 30px rgba(0,0,0,0.55)); }
+    .f05-band { position: absolute; -webkit-mask: url(assets/images/brush.png) center / 100% 100% no-repeat; mask: url(assets/images/brush.png) center / 100% 100% no-repeat; }
+    .f05-band span { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; white-space: nowrap; }
+    .f05-m { position: absolute; overflow: hidden; box-sizing: content-box; padding-top: 70px; margin-top: -70px; }
+    .f05-m > * { display: inline-block; }
+
+
+  </style>
+  <div id="root" data-composition-id="05-accomp" data-start="0" data-duration="4.25" data-width="1080" data-height="1920">
+    <div id="f05-clip" class="clip" data-start="0" data-duration="4.25" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="f05-slate"></div>
+    <div class="f05-full" style="background:radial-gradient(80% 60% at 50% 50%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.6) 100%)"></div>
+    <div id="f05-shk" class="f05-full">
+      <div class="f05-a f05-c f05-m" style="top:170px; height:150px"><span class="f05-h f05-gr" id="f05-t" style="font-size:132px; color:#F26A1B">Accompagnements</span></div>
+      <img class="f05-food" id="f05-w0" src="assets/images/food/pates.png" alt="" style="left:70px; top:360px; width:440px; ">
+      <div class="f05-a f05-h" id="f05-lb0" style="left:560px; top:420px; font-size:92px; text-align:left; width:420px">PÂTES<br>AU POULET</div>
+      <img class="f05-food" id="f05-w1" src="assets/images/food/riz.png" alt="" style="left:570px; top:700px; width:440px; ">
+      <div class="f05-a f05-h" id="f05-lb1" style="left:90px; top:760px; font-size:92px; text-align:right; width:420px">RIZ<br>THAÏ</div>
+      <img class="f05-food" id="f05-w2" src="assets/images/food/alloco.png" alt="" style="left:70px; top:1040px; width:440px; ">
+      <div class="f05-a f05-h" id="f05-lb2" style="left:560px; top:1130px; font-size:92px; text-align:left; width:420px">ALLOCO</div>
+      <div class="f05-band" id="f05-pr" style="left:80px; top:1430px; width:920px; height:230px; background:#F26A1B"><span style="font-family:Anton; font-size:150px; color:#0B0908">3€ <em style='font-style:normal; font-size:0.6em; margin-left:18px'>LA BARQUETTE</em></span></div>
+    </div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="05-accomp"] ' + s);
+      tl.fromTo(R("#f05-t"), { yPercent: 105 }, { yPercent: 0, duration: 0.45, ease: "power4.out" }, 0.1);
+      tl.fromTo(R("#f05-w0"), { x: -900, rotation: -40 }, { x: 0, rotation: -6, duration: 0.6, ease: "power3.out" }, 0.35);
+      tl.to(R("#f05-w0"), { rotation: 4, y: 12, duration: 3.0, ease: "sine.inOut" }, 0.95);
+      tl.fromTo(R("#f05-lb0"), { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 0.6);
+      tl.fromTo(R("#f05-w1"), { x: 900, rotation: 40 }, { x: 0, rotation: 6, duration: 0.6, ease: "power3.out" }, 0.65);
+      tl.to(R("#f05-w1"), { rotation: -4, y: -12, duration: 3.0, ease: "sine.inOut" }, 1.25);
+      tl.fromTo(R("#f05-lb1"), { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 0.9);
+      tl.fromTo(R("#f05-w2"), { x: -900, rotation: -40 }, { x: 0, rotation: -6, duration: 0.6, ease: "power3.out" }, 0.95);
+      tl.to(R("#f05-w2"), { rotation: 4, y: 12, duration: 3.0, ease: "sine.inOut" }, 1.55);
+      tl.fromTo(R("#f05-lb2"), { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 1.2);
+      tl.fromTo(R("#f05-pr"), { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.42, ease: "power3.inOut" }, 2.4);
+      tl.fromTo(R("#f05-pr span"), { opacity: 0, scale: 1.6, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.3, ease: "expo.out" }, 2.65);
+      tl.fromTo(R("#f05-shk"), { x: -18, y: 11 }, { x: 0, y: 0, duration: 0.45, ease: "elastic.out(1.2, 0.3)", immediateRender: false }, 2.67);
+      tl.to(R("#f05-shk"), { y: 1500, filter: "blur(18px)", duration: 0.28, ease: "power3.in" }, 3.72);
+
+      tl.to({}, { duration: 4.25 }, 0);
+      window.__timelines["05-accomp"] = tl;
+    })();
+  </script>
+</template>

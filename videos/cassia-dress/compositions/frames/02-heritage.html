@@ -1,0 +1,66 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Playfair Display"; font-weight: 600; src: url("assets/fonts/playfair-display-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Playfair Display"; font-weight: 700; src: url("assets/fonts/playfair-display-latin-700-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 500; src: url("assets/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 600; src: url("assets/fonts/montserrat-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Great Vibes"; font-weight: 400; src: url("assets/fonts/greatvibes-400.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Montserrat", sans-serif; color: #F1E6D2; background: #140D08; }
+
+    .c02-a { position: absolute; }
+    .c02-c { left: 0; right: 0; text-align: center; }
+    .c02-bg { position: absolute; inset: 0; background: radial-gradient(90% 60% at 50% 45%, #3a2416 0%, #2A1A10 55%, #140D08 100%); }
+    .c02-kick { font-family: "Montserrat"; font-weight: 600; font-size: 26px; letter-spacing: 0.3em; color: #C9923F; white-space: nowrap; }
+    .c02-t1 { font-family: "Playfair Display"; font-weight: 700; font-size: 92px; line-height: 1.05; color: #F1E6D2; white-space: nowrap; }
+    .c02-t2 { font-family: "Playfair Display"; font-weight: 600; font-size: 80px; line-height: 1.05; color: #C9923F; white-space: nowrap; }
+    .c02-sc { font-family: "Great Vibes"; font-weight: 400; color: #F1E6D2; white-space: nowrap; line-height: 1; }
+    .c02-ph { position: absolute; overflow: hidden; }
+    .c02-ph img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
+    .c02-band { position: absolute; left: 0; width: 1080px; height: 90px; }
+    .c02-band svg { display: block; }
+
+
+    #c02-cloth { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+    #c02-veil { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(20,13,8,0.97) 0%, rgba(20,13,8,0.9) 24%, rgba(20,13,8,0.55) 34%, rgba(20,13,8,0.55) 70%, rgba(20,13,8,0.95) 100%); }
+    #c02-rv { top: 1545px; font-size: 150px; }
+    #c02-ul { position: absolute; left: 330px; top: 1715px; width: 420px; height: 4px; background: #C9923F; transform-origin: 0 50%; }
+    #c02-arc { box-shadow: 0 30px 80px rgba(0,0,0,0.6); }
+    #c02-arcl { position: absolute; left: 175px; top: 545px; width: 730px; height: 960px; border: 3px solid #C9923F; border-radius: 365px 365px 20px 20px; }
+
+  </style>
+  <div id="root" data-composition-id="02-heritage" data-start="0" data-duration="5.3" data-width="1080" data-height="1920">
+    <div id="c02-clip" class="clip" data-start="0" data-duration="5.3" data-track-index="0" style="position:absolute; inset:0"></div>
+    <svg id="c02-cloth" width="1080" height="1920"><defs><pattern id="c02-cp" width="200" height="200" patternUnits="userSpaceOnUse"><rect width="200" height="200" fill="#1A110A"/><g fill="#E8D9BC"><circle cx="22" cy="22" r="6"/><circle cx="22" cy="50" r="6"/><circle cx="22" cy="78" r="6"/><circle cx="50" cy="22" r="6"/><circle cx="50" cy="50" r="6"/><circle cx="50" cy="78" r="6"/><circle cx="78" cy="22" r="6"/><circle cx="78" cy="50" r="6"/><circle cx="78" cy="78" r="6"/><rect x="116" y="12" width="8" height="76" rx="4"/><rect x="136" y="12" width="8" height="76" rx="4"/><rect x="156" y="12" width="8" height="76" rx="4"/><rect x="176" y="12" width="8" height="76" rx="4"/><rect x="0" y="94" width="200" height="10" rx="4"/><rect x="94" y="0" width="10" height="200" rx="4"/><circle cx="116" cy="116" r="5"/><circle cx="180" cy="116" r="5"/><circle cx="116" cy="180" r="5"/><circle cx="180" cy="180" r="5"/></g><g stroke="#E8D9BC" stroke-width="9" stroke-linecap="round" fill="none"><path d="M 14 130 L 80 190 M 80 130 L 14 190"/><path d="M 112 140 L 128 124 L 144 140 L 160 124 L 176 140 L 192 124 M 112 168 L 128 152 L 144 168 L 160 152 L 176 168 L 192 152"/></g></pattern></defs><rect width="1080" height="1920" fill="url(#c02-cp)"/></svg>
+    <div id="c02-veil"></div>
+    <div class="c02-a c02-kick c02-c" id="c02-k" style="top:190px">NOTRE HÉRITAGE</div>
+    <div class="c02-a c02-c c02-m" style="top:240px; overflow:hidden; height:110px"><span class="c02-t1" id="c02-s1" style="display:inline-block">Le Bogolan,</span></div>
+    <div class="c02-a c02-c c02-m" style="top:350px; overflow:hidden; height:100px"><span class="c02-t2" id="c02-s2" style="display:inline-block">revisité avec élégance</span></div>
+    <div id="c02-arcl"></div>
+    <div class="c02-ph" id="c02-arc" style="left:190px; top:560px; width:700px; height:930px; border-radius:350px 350px 16px 16px; "><img id="c02-arci" src="assets/images/post2.jpg" alt="" style="object-position:50% 30%"></div>
+    <div class="c02-a c02-c c02-sc" id="c02-rv">réinventé.</div>
+    <div id="c02-ul"></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="02-heritage"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="02-heritage"] ' + s);
+      tl.fromTo(R("#c02-cloth"), { clipPath: "inset(0% 0% 100% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 1.0, ease: "power3.inOut" }, 0);
+      tl.fromTo(R("#c02-cloth"), { y: 0 }, { y: -120, duration: 5.3, ease: "none" }, 0);
+      tl.fromTo(R("#c02-k"), { opacity: 0 }, { opacity: 1, duration: 0.6 }, 0.3);
+      tl.fromTo(R("#c02-s1"), { yPercent: 110 }, { yPercent: 0, duration: 0.8, ease: "power3.out" }, 0.35);
+      tl.fromTo(R("#c02-s2"), { yPercent: 110 }, { yPercent: 0, duration: 0.8, ease: "power3.out" }, 0.6);
+      tl.fromTo(R("#c02-arc"), { clipPath: "inset(100% 0% 0% 0% round 350px 350px 16px 16px)" }, { clipPath: "inset(0% 0% 0% 0% round 350px 350px 16px 16px)", duration: 1.1, ease: "power3.inOut" }, 0.5);
+      tl.fromTo(R("#c02-arci"), { scale: 1.22 }, { scale: 1.02, duration: 4.8, ease: "power1.out" }, 0.5);
+      tl.fromTo(R("#c02-arcl"), { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.9, ease: "power2.out" }, 1.1);
+      tl.fromTo(R("#c02-rv"), { opacity: 0, clipPath: "inset(0% 100% 0% 0%)" }, { opacity: 1, clipPath: "inset(0% 0% 0% 0%)", duration: 0.9, ease: "power2.inOut" }, 2.5);
+      tl.fromTo(R("#c02-ul"), { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: "power2.inOut" }, 3.1);
+
+      tl.to({}, { duration: 5.3 }, 0);
+      window.__timelines["02-heritage"] = tl;
+    })();
+  </script>
+</template>

@@ -1,0 +1,79 @@
+<template>
+  <style>
+@font-face { font-family: "Inter"; font-weight: 400; src: url("assets/fonts/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; src: url("assets/fonts/inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 700; src: url("assets/fonts/inter-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 800; src: url("assets/fonts/inter-latin-800-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 900; src: url("assets/fonts/inter-latin-900-normal.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 500; src: url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Inter", sans-serif; color: #FFFFFF; }
+
+    #k01-bg { position: absolute; inset: 0; background: radial-gradient(110% 60% at 50% 40%, #0c1a3a 0%, #050B1A 65%); }
+    .k01-kick { position: absolute; left: 0; right: 0; text-align: center; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 30px; letter-spacing: 0.16em; color: #38BDF8; }
+    .k01-h { position: absolute; left: 30px; right: 30px; text-align: center; font-weight: 900; letter-spacing: -0.04em; line-height: 1; color: #F8FAFC; white-space: nowrap; }
+    .k01-h em { font-style: normal; color: #38BDF8; }
+    .k01-card { position: absolute; border-radius: 40px; background: rgba(12,23,48,0.92); border: 2px solid #1E2A44; }
+    .k01-mono { font-family: "IBM Plex Mono", monospace; font-weight: 500; letter-spacing: 0.12em; }
+
+    #k01-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; display: block; }
+    .k01-pin { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+    .k01-pin > div { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); }
+
+
+    .k01-sh { text-shadow: 0 10px 34px rgba(5,11,26,0.95); }
+    .k01-h em.o { color: #EA580C; }
+    .k01-h em.g { color: #22C55E; }
+    .k01-badge { position: absolute; left: 0; right: 0; display: flex; justify-content: center; }
+    .k01-badge div { display: flex; align-items: center; gap: 14px; padding: 18px 34px; border-radius: 44px; font-weight: 900; font-size: 46px; color: #fff; white-space: nowrap; }
+    .k01-c { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+    .k01-c > div { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); }
+    .k01-gl { width: 300px; padding: 20px 24px; border-radius: 28px; background: linear-gradient(140deg, rgba(56,189,248,0.22), rgba(12,23,48,0.86) 55%); border: 2px solid rgba(125,211,252,0.45); box-shadow: 0 18px 50px rgba(0,0,0,0.45); }
+    .k01-gl .n { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 24px; color: #CBD5E1; white-space: nowrap; }
+    .k01-gl .n u { display: block; width: 14px; height: 14px; border-radius: 7px; background: #22C55E; }
+    .k01-gl b { display: block; margin-top: 6px; font-weight: 900; font-size: 46px; letter-spacing: -0.02em; color: #F8FAFC; white-space: nowrap; }
+
+    #k01-k { top: 150px; color: #F87171; }
+    #k01-h1 { top: 205px; font-size: 112px; }
+    #k01-h2 { top: 320px; font-size: 150px; }
+    #k01-ml { position: absolute; left: 0; right: 0; top: 1270px; text-align: center; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 28px; letter-spacing: 0.16em; color: #94A3B8; }
+    #k01-num { position: absolute; left: 0; right: 0; top: 1312px; text-align: center; font-weight: 900; font-size: 104px; letter-spacing: -0.03em; color: #F87171; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  </style>
+  <div id="root" data-composition-id="01-facture" data-start="0" data-duration="4.09" data-width="1080" data-height="1920">
+
+    <div id="k01-bg" class="clip" data-start="0" data-duration="4.09" data-track-index="0"></div>
+    <canvas id="k01-cv" width="1080" height="1920"></canvas>
+    <div class="k01-kick" id="k01-k">CHAQUE MOIS</div>
+    <div class="k01-h k01-sh" id="k01-h1">votre facture</div>
+    <div class="k01-h k01-sh" id="k01-h2"><em class="o">grimpe</em> ?</div>
+    <div id="k01-ml">FACTURE D'ÉLECTRICITÉ</div>
+    <div id="k01-num"><span id="k01-v">45 000</span> FCFA</div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="01-facture"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="01-facture"] ' + s);
+
+      const __r0 = ENX3D.meter(R("#k01-cv"));
+      const __r3 = (t) => __r0(t + 0);
+      const __s3 = { t: 0 };
+      tl.fromTo(__s3, { t: 0 }, { t: 3.69, duration: 3.69, ease: "none", onUpdate: () => __r3(__s3.t) }, 0);
+      __r3(0);
+      const __c = { v: 45000 };
+      const __cs = () => { R("#k01-v").textContent = Math.round(__c.v / 500) * 500 > 0 ? (Math.round(__c.v / 500) * 500).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + "" : "0"; };
+      tl.fromTo(__c, { v: 45000 }, { v: 215000, duration: 2.3, ease: "power2.in", onUpdate: __cs }, 0.3);
+      __cs();
+      tl.fromTo(R("#k01-k"), { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 0);
+      tl.fromTo(R("#k01-h1"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 0.25);
+      tl.fromTo(R("#k01-h2"), { opacity: 0, scale: 1.6 }, { opacity: 1, scale: 1, duration: 0.28, ease: "power4.out" }, 1.62);
+      tl.fromTo(R("#k01-ml"), { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.4);
+      tl.fromTo(R("#k01-num"), { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.8)" }, 0.35);
+      tl.fromTo(R("#k01-num"), { x: -7 }, { x: 7, duration: 0.05, repeat: 7, yoyo: true, immediateRender: false }, 2.6);
+
+      window.__timelines["01-facture"] = tl;
+    })();
+  </script>
+</template>

@@ -1,0 +1,6 @@
+# Asset inventory (user-supplied screenshots, 1290x2796 iPhone, dark mode)
+
+- capture/assets/screen-accueil.png — Home screen: KOFA header with blue "K" logo, "Bonjour 👋 Bamako, Mali", headline "Le goût de Bamako, livré chez vous." (second line orange), search bar + orange filter button, 4 category circles (Repas, Courses, Colis, Grillades), "Nos restaurants" with an orange "G / Grill — Grillades · Sebenikoro" card, blue "Parrainez un ami" promo card, orange floating bottom nav (Accueil active).
+- capture/assets/screen-diaspora.png — "Depuis l'étranger" page: headline "Faites plaisir à votre famille à Bamako, où que vous soyez", grid of ~29 round country flags with an arrow down to a big Mali flag "Bamako, Mali", then "Comment ça marche" card with 3 blue numbered steps.
+- capture/assets/screen-restaurant-onboarding.png — Restaurant onboarding: "Comment ça marche pour vous" 3 numbered steps (fiche, menu en ligne, commandes), big orange CTA "Déposer la candidature de mon restaurant →".
+- capture/assets/screen-compte.png — Account page: "Contacter le support (WhatsApp)", "Rejoindre KOFA autrement": Devenir livreur 🏎️, Inscrire mon restaurant 🍴, Devenir commerçant partenaire 🏪, Envoyer depuis l'étranger ✈️; orange bottom nav (Compte active).

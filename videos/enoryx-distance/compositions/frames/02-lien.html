@@ -1,0 +1,80 @@
+<template>
+  <style>
+@font-face { font-family: "Inter"; font-weight: 400; src: url("assets/fonts/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; src: url("assets/fonts/inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 700; src: url("assets/fonts/inter-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 800; src: url("assets/fonts/inter-latin-800-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 900; src: url("assets/fonts/inter-latin-900-normal.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 500; src: url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Inter", sans-serif; color: #FFFFFF; }
+
+    #k02-bg { position: absolute; inset: 0; background: radial-gradient(110% 60% at 50% 40%, #0c1a3a 0%, #050B1A 65%); }
+    .k02-kick { position: absolute; left: 0; right: 0; text-align: center; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 30px; letter-spacing: 0.16em; color: #38BDF8; }
+    .k02-h { position: absolute; left: 30px; right: 30px; text-align: center; font-weight: 900; letter-spacing: -0.04em; line-height: 1; color: #F8FAFC; white-space: nowrap; }
+    .k02-h em { font-style: normal; color: #38BDF8; }
+    .k02-card { position: absolute; border-radius: 40px; background: rgba(12,23,48,0.92); border: 2px solid #1E2A44; }
+    .k02-mono { font-family: "IBM Plex Mono", monospace; font-weight: 500; letter-spacing: 0.12em; }
+
+    #k02-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; display: block; }
+    .k02-pin { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+    .k02-pin > div { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); }
+
+
+    .k02-tag { display: flex; align-items: center; gap: 12px; padding: 14px 24px; border-radius: 30px; background: rgba(12,23,48,0.9); border: 2px solid #1E2A44; white-space: nowrap; }
+    .k02-tag b { display: block; font-weight: 700; font-size: 32px; color: #F8FAFC; }
+    .k02-tag s { display: block; text-decoration: none; font-weight: 700; font-size: 32px; color: #EA580C; }
+    .k02-tag i { display: block; width: 16px; height: 16px; border-radius: 8px; background: #38BDF8; }
+    .k02-badge { position: absolute; left: 0; right: 0; display: flex; justify-content: center; }
+    .k02-badge div { display: flex; align-items: center; gap: 14px; padding: 18px 34px; border-radius: 40px; font-weight: 900; font-size: 44px; letter-spacing: 0.02em; color: #fff; }
+    .k02-sh { text-shadow: 0 8px 30px rgba(5,11,26,0.9); }
+    .k02-stack { position: absolute; left: 70px; right: 70px; display: flex; flex-direction: column; gap: 22px; }
+    .k02-row { display: flex; align-items: center; gap: 20px; padding: 24px 30px; border-radius: 30px; background: rgba(12,23,48,0.92); border: 2px solid #1E2A44; }
+    .k02-row i { display: flex; flex: none; width: 56px; height: 56px; border-radius: 28px; align-items: center; justify-content: center; font-style: normal; font-weight: 900; font-size: 30px; color: #fff; }
+    .k02-row b { display: block; font-weight: 800; font-size: 40px; color: #F8FAFC; }
+
+
+    #k02-h { top: 640px; font-size: 92px; }
+    #k02-world { top: 1600px; }
+    #k02-world div { background: #0C1730; border: 2px solid #38BDF8; color: #F8FAFC; font-size: 34px; font-weight: 700; }
+    #k02-world em { font-style: normal; color: #38BDF8; }
+    .k02-pin > div.k02-mid { transform: translate(-50%, -50%); }
+    .k02-scr { width: 280px; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+    .k02-scr .k { display: flex; width: 86px; height: 86px; border-radius: 24px; background: #1D4ED8; align-items: center; justify-content: center; font-weight: 900; font-size: 48px; color: #fff; }
+    .k02-scr b { display: block; font-weight: 800; font-size: 34px; color: #F8FAFC; text-align: center; }
+    .k02-scr span { display: block; font-size: 26px; color: #94A3B8; }
+    .k02-scr i { display: flex; align-items: center; gap: 10px; font-style: normal; font-family: "IBM Plex Mono", monospace; font-size: 22px; letter-spacing: 0.12em; color: #16A34A; }
+    .k02-scr i u { display: block; width: 14px; height: 14px; border-radius: 7px; background: #16A34A; }
+    .k02-city { display: block; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 26px; letter-spacing: 0.12em; color: #EA580C; white-space: nowrap; text-shadow: 0 4px 18px rgba(5,11,26,0.95); }
+
+  </style>
+  <div id="root" data-composition-id="02-lien" data-start="0" data-duration="6.27" data-width="1080" data-height="1920">
+
+    <div id="k02-bg" class="clip" data-start="0" data-duration="6.27" data-track-index="0"></div>
+    <canvas id="k02-cv" width="1080" height="1920"></canvas>
+    <div class="k02-h k02-sh" id="k02-h">gardez le <em>contrôle</em></div>
+    <div class="k02-pin" id="k02-p0"><div class="k02-mid"><div class="k02-scr" id="k02-scr"><div class="k">E</div><b>Votre bâtiment</b><span>Bamako, Mali</span><i><u></u>EN LIGNE</i></div></div></div>
+    <div class="k02-pin" id="k02-p1"><div><span class="k02-city">BAMAKO</span></div></div>
+    <div class="k02-badge" id="k02-world" style="top:1440px"><div>depuis <em>n'importe où</em></div></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="02-lien"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="02-lien"] ' + s);
+
+      const P = [R("#k02-p0"), R("#k02-p1")];
+      const __r3 = ENX3D.link(R("#k02-cv"), P);
+      const __s3 = { t: 0 };
+      tl.fromTo(__s3, { t: 0 }, { t: 5.77, duration: 5.77, ease: "none", onUpdate: () => __r3(__s3.t) }, 0);
+      __r3(0);
+      tl.fromTo(R("#k02-p1 .k02-city"), { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.3);
+      tl.fromTo(R("#k02-scr"), { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" }, 1.0);
+      tl.fromTo(R("#k02-h"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 1.85);
+      tl.fromTo(R("#k02-world div"), { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.7)" }, 3.75);
+
+      window.__timelines["02-lien"] = tl;
+    })();
+  </script>
+</template>

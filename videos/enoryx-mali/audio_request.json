@@ -1,0 +1,46 @@
+{
+  "provider": "kokoro",
+  "speed": "0.9",
+  "lines": [
+    {
+      "id": "01",
+      "text": "Au Mali, l'électricité coûte cher. Et pendant les coupures, c'est le groupe électrogène qui brûle du gasoil."
+    },
+    {
+      "id": "02",
+      "text": "Pourtant, dans beaucoup de bureaux, d'hôtels et de cliniques, les climatiseurs tournent la nuit, dans des salles vides."
+    },
+    {
+      "id": "03",
+      "text": "Et quand une clim ou un groupe tombe en panne, on le découvre trop tard. La réparation coûte cher, et le travail s'arrête."
+    },
+    {
+      "id": "04",
+      "text": "Enoryx surveille tous vos équipements : climatiseurs, groupes électrogènes, chambres froides, compteurs. Vous voyez tout, à distance."
+    },
+    {
+      "id": "05",
+      "text": "Il repère ce qui consomme trop, où et quand. Et il estime ce que cela vous coûte, en francs CFA."
+    },
+    {
+      "id": "06",
+      "text": "Il voit aussi une machine qui fatigue, avant la panne. Votre technicien intervient au bon moment."
+    },
+    {
+      "id": "07",
+      "text": "Résultat : moins de gaspillage, moins de pannes, et des équipements mieux entretenus."
+    },
+    {
+      "id": "08",
+      "text": "Bureaux, hôtels, hôpitaux, banques, supermarchés : Enoryx s'adapte à votre bâtiment."
+    },
+    {
+      "id": "09",
+      "text": "Enoryx. Chaque kilowattheure compte."
+    }
+  ],
+  "bgm": {
+    "mode": "none"
+  },
+  "voice": "ff_siwis"
+}

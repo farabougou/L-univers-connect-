@@ -1,0 +1,59 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Cormorant"; font-weight: 300; src: url("assets/fonts/cormorant-garamond-latin-300-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 300; font-style: italic; src: url("assets/fonts/cormorant-garamond-latin-300-italic.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 400; font-style: italic; src: url("assets/fonts/cormorant-garamond-latin-400-italic.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 500; src: url("assets/fonts/cormorant-garamond-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 400; src: url("assets/fonts/montserrat-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 500; src: url("assets/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; }
+
+    .s05-a { position: absolute; }
+    .s05-c { left: 0; right: 0; text-align: center; }
+    .s05-cv { position: absolute; left: 0; top: 0; }
+    .s05-d { font-family: "Cormorant"; font-weight: 300; color: #F5E6D3; white-space: nowrap; line-height: 1.05; }
+    .s05-i { font-family: "Cormorant"; font-weight: 300; font-style: italic; color: #F5E6D3; white-space: nowrap; line-height: 1.05; }
+    .s05-cap { font-family: "Montserrat"; font-weight: 500; font-size: 25px; letter-spacing: 0.34em; color: #D4AF37; white-space: nowrap; text-transform: uppercase; }
+    .s05-w { display: inline-block; }
+    .s05-frame { position: absolute; overflow: hidden; background: #000; -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 72%, rgba(0,0,0,0) 100%); mask-image: linear-gradient(180deg, #000 0%, #000 72%, rgba(0,0,0,0) 100%); }
+    .s05-frame img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+    .s05-frame canvas { position: absolute; left: 0; top: 0; }
+    .s05-line { position: absolute; height: 1px; background: linear-gradient(90deg, rgba(212,175,55,0), #D4AF37, rgba(212,175,55,0)); }
+    .s05-glow { position: absolute; border-radius: 50%; background: radial-gradient(closest-side, rgba(212,175,55,0.38), rgba(212,175,55,0.08) 55%, rgba(212,175,55,0)); }
+
+
+  </style>
+  <div id="root" data-composition-id="05-monarque" data-start="0" data-duration="5.6" data-width="1080" data-height="1920">
+    <div id="s05-clip" class="clip" data-start="0" data-duration="5.6" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="s05-frame" id="s05-f" style="left:160px; top:200px; width:760px; height:1000px; border-radius:380px 380px 40px 40px"><img id="s05-fi" src="assets/images/monarque.jpg" alt=""><canvas id="s05-fv" width="760" height="1000"></canvas><canvas id="s05-st" width="760" height="1000" style="mix-blend-mode:screen"></canvas></div>
+    <div class="s05-a s05-c s05-i" id="s05-n" style="top:1225px; font-size:150px">Le Monarque</div>
+    <div class="s05-a s05-c s05-d" id="s05-s2" style="top:1415px; font-size:62px">Deux parfums. Un ciel d'étoiles.</div>
+    <div class="s05-a s05-c s05-cap" id="s05-s1" style="top:1530px">Double recharge · projecteur d'étoiles</div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="05-monarque"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="05-monarque"] ' + s);
+      const __r0 = AURA.vapour(R("#s05-fv"), {"x": 391.0, "y": 200.0, "dir": 0.0, "rise": 260, "size": 70, "alpha": 0.22, "n": 60, "life": 3.4, "seed": 33});
+      const __r1 = AURA.stars(R("#s05-st"), { n: 140, band: 0.42, seed: 8 });
+      const __p = { t: 0 };
+      tl.fromTo(__p, { t: 0 }, { t: 5.8, duration: 5.8, ease: "none", onUpdate: () => { __r0(__p.t); __r1(__p.t); } }, 0);
+      __r0(__p.t); __r1(__p.t);
+      tl.fromTo(R("#s05-f"), { clipPath: "inset(40% 34% 40% 34% round 760px 760px 760px 760px)", opacity: 0 }, { clipPath: "inset(0% 0% 0% 0% round 380px 380px 40px 40px)", opacity: 1, duration: 1.8, ease: "expo.out" }, 0.1);
+      tl.fromTo(R("#s05-fi"), { scale: 1.18, filter: "blur(10px) brightness(0.7)" }, { scale: 1.0, filter: "blur(0px) brightness(1)", duration: 4.4, ease: "power2.out" }, 0.1);
+      tl.fromTo(R("#s05-st"), { opacity: 0 }, { opacity: 1, duration: 1.4, ease: "power2.out" }, 2.5);
+      tl.fromTo(R("#s05-n"), { opacity: 0, y: 40, filter: "blur(18px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.6, ease: "expo.out" }, 0.9);
+      tl.fromTo(R("#s05-s2"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 1.6);
+      tl.fromTo(R("#s05-s1"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 2.6);
+      tl.to(R("#s05-f"), { clipPath: "inset(40% 34% 40% 34% round 760px 760px 760px 760px)", opacity: 0, filter: "blur(8px)", duration: 1.0, ease: "power3.in" }, 4.2);
+      tl.to([R("#s05-n"), R("#s05-s1"), R("#s05-s2")], { opacity: 0, y: -26, filter: "blur(14px)", duration: 0.8, ease: "power2.in", stagger: 0.04 }, 4.15);
+
+      tl.to({}, { duration: 5.6 }, 0);
+      window.__timelines["05-monarque"] = tl;
+    })();
+  </script>
+</template>

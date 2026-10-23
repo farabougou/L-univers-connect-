@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="assets/vendor/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #1A0406; }
+      #root { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: #1A0406; }
+      .scene { position: absolute; inset: 0; width: 100%; height: 100%; }
+      .vid { position: absolute; object-fit: cover; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="32" data-width="1080" data-height="1920" data-fps="25">
+      <div id="el-04-acc-bg" class="scene" data-composition-id="04-acc-bg" data-composition-src="compositions/frames/04-acc-bg.html" data-start="19.0" data-duration="4.0" data-track-index="5"></div>
+      <video id="v-h1" class="clip vid" src="assets/clips/cape-gros.mp4" data-start="0.0" data-duration="0.9" data-media-start="0.3" data-track-index="0" muted playsinline style="left:0; top:0; width:1080px; height:1920px;"></video>
+      <video id="v-h2" class="clip vid" src="assets/clips/blanc-gros.mp4" data-start="0.9" data-duration="0.9" data-media-start="0.4" data-track-index="1" muted playsinline style="left:0; top:0; width:1080px; height:1920px;"></video>
+      <video id="v-h3" class="clip vid" src="assets/clips/noir-gros.mp4" data-start="1.8" data-duration="0.9" data-media-start="0.6" data-track-index="0" muted playsinline style="left:0; top:0; width:1080px; height:1920px;"></video>
+      <video id="v-h4" class="clip vid" src="assets/clips/capuche-gros.mp4" data-start="2.7" data-duration="1.1" data-media-start="1.0" data-track-index="1" muted playsinline style="left:0; top:0; width:1080px; height:1920px;"></video>
+      <video id="v-l1" class="clip vid" src="assets/clips/cape-capuche.mp4" data-start="7.0" data-duration="3.1" data-media-start="0.0" data-track-index="0" muted playsinline style="left:0; top:0; width:1080px; height:1920px;"></video>
+      <video id="v-l2" class="clip vid" src="assets/clips/poncho-blanc.mp4" data-start="10.0" data-duration="3.1" data-media-start="0.0" data-track-index="1" muted playsinline style="left:0; top:0; width:1080px; height:1920px;"></video>
+      <video id="v-l3" class="clip vid" src="assets/clips/poncho-noir.mp4" data-start="13.0" data-duration="3.1" data-media-start="0.0" data-track-index="0" muted playsinline style="left:0; top:0; width:1080px; height:1920px;"></video>
+      <video id="v-l4" class="clip vid" src="assets/clips/gilet-franges.mp4" data-start="16.0" data-duration="3.1" data-media-start="0.0" data-track-index="1" muted playsinline style="left:0; top:0; width:1080px; height:1920px;"></video>
+      <video id="v-ac" class="clip vid" src="assets/clips/casquettes.mp4" data-start="19.0" data-duration="4.0" data-media-start="0.0" data-track-index="0" muted playsinline style="left:180px; top:420px; width:720px; height:1280px; border-radius:28px;"></video>
+      <video id="v-pr" class="clip vid" src="assets/clips/capuche-gros.mp4" data-start="23.0" data-duration="3.2" data-media-start="0.0" data-track-index="1" muted playsinline style="left:0; top:0; width:1080px; height:1920px;"></video>
+      <div id="el-01-accroche" class="scene" data-composition-id="01-accroche" data-composition-src="compositions/frames/01-accroche.html" data-start="0" data-duration="3.8" data-track-index="2"></div>
+      <div id="el-02-marque" class="scene" data-composition-id="02-marque" data-composition-src="compositions/frames/02-marque.html" data-start="3.6" data-duration="3.6" data-track-index="3"></div>
+      <div id="el-03-looks" class="scene" data-composition-id="03-looks" data-composition-src="compositions/frames/03-looks.html" data-start="7.0" data-duration="12.1" data-track-index="4"></div>
+      <div id="el-05-acc" class="scene" data-composition-id="05-acc" data-composition-src="compositions/frames/05-acc.html" data-start="19.0" data-duration="4.1" data-track-index="6"></div>
+      <div id="el-06-preuve" class="scene" data-composition-id="06-preuve" data-composition-src="compositions/frames/06-preuve.html" data-start="23.0" data-duration="3.3" data-track-index="7"></div>
+      <div id="el-07-contact" class="scene" data-composition-id="07-contact" data-composition-src="compositions/frames/07-contact.html" data-start="25.9" data-duration="6.1" data-track-index="8"></div>
+
+      <audio id="el-bgm" src="assets/music.wav" data-start="0" data-duration="32" data-track-index="15" data-volume="0.22"></audio>
+      <audio id="el-vo1" src="assets/voice/01.wav" data-start="0.15" data-duration="3.28" data-track-index="20" data-volume="1"></audio>
+      <audio id="el-vo2" src="assets/voice/02.wav" data-start="3.95" data-duration="1.55" data-track-index="21" data-volume="1"></audio>
+      <audio id="el-vo3" src="assets/voice/03.wav" data-start="7.35" data-duration="1.43" data-track-index="22" data-volume="1"></audio>
+      <audio id="el-vo4" src="assets/voice/04.wav" data-start="10.3" data-duration="1.04" data-track-index="23" data-volume="1"></audio>
+      <audio id="el-vo5" src="assets/voice/05.wav" data-start="13.3" data-duration="1.43" data-track-index="24" data-volume="1"></audio>
+      <audio id="el-vo6" src="assets/voice/06.wav" data-start="16.3" data-duration="2.57" data-track-index="25" data-volume="1"></audio>
+      <audio id="el-vo7" src="assets/voice/07.wav" data-start="19.4" data-duration="3.0" data-track-index="26" data-volume="1"></audio>
+      <audio id="el-vo8" src="assets/voice/08.wav" data-start="23.15" data-duration="2.89" data-track-index="27" data-volume="1"></audio>
+      <audio id="el-vo9" src="assets/voice/09.wav" data-start="26.6" data-duration="4.08" data-track-index="28" data-volume="1"></audio>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+      (function () { var tl = window.__timelines["main"];
+        tl.fromTo("#v-h1", { scale: 1.0 }, { scale: 1.08, duration: 0.9, ease: "none" }, 0.0);
+        tl.fromTo("#v-h2", { scale: 1.0 }, { scale: 1.08, duration: 0.9, ease: "none" }, 0.9);
+        tl.fromTo("#v-h3", { scale: 1.0 }, { scale: 1.08, duration: 0.9, ease: "none" }, 1.8);
+        tl.fromTo("#v-h4", { scale: 1.0 }, { scale: 1.08, duration: 1.1, ease: "none" }, 2.7);
+        tl.fromTo("#v-l1", { scale: 1.0 }, { scale: 1.08, duration: 3.1, ease: "none" }, 7.0);
+        tl.fromTo("#v-l2", { scale: 1.0 }, { scale: 1.08, duration: 3.1, ease: "none" }, 10.0);
+        tl.fromTo("#v-l3", { scale: 1.0 }, { scale: 1.08, duration: 3.1, ease: "none" }, 13.0);
+        tl.fromTo("#v-l4", { scale: 1.0 }, { scale: 1.08, duration: 3.1, ease: "none" }, 16.0);
+        tl.fromTo("#v-ac", { scale: 0.96 }, { scale: 1.0, duration: 4.0, ease: "none" }, 19.0);
+        tl.fromTo("#v-pr", { scale: 1.0 }, { scale: 1.08, duration: 3.2, ease: "none" }, 23.0);
+        tl.fromTo("#el-02-marque", { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power2.out" }, 3.6);
+        tl.to("#el-02-marque", { clipPath: "inset(0% 0% 100% 0%)", duration: 0.35, ease: "power3.inOut" }, 6.85);
+        tl.fromTo("#el-04-acc-bg", { clipPath: "inset(100% 0% 0% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.4, ease: "power3.inOut" }, 19.0);
+        tl.fromTo("#v-ac", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 19.2);
+        tl.fromTo("#el-07-contact", { clipPath: "circle(0% at 50% 50%)" }, { clipPath: "circle(75% at 50% 50%)", duration: 0.6, ease: "power3.inOut" }, 25.9);
+        tl.to({}, { duration: 32 }, 0);
+      })();
+    </script>
+  </body>
+</html>

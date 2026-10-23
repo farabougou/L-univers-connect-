@@ -1,0 +1,72 @@
+<template>
+  <style>
+@font-face { font-family: "Inter"; font-weight: 400; src: url("assets/fonts/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; src: url("assets/fonts/inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 700; src: url("assets/fonts/inter-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 800; src: url("assets/fonts/inter-latin-800-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 900; src: url("assets/fonts/inter-latin-900-normal.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 500; src: url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Inter", sans-serif; color: #FFFFFF; }
+
+
+    #k07-bg { position: absolute; inset: 0; background: radial-gradient(110% 60% at 50% 42%, #23236b 0%, #0d0d2b 65%); }
+    .k07-kick { position: absolute; left: 0; right: 0; text-align: center; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 30px; letter-spacing: 0.16em; color: #F58F20; }
+    .k07-h { position: absolute; left: 30px; right: 30px; text-align: center; font-weight: 900; letter-spacing: -0.04em; line-height: 1; color: #FFFFFF; white-space: nowrap; text-shadow: 0 8px 30px rgba(0,0,30,0.7); }
+    .k07-h em { font-style: normal; color: #F58F20; }
+    .k07-chip { display: flex; align-items: center; gap: 12px; padding: 14px 26px; border-radius: 40px; background: rgba(46,46,142,0.92); border: 2px solid #4a4ab0; white-space: nowrap; }
+    .k07-chip b { display: block; font-weight: 800; font-size: 36px; color: #fff; }
+    .k07-chip u { display: block; width: 16px; height: 16px; border-radius: 8px; }
+    .k07-badge { position: absolute; left: 0; right: 0; display: flex; justify-content: center; }
+
+    #k07-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; display: block; }
+    .k07-pin { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+    .k07-pin > div { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); }
+
+
+    #k07-s1 { top: 930px; font-size: 64px; color: #2E2E8E; text-shadow: none; }
+    #k07-s2 { top: 1010px; font-size: 96px; color: #E00511; text-shadow: none; }
+    #k07-band { position: absolute; left: 0; right: 0; top: 1180px; height: 330px; background: #2E2E8E; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
+    #k07-band .t { display: flex; align-items: center; gap: 24px; }
+    #k07-band .ic { display: flex; width: 84px; height: 84px; border-radius: 42px; background: #25D366; align-items: center; justify-content: center; }
+    #k07-band b { display: block; font-weight: 900; font-size: 84px; letter-spacing: -0.01em; color: #fff; font-variant-numeric: tabular-nums; }
+    #k07-band span { display: block; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 28px; letter-spacing: 0.14em; color: #F58F20; }
+    #k07-black { position: absolute; inset: 0; background: #000; opacity: 0; }
+
+  </style>
+  <div id="root" data-composition-id="07-contact" data-start="0" data-duration="11.37" data-width="1080" data-height="1920">
+
+    <div id="k07-bg" class="clip" data-start="0" data-duration="11.37" data-track-index="0" style="background: radial-gradient(90% 60% at 50% 35%, #ffffff 0%, #eef0f8 60%, #d9dcef 100%)"></div>
+    <canvas id="k07-cv" width="1080" height="1920"></canvas>
+    <div class="k07-h" id="k07-s1">nous imprimons</div>
+    <div class="k07-h" id="k07-s2">vos idées.</div>
+    <div id="k07-band">
+      <span id="k07-wa">APPEL &amp; WHATSAPP</span>
+      <div class="t" id="k07-n1"><div class="ic"><svg width="46" height="46" viewBox="0 0 46 46"><path d="M15 9 C12 9 9 12 10 16 C12 25 21 34 30 36 C34 37 37 34 37 31 L37 28 L30 25 L27 28 C22 26 20 24 18 19 L21 16 L18 9 Z" fill="#fff"/></svg></div><b>83-65-14-78</b></div>
+      <div class="t" id="k07-n2"><b>94-77-47-16</b></div>
+    </div>
+    <div id="k07-black"></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="07-contact"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="07-contact"] ' + s);
+
+      const __r3 = SK3D.logoScene(R("#k07-cv"), { y: 4.3, t0: 0, z: 31, look: 0.2 });
+      const __s3 = { t: 0 };
+      tl.fromTo(__s3, { t: 0 }, { t: 11.37, duration: 11.37, ease: "none", onUpdate: () => __r3(__s3.t) }, 0);
+      __r3(0);
+      tl.fromTo(R("#k07-s1"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 0.5);
+      tl.fromTo(R("#k07-s2"), { opacity: 0, scale: 1.5 }, { opacity: 1, scale: 1, duration: 0.28, ease: "power4.out" }, 1.65);
+      tl.fromTo(R("#k07-band"), { opacity: 0, scaleY: 0 }, { opacity: 1, scaleY: 1, duration: 0.45, ease: "power3.out" }, 2.45);
+      tl.fromTo(R("#k07-wa"), { opacity: 0 }, { opacity: 1, duration: 0.3 }, 2.7);
+      tl.fromTo(R("#k07-n1"), { opacity: 0, x: -80 }, { opacity: 1, x: 0, duration: 0.45, ease: "power3.out" }, 3.2);
+      tl.fromTo(R("#k07-n2"), { opacity: 0, x: 80 }, { opacity: 1, x: 0, duration: 0.45, ease: "power3.out" }, 7.55);
+      tl.fromTo(R("#k07-black"), { opacity: 0 }, { opacity: 1, duration: 0.45, ease: "power1.in" }, 10.9);
+
+      window.__timelines["07-contact"] = tl;
+    })();
+  </script>
+</template>

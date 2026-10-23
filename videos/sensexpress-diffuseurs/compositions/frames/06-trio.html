@@ -1,0 +1,76 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Cormorant"; font-weight: 300; src: url("assets/fonts/cormorant-garamond-latin-300-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 300; font-style: italic; src: url("assets/fonts/cormorant-garamond-latin-300-italic.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 400; font-style: italic; src: url("assets/fonts/cormorant-garamond-latin-400-italic.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 500; src: url("assets/fonts/cormorant-garamond-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 400; src: url("assets/fonts/montserrat-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 500; src: url("assets/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; }
+
+    .s06-a { position: absolute; }
+    .s06-c { left: 0; right: 0; text-align: center; }
+    .s06-cv { position: absolute; left: 0; top: 0; }
+    .s06-d { font-family: "Cormorant"; font-weight: 300; color: #F5E6D3; white-space: nowrap; line-height: 1.05; }
+    .s06-i { font-family: "Cormorant"; font-weight: 300; font-style: italic; color: #F5E6D3; white-space: nowrap; line-height: 1.05; }
+    .s06-cap { font-family: "Montserrat"; font-weight: 500; font-size: 25px; letter-spacing: 0.34em; color: #D4AF37; white-space: nowrap; text-transform: uppercase; }
+    .s06-w { display: inline-block; }
+    .s06-frame { position: absolute; overflow: hidden; background: #000; -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 72%, rgba(0,0,0,0) 100%); mask-image: linear-gradient(180deg, #000 0%, #000 72%, rgba(0,0,0,0) 100%); }
+    .s06-frame img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+    .s06-frame canvas { position: absolute; left: 0; top: 0; }
+    .s06-line { position: absolute; height: 1px; background: linear-gradient(90deg, rgba(212,175,55,0), #D4AF37, rgba(212,175,55,0)); }
+    .s06-glow { position: absolute; border-radius: 50%; background: radial-gradient(closest-side, rgba(212,175,55,0.38), rgba(212,175,55,0.08) 55%, rgba(212,175,55,0)); }
+
+
+    [id^="s06-n"], [id^="s06-s"] { opacity: 0; }
+
+  </style>
+  <div id="root" data-composition-id="06-trio" data-start="0" data-duration="6.6" data-width="1080" data-height="1920">
+    <div id="s06-clip" class="clip" data-start="0" data-duration="6.6" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="s06-frame" id="s06-f0" style="left:40px; top:470px; width:320px; height:520px; border-radius:160px 160px 22px 22px"><img id="s06-f0i" src="assets/images/nomade.jpg" alt=""><canvas id="s06-f0v" width="320" height="520"></canvas></div>
+    <div class="s06-a s06-i" id="s06-n0" style="left:40px; width:320px; text-align:center; top:1010px; font-size:62px">Le Nomade</div>
+    <div class="s06-a s06-cap" id="s06-s0" style="left:40px; width:320px; text-align:center; top:1095px; font-size:18px; letter-spacing:0.26em">30 jours</div>
+    <div class="s06-frame" id="s06-f1" style="left:380px; top:470px; width:320px; height:520px; border-radius:160px 160px 22px 22px"><img id="s06-f1i" src="assets/images/duosens.jpg" alt=""><canvas id="s06-f1v" width="320" height="520"></canvas></div>
+    <div class="s06-a s06-i" id="s06-n1" style="left:380px; width:320px; text-align:center; top:1010px; font-size:62px">DuoSens</div>
+    <div class="s06-a s06-cap" id="s06-s1" style="left:380px; width:320px; text-align:center; top:1095px; font-size:18px; letter-spacing:0.26em">Maison & voiture</div>
+    <div class="s06-frame" id="s06-f2" style="left:720px; top:470px; width:320px; height:520px; border-radius:160px 160px 22px 22px"><img id="s06-f2i" src="assets/images/senspro.jpg" alt=""><canvas id="s06-f2v" width="320" height="520"></canvas></div>
+    <div class="s06-a s06-i" id="s06-n2" style="left:720px; width:320px; text-align:center; top:1010px; font-size:62px">SensPro</div>
+    <div class="s06-a s06-cap" id="s06-s2" style="left:720px; width:320px; text-align:center; top:1095px; font-size:18px; letter-spacing:0.26em">Mural</div>
+    <div class="s06-a s06-c s06-i" id="s06-cl" style="top:1260px; font-size:76px" ><span class="s06-w">Un</span> <span class="s06-w">diffuseur</span> <span class="s06-w">pour</span> <span class="s06-w">chaque</span> <span class="s06-w">espace.</span></div>
+    <div class="s06-line" id="s06-ln" style="left:390px; top:1400px; width:300px"></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="06-trio"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="06-trio"] ' + s);
+      const __r0 = AURA.vapour(R("#s06-f0v"), {"x": 256.7, "y": 162.8, "dir": 0.35, "rise": 155, "size": 30, "alpha": 0.26, "n": 40, "life": 3.4, "seed": 40});
+      const __r1 = AURA.vapour(R("#s06-f1v"), {"x": 226.0, "y": 183.0, "dir": 0.0, "rise": 174, "size": 30, "alpha": 0.26, "n": 40, "life": 3.4, "seed": 41});
+      const __r2 = AURA.vapour(R("#s06-f2v"), {"x": 351.2, "y": 136.2, "dir": 0.15, "rise": 129, "size": 30, "alpha": 0.26, "n": 40, "life": 3.4, "seed": 42});
+      const __p = { t: 0 };
+      tl.fromTo(__p, { t: 0 }, { t: 6.6, duration: 6.6, ease: "none", onUpdate: () => { __r0(__p.t); __r1(__p.t); __r2(__p.t); } }, 0);
+      __r0(__p.t); __r1(__p.t); __r2(__p.t);
+      tl.fromTo(R("#s06-f0"), { opacity: 0, y: 60, filter: "blur(16px)", clipPath: "inset(40% 34% 40% 34% round 320px 320px 320px 320px)" }, { opacity: 1, y: 0, filter: "blur(0px)", clipPath: "inset(0% 0% 0% 0% round 160px 160px 22px 22px)", duration: 1.5, ease: "expo.out" }, 0.10);
+      tl.fromTo(R("#s06-f0i"), { scale: 1.2 }, { scale: 1.0, duration: 4.5, ease: "power2.out" }, 0.10);
+      tl.fromTo(R("#s06-n0"), { opacity: 0, y: 24, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "expo.out" }, 0.35);
+      tl.fromTo(R("#s06-s0"), { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 1.0, ease: "power3.out" }, 0.60);
+      tl.fromTo(R("#s06-f1"), { opacity: 0, y: 60, filter: "blur(16px)", clipPath: "inset(40% 34% 40% 34% round 320px 320px 320px 320px)" }, { opacity: 1, y: 0, filter: "blur(0px)", clipPath: "inset(0% 0% 0% 0% round 160px 160px 22px 22px)", duration: 1.5, ease: "expo.out" }, 0.95);
+      tl.fromTo(R("#s06-f1i"), { scale: 1.2 }, { scale: 1.0, duration: 4.5, ease: "power2.out" }, 0.95);
+      tl.fromTo(R("#s06-n1"), { opacity: 0, y: 24, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "expo.out" }, 1.20);
+      tl.fromTo(R("#s06-s1"), { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 1.0, ease: "power3.out" }, 1.45);
+      tl.fromTo(R("#s06-f2"), { opacity: 0, y: 60, filter: "blur(16px)", clipPath: "inset(40% 34% 40% 34% round 320px 320px 320px 320px)" }, { opacity: 1, y: 0, filter: "blur(0px)", clipPath: "inset(0% 0% 0% 0% round 160px 160px 22px 22px)", duration: 1.5, ease: "expo.out" }, 2.35);
+      tl.fromTo(R("#s06-f2i"), { scale: 1.2 }, { scale: 1.0, duration: 4.5, ease: "power2.out" }, 2.35);
+      tl.fromTo(R("#s06-n2"), { opacity: 0, y: 24, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "expo.out" }, 2.60);
+      tl.fromTo(R("#s06-s2"), { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 1.0, ease: "power3.out" }, 2.85);
+      tl.fromTo(RA("#s06-cl .s06-w"), { opacity: 0, y: 24, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.4, ease: "expo.out", stagger: 0.09 }, 3.15);
+      tl.fromTo(R("#s06-ln"), { scaleX: 0, opacity: 0 }, { scaleX: 1, opacity: 1, duration: 1.2, ease: "expo.out" }, 3.6);
+      tl.to([R("#s06-f0"), R("#s06-f1"), R("#s06-f2"), R("#s06-n0"), R("#s06-n1"), R("#s06-n2"), R("#s06-s0"), R("#s06-s1"), R("#s06-s2"), R("#s06-cl"), R("#s06-ln")], { opacity: 0, y: -20, filter: "blur(16px)", duration: 0.8, ease: "power2.in", stagger: 0.04 }, 5.3);
+
+      tl.to({}, { duration: 6.6 }, 0);
+      window.__timelines["06-trio"] = tl;
+    })();
+  </script>
+</template>

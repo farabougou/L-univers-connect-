@@ -1,0 +1,37 @@
+<template>
+  <style>
+    @font-face { font-family: "Montserrat"; font-weight: 500; src: url("assets/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+    [data-composition-id="captions"] .cap { position: absolute; left: 0; right: 0; bottom: 188px; display: flex; justify-content: center; opacity: 0; }
+    [data-composition-id="captions"] .cap span { display: block; max-width: 880px; font-family: "Montserrat"; font-weight: 500; font-size: 34px; line-height: 1.36; text-align: center; color: #FFFFFF; padding: 10px 24px; border-radius: 10px; background: rgba(0,0,0,0.62); }
+  </style>
+  <div id="root" data-composition-id="captions" data-start="0" data-duration="42" data-width="1080" data-height="1920" style="position:absolute; inset:0">
+    <div class="cap" id="cap0"><span>Une marque se reconnaît aussi à ce qu'elle fait ressentir.</span></div>
+    <div class="cap" id="cap1"><span>Avec SensExpress, cet univers prend forme à l'écran.</span></div>
+    <div class="cap" id="cap2"><span>Le noir pose le décor.</span></div>
+    <div class="cap" id="cap3"><span>Le doré attire le regard.</span></div>
+    <div class="cap" id="cap4"><span>Les titres et les images invitent à découvrir les solutions olfactives.</span></div>
+    <div class="cap" id="cap5"><span>Hôtels, bureaux, maison et voiture : chaque espace ouvre sur une gamme à explorer.</span></div>
+    <div class="cap" id="cap6"><span>Le site présente les diffuseurs et vous guide vers un conseiller pour parler de votre projet.</span></div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#cap0", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, 0.5);
+      tl.to("#cap0", { opacity: 0, duration: 0.25 }, 3.29);
+      tl.fromTo("#cap1", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, 3.3);
+      tl.to("#cap1", { opacity: 0, duration: 0.25 }, 6.26);
+      tl.fromTo("#cap2", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, 6.5);
+      tl.to("#cap2", { opacity: 0, duration: 0.25 }, 8.26);
+      tl.fromTo("#cap3", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, 8.5);
+      tl.to("#cap3", { opacity: 0, duration: 0.25 }, 10.46);
+      tl.fromTo("#cap4", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, 10.6);
+      tl.to("#cap4", { opacity: 0, duration: 0.25 }, 14.14);
+      tl.fromTo("#cap5", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, 14.2);
+      tl.to("#cap5", { opacity: 0, duration: 0.25 }, 19.32);
+      tl.fromTo("#cap6", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, 25.4);
+      tl.to("#cap6", { opacity: 0, duration: 0.25 }, 29.74);
+      tl.to({}, { duration: 42 }, 0);
+      window.__timelines["captions"] = tl;
+    })();
+  </script>
+</template>

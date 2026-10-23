@@ -1,0 +1,73 @@
+<template>
+  <style>
+@font-face { font-family: "Inter"; font-weight: 400; src: url("assets/fonts/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; src: url("assets/fonts/inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 700; src: url("assets/fonts/inter-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 800; src: url("assets/fonts/inter-latin-800-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 900; src: url("assets/fonts/inter-latin-900-normal.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 500; src: url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Inter", sans-serif; color: #FFFFFF; }
+
+    #k02-bg { position: absolute; inset: 0; background: radial-gradient(110% 60% at 50% 40%, #0c1a3a 0%, #050B1A 65%); }
+    .k02-kick { position: absolute; left: 0; right: 0; text-align: center; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 30px; letter-spacing: 0.16em; color: #38BDF8; }
+    .k02-h { position: absolute; left: 30px; right: 30px; text-align: center; font-weight: 900; letter-spacing: -0.04em; line-height: 1; color: #F8FAFC; white-space: nowrap; }
+    .k02-h em { font-style: normal; color: #38BDF8; }
+    .k02-card { position: absolute; border-radius: 40px; background: rgba(12,23,48,0.92); border: 2px solid #1E2A44; }
+    .k02-mono { font-family: "IBM Plex Mono", monospace; font-weight: 500; letter-spacing: 0.12em; }
+
+    #k02-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; display: block; }
+    .k02-pin { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+    .k02-pin > div { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); }
+
+    #k02-k { top: 150px; }
+    #k02-hero { top: 210px; font-size: 250px; color: #38BDF8; font-variant-numeric: tabular-nums; }
+    #k02-hero small { font-size: 150px; }
+    #k02-sub { top: 480px; font-size: 64px; font-weight: 800; }
+    .k02-v { display: block; font-weight: 900; font-size: 54px; color: #F8FAFC; white-space: nowrap; text-shadow: 0 6px 24px rgba(5,11,26,0.9); }
+    .k02-y { display: block; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 30px; letter-spacing: 0.1em; color: #94A3B8; white-space: nowrap; }
+
+  </style>
+  <div id="root" data-composition-id="02-enjeu" data-start="0" data-duration="5.9" data-width="1080" data-height="1920">
+
+    <div id="k02-bg" class="clip" data-start="0" data-duration="5.9" data-track-index="0"></div>
+    <canvas id="k02-cv" width="1080" height="1920"></canvas>
+    <div class="k02-kick" id="k02-k">DÉCRET TERTIAIRE</div>
+    <div class="k02-h" id="k02-hero">-<span id="k02-n">0</span><small> %</small></div>
+    <div class="k02-h" id="k02-sub">d'ici <em>2030</em></div>
+    <div class="k02-pin" id="k02-v0"><div><span class="k02-v">100</span></div></div>
+    <div class="k02-pin" id="k02-v1"><div><span class="k02-v">-40 %</span></div></div>
+    <div class="k02-pin" id="k02-v2"><div><span class="k02-v">-50 %</span></div></div>
+    <div class="k02-pin" id="k02-v3"><div><span class="k02-v">-60 %</span></div></div>
+    <div class="k02-pin" id="k02-y0"><div><span class="k02-y">RÉF.</span></div></div>
+    <div class="k02-pin" id="k02-y1"><div><span class="k02-y">2030</span></div></div>
+    <div class="k02-pin" id="k02-y2"><div><span class="k02-y">2040</span></div></div>
+    <div class="k02-pin" id="k02-y3"><div><span class="k02-y">2050</span></div></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="02-enjeu"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="02-enjeu"] ' + s);
+
+      const L = [0, 1, 2, 3].map((i) => ({ v: R("#k02-v" + i), y: R("#k02-y" + i) }));
+      const __r3 = ENX3D.bars(R("#k02-cv"), L);
+      const __s3 = { t: 0 };
+      tl.fromTo(__s3, { t: 0 }, { t: 5.5, duration: 5.5, ease: "none", onUpdate: () => __r3(__s3.t) }, 0);
+      __r3(0);
+      const at = [0.4, 1.95, 3.9, 4.2];
+      L.forEach((l, i) => {
+        tl.fromTo(l.v.querySelector("span"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, at[i] + 0.5);
+        tl.fromTo(l.y.querySelector("span"), { opacity: 0 }, { opacity: 1, duration: 0.3 }, at[i] + 0.1);
+      });
+      tl.fromTo(R("#k02-k"), { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 0);
+      tl.fromTo(R("#k02-hero"), { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.6)" }, 1.9);
+      const n = { v: 0 };
+      tl.fromTo(n, { v: 0 }, { v: 40, duration: 1.0, ease: "power2.out", immediateRender: false, onUpdate: () => { R("#k02-n").textContent = Math.round(n.v); } }, 1.95);
+      tl.fromTo(R("#k02-sub"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 3.55);
+
+      window.__timelines["02-enjeu"] = tl;
+    })();
+  </script>
+</template>

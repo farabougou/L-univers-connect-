@@ -1,0 +1,79 @@
+<template>
+  <style>
+@font-face { font-family: "Inter"; font-weight: 400; src: url("assets/fonts/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; src: url("assets/fonts/inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 700; src: url("assets/fonts/inter-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 800; src: url("assets/fonts/inter-latin-800-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 900; src: url("assets/fonts/inter-latin-900-normal.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 500; src: url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Inter", sans-serif; color: #FFFFFF; }
+
+    #k05-bg { position: absolute; inset: 0; background: radial-gradient(110% 60% at 50% 40%, #0c1a3a 0%, #050B1A 65%); }
+    .k05-kick { position: absolute; left: 0; right: 0; text-align: center; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 30px; letter-spacing: 0.16em; color: #38BDF8; }
+    .k05-h { position: absolute; left: 30px; right: 30px; text-align: center; font-weight: 900; letter-spacing: -0.04em; line-height: 1; color: #F8FAFC; white-space: nowrap; }
+    .k05-h em { font-style: normal; color: #38BDF8; }
+    .k05-card { position: absolute; border-radius: 40px; background: rgba(12,23,48,0.92); border: 2px solid #1E2A44; }
+    .k05-mono { font-family: "IBM Plex Mono", monospace; font-weight: 500; letter-spacing: 0.12em; }
+
+    #k05-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; display: block; }
+    .k05-pin { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+    .k05-pin > div { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); }
+
+
+    .k05-sh { text-shadow: 0 10px 34px rgba(5,11,26,0.95); }
+    .k05-h em.o { color: #EA580C; }
+    .k05-h em.g { color: #22C55E; }
+    .k05-badge { position: absolute; left: 0; right: 0; display: flex; justify-content: center; }
+    .k05-badge div { display: flex; align-items: center; gap: 14px; padding: 18px 34px; border-radius: 44px; font-weight: 900; font-size: 46px; color: #fff; white-space: nowrap; }
+    .k05-c { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+    .k05-c > div { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); }
+    .k05-gl { width: 300px; padding: 20px 24px; border-radius: 28px; background: linear-gradient(140deg, rgba(56,189,248,0.22), rgba(12,23,48,0.86) 55%); border: 2px solid rgba(125,211,252,0.45); box-shadow: 0 18px 50px rgba(0,0,0,0.45); }
+    .k05-gl .n { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 24px; color: #CBD5E1; white-space: nowrap; }
+    .k05-gl .n u { display: block; width: 14px; height: 14px; border-radius: 7px; background: #22C55E; }
+    .k05-gl b { display: block; margin-top: 6px; font-weight: 900; font-size: 46px; letter-spacing: -0.02em; color: #F8FAFC; white-space: nowrap; }
+
+    #k05-h { top: 172px; font-size: 120px; }
+    .k05-bad { position: absolute; left: 0; top: 0; border-color: #EA580C; background: linear-gradient(140deg, rgba(234,88,12,0.45), rgba(12,23,48,0.9) 60%); }
+    .k05-bad b { color: #FDBA74; }
+    #k05-app > div { padding: 10px 20px; border-radius: 20px; background: #0C1730; border: 2px solid #EA580C; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 22px; letter-spacing: 0.12em; color: #FDBA74; white-space: nowrap; transform: translate(-50%, -160%); }
+    #k05-ok { top: 330px; }
+    #k05-ok div { background: #16A34A; box-shadow: 0 14px 40px rgba(22,163,74,0.45); }
+
+  </style>
+  <div id="root" data-composition-id="05-alerte" data-start="0" data-duration="5.03" data-width="1080" data-height="1920">
+
+    <div id="k05-bg" class="clip" data-start="0" data-duration="5.03" data-track-index="0"></div>
+    <canvas id="k05-cv" width="1080" height="1920"></canvas>
+    <div class="k05-h k05-sh" id="k05-h">une <em class="o">dérive</em> ?</div>
+    <div class="k05-c" id="k05-p0"><div><div class="k05-gl" id="k05-g0"><div class="n"><u></u>Climatisation</div><b>4,2 kW</b></div><div class="k05-gl k05-bad" id="k05-bad"><div class="n"><u style="background:#EA580C"></u>Climatisation</div><b>+38 %</b></div></div></div>
+    <div class="k05-c" id="k05-p1"><div><div class="k05-gl" id="k05-g1"><div class="n"><u style="background:#64748B"></u>Groupe électrogène</div><b>à l'arrêt</b></div></div></div>
+    <div class="k05-c" id="k05-p2"><div><div class="k05-gl" id="k05-g2"><div class="n"><u></u>Chambre froide</div><b>-18 °C</b></div></div></div>
+    <div class="k05-c" id="k05-p3"><div><div class="k05-gl" id="k05-g3"><div class="n"><u></u>Compteur</div><b>12,6 kW</b></div></div></div>
+    <div class="k05-c" id="k05-app"><div>ALERTE DANS L'APPLICATION</div></div>
+    <div class="k05-badge" id="k05-ok"><div>avant la panne</div></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="05-alerte"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="05-alerte"] ' + s);
+
+      const P = [0, 1, 2, 3, 4].map((i) => R(i < 4 ? "#k05-p" + i : "#k05-app"));
+      const __r0 = ENX3D.live(R("#k05-cv"), P, { at: [-1, -1, -1, -1], bad: 0.4, alert: 2.1, intro: null });
+      const __r3 = (t) => __r0(t + 0);
+      const __s3 = { t: 0 };
+      tl.fromTo(__s3, { t: 0 }, { t: 4.63, duration: 4.63, ease: "none", onUpdate: () => __r3(__s3.t) }, 0);
+      __r3(0);
+      tl.fromTo(R("#k05-h"), { opacity: 0, scale: 1.6 }, { opacity: 1, scale: 1, duration: 0.28, ease: "power4.out" }, 0.3);
+      tl.to(R("#k05-g0"), { opacity: 0, duration: 0.2 }, 0.4);
+      tl.fromTo(R("#k05-bad"), { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1.08, duration: 0.3, ease: "back.out(2)" }, 0.4);
+      tl.fromTo(R("#k05-bad"), { x: -6 }, { x: 6, duration: 0.05, repeat: 5, yoyo: true, immediateRender: false }, 1.45);
+      tl.fromTo(R("#k05-app > div"), { opacity: 0 }, { opacity: 1, duration: 0.3 }, 2.2);
+      tl.fromTo(R("#k05-ok div"), { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.8)" }, 2.75);
+
+      window.__timelines["05-alerte"] = tl;
+    })();
+  </script>
+</template>

@@ -1,0 +1,75 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Playfair Display"; font-weight: 400; src: url("assets/fonts/playfair-display-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Playfair Display"; font-weight: 600; src: url("assets/fonts/playfair-display-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Playfair Display"; font-weight: 700; src: url("assets/fonts/playfair-display-latin-700-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 400; src: url("assets/fonts/montserrat-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 500; src: url("assets/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 600; src: url("assets/fonts/montserrat-latin-600-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Montserrat", sans-serif; color: #FFFFFF; background: #000; }
+
+    .s06-a { position: absolute; }
+    .s06-full { position: absolute; inset: 0; }
+    .s06-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+    .s06-kick { font-family: "Montserrat"; font-weight: 500; font-size: 24px; letter-spacing: 0.26em; color: #E9C221; white-space: nowrap; }
+    .s06-l1, .s06-l2 { position: absolute; left: 120px; font-family: "Playfair Display"; font-weight: 600; font-size: 76px; line-height: 1.1; color: #FFFFFF; white-space: nowrap; }
+    .s06-l2 { color: #E9C221; }
+    /* ── site reconstruction (mobile home, 800 px wide) ── */
+    .s06-home { position: absolute; left: 0; top: 0; width: 800px; height: 1130px; background: #000; overflow: hidden; }
+    .s06-hd { height: 112px; display: flex; align-items: center; padding: 0 36px; background: #000; border-bottom: 1px solid #1d1d1d; }
+    .s06-hd img { display: block; height: 72px; }
+    .s06-bg { margin-left: auto; display: flex; flex-direction: column; gap: 9px; }
+    .s06-bg i { display: block; width: 40px; height: 3px; background: #FFFFFF; }
+    .s06-img { position: relative; height: 500px; overflow: hidden; background: radial-gradient(70% 70% at 62% 38%, #4a3712 0%, #1a1308 45%, #070605 100%); }
+    .s06-txtb { padding: 52px 48px 0; }
+    .s06-ttl { font-family: "Playfair Display"; font-weight: 600; font-size: 70px; line-height: 1.08; color: #FFFFFF; margin-top: 18px; }
+    .s06-ttl em { font-style: normal; color: #E9C221; }
+    .s06-p { font-family: "Montserrat"; font-weight: 400; font-size: 27px; line-height: 1.55; color: #C9C9C9; margin-top: 22px; }
+    .s06-btns { display: flex; flex-direction: column; gap: 18px; margin-top: 38px; }
+    .s06-btn { display: flex; align-items: center; justify-content: center; height: 78px; font-family: "Montserrat"; font-weight: 600; font-size: 22px; letter-spacing: 0.14em; color: #000; background: #E9C221; white-space: nowrap; }
+    .s06-btn.ol { color: #E9C221; background: transparent; border: 2px solid #E9C221; }
+    /* arch windows */
+    .s06-arch { position: absolute; left: 180px; top: 470px; width: 720px; height: 1120px; border-radius: 360px 360px 28px 28px; overflow: hidden; border: 2px solid rgba(233,194,33,0.55); }
+    .s06-in { position: absolute; inset: 0; }
+    .s06-arch svg.ic { position: absolute; left: 110px; top: 250px; width: 500px; height: 500px; }
+    .s06-al { position: absolute; left: 50px; right: 50px; bottom: 70px; text-align: center; }
+    .s06-al span { display: block; font-family: "Montserrat"; font-weight: 500; font-size: 24px; letter-spacing: 0.26em; color: #E9C221; }
+    .s06-al b { display: block; margin-top: 16px; font-family: "Playfair Display"; font-weight: 600; font-size: 58px; line-height: 1.12; color: #FFFFFF; }
+
+
+    #s06-logo { position: absolute; left: 160px; top: 654px; width: 760px; height: 411px; }
+    #s06-logo img { display: block; width: 100%; }
+    #s06-url { position: absolute; left: 0; right: 0; top: 880px; text-align: center; font-family: "Playfair Display"; font-weight: 600; font-size: 104px; color: #FFFFFF; }
+    #s06-url em { font-style: normal; color: #E9C221; }
+
+  </style>
+  <div id="root" data-composition-id="06-adresse" data-start="0" data-duration="6" data-width="1080" data-height="1920">
+    <div id="s06-clip" class="clip" data-start="0" data-duration="6" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="s06-full" style="background:#000"></div>
+    <svg class="s06-a" style="left:0;top:0" width="1080" height="1920" viewBox="0 0 1080 1920">
+      <path id="s06-cur" d="M 150 1220 C 230 920 470 730 760 780 C 960 820 1000 1050 850 1100" stroke="#E9C221" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.7"/>
+      <path id="s06-ul" d="M 380 1050 C 470 1030 610 1030 700 1050" stroke="#E9C221" stroke-width="4" fill="none" stroke-linecap="round"/>
+    </svg>
+    <div id="s06-logo"><img src="assets/images/sensexpress-logo.png" alt="SensExpress"></div>
+    <div id="s06-url">sensexpress<em>.com</em></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="06-adresse"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="06-adresse"] ' + s);
+      const cur = R("#s06-cur"), CL = cur.getTotalLength(), ul = R("#s06-ul"), UL = ul.getTotalLength();
+      tl.fromTo(R("#s06-logo"), { opacity: 0, scale: 0.95 }, { opacity: 1, scale: 1, duration: 0.8, ease: "power2.out" }, 0.1);
+      tl.fromTo(cur, { attr: { "stroke-dasharray": CL, "stroke-dashoffset": CL } }, { attr: { "stroke-dashoffset": 0 }, duration: 1.2, ease: "power2.inOut" }, 0.2);
+      tl.to([R("#s06-logo"), cur], { opacity: 0, duration: 0.5, ease: "power2.in" }, 1.45);
+      tl.fromTo(R("#s06-url"), { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }, 2.0);
+      tl.fromTo(ul, { attr: { "stroke-dasharray": UL, "stroke-dashoffset": UL } }, { attr: { "stroke-dashoffset": 0 }, duration: 0.9, ease: "power2.inOut" }, 2.4);
+
+      tl.to({}, { duration: 6 }, 0);
+      window.__timelines["06-adresse"] = tl;
+    })();
+  </script>
+</template>

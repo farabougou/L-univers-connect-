@@ -1,0 +1,350 @@
+[
+  {
+    "text": "Tu",
+    "start": 0.09,
+    "end": 0.11,
+    "id": "w0"
+  },
+  {
+    "text": "veux",
+    "start": 0.11,
+    "end": 0.3,
+    "id": "w1"
+  },
+  {
+    "text": "que",
+    "start": 0.38,
+    "end": 0.5,
+    "id": "w2"
+  },
+  {
+    "text": "ta",
+    "start": 0.5,
+    "end": 0.61,
+    "id": "w3"
+  },
+  {
+    "text": "maison",
+    "start": 0.61,
+    "end": 0.95,
+    "id": "w4"
+  },
+  {
+    "text": "sente",
+    "start": 0.95,
+    "end": 1.23,
+    "id": "w5"
+  },
+  {
+    "text": "bon?",
+    "start": 1.23,
+    "end": 1.6,
+    "id": "w6"
+  },
+  {
+    "text": "Découvre",
+    "start": 1.65,
+    "end": 2.02,
+    "id": "w7"
+  },
+  {
+    "text": "le",
+    "start": 2.07,
+    "end": 2.15,
+    "id": "w8"
+  },
+  {
+    "text": "woosoulans",
+    "start": 2.15,
+    "end": 2.71,
+    "id": "w9"
+  },
+  {
+    "text": "sous-madouement",
+    "start": 2.71,
+    "end": 3.6,
+    "id": "w10"
+  },
+  {
+    "text": "de",
+    "start": 3.6,
+    "end": 3.78,
+    "id": "w11"
+  },
+  {
+    "text": "chez",
+    "start": 3.78,
+    "end": 4.13,
+    "id": "w12"
+  },
+  {
+    "text": "Mme",
+    "start": 4.21,
+    "end": 4.41,
+    "id": "w13"
+  },
+  {
+    "text": "Traoré.",
+    "start": 4.41,
+    "end": 5,
+    "id": "w14"
+  },
+  {
+    "text": "Rouge",
+    "start": 5.11,
+    "end": 5.42,
+    "id": "w15"
+  },
+  {
+    "text": "ou",
+    "start": 5.47,
+    "end": 5.63,
+    "id": "w16"
+  },
+  {
+    "text": "doré?",
+    "start": 5.63,
+    "end": 6.28,
+    "id": "w17"
+  },
+  {
+    "text": "À",
+    "start": 6.28,
+    "end": 6.37,
+    "id": "w18"
+  },
+  {
+    "text": "toi",
+    "start": 6.37,
+    "end": 6.54,
+    "id": "w19"
+  },
+  {
+    "text": "de",
+    "start": 6.54,
+    "end": 6.67,
+    "id": "w20"
+  },
+  {
+    "text": "choisir!",
+    "start": 6.67,
+    "end": 7.36,
+    "id": "w21"
+  },
+  {
+    "text": "Il",
+    "start": 7.45,
+    "end": 7.49,
+    "id": "w22"
+  },
+  {
+    "text": "existe",
+    "start": 7.49,
+    "end": 7.88,
+    "id": "w23"
+  },
+  {
+    "text": "aussi",
+    "start": 7.88,
+    "end": 8.21,
+    "id": "w24"
+  },
+  {
+    "text": "en",
+    "start": 8.21,
+    "end": 8.34,
+    "id": "w25"
+  },
+  {
+    "text": "flacons",
+    "start": 8.34,
+    "end": 8.67,
+    "id": "w26"
+  },
+  {
+    "text": "près.",
+    "start": 9.01,
+    "end": 9.08,
+    "id": "w27"
+  },
+  {
+    "text": "Et",
+    "start": 9.17,
+    "end": 9.18,
+    "id": "w28"
+  },
+  {
+    "text": "ce",
+    "start": 9.19,
+    "end": 9.28,
+    "id": "w29"
+  },
+  {
+    "text": "n'est",
+    "start": 9.28,
+    "end": 9.5,
+    "id": "w30"
+  },
+  {
+    "text": "pas",
+    "start": 9.55,
+    "end": 9.68,
+    "id": "w31"
+  },
+  {
+    "text": "tout!",
+    "start": 9.68,
+    "end": 10.04,
+    "id": "w32"
+  },
+  {
+    "text": "Des",
+    "start": 10.14,
+    "end": 10.26,
+    "id": "w33"
+  },
+  {
+    "text": "savons",
+    "start": 10.26,
+    "end": 10.7,
+    "id": "w34"
+  },
+  {
+    "text": "et",
+    "start": 10.7,
+    "end": 10.85,
+    "id": "w35"
+  },
+  {
+    "text": "des",
+    "start": 10.85,
+    "end": 11.07,
+    "id": "w36"
+  },
+  {
+    "text": "foulards!",
+    "start": 11.07,
+    "end": 11.85,
+    "id": "w37"
+  },
+  {
+    "text": "Déjà",
+    "start": 12.01,
+    "end": 12.1,
+    "id": "w38"
+  },
+  {
+    "text": "plus",
+    "start": 12.1,
+    "end": 12.27,
+    "id": "w39"
+  },
+  {
+    "text": "de",
+    "start": 12.3,
+    "end": 12.34,
+    "id": "w40"
+  },
+  {
+    "text": "12",
+    "start": 12.39,
+    "end": 12.64,
+    "id": "w41"
+  },
+  {
+    "text": "000",
+    "start": 12.64,
+    "end": 13.05,
+    "id": "w42"
+  },
+  {
+    "text": "abonnés",
+    "start": 13.05,
+    "end": 13.4,
+    "id": "w43"
+  },
+  {
+    "text": "nous",
+    "start": 13.57,
+    "end": 13.66,
+    "id": "w44"
+  },
+  {
+    "text": "suivent",
+    "start": 13.66,
+    "end": 14.11,
+    "id": "w45"
+  },
+  {
+    "text": "sur",
+    "start": 14.11,
+    "end": 14.29,
+    "id": "w46"
+  },
+  {
+    "text": "TikTok.",
+    "start": 14.3,
+    "end": 14.72,
+    "id": "w47"
+  },
+  {
+    "text": "Commande",
+    "start": 14.82,
+    "end": 15.14,
+    "id": "w48"
+  },
+  {
+    "text": "maintenant",
+    "start": 15.14,
+    "end": 15.68,
+    "id": "w49"
+  },
+  {
+    "text": "au",
+    "start": 15.68,
+    "end": 15.88,
+    "id": "w50"
+  },
+  {
+    "text": "77-22-42-50.",
+    "start": 15.88,
+    "end": 18.64,
+    "id": "w51"
+  },
+  {
+    "text": "Fantashop,",
+    "start": 18.75,
+    "end": 19.6,
+    "id": "w52"
+  },
+  {
+    "text": "ça",
+    "start": 19.6,
+    "end": 19.74,
+    "id": "w53"
+  },
+  {
+    "text": "sent",
+    "start": 19.74,
+    "end": 19.95,
+    "id": "w54"
+  },
+  {
+    "text": "bon",
+    "start": 19.95,
+    "end": 20.3,
+    "id": "w55"
+  },
+  {
+    "text": "chez",
+    "start": 20.3,
+    "end": 20.45,
+    "id": "w56"
+  },
+  {
+    "text": "toi!",
+    "start": 20.58,
+    "end": 20.96,
+    "id": "w57"
+  }
+]

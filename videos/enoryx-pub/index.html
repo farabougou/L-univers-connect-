@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="assets/vendor/gsap.min.js"></script>
+    <script src="assets/vendor/three.min.js"></script>
+    <script src="assets/vendor/enx3d.js"></script>
+    <script src="assets/vendor/font-bold.js"></script>
+    <script src="assets/vendor/enx3d-mali.js"></script>
+    <script src="assets/vendor/enx3d-pub.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #000;
+      }
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #050B1A;
+      }
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="31.27"
+      data-width="1080"
+      data-height="1920"
+    >
+      <div
+        id="el-01-facture"
+        class="scene"
+        data-composition-id="01-facture"
+        data-composition-src="compositions/frames/01-facture.html"
+        data-start="0"
+        data-duration="4.09"
+        data-track-index="0"
+      ></div>
+      <audio
+        id="el-01-facture-voice"
+        src="assets/voice/01.wav"
+        data-start="0"
+        data-duration="2.69"
+        data-track-index="10"
+        data-volume="1"
+      ></audio>
+
+      <div
+        id="el-02-gaspillage"
+        class="scene"
+        data-composition-id="02-gaspillage"
+        data-composition-src="compositions/frames/02-gaspillage.html"
+        data-start="3.69"
+        data-duration="6.8"
+        data-track-index="1"
+      ></div>
+      <audio
+        id="el-02-gaspillage-voice"
+        src="assets/voice/02.wav"
+        data-start="3.69"
+        data-duration="5.4"
+        data-track-index="10"
+        data-volume="1"
+      ></audio>
+
+      <div
+        id="el-03-enoryx"
+        class="scene"
+        data-composition-id="03-enoryx"
+        data-composition-src="compositions/frames/03-enoryx.html"
+        data-start="9.89"
+        data-duration="3.71"
+        data-track-index="0"
+      ></div>
+      <audio
+        id="el-03-enoryx-voice"
+        src="assets/voice/03.wav"
+        data-start="9.89"
+        data-duration="1.41"
+        data-track-index="10"
+        data-volume="1"
+      ></audio>
+
+      <div
+        id="el-04-temps-reel"
+        class="scene"
+        data-composition-id="04-temps-reel"
+        data-composition-src="compositions/frames/04-temps-reel.html"
+        data-start="13.100000000000001"
+        data-duration="5.11"
+        data-track-index="1"
+      ></div>
+      <audio
+        id="el-04-temps-reel-voice"
+        src="assets/voice/04.wav"
+        data-start="13.100000000000001"
+        data-duration="3.6"
+        data-track-index="10"
+        data-volume="1"
+      ></audio>
+
+      <div
+        id="el-05-alerte"
+        class="scene"
+        data-composition-id="05-alerte"
+        data-composition-src="compositions/frames/05-alerte.html"
+        data-start="17.71"
+        data-duration="5.03"
+        data-track-index="0"
+      ></div>
+      <audio
+        id="el-05-alerte-voice"
+        src="assets/voice/05.wav"
+        data-start="17.71"
+        data-duration="3.63"
+        data-track-index="10"
+        data-volume="1"
+      ></audio>
+
+      <div
+        id="el-06-gains"
+        class="scene"
+        data-composition-id="06-gains"
+        data-composition-src="compositions/frames/06-gains.html"
+        data-start="22.34"
+        data-duration="4.84"
+        data-track-index="1"
+      ></div>
+      <audio
+        id="el-06-gains-voice"
+        src="assets/voice/06.wav"
+        data-start="22.34"
+        data-duration="2.84"
+        data-track-index="10"
+        data-volume="1"
+      ></audio>
+
+      <div
+        id="el-07-signature"
+        class="scene"
+        data-composition-id="07-signature"
+        data-composition-src="compositions/frames/07-signature.html"
+        data-start="26.58"
+        data-duration="4.69"
+        data-track-index="0"
+      ></div>
+      <audio
+        id="el-07-signature-voice"
+        src="assets/voice/07.wav"
+        data-start="26.58"
+        data-duration="2.09"
+        data-track-index="10"
+        data-volume="1"
+      ></audio>
+
+      <!-- BGM -->
+      <audio
+        id="el-bgm"
+        src="assets/music.wav"
+        data-start="0"
+        data-duration="31.27"
+        data-track-index="11"
+        data-volume="0.2"
+      ></audio>
+
+      <!-- captions -->
+      <div
+        id="el-captions"
+        data-track-kind="captions"
+        class="scene"
+        data-composition-id="captions"
+        data-composition-src="compositions/captions.html"
+        data-start="0"
+        data-duration="31.27"
+        data-track-index="2"
+      ></div>
+
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+      // ── frame transitions (injected by transitions.mjs) ──
+      (function () { var tl = window.__timelines["main"];
+        tl.to("#el-01-facture", { scale: 2.5, opacity: 0, filter: "blur(8px)", duration: 0.4, ease: "power3.in" }, 3.69);
+        tl.fromTo("#el-02-gaspillage", { scale: 0.5, opacity: 0, filter: "blur(8px)" }, { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.4, ease: "power3.out" }, 3.69);
+        tl.to("#el-02-gaspillage", { filter: "blur(10px)", scale: 1.03, opacity: 0, duration: 0.6, ease: "power2.inOut" }, 9.89);
+        tl.fromTo("#el-03-enoryx", { filter: "blur(10px)", scale: 0.97, opacity: 0 }, { filter: "blur(0px)", scale: 1, opacity: 1, duration: 0.6, ease: "power2.inOut" }, 9.89);
+        tl.to("#el-03-enoryx", { x: -1080, duration: 0.5, ease: "power3.inOut" }, 13.1);
+        tl.fromTo("#el-04-temps-reel", { x: 1080, opacity: 1 }, { x: 0, opacity: 1, duration: 0.5, ease: "power3.inOut" }, 13.1);
+        tl.to("#el-04-temps-reel", { x: -1080, duration: 0.5, ease: "power3.inOut" }, 17.71);
+        tl.fromTo("#el-05-alerte", { x: 1080, opacity: 1 }, { x: 0, opacity: 1, duration: 0.5, ease: "power3.inOut" }, 17.71);
+        tl.to("#el-05-alerte", { scale: 2.5, opacity: 0, filter: "blur(8px)", duration: 0.4, ease: "power3.in" }, 22.34);
+        tl.fromTo("#el-06-gains", { scale: 0.5, opacity: 0, filter: "blur(8px)" }, { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.4, ease: "power3.out" }, 22.34);
+        tl.to("#el-06-gains", { filter: "blur(10px)", scale: 1.03, opacity: 0, duration: 0.6, ease: "power2.inOut" }, 26.58);
+        tl.fromTo("#el-07-signature", { filter: "blur(10px)", scale: 0.97, opacity: 0 }, { filter: "blur(0px)", scale: 1, opacity: 1, duration: 0.6, ease: "power2.inOut" }, 26.58);
+        tl.to({}, { duration: 31.27 }, 0); // full-span anchor — main.duration() == composition total (Studio master duration)
+      })();
+    </script>
+  </body>
+</html>

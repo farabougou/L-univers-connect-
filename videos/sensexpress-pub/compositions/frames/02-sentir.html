@@ -1,0 +1,61 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Playfair Display"; font-weight: 400; src: url("assets/fonts/playfair-display-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Playfair Display"; font-weight: 600; src: url("assets/fonts/playfair-display-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 400; src: url("assets/fonts/montserrat-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 500; src: url("assets/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 600; src: url("assets/fonts/montserrat-latin-600-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Montserrat", sans-serif; color: #FFFFFF; background: #000; }
+
+    .p02-a { position: absolute; }
+    .p02-full { position: absolute; inset: 0; }
+    .p02-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+    .p02-bgd { position: absolute; inset: 0; background: radial-gradient(90% 60% at 50% 45%, #1d160a 0%, #0b0907 55%, #000 100%); }
+    .p02-kick { font-family: "Montserrat"; font-weight: 500; font-size: 24px; letter-spacing: 0.28em; color: #E9C221; white-space: nowrap; }
+    .p02-l1, .p02-l2 { position: absolute; left: 120px; font-family: "Playfair Display"; font-weight: 600; font-size: 80px; line-height: 1.1; color: #FFFFFF; white-space: nowrap; }
+    .p02-l2 { color: #E9C221; }
+    .p02-c { left: 0; right: 0; text-align: center; }
+    .p02-ph { position: absolute; overflow: hidden; }
+    .p02-ph .b { position: absolute; inset: -50px; background-size: cover; background-position: center; filter: blur(30px) brightness(0.55) saturate(1.1); }
+    .p02-ph img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; }
+    .p02-ph img.ct { object-fit: contain; }
+    .p02-ph img.cv { object-fit: cover; }
+    .p02-ln { position: absolute; inset: 0; pointer-events: none; border: 2px solid rgba(233,194,33,0.6); }
+
+
+    #p02-p { position: absolute; left: 120px; right: 120px; top: 225px; font-family: "Montserrat"; font-weight: 400; font-size: 32px; line-height: 1.45; color: #BDBDBD; }
+
+  </style>
+  <div id="root" data-composition-id="02-sentir" data-start="0" data-duration="6.1" data-width="1080" data-height="1920">
+    <div id="p02-clip" class="clip" data-start="0" data-duration="6.1" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="p02-full" style="background:linear-gradient(180deg,#000 0%,#0d0a06 100%)"></div>
+    <div id="p02-p">Ne vous contentez plus de faire parler<br>de vos produits :</div>
+    <div class="p02-l1" id="p02-s1" style="top:345px">faites sentir</div>
+    <div class="p02-l2" id="p02-s2" style="top:435px">votre marque.</div>
+    <div class="p02-ph" id="p02-w0" style="left:120px; top:690px; width:195px; height:850px; border-radius:98px 98px 18px 18px"><img class="cv" id="p02-w0i" src="assets/images/lavande.jpg" alt="" style="object-position:center"><div class="p02-ln" style="border-radius:98px 98px 18px 18px"></div></div>
+    <div class="p02-ph" id="p02-w1" style="left:335px; top:760px; width:195px; height:850px; border-radius:98px 98px 18px 18px"><img class="cv" id="p02-w1i" src="assets/images/citron.jpg" alt="" style="object-position:center"><div class="p02-ln" style="border-radius:98px 98px 18px 18px"></div></div>
+    <div class="p02-ph" id="p02-w2" style="left:550px; top:690px; width:195px; height:850px; border-radius:98px 98px 18px 18px"><img class="cv" id="p02-w2i" src="assets/images/coucher-soleil.jpg" alt="" style="object-position:center"><div class="p02-ln" style="border-radius:98px 98px 18px 18px"></div></div>
+    <div class="p02-ph" id="p02-w3" style="left:765px; top:760px; width:195px; height:850px; border-radius:98px 98px 18px 18px"><img class="cv" id="p02-w3i" src="assets/images/fruits.jpg" alt="" style="object-position:center"><div class="p02-ln" style="border-radius:98px 98px 18px 18px"></div></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="02-sentir"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="02-sentir"] ' + s);
+      tl.fromTo(R("#p02-p"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 0.45);
+      tl.fromTo(R("#p02-s1"), { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 2.85);
+      tl.fromTo(R("#p02-s2"), { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 3.1);
+      [0, 1, 2, 3].forEach((i) => {
+        tl.fromTo(R("#p02-w" + i), { clipPath: "inset(100% 0% 0% 0%)", y: 60 }, { clipPath: "inset(0% 0% 0% 0%)", y: 0, duration: 0.9, ease: "power3.out" }, 0.45 + i * 0.18);
+        tl.fromTo(R("#p02-w" + i + "i"), { scale: 1.25 }, { scale: 1.02, duration: 5.6, ease: "power1.out" }, 0.45 + i * 0.18);
+        tl.to(R("#p02-w" + i), { y: i % 2 ? -50 : -20, duration: 5.0, ease: "none" }, 1.1);
+      });
+
+      tl.to({}, { duration: 6.1 }, 0);
+      window.__timelines["02-sentir"] = tl;
+    })();
+  </script>
+</template>

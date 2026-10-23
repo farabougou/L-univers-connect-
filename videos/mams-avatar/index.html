@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="assets/vendor/gsap.min.js"></script>
+    <script src="assets/vendor/studio.js"></script>
+    <link rel="stylesheet" href="assets/vendor/studio.css" />
+    <style>
+      @font-face { font-family: "Archivo Black"; src: url("assets/fonts/archivo-black-latin-400-normal.woff2") format("woff2"); }
+      @font-face { font-family: "Instrument Serif"; font-style: italic; src: url("assets/fonts/instrument-serif-latin-400-italic.woff2") format("woff2"); }
+      @font-face { font-family: "Inter"; font-weight: 800; src: url("assets/fonts/inter-latin-800-normal.woff2") format("woff2"); }
+      @font-face { font-family: "Plex Mono"; font-weight: 500; src: url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+      #root { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+      .L { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+      .L img { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+      #Lbg, #Lsub { filter: brightness(1); }
+      #Lbloom, #Lspill { mix-blend-mode: screen; }
+      #spill { position: absolute; left: 140px; top: 260px; width: 760px; height: 760px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,110,50,0.55), rgba(255,79,31,0.18) 55%, rgba(255,79,31,0)); }
+      #mq { position: absolute; left: 0; top: 300px; font: 400 520px/1 "Archivo Black"; color: #FF4F1F; letter-spacing: -0.03em; white-space: nowrap; opacity: 0; }
+      .card { position: absolute; top: 410px; width: 290px; height: 516px; border-radius: 24px; overflow: visible; opacity: 0; }
+      .card.L { left: 36px; } .card.R { left: 754px; }
+      .cvid { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 24px; box-shadow: 0 0 0 3px rgba(243,235,221,0.9), 0 2px 4px rgba(0,0,0,0.4), 0 18px 40px rgba(0,0,0,0.45), 0 50px 90px rgba(0,0,0,0.35); }
+      .tag { position: absolute; left: 50%; bottom: -24px; transform: translateX(-50%); padding: 10px 22px; border-radius: 30px; background: #F3EBDD; color: #111; font: 800 26px "Inter"; white-space: nowrap; box-shadow: 0 8px 20px rgba(0,0,0,0.4); }
+      #vig { position: absolute; inset: 0; background: radial-gradient(ellipse 80% 60% at 50% 38%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.45) 100%), linear-gradient(rgba(0,0,0,0) 48%, rgba(0,0,0,0.62) 72%, rgba(0,0,0,0.7) 100%); }
+      /* zone de texte unique, au-dessus de l'interface TikTok */
+      .cap { position: absolute; left: 70px; right: 70px; top: 1190px; text-align: center; font: 400 84px/1.1 "Archivo Black"; color: #F3EBDD; letter-spacing: -0.01em; text-shadow: 0 4px 22px rgba(0,0,0,0.65); }
+      .cap .w { display: inline-block; }
+      .kw { display: inline-block; padding: 2px 16px 6px; margin: 0 -2px; border-radius: 10px; background: #FF4F1F; color: #141414; text-shadow: none; }
+      .serif { font: italic 400 72px/1 "Instrument Serif"; }
+      #h1a { position: absolute; left: 0; right: 0; top: 1060px; text-align: center; color: #F3EBDD; text-shadow: 0 4px 18px rgba(0,0,0,0.6); }
+      #cnt { position: absolute; left: 0; right: 0; top: 1140px; text-align: center; font: 400 230px/1 "Archivo Black"; color: #F3EBDD; text-shadow: 0 6px 30px rgba(0,0,0,0.6); white-space: nowrap; }
+      .dg { display: inline-block; width: 0.7em; text-align: center; } .dg.sp { width: 0.26em; }
+      #h1b { position: absolute; left: 0; right: 0; top: 1385px; text-align: center; color: #FF4F1F; text-shadow: 0 4px 18px rgba(0,0,0,0.6); }
+      #n1 { position: absolute; left: 0; right: 0; top: 1060px; text-align: center; color: #F3EBDD; text-shadow: 0 4px 18px rgba(0,0,0,0.6); }
+      #n2 { position: absolute; left: 0; right: 0; top: 1140px; display: flex; justify-content: center; align-items: center; gap: 26px; }
+      #n2 b { font: 400 210px/1 "Archivo Black"; color: #F3EBDD; letter-spacing: -0.03em; text-shadow: 0 6px 30px rgba(0,0,0,0.6); }
+      #n3 { position: absolute; left: 0; right: 0; top: 1375px; text-align: center; color: #FF4F1F; text-shadow: 0 4px 18px rgba(0,0,0,0.6); }
+      #e1 { position: absolute; left: 0; right: 0; top: 990px; display: flex; justify-content: center; }
+      #e2 { position: absolute; left: 0; right: 0; top: 1190px; text-align: center; font: 400 140px/1 "Archivo Black"; color: #F3EBDD; letter-spacing: -0.02em; text-shadow: 0 6px 30px rgba(0,0,0,0.6); white-space: nowrap; }
+      #e3 { position: absolute; left: 0; right: 0; top: 1370px; text-align: center; font: 500 26px "Plex Mono"; letter-spacing: 0.2em; color: #F3EBDD; opacity: 0.85; }
+      .mdraw { stroke-dasharray: 100 100; stroke-dashoffset: 100; }
+      #n2 svg, #e1 svg { visibility: hidden; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="19.0" data-width="1080" data-height="1920" data-fps="60">
+      <div id="frame" class="clip" data-start="0" data-duration="19.0" data-track-index="0" style="position:absolute; inset:0">
+        <div class="L" id="Lbg"><img src="assets/images/bg.jpg" alt="" /></div>
+        <div class="L" id="Lmq"><div id="mq" data-layout-allow-overflow>MAMS — MAMS — MAMS — MAMS — MAMS —</div></div>
+        <div class="L" id="Lsub"><img src="assets/images/subject.png" alt="" /></div>
+        <div class="L" id="Lm"><img id="mlit" src="assets/images/mlit.png" alt="" style="opacity:0" /></div>
+        <div class="L" id="Lbloom"><img id="mbloom" src="assets/images/mbloom.jpg" alt="" style="opacity:0" /></div>
+        <div class="L" id="Lspill"><div id="spill" style="opacity:0"></div></div>
+        <div id="vig"></div>
+        <div class="L" id="Lcards">
+          <div class="card L" id="cd0"><video id="cv0" class="clip cvid" src="assets/clips/pubs.mp4" data-start="8.62" data-duration="1.88" data-track-index="4" muted playsinline></video><span class="tag">Nessa Paris</span></div>
+          <div class="card R" id="cd1"><video id="cv1" class="clip cvid" src="assets/clips/site.mp4" data-start="9.51" data-duration="3.14" data-track-index="5" muted playsinline></video><span class="tag">KTF Shipping</span></div>
+          <div class="card L" id="cd2"><video id="cv2" class="clip cvid" src="assets/clips/appli.mp4" data-start="10.5" data-duration="2.2" data-track-index="6" muted playsinline></video><span class="tag">KOFA</span></div>
+        </div>
+        <div id="h1a" class="serif">Vous êtes</div>
+        <div id="cnt"><span class="dg" id="dg0"></span><span class="dg" id="dg1"></span><span class="dg sp" id="dg2"></span><span class="dg" id="dg3"></span><span class="dg" id="dg4"></span><span class="dg" id="dg5"></span></div>
+        <div id="h1b" class="serif">à me suivre…</div>
+        <div class="cap" id="cp0"><span class="w" data-t="3.24">et</span> <span class="w" data-t="3.41">vous</span> <span class="w" data-t="3.64">n&#x27;avez</span> <span class="w" data-t="4.02">jamais</span></div>
+        <div class="cap" id="cp1"><span class="w" data-t="4.42">vu</span> <span class="w" data-t="4.55">mon</span> <span class="kw"><span class="w" data-t="4.75">visage.</span></span></div>
+        <div class="cap" id="cp2"><span class="w" data-t="5.32">Et</span> <span class="w" data-t="5.37">ça</span> <span class="w" data-t="5.5">ne</span> <span class="w" data-t="5.62">va</span> <span class="w" data-t="5.77">pas</span> <span class="kw"><span class="w" data-t="5.96">changer.</span></span></div>
+        <div class="cap" id="cp3"><span class="w" data-t="8.12">Je</span> <span class="w" data-t="8.17">crée</span> <span class="w" data-t="8.42">des</span> <span class="kw"><span class="w" data-t="8.62">pubs</span></span> <span class="kw"><span class="w" data-t="8.87">vidéo,</span></span></div>
+        <div class="cap" id="cp4"><span class="w" data-t="9.36">des</span> <span class="kw"><span class="w" data-t="9.51">sites</span></span> <span class="kw"><span class="w" data-t="9.79">internet</span></span></div>
+        <div class="cap" id="cp5"><span class="w" data-t="10.02">et</span> <span class="w" data-t="10.45">des</span> <span class="kw"><span class="w" data-t="10.5">applis</span></span> <span class="kw"><span class="w" data-t="10.81">mobiles,</span></span></div>
+        <div class="cap" id="cp6"><span class="kw"><span class="w" data-t="11.2">100 %</span></span> <span class="w" data-t="11.98">en</span> <span class="w" data-t="12.05">code.</span></div>
+        <div class="cap" id="cp7"><span class="w" data-t="12.78">Votre</span> <span class="w" data-t="13.02">prochaine</span> <span class="kw"><span class="w" data-t="13.56">pub ?</span></span></div>
+        <div class="cap" id="cp8"><span class="w" data-t="13.88">C&#x27;est</span> <span class="w" data-t="14.14">peut-être</span> <span class="kw"><span class="w" data-t="14.61">moi</span></span> <span class="w" data-t="14.71">qui</span> <span class="w" data-t="14.78">la</span> <span class="w" data-t="15.13">ferai.</span></div>
+        <div class="cap" id="cp9"><span class="w" data-t="15.57">Écrivez-moi</span> <span class="w" data-t="16.07">en</span> <span class="kw"><span class="w" data-t="16.21">message.</span></span></div>
+        <div id="n1" class="serif">Moi, c'est</div>
+        <div id="n2"><svg viewBox="-12 -12 140 120" width="190" height="163"><defs><filter id="lg1" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter></defs><path class="mdraw" d="M 6 88 L 22 41 C 25 32, 33 30, 38 38 L 46 52 C 50 59, 56 59, 61 53 L 91 15 C 96 9, 102 11, 102 18 L 104 89" fill="none" stroke="#FF4F1F" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" opacity="0.7" filter="url(#lg1)" pathLength="100"/><path class="mdraw" d="M 6 88 L 22 41 C 25 32, 33 30, 38 38 L 46 52 C 50 59, 56 59, 61 53 L 91 15 C 96 9, 102 11, 102 18 L 104 89" fill="none" stroke="#FF6A3A" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" pathLength="100"/><path class="mdraw" d="M 6 88 L 22 41 C 25 32, 33 30, 38 38 L 46 52 C 50 59, 56 59, 61 53 L 91 15 C 96 9, 102 11, 102 18 L 104 89" fill="none" stroke="#FFD3B5" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" pathLength="100"/></svg><b id="nm">MAMS</b></div>
+        <div id="n3" class="serif">motion designer</div>
+        <div id="e1"><svg viewBox="-12 -12 140 120" width="220" height="189"><defs><filter id="lg2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter></defs><path class="mdraw" d="M 6 88 L 22 41 C 25 32, 33 30, 38 38 L 46 52 C 50 59, 56 59, 61 53 L 91 15 C 96 9, 102 11, 102 18 L 104 89" fill="none" stroke="#FF4F1F" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" opacity="0.7" filter="url(#lg2)" pathLength="100"/><path class="mdraw" d="M 6 88 L 22 41 C 25 32, 33 30, 38 38 L 46 52 C 50 59, 56 59, 61 53 L 91 15 C 96 9, 102 11, 102 18 L 104 89" fill="none" stroke="#FF6A3A" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" pathLength="100"/><path class="mdraw" d="M 6 88 L 22 41 C 25 32, 33 30, 38 38 L 46 52 C 50 59, 56 59, 61 53 L 91 15 C 96 9, 102 11, 102 18 L 104 89" fill="none" stroke="#FFD3B5" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" pathLength="100"/></svg></div>
+        <div id="e2">@kofamali</div>
+        <div id="e3">TIKTOK · SITES · APPLIS · PUBS VIDÉO</div>
+        <canvas id="grain" class="st-grain" width="1080" height="1920" style="opacity:0.06"></canvas>
+      </div>
+      <audio id="voice" src="assets/voice/voice.wav" data-start="1.0" data-duration="15.8" data-track-index="10" data-volume="1"></audio>
+      <audio id="music" src="assets/music.wav" data-start="0.9" data-duration="18.1" data-track-index="11" data-volume="0.6"></audio>
+      <audio id="sfxon" src="assets/sfx/neon-on.wav" data-start="0.12" data-duration="1.0" data-track-index="12" data-volume="0.5"></audio>
+      <audio id="sfxgl" src="assets/sfx/neon-glitch.wav" data-start="5.96" data-duration="0.7" data-track-index="13" data-volume="0.4"></audio>
+      <audio id="sfxw0" src="assets/sfx/whoosh.wav" data-start="8.55" data-duration="0.55" data-track-index="14" data-volume="0.3"></audio>
+      <audio id="sfxw1" src="assets/sfx/whoosh.wav" data-start="9.44" data-duration="0.55" data-track-index="15" data-volume="0.3"></audio>
+      <audio id="sfxw2" src="assets/sfx/whoosh.wav" data-start="10.43" data-duration="0.55" data-track-index="16" data-volume="0.3"></audio>
+      <audio id="sfxim" src="assets/sfx/impact.wav" data-start="16.8" data-duration="1.2" data-track-index="17" data-volume="0.45"></audio>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      (function () {
+        const S = STUDIO, $ = (q) => document.querySelector(q), $$ = (q) => Array.from(document.querySelectorAll(q));
+        const tl = gsap.timeline({ paused: true }), cl = (x) => Math.min(1, Math.max(0, x)), once = { immediateRender: false };
+        const V0 = 1.0, VEND = 16.8, TOTAL = 19.0, ENV = [0.0, 0.0, 0.0, 0.185, 0.49, 0.687, 0.809, 0.91, 0.969, 0.987, 0.978, 0.958, 0.935, 0.922, 0.919, 0.922, 0.918, 0.899, 0.858, 0.785, 0.726, 0.71, 0.706, 0.702, 0.696, 0.688, 0.682, 0.676, 0.67, 0.658, 0.649, 0.662, 0.708, 0.726, 0.732, 0.736, 0.733, 0.718, 0.676, 0.595, 0.637, 0.747, 0.848, 0.905, 0.935, 0.949, 0.952, 0.952, 0.949, 0.937, 0.914, 0.892, 0.868, 0.84, 0.809, 0.787, 0.778, 0.778, 0.781, 0.785, 0.778, 0.756, 0.676, 0.611, 0.561, 0.527, 0.656, 0.807, 0.905, 0.95, 0.973, 0.99, 0.99, 0.988, 0.986, 0.979, 0.972, 0.961, 0.952, 0.94, 0.926, 0.911, 0.898, 0.888, 0.88, 0.873, 0.864, 0.848, 0.829, 0.809, 0.792, 0.773, 0.755, 0.736, 0.711, 0.679, 0.655, 0.638, 0.635, 0.677, 0.699, 0.699, 0.698, 0.694, 0.684, 0.662, 0.629, 0.598, 0.575, 0.559, 0.543, 0.529, 0.521, 0.518, 0.516, 0.507, 0.491, 0.451, 0.4, 0.352, 0.31, 0.273, 0.24, 0.211, 0.186, 0.164, 0.144, 0.127, 0.112, 0.098, 0.086, 0.076, 0.067, 0.059, 0.052, 0.046, 0.04, 0.035, 0.031, 0.027, 0.024, 0.021, 0.019, 0.454, 0.696, 0.819, 0.844, 0.841, 0.837, 0.835, 0.84, 0.871, 0.897, 0.921, 0.93, 0.933, 0.933, 0.93, 0.927, 0.923, 0.916, 0.903, 0.881, 0.87, 0.866, 0.901, 0.906, 0.908, 0.903, 0.899, 0.887, 0.875, 0.857, 0.837, 0.816, 0.797, 0.786, 0.799, 0.846, 0.864, 0.859, 0.845, 0.829, 0.82, 0.815, 0.82, 0.844, 0.876, 0.893, 0.91, 0.907, 0.898, 0.867, 0.832, 0.801, 0.786, 0.794, 0.834, 0.871, 0.887, 0.9, 0.897, 0.892, 0.884, 0.877, 0.867, 0.858, 0.848, 0.828, 0.802, 0.781, 0.771, 0.765, 0.759, 0.75, 0.743, 0.732, 0.72, 0.703, 0.703, 0.731, 0.729, 0.717, 0.698, 0.675, 0.652, 0.629, 0.609, 0.59, 0.564, 0.539, 0.521, 0.511, 0.502, 0.487, 0.459, 0.41, 0.361, 0.318, 0.28, 0.246, 0.217, 0.191, 0.168, 0.148, 0.13, 0.114, 0.101, 0.089, 0.078, 0.069, 0.06, 0.053, 0.047, 0.041, 0.036, 0.032, 0.028, 0.025, 0.022, 0.019, 0.017, 0.343, 0.721, 0.89, 0.906, 0.893, 0.874, 0.852, 0.826, 0.813, 0.804, 0.792, 0.779, 0.77, 0.769, 0.772, 0.767, 0.806, 0.913, 0.97, 0.989, 0.981, 0.956, 0.9, 0.816, 0.746, 0.782, 0.883, 0.949, 0.957, 0.952, 0.935, 0.91, 0.884, 0.861, 0.833, 0.801, 0.789, 0.784, 0.782, 0.78, 0.78, 0.779, 0.773, 0.756, 0.738, 0.729, 0.729, 0.729, 0.725, 0.714, 0.686, 0.644, 0.593, 0.522, 0.459, 0.404, 0.356, 0.313, 0.275, 0.242, 0.213, 0.188, 0.165, 0.145, 0.128, 0.113, 0.099, 0.087, 0.077, 0.068, 0.059, 0.052, 0.046, 0.04, 0.036, 0.031, 0.028, 0.024, 0.021, 0.019, 0.017, 0.015, 0.284, 0.576, 0.79, 0.899, 0.964, 0.987, 0.996, 0.998, 0.999, 1.0, 1.0, 0.992, 0.976, 0.954, 0.923, 0.877, 0.808, 0.711, 0.626, 0.551, 0.485, 0.426, 0.375, 0.33, 0.291, 0.262, 0.483, 0.604, 0.649, 0.659, 0.66, 0.654, 0.649, 0.685, 0.729, 0.733, 0.746, 0.779, 0.808, 0.835, 0.871, 0.897, 0.926, 0.926, 0.924, 0.916, 0.905, 0.884, 0.853, 0.821, 0.794, 0.771, 0.752, 0.734, 0.725, 0.724, 0.723, 0.716, 0.709, 0.704, 0.696, 0.68, 0.655, 0.622, 0.584, 0.538, 0.474, 0.417, 0.367, 0.323, 0.284, 0.25, 0.22, 0.194, 0.17, 0.15, 0.132, 0.116, 0.102, 0.09, 0.079, 0.07, 0.061, 0.299, 0.579, 0.731, 0.788, 0.832, 0.916, 0.971, 0.99, 0.982, 0.953, 0.905, 0.856, 0.832, 0.813, 0.801, 0.8, 0.873, 0.927, 0.939, 0.934, 0.919, 0.892, 0.886, 0.918, 0.944, 0.944, 0.932, 0.905, 0.857, 0.754, 0.664, 0.63, 0.766, 0.902, 0.966, 0.965, 0.951, 0.933, 0.917, 0.9, 0.884, 0.875, 0.873, 0.9, 0.935, 0.935, 0.926, 0.906, 0.892, 0.944, 0.98, 0.993, 0.988, 0.983, 0.978, 0.974, 0.972, 0.971, 0.969, 0.968, 0.965, 0.96, 0.953, 0.947, 0.942, 0.936, 0.933, 0.929, 0.922, 0.911, 0.895, 0.873, 0.839, 0.789, 0.722, 0.691, 0.679, 0.697, 0.737, 0.79, 0.837, 0.856, 0.851, 0.841, 0.821, 0.805, 0.784, 0.764, 0.741, 0.725, 0.717, 0.714, 0.706, 0.69, 0.662, 0.646, 0.753, 0.829, 0.856, 0.857, 0.852, 0.839, 0.803, 0.73, 0.698, 0.776, 0.873, 0.928, 0.926, 0.92, 0.912, 0.903, 0.894, 0.884, 0.877, 0.875, 0.883, 0.89, 0.897, 0.91, 0.924, 0.928, 0.924, 0.909, 0.852, 0.777, 0.75, 0.741, 0.731, 0.71, 0.629, 0.627, 0.758, 0.858, 0.882, 0.878, 0.862, 0.85, 0.853, 0.866, 0.88, 0.876, 0.867, 0.856, 0.839, 0.825, 0.854, 0.907, 0.929, 0.922, 0.905, 0.869, 0.811, 0.758, 0.717, 0.701, 0.822, 0.917, 0.957, 0.954, 0.947, 0.943, 0.941, 0.944, 0.949, 0.949, 0.944, 0.931, 0.91, 0.892, 0.877, 0.87, 0.888, 0.925, 0.941, 0.946, 0.946, 0.944, 0.938, 0.934, 0.933, 0.934, 0.932, 0.923, 0.904, 0.86, 0.799, 0.703, 0.619, 0.545, 0.541, 0.619, 0.67, 0.67, 0.676, 0.682, 0.679, 0.675, 0.671, 0.667, 0.659, 0.657, 0.657, 0.658, 0.654, 0.651, 0.651, 0.644, 0.62, 0.546, 0.506, 0.524, 0.668, 0.784, 0.826, 0.82, 0.788, 0.752, 0.73, 0.727, 0.731, 0.726, 0.717, 0.702, 0.694, 0.713, 0.757, 0.77, 0.785, 0.785, 0.791, 0.788, 0.786, 0.784, 0.78, 0.774, 0.756, 0.706, 0.621, 0.546, 0.595, 0.627, 0.723, 0.804, 0.847, 0.857, 0.85, 0.844, 0.833, 0.81, 0.782, 0.749, 0.725, 0.711, 0.699, 0.679, 0.639, 0.562, 0.495, 0.435, 0.383, 0.337, 0.297, 0.261, 0.23, 0.202, 0.178, 0.157, 0.138, 0.121, 0.107, 0.094, 0.083, 0.073, 0.064, 0.056, 0.05, 0.044, 0.038, 0.034, 0.03, 0.219, 0.501, 0.756, 0.897, 0.954, 0.947, 0.915, 0.876, 0.847, 0.831, 0.904, 0.966, 0.975, 0.96, 0.931, 0.87, 0.815, 0.759, 0.757, 0.894, 0.963, 0.982, 0.972, 0.953, 0.929, 0.903, 0.882, 0.875, 0.873, 0.866, 0.857, 0.852, 0.855, 0.862, 0.853, 0.818, 0.72, 0.665, 0.642, 0.785, 0.903, 0.966, 0.988, 0.996, 0.989, 0.974, 0.951, 0.928, 0.911, 0.9, 0.899, 0.935, 0.94, 0.924, 0.885, 0.828, 0.741, 0.652, 0.574, 0.505, 0.444, 0.391, 0.344, 0.303, 0.266, 0.234, 0.206, 0.182, 0.16, 0.365, 0.525, 0.642, 0.674, 0.664, 0.649, 0.741, 0.797, 0.802, 0.785, 0.755, 0.664, 0.585, 0.556, 0.634, 0.725, 0.785, 0.78, 0.755, 0.665, 0.634, 0.661, 0.738, 0.823, 0.85, 0.841, 0.805, 0.771, 0.745, 0.717, 0.683, 0.666, 0.844, 0.945, 0.97, 0.963, 0.95, 0.936, 0.923, 0.918, 0.94, 0.964, 0.97, 0.962, 0.948, 0.929, 0.904, 0.862, 0.776, 0.728, 0.701, 0.695, 0.8, 0.852, 0.851, 0.847, 0.843, 0.839, 0.829, 0.808, 0.774, 0.738, 0.715, 0.698, 0.681, 0.656, 0.619, 0.581, 0.572, 0.642, 0.707, 0.726, 0.72, 0.703, 0.677, 0.639, 0.572, 0.503, 0.443, 0.39, 0.343, 0.302, 0.266, 0.234, 0.206, 0.181, 0.159, 0.14, 0.123, 0.109, 0.096, 0.084, 0.074, 0.065, 0.057, 0.05, 0.044, 0.039, 0.034, 0.463, 0.785, 0.925, 0.957, 0.941, 0.901, 0.86, 0.832, 0.81, 0.794, 0.845, 0.918, 0.938, 0.931, 0.917, 0.912, 0.935, 0.961, 0.96, 0.951, 0.937, 0.924, 0.913, 0.907, 0.907, 0.927, 0.933, 0.93, 0.927, 0.923, 0.919, 0.908, 0.896, 0.884, 0.878, 0.874, 0.867, 0.859, 0.842, 0.827, 0.817, 0.804, 0.787, 0.75, 0.73, 0.721, 0.718, 0.712, 0.703, 0.694, 0.686, 0.679, 0.67, 0.657, 0.638, 0.618, 0.602, 0.585, 0.564, 0.536, 0.502, 0.452, 0.398, 0.35, 0.308, 0.271, 0.239, 0.21, 0.185, 0.163, 0.143, 0.126, 0.111], FLICK = {"on": [[0.0, 0.05], [0.12, 0.16], [0.22, 0.34], [0.42, 1.0]], "glitch": [[0.0, 0.08], [0.14, 0.2], [0.27, 0.7]]};
+
+        // ── la voix allume le M : enveloppe de la voix + allumage du néon + accents (« changer », « moi ») ──
+        const env = (t) => { const i = (t - V0) * 60; if (i < 0 || i >= ENV.length - 1) return 0; const k = Math.floor(i), f = i - k; return ENV[k] * (1 - f) + ENV[k + 1] * f; };
+        const inSteps = (steps, x) => steps.some(([a, b]) => x >= a && x < b);
+        const mlit = $("#mlit"), mbloom = $("#mbloom"), spill = $("#spill");
+        const neon = (t) => {
+          let lit;
+          if (t < 1.12) lit = inSteps(FLICK.on, t - 0.12) ? 1 : 0.04;                       // allumage du tube
+          else if (t >= VEND) lit = 0.88 + 0.12 * Math.sin((t - VEND) * 3.2);                  // carte finale : il respire
+          else lit = 0.32 + 0.68 * env(t);
+          if (t >= 5.96 && t < 6.66) lit *= inSteps(FLICK.glitch, t - 5.96) ? 1.15 : 0.15;    // « changer » : il grésille
+          lit += 0.5 * Math.exp(-Math.max(0, t - 14.61) * 5) * (t >= 14.61 ? 1 : 0);           // « moi » : éclat
+          lit = Math.min(1.25, lit);
+          mlit.style.opacity = Math.min(1, lit).toFixed(3);
+          mbloom.style.opacity = Math.min(1.2, Math.pow(lit, 1.4) * 1.05).toFixed(3);
+          mbloom.style.transform = "scale(" + (1 + 0.035 * lit).toFixed(4) + ")";
+          spill.style.opacity = (t < 1.12 ? 0.25 * lit : 0.18 + 0.42 * env(t)).toFixed(3);
+        };
+
+        // ── lumière de la pièce : noir au départ, le studio s'allume après le néon ; pénombre sur la carte finale ──
+        tl.set(["#Lbg", "#Lsub"], { filter: "brightness(0.05)" }, 0);
+        tl.fromTo(["#Lbg", "#Lsub"], { filter: "brightness(0.05)" }, { filter: "brightness(1)", duration: 1.0, ease: S.ease.silk }, 0.62);
+        tl.fromTo(["#Lbg", "#Lsub"], { filter: "brightness(1)" }, { filter: "brightness(0.42)", duration: 0.7, ease: S.ease.glide, ...once }, VEND);
+
+        // ── caméra : rapprochée à l'allumage, recule, pousse sur « visage », claque sur « changer », recule pour
+        //    le nom et les écrans, pousse sur la question, recule pour la fin. Point fixe : le masque. ──
+        const F = (s) => ({ s, x: 35 * (s - 1), y: 360 * (s - 1) });
+        const k = (t, s, ease) => Object.assign({ t, ease }, F(s));
+        S.camera(tl, [{ el: $("#Lbg"), depth: 0.55 }, { el: $("#Lmq"), depth: 0.75 }, { el: $("#Lsub"), depth: 1 }, { el: $("#Lm"), depth: 1 },
+                      { el: $("#Lbloom"), depth: 1 }, { el: $("#Lspill"), depth: 1 }, { el: $("#Lcards"), depth: 1.2 }], {
+          keys: [k(0, 1.1), k(1.0, 1.1), k(2.7, 1.0), k(4.2, 1.0), k(5.3, 1.09), k(5.96, 1.09), k(6.25, 1.17, S.ease.swift), k(6.6, 1.17),
+                 k(7.5, 1.0), k(12.7, 1.02), k(15.5, 1.12), k(16.8, 1.12), k(17.6, 1.03), k(TOTAL, 1.045)],
+          drift: { x: 4, y: 3, r: 0.1, period: 8 }, start: 0, end: TOTAL });
+
+        // ── « Vous êtes 55 000 à me suivre… » : compteur à chiffres fixes (pas de tremblement de largeur) ──
+        S.rise(tl, "#h1a", 1.08, { y: 18, blur: 8, duration: 0.6 });
+        S.rise(tl, "#cnt", 1.5, { y: 30, blur: 10, duration: 0.6 });
+        const dg = $$("#cnt .dg");
+        const counter = (t) => {
+          const v = Math.round(55000 * S.ease.silk(cl((t - 1.54) / 1.05)));
+          const s = v.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ").padStart(6, " ");
+          dg.forEach((el, i) => { el.textContent = s[i] === " " ? " " : s[i]; });
+        };
+        S.rise(tl, "#h1b", 2.56, { y: 18, blur: 8, duration: 0.6 });
+        S.leave(tl, ["#h1a", "#cnt", "#h1b"], 3.08, { y: -24, duration: 0.18, stagger: 0.03 });
+
+        // ── sous-titres : chaque mot arrive à son temps, la phrase s'efface juste avant la suivante ──
+        const CAPEND = [4.42, 5.32, 6.7, 9.36, 10.02, 11.2, 12.7, 13.88, 15.57, 16.8];
+        $$(".cap").forEach((cap, i) => {
+          tl.set(cap, { autoAlpha: 0 }, 0); tl.set(cap, { autoAlpha: 1 }, +cap.querySelector(".w").dataset.t - 0.01);
+          cap.querySelectorAll(".w").forEach((w) => tl.fromTo(w, { opacity: 0, y: 26, filter: "blur(6px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.24, ease: S.ease.swift }, +w.dataset.t));
+          cap.querySelectorAll(".kw").forEach((b) => { const s = S.spring({ response: 0.32, damping: 0.62 }); tl.fromTo(b, { scale: 0.7, opacity: 0 }, { scale: 1, opacity: 1, duration: s.duration, ease: s.ease }, +b.querySelector(".w").dataset.t); });
+          S.leave(tl, cap, CAPEND[i] - 0.17, { y: -22, duration: 0.16 });
+        });
+
+        // ── « Moi, c'est MAMS » : le nom, le M qui se dessine, « motion designer » ; MAMS géant défile derrière lui ──
+        S.rise(tl, "#n1", 6.72, { y: 18, blur: 8, duration: 0.5 });
+        S.converge(tl, S.split($("#nm")), 7.40, { spread: 40, duration: 0.7, stagger: 0.04 });
+        tl.set("#n2 svg", { visibility: "visible" }, 7.36);
+        tl.fromTo("#n2 .mdraw", { strokeDashoffset: 100 }, { strokeDashoffset: 0, duration: 0.55, ease: S.ease.glide }, 7.36);
+        S.rise(tl, "#n3", 7.62, { y: 18, blur: 8, duration: 0.5 });
+        S.leave(tl, ["#n1", "#n2", "#n3"], 7.92, { y: -24, duration: 0.18, stagger: 0.03 });
+        tl.set("#mq", { opacity: 0 }, 0);
+        tl.fromTo("#mq", { opacity: 0 }, { opacity: 0.95, duration: 0.35, ease: S.ease.silk }, 7.30);
+        tl.fromTo("#mq", { opacity: 0.95 }, { opacity: 0.38, duration: 0.6, ease: S.ease.glide, ...once }, 8.3);
+        tl.fromTo("#mq", { opacity: 0.38 }, { opacity: 0, duration: 0.35, ease: S.ease.accel, ...once }, 12.4);
+        const mq = $("#mq");
+        const marquee = (t) => { mq.style.transform = "translateX(" + (-140 - Math.max(0, t - 7.3) * 230).toFixed(1) + "px)"; };
+
+        // ── écrans flottants : ses vraies pubs arrivent sur le mot, sur ressort, puis vivent ──
+        const cs = S.spring({ response: 0.5, damping: 0.72 });
+        [["L", 8.62, 10.4], ["R", 9.51, 12.55], ["L", 10.5, 12.6]].forEach(([side, t0, t1], i) => {
+          const el = "#cd" + i, dir = side === "L" ? -1 : 1, rot = side === "L" ? -6 + i * 1.5 : 6;
+          tl.fromTo(el, { opacity: 0, x: 260 * dir, y: 60, rotation: rot + 22 * dir, scale: 0.8 }, { opacity: 1, x: 0, y: 0, rotation: rot, scale: 1, duration: cs.duration, ease: cs.ease }, t0);
+          tl.fromTo(el, { opacity: 1, x: 0, rotation: rot }, { opacity: 0, x: 300 * dir, rotation: rot + 14 * dir, duration: 0.32, ease: S.ease.accel, ...once }, t1 - 0.32);
+        });
+        S.life(tl, $$(".card"), 8.6, 12.6, { x: 3, y: 6, rotate: 0.6, scale: 0.006, period: 4, seed: 11 });
+
+        // ── carte finale : le M se dessine, @kofamali, ce qu'il fait ──
+        tl.set("#e1 svg", { visibility: "visible" }, VEND + 0.05);
+        tl.fromTo("#e1 .mdraw", { strokeDashoffset: 100 }, { strokeDashoffset: 0, duration: 0.7, ease: S.ease.glide }, VEND + 0.05);
+        S.converge(tl, S.split($("#e2")), VEND + 0.3, { spread: 30, duration: 0.8, stagger: 0.03 });
+        S.rise(tl, "#e3", VEND + 0.75, { y: 12, blur: 4, duration: 0.6 });
+
+        S.drive(tl, 0, TOTAL, [neon, counter, marquee, S.grain($("#grain"), { fps: 60, seed: 4 })]);
+
+        tl.to({}, { duration: TOTAL }, 0);
+        window.__timelines["main"] = tl;
+      })();
+    </script>
+  </body>
+</html>

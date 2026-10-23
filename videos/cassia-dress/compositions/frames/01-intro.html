@@ -1,0 +1,68 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Playfair Display"; font-weight: 600; src: url("assets/fonts/playfair-display-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Playfair Display"; font-weight: 700; src: url("assets/fonts/playfair-display-latin-700-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 500; src: url("assets/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 600; src: url("assets/fonts/montserrat-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Great Vibes"; font-weight: 400; src: url("assets/fonts/greatvibes-400.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Montserrat", sans-serif; color: #F1E6D2; background: #140D08; }
+
+    .c01-a { position: absolute; }
+    .c01-c { left: 0; right: 0; text-align: center; }
+    .c01-bg { position: absolute; inset: 0; background: radial-gradient(90% 60% at 50% 45%, #3a2416 0%, #2A1A10 55%, #140D08 100%); }
+    .c01-kick { font-family: "Montserrat"; font-weight: 600; font-size: 26px; letter-spacing: 0.3em; color: #C9923F; white-space: nowrap; }
+    .c01-t1 { font-family: "Playfair Display"; font-weight: 700; font-size: 92px; line-height: 1.05; color: #F1E6D2; white-space: nowrap; }
+    .c01-t2 { font-family: "Playfair Display"; font-weight: 600; font-size: 80px; line-height: 1.05; color: #C9923F; white-space: nowrap; }
+    .c01-sc { font-family: "Great Vibes"; font-weight: 400; color: #F1E6D2; white-space: nowrap; line-height: 1; }
+    .c01-ph { position: absolute; overflow: hidden; }
+    .c01-ph img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
+    .c01-band { position: absolute; left: 0; width: 1080px; height: 90px; }
+    .c01-band svg { display: block; }
+
+
+    #c01-svg { position: absolute; left: 0; top: 0; }
+    #c01-name { top: 690px; font-size: 230px; }
+    #c01-dr { top: 880px; font-size: 120px; color: #C9923F; }
+    .c01-m { position: absolute; overflow: hidden; height: 110px; }
+    .c01-m span { display: inline-block; }
+
+  </style>
+  <div id="root" data-composition-id="01-intro" data-start="0" data-duration="5.1" data-width="1080" data-height="1920">
+    <div id="c01-clip" class="clip" data-start="0" data-duration="5.1" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="c01-bg"></div>
+    <svg id="c01-svg" width="1080" height="1920"><g stroke="#F1E6D2" stroke-opacity="0.32" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <path class="c01-ln" d="M -20 300 L 90 220 L 200 300 L 310 220 L 420 300 L 530 220 L 640 300 L 750 220 L 860 300 L 970 220 L 1100 300"/>
+      <path class="c01-ln" d="M -20 1640 L 90 1720 L 200 1640 L 310 1720 L 420 1640 L 530 1720 L 640 1640 L 750 1720 L 860 1640 L 970 1720 L 1100 1640"/>
+      <path class="c01-ln" d="M 120 470 L 240 590 M 240 470 L 120 590"/>
+      <path class="c01-ln" d="M 840 470 L 960 590 M 960 470 L 840 590"/>
+      <path class="c01-ln" d="M 120 1330 L 240 1450 M 240 1330 L 120 1450"/>
+      <path class="c01-ln" d="M 840 1330 L 960 1450 M 960 1330 L 840 1450"/>
+      <path class="c01-ln" d="M 540 960 m -380 0 a 380 380 0 1 0 760 0 a 380 380 0 1 0 -760 0" stroke-dasharray="4 26"/>
+    </g><g fill="#F1E6D2" fill-opacity="0.32"><circle class="c01-dt" cx="80" cy="380" r="9"/><circle class="c01-dt" cx="172" cy="380" r="9"/><circle class="c01-dt" cx="264" cy="380" r="9"/><circle class="c01-dt" cx="356" cy="380" r="9"/><circle class="c01-dt" cx="448" cy="380" r="9"/><circle class="c01-dt" cx="540" cy="380" r="9"/><circle class="c01-dt" cx="632" cy="380" r="9"/><circle class="c01-dt" cx="724" cy="380" r="9"/><circle class="c01-dt" cx="816" cy="380" r="9"/><circle class="c01-dt" cx="908" cy="380" r="9"/><circle class="c01-dt" cx="1000" cy="380" r="9"/><circle class="c01-dt" cx="80" cy="1540" r="9"/><circle class="c01-dt" cx="172" cy="1540" r="9"/><circle class="c01-dt" cx="264" cy="1540" r="9"/><circle class="c01-dt" cx="356" cy="1540" r="9"/><circle class="c01-dt" cx="448" cy="1540" r="9"/><circle class="c01-dt" cx="540" cy="1540" r="9"/><circle class="c01-dt" cx="632" cy="1540" r="9"/><circle class="c01-dt" cx="724" cy="1540" r="9"/><circle class="c01-dt" cx="816" cy="1540" r="9"/><circle class="c01-dt" cx="908" cy="1540" r="9"/><circle class="c01-dt" cx="1000" cy="1540" r="9"/></g></svg>
+    <div class="c01-a c01-kick c01-c" id="c01-k" style="top:600px">CASSIA DRESSING PRÉSENTE</div>
+    <div class="c01-a c01-c c01-sc" id="c01-name">Cassia</div>
+    <div class="c01-a c01-c c01-sc" id="c01-dr">Dressing</div>
+    <div class="c01-a c01-c c01-m" id="c01-m1" style="top:1130px"><span class="c01-t2" style="font-size:66px">La nouvelle collection</span></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="01-intro"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="01-intro"] ' + s);
+      RA(".c01-ln").forEach((p, i) => { const L = p.getTotalLength(); tl.fromTo(p, { attr: { "stroke-dasharray": i === 6 ? "4 26" : L + " " + L, "stroke-dashoffset": L } }, { attr: { "stroke-dashoffset": 0 }, duration: 1.6, ease: "power2.inOut" }, 0.1 + (i % 6) * 0.12); });
+      RA(".c01-dt").forEach((d, i) => tl.fromTo(d, { attr: { r: 0 } }, { attr: { r: 9 }, duration: 0.3, ease: "back.out(3)" }, 0.6 + (i % 12) * 0.05));
+      tl.fromTo(R("#c01-k"), { opacity: 0, scale: 1.08 }, { opacity: 1, scale: 1, duration: 1.0, ease: "power2.out" }, 0.3);
+      tl.fromTo(R("#c01-name"), { opacity: 0, clipPath: "inset(0% 100% 0% 0%)" }, { opacity: 1, clipPath: "inset(0% 0% 0% 0%)", duration: 1.1, ease: "power2.inOut" }, 0.5);
+      tl.fromTo(R("#c01-dr"), { opacity: 0, clipPath: "inset(0% 100% 0% 0%)" }, { opacity: 1, clipPath: "inset(0% 0% 0% 0%)", duration: 0.8, ease: "power2.inOut" }, 1.2);
+      tl.fromTo(R("#c01-m1 span"), { yPercent: 110 }, { yPercent: 0, duration: 0.8, ease: "power3.out" }, 1.9);
+      tl.to(R("#c01-svg"), { scale: 1.06, duration: 4.6, ease: "none", transformOrigin: "50% 50%" }, 0);
+      tl.to([R("#c01-name"), R("#c01-dr"), R("#c01-k"), R("#c01-m1")], { opacity: 0, y: -30, filter: "blur(6px)", duration: 0.5, ease: "power2.in" }, 4.15);
+
+      tl.to({}, { duration: 5.1 }, 0);
+      window.__timelines["01-intro"] = tl;
+    })();
+  </script>
+</template>

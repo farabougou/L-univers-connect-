@@ -1,0 +1,63 @@
+<template>
+  <style>
+@font-face { font-family: "Inter"; font-weight: 400; src: url("assets/fonts/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; src: url("assets/fonts/inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 700; src: url("assets/fonts/inter-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 800; src: url("assets/fonts/inter-latin-800-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 900; src: url("assets/fonts/inter-latin-900-normal.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 500; src: url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Inter", sans-serif; color: #FFFFFF; }
+
+
+    #k05-bg { position: absolute; inset: 0; background: radial-gradient(110% 60% at 50% 42%, #2a140b 0%, #0E0E10 62%); }
+    .k05-kick { position: absolute; left: 0; right: 0; text-align: center; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 30px; letter-spacing: 0.16em; color: #EB6834; }
+    .k05-h { position: absolute; left: 30px; right: 30px; text-align: center; font-weight: 900; letter-spacing: -0.04em; line-height: 1; color: #FFFFFF; white-space: nowrap; text-shadow: 0 8px 30px rgba(14,14,16,0.85); }
+    .k05-h em { font-style: normal; color: #EB6834; }
+    .k05-chip { display: flex; align-items: center; gap: 12px; padding: 14px 26px; border-radius: 40px; background: rgba(26,26,29,0.92); border: 2px solid #2c2c31; white-space: nowrap; }
+    .k05-chip b { display: block; font-weight: 800; font-size: 36px; color: #fff; }
+    .k05-chip u { display: block; width: 16px; height: 16px; border-radius: 8px; }
+    .k05-badge { position: absolute; left: 0; right: 0; display: flex; justify-content: center; }
+
+    #k05-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; display: block; }
+    .k05-pin { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+    .k05-pin > div { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); }
+
+
+    #k05-k { top: 140px; }
+    #k05-h { top: 195px; font-size: 104px; }
+    #k05-live { top: 1430px; }
+    #k05-live .k05-chip { border-color: #1BAF7A; }
+    .k05-kp { display: flex; width: 70px; height: 70px; border-radius: 20px; background: #2A78D6; align-items: center; justify-content: center; font-weight: 900; font-size: 42px; color: #fff; }
+
+  </style>
+  <div id="root" data-composition-id="05-livreur" data-start="0" data-duration="3.14" data-width="1080" data-height="1920">
+
+    <div id="k05-bg" class="clip" data-start="0" data-duration="3.14" data-track-index="0"></div>
+    <canvas id="k05-cv" width="1080" height="1920"></canvas>
+    <div class="k05-kick" id="k05-k">VOTRE LIVREUR</div>
+    <div class="k05-h" id="k05-h">en <em>direct</em></div>
+    <div class="k05-pin" id="k05-p0"><div><div class="k05-kp">K</div></div></div>
+    <div class="k05-badge" id="k05-live"><div class="k05-chip"><u style="background:#1BAF7A"></u><b>arrive bientôt</b></div></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="05-livreur"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="05-livreur"] ' + s);
+
+      const P = [R("#k05-p0")];
+      const __r3 = ENX3D.k.rider(R("#k05-cv"), P);
+      const __s3 = { t: 0 };
+      tl.fromTo(__s3, { t: 0 }, { t: 2.74, duration: 2.74, ease: "none", onUpdate: () => __r3(__s3.t) }, 0);
+      __r3(0);
+      tl.fromTo(R("#k05-k"), { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 0.0);
+      tl.fromTo(R("#k05-p0 .k05-kp"), { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.8)" }, 0.3);
+      tl.fromTo(R("#k05-h"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 1.35);
+      tl.fromTo(R("#k05-live .k05-chip"), { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.8)" }, 1.6);
+
+      window.__timelines["05-livreur"] = tl;
+    })();
+  </script>
+</template>

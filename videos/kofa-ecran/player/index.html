@@ -1,0 +1,86 @@
+<title>Écran KOFA</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* Layout: one dark control column; the video takes the whole screen once launched. Deliberate single dark look (it runs on a laptop in a dark room). */
+  :root {
+    --bg: #101119;
+    --panel: #1a1b2a;
+    --line: #2c2e45;
+    --fg: #e9eaf6;
+    --muted: #a3a6c2;
+    --accent: #eb6834;
+    --ok: #1baf7a;
+    --ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+    color-scheme: dark;
+  }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg); color: var(--fg); font-family: var(--ui); font-size: 16px; line-height: 1.55;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 40px;
+  }
+  main { max-width: 640px; margin: 0 auto; display: grid; gap: 22px; }
+  .eyebrow { font: 500 13px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  h1 { font-size: clamp(28px, 5vw, 40px); line-height: 1.1; letter-spacing: -0.02em; text-wrap: balance; }
+  h1 em { font-style: normal; color: var(--accent); }
+  .lead { color: var(--muted); max-width: 60ch; }
+  #go {
+    justify-self: start; display: inline-flex; align-items: center; gap: 12px; border: 0; border-radius: 12px; cursor: pointer;
+    background: var(--accent); color: #1a0d07; font: 700 18px var(--ui); padding: 16px 26px;
+  }
+  #go:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px; }
+  #go svg { width: 20px; height: 20px; }
+  ol { display: grid; gap: 10px; padding-left: 22px; color: var(--fg); }
+  ol li::marker { color: var(--accent); font-family: var(--mono); }
+  ol b { color: var(--fg); }
+  ol span { color: var(--muted); }
+  .note { border: 1px solid var(--line); background: var(--panel); border-radius: 12px; padding: 14px 16px; color: var(--muted); font-size: 15px; }
+  .note b { color: var(--ok); font-weight: 600; }
+  #stage { position: fixed; inset: 0; background: #000; display: none; cursor: none; z-index: 10; }
+  #stage.on { display: block; }
+  #stage video { width: 100%; height: 100%; object-fit: contain; display: block; }
+  @media (prefers-reduced-motion: no-preference) { #go { transition: transform 0.12s ease; } #go:hover { transform: translateY(-1px); } }
+</style>
+
+<main>
+  <div class="eyebrow">Tournage · KOFA · iPhone 15 Pro Max</div>
+  <h1>Votre écran de dev <em>KOFA</em>, prêt à filmer</h1>
+  <p class="lead">Cette page lance l'enregistrement d'écran en plein écran et bloque le clavier : vous pouvez taper pour de vrai pendant que vous vous filmez, la vidéo ne s'arrête pas. Elle tourne en boucle (1 min 12).</p>
+  <button id="go" type="button"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>Lancer en plein écran</button>
+  <ol>
+    <li><b>Ouvrez cette page sur votre HP</b> <span>(Chrome ou Edge), luminosité de l'écran au maximum.</span></li>
+    <li><b>Cliquez sur « Lancer en plein écran ».</b> <span>Pour sortir : touche Échap.</span></li>
+    <li><b>Éteignez la lumière</b> <span>et filmez avec l'iPhone posé bas, à gauche du PC, de biais, comme dans le Reel.</span></li>
+    <li><b>Tapez au clavier en suivant le code</b> <span>pendant que la caméra glisse lentement vers l'écran.</span></li>
+  </ol>
+  <p class="note"><b>Clavier bloqué :</b> toutes les touches (Espace, Entrée, flèches, lettres) sont ignorées en plein écran, sauf Échap. Les clics sur le pavé tactile ne font rien non plus.</p>
+</main>
+
+<div id="stage" aria-hidden="true"><video id="v" src="ecran-kofa.mp4" muted playsinline loop preload="auto"></video></div>
+
+<script>
+  const stage = document.getElementById('stage');
+  const v = document.getElementById('v');
+  let lock = null;
+  async function launch() {
+    stage.classList.add('on');
+    try { await stage.requestFullscreen(); } catch (e) { /* fullscreen refused: F11 still works */ }
+    try { v.currentTime = 0; await v.play(); } catch (e) {}
+    try { lock = await navigator.wakeLock.request('screen'); } catch (e) {}
+  }
+  function stop() {
+    stage.classList.remove('on'); v.pause();
+    try { lock && lock.release(); } catch (e) {}
+  }
+  document.getElementById('go').addEventListener('click', launch);
+  document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) stop(); });
+  // swallow every key while the screen plays, so real typing never pauses or seeks the video
+  window.addEventListener('keydown', (e) => {
+    if (!stage.classList.contains('on')) return;
+    if (e.key === 'Escape') { if (!document.fullscreenElement) stop(); return; }
+    e.preventDefault(); e.stopPropagation();
+  }, true);
+  ['keyup', 'keypress'].forEach((t) => window.addEventListener(t, (e) => { if (stage.classList.contains('on') && e.key !== 'Escape') { e.preventDefault(); e.stopPropagation(); } }, true));
+  ['click', 'dblclick', 'contextmenu', 'wheel'].forEach((t) => stage.addEventListener(t, (e) => { e.preventDefault(); e.stopPropagation(); if (v.paused) v.play().catch(() => {}); }, { passive: false }));
+</script>

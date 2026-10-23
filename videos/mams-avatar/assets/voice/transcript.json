@@ -1,0 +1,302 @@
+[
+  {
+    "text": "Vous",
+    "start": 0.08,
+    "end": 0.27,
+    "id": "w0"
+  },
+  {
+    "text": "êtes",
+    "start": 0.27,
+    "end": 0.54,
+    "id": "w1"
+  },
+  {
+    "text": "55",
+    "start": 0.54,
+    "end": 0.95,
+    "id": "w2"
+  },
+  {
+    "text": "000",
+    "start": 0.95,
+    "end": 1.56,
+    "id": "w3"
+  },
+  {
+    "text": "à",
+    "start": 1.56,
+    "end": 1.61,
+    "id": "w4"
+  },
+  {
+    "text": "me",
+    "start": 1.62,
+    "end": 1.75,
+    "id": "w5"
+  },
+  {
+    "text": "suivre,",
+    "start": 1.75,
+    "end": 2.24,
+    "id": "w6"
+  },
+  {
+    "text": "et",
+    "start": 2.24,
+    "end": 2.41,
+    "id": "w7"
+  },
+  {
+    "text": "vous",
+    "start": 2.41,
+    "end": 2.64,
+    "id": "w8"
+  },
+  {
+    "text": "n'avez",
+    "start": 2.64,
+    "end": 3.02,
+    "id": "w9"
+  },
+  {
+    "text": "jamais",
+    "start": 3.02,
+    "end": 3.42,
+    "id": "w10"
+  },
+  {
+    "text": "vu",
+    "start": 3.42,
+    "end": 3.55,
+    "id": "w11"
+  },
+  {
+    "text": "mon",
+    "start": 3.55,
+    "end": 3.75,
+    "id": "w12"
+  },
+  {
+    "text": "visage.",
+    "start": 3.75,
+    "end": 4.23,
+    "id": "w13"
+  },
+  {
+    "text": "Et",
+    "start": 4.32,
+    "end": 4.37,
+    "id": "w14"
+  },
+  {
+    "text": "ça",
+    "start": 4.37,
+    "end": 4.5,
+    "id": "w15"
+  },
+  {
+    "text": "ne",
+    "start": 4.5,
+    "end": 4.62,
+    "id": "w16"
+  },
+  {
+    "text": "va",
+    "start": 4.62,
+    "end": 4.75,
+    "id": "w17"
+  },
+  {
+    "text": "pas",
+    "start": 4.77,
+    "end": 4.96,
+    "id": "w18"
+  },
+  {
+    "text": "changer.",
+    "start": 4.96,
+    "end": 5.64,
+    "id": "w19"
+  },
+  {
+    "text": "Moi,",
+    "start": 5.72,
+    "end": 6.04,
+    "id": "w20"
+  },
+  {
+    "text": "c'est",
+    "start": 6.04,
+    "end": 6.44,
+    "id": "w21"
+  },
+  {
+    "text": "MAMS.",
+    "start": 6.44,
+    "end": 7.04,
+    "id": "w22"
+  },
+  {
+    "text": "Je",
+    "start": 7.12,
+    "end": 7.17,
+    "id": "w23"
+  },
+  {
+    "text": "crée",
+    "start": 7.17,
+    "end": 7.42,
+    "id": "w24"
+  },
+  {
+    "text": "des",
+    "start": 7.42,
+    "end": 7.62,
+    "id": "w25"
+  },
+  {
+    "text": "pubs",
+    "start": 7.62,
+    "end": 7.87,
+    "id": "w26"
+  },
+  {
+    "text": "vidéo,",
+    "start": 7.87,
+    "end": 8.36,
+    "id": "w27"
+  },
+  {
+    "text": "des",
+    "start": 8.36,
+    "end": 8.51,
+    "id": "w28"
+  },
+  {
+    "text": "sites",
+    "start": 8.51,
+    "end": 8.79,
+    "id": "w29"
+  },
+  {
+    "text": "Internet",
+    "start": 8.79,
+    "end": 9.02,
+    "id": "w30"
+  },
+  {
+    "text": "et",
+    "start": 9.02,
+    "end": 9.45,
+    "id": "w31"
+  },
+  {
+    "text": "des",
+    "start": 9.45,
+    "end": 9.5,
+    "id": "w32"
+  },
+  {
+    "text": "applis",
+    "start": 9.5,
+    "end": 9.81,
+    "id": "w33"
+  },
+  {
+    "text": "mobiles",
+    "start": 9.81,
+    "end": 10.2,
+    "id": "w34"
+  },
+  {
+    "text": "100%",
+    "start": 10.2,
+    "end": 10.98,
+    "id": "w35"
+  },
+  {
+    "text": "en",
+    "start": 10.98,
+    "end": 11.02,
+    "id": "w36"
+  },
+  {
+    "text": "code.",
+    "start": 11.44,
+    "end": 11.72,
+    "id": "w37"
+  },
+  {
+    "text": "Votre",
+    "start": 11.78,
+    "end": 12.02,
+    "id": "w38"
+  },
+  {
+    "text": "prochaine",
+    "start": 12.02,
+    "end": 12.56,
+    "id": "w39"
+  },
+  {
+    "text": "pub,",
+    "start": 12.56,
+    "end": 12.88,
+    "id": "w40"
+  },
+  {
+    "text": "c'est",
+    "start": 12.88,
+    "end": 13.14,
+    "id": "w41"
+  },
+  {
+    "text": "peut-être",
+    "start": 13.14,
+    "end": 13.61,
+    "id": "w42"
+  },
+  {
+    "text": "moi",
+    "start": 13.61,
+    "end": 13.71,
+    "id": "w43"
+  },
+  {
+    "text": "qui",
+    "start": 13.71,
+    "end": 13.78,
+    "id": "w44"
+  },
+  {
+    "text": "la",
+    "start": 13.78,
+    "end": 14.13,
+    "id": "w45"
+  },
+  {
+    "text": "ferai.",
+    "start": 14.13,
+    "end": 14.52,
+    "id": "w46"
+  },
+  {
+    "text": "Écrivez-moi",
+    "start": 14.57,
+    "end": 15.07,
+    "id": "w47"
+  },
+  {
+    "text": "en",
+    "start": 15.07,
+    "end": 15.15,
+    "id": "w48"
+  },
+  {
+    "text": "message.",
+    "start": 15.21,
+    "end": 15.72,
+    "id": "w49"
+  }
+]

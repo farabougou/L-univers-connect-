@@ -1,0 +1,89 @@
+<template>
+  <style>
+@font-face { font-family: "Inter"; font-weight: 400; src: url("assets/fonts/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; src: url("assets/fonts/inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 700; src: url("assets/fonts/inter-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 800; src: url("assets/fonts/inter-latin-800-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 900; src: url("assets/fonts/inter-latin-900-normal.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 500; src: url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Inter", sans-serif; color: #FFFFFF; }
+
+    #k06-bg { position: absolute; inset: 0; background: #0E0E10; }
+    #k06-title { position: absolute; top: 150px; left: 0; right: 0; text-align: center; font-weight: 900; font-size: 106px; letter-spacing: -0.04em; line-height: 1; color: #fff; white-space: nowrap; }
+    #k06-title em { font-style: normal; color: #EB6834; }
+    #k06-sub { position: absolute; top: 290px; left: 0; right: 0; text-align: center; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 28px; letter-spacing: 0.14em; color: #A1A1A6; }
+    #k06-stage { position: absolute; left: 0; top: 380px; width: 1080px; height: 1180px; overflow: hidden; }
+    #k06-cam { position: absolute; inset: 0; }
+    #k06-map { position: absolute; left: 0; top: 0; width: 1080px; height: 1180px; opacity: 0.95; }
+    #k06-ov { position: absolute; left: 0; top: 0; width: 1080px; height: 1180px; overflow: visible; }
+    .k06-lbl { position: absolute; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 26px; letter-spacing: 0.1em; color: #fff; white-space: nowrap; }
+    #k06-bko { position: absolute; font-weight: 900; font-size: 46px; letter-spacing: -0.01em; color: #EB6834; white-space: nowrap; }
+    #k06-fade { position: absolute; left: 0; right: 0; top: 380px; height: 120px; background: linear-gradient(#0E0E10, rgba(14,14,16,0)); }
+    #k06-fade2 { position: absolute; left: 0; right: 0; top: 1440px; height: 130px; background: linear-gradient(rgba(14,14,16,0), #0E0E10); }
+
+  </style>
+  <div id="root" data-composition-id="06-diaspora" data-start="0" data-duration="8.73" data-width="1080" data-height="1920">
+
+    <div id="k06-bg" class="clip" data-start="0" data-duration="8.73" data-track-index="0"></div>
+    <div id="k06-stage"><div id="k06-cam">
+      <img id="k06-map" src="assets/world-map.svg" alt="">
+      <svg id="k06-ov" viewBox="0 0 1080 1180"></svg>
+    </div></div>
+    <div id="k06-fade"></div><div id="k06-fade2"></div>
+    <div id="k06-title">où que <em>vous</em> soyez</div>
+    <div id="k06-sub">COMMANDEZ ET PAYEZ À DISTANCE</div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="06-diaspora"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="06-diaspora"] ' + s);
+
+      const NS = "http://www.w3.org/2000/svg";
+      const P = {"Paris":[635.9,413.2],"Bruxelles":[650.3,391],"New York":[87.5,495.9],"Montréal":[90.6,448.7],"Dakar":[493.7,709.9],"Abidjan":[590.3,778.2],"Dubaï":[1016,629.4],"Bamako":[561.5,725]};
+      const ov = R("#k06-ov"), cam = R("#k06-cam");
+      const B = P["Bamako"];
+      // city order + reveal times (VO: Paris 0.83, New York 1.66, Dakar 2.46; then the wave)
+      const cities = [["Paris",0.8,true,"r"],["New York",1.62,true,"r"],["Dakar",2.42,true,"l"],["Bruxelles",2.85,false,"l"],["Montréal",2.95,false,"r"],["Abidjan",3.05,false,"r"],["Dubaï",3.15,false,"l"]];
+      const mk = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); ov.appendChild(e); return e; };
+      const arcs = [];
+      cities.forEach(([name, t, main, side], idx) => {
+        const [x, y] = P[name];
+        const mx = (x + B[0]) / 2, my = (y + B[1]) / 2;
+        const dist = Math.hypot(B[0] - x, B[1] - y);
+        const cx = mx, cy = my - Math.max(60, dist * 0.35);
+        const arc = mk("path", { d: `M${x} ${y} Q${cx} ${cy} ${B[0]} ${B[1]}`, fill: "none", stroke: main ? "#EB6834" : "#4A3AA7", "stroke-width": main ? 6 : 5, "stroke-linecap": "round", opacity: main ? 1 : 0.95 });
+        const L = arc.getTotalLength(); arc.style.strokeDasharray = L; arc.style.strokeDashoffset = L;
+        arcs.push([arc, L, idx]);
+        const halo = mk("circle", { cx: x, cy: y, r: 26, fill: main ? "#EB6834" : "#ffffff", opacity: 0 });
+        const dot = mk("circle", { cx: x, cy: y, r: main ? 11 : 8, fill: main ? "#EB6834" : "#ffffff", opacity: 0 });
+        const lbl = document.createElement("div"); lbl.className = "k06-lbl"; lbl.textContent = name.toUpperCase();
+        lbl.style.top = (y - 15) + "px"; if (side === "r") lbl.style.left = (x + 22) + "px"; else lbl.style.right = (1080 - x + 22) + "px";
+        if (!main) lbl.style.color = "#A1A1A6";
+        cam.appendChild(lbl);
+        tl.fromTo(dot, { opacity: 0, attr: { r: 0 } }, { opacity: 1, attr: { r: main ? 11 : 8 }, duration: 0.35, ease: "back.out(2.5)" }, t);
+        tl.fromTo(halo, { opacity: 0.6, attr: { r: 8 } }, { opacity: 0, attr: { r: 44 }, duration: 0.9, ease: "power2.out" }, t);
+        tl.fromTo(lbl, { opacity: 0, x: side === "r" ? -10 : 10 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" }, t + 0.05);
+      });
+      // Bamako
+      const bh = mk("circle", { cx: B[0], cy: B[1], r: 20, fill: "#EB6834", opacity: 0 });
+      const bd = mk("circle", { cx: B[0], cy: B[1], r: 15, fill: "#FFFFFF", stroke: "#EB6834", "stroke-width": 6, opacity: 0 });
+      const bl = document.createElement("div"); bl.id = "k06-bko"; bl.textContent = "Bamako"; bl.style.left = (B[0] - 205) + "px"; bl.style.top = (B[1] + 22) + "px"; cam.appendChild(bl);
+      tl.fromTo(bd, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.3);
+      // arcs draw on "commandez et payez à distance" (3.0 → 5.0), main first
+      arcs.forEach(([arc, L, idx]) => tl.to(arc, { strokeDashoffset: 0, duration: 1.1, ease: "power2.inOut" }, 3.0 + idx * 0.18));
+      tl.fromTo(bh, { opacity: 0.7, attr: { r: 16 } }, { opacity: 0, attr: { r: 90 }, duration: 1.1, repeat: 2, ease: "power2.out" }, 4.3);
+      tl.fromTo(bd, { attr: { r: 15 } }, { attr: { r: 22 }, immediateRender: false, duration: 0.4, ease: "back.out(3)" }, 4.4);
+      tl.fromTo(bl, { opacity: 0, y: 14, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(1.6)" }, 5.5);
+      // titles + camera
+      tl.fromTo(R("#k06-title"), { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0);
+      tl.fromTo(R("#k06-sub"), { opacity: 0 }, { opacity: 1, duration: 0.5 }, 3.0);
+      tl.fromTo(R("#k06-map"), { opacity: 0 }, { opacity: 0.95, duration: 0.8 }, 0);
+      tl.fromTo(cam, { scale: 1.0, transformOrigin: `${B[0]}px ${B[1]}px` }, { scale: 1.12, duration: 8.1, ease: "sine.inOut" }, 0);
+
+      window.__timelines["06-diaspora"] = tl;
+    })();
+  </script>
+</template>

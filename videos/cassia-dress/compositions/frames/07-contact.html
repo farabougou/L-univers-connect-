@@ -1,0 +1,73 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Playfair Display"; font-weight: 600; src: url("assets/fonts/playfair-display-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Playfair Display"; font-weight: 700; src: url("assets/fonts/playfair-display-latin-700-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 500; src: url("assets/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 600; src: url("assets/fonts/montserrat-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Great Vibes"; font-weight: 400; src: url("assets/fonts/greatvibes-400.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Montserrat", sans-serif; color: #F1E6D2; background: #140D08; }
+
+    .c07-a { position: absolute; }
+    .c07-c { left: 0; right: 0; text-align: center; }
+    .c07-bg { position: absolute; inset: 0; background: radial-gradient(90% 60% at 50% 45%, #3a2416 0%, #2A1A10 55%, #140D08 100%); }
+    .c07-kick { font-family: "Montserrat"; font-weight: 600; font-size: 26px; letter-spacing: 0.3em; color: #C9923F; white-space: nowrap; }
+    .c07-t1 { font-family: "Playfair Display"; font-weight: 700; font-size: 92px; line-height: 1.05; color: #F1E6D2; white-space: nowrap; }
+    .c07-t2 { font-family: "Playfair Display"; font-weight: 600; font-size: 80px; line-height: 1.05; color: #C9923F; white-space: nowrap; }
+    .c07-sc { font-family: "Great Vibes"; font-weight: 400; color: #F1E6D2; white-space: nowrap; line-height: 1; }
+    .c07-ph { position: absolute; overflow: hidden; }
+    .c07-ph img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
+    .c07-band { position: absolute; left: 0; width: 1080px; height: 90px; }
+    .c07-band svg { display: block; }
+
+
+    #c07-name { top: 560px; font-size: 230px; }
+    #c07-dr { top: 750px; font-size: 120px; color: #C9923F; }
+    #c07-cta { top: 1000px; font-family: "Playfair Display"; font-weight: 700; font-size: 74px; color: #F1E6D2; }
+    #c07-wa { top: 1180px; display: flex; justify-content: center; align-items: center; gap: 22px; }
+    #c07-wa b { font-family: "Montserrat"; font-weight: 600; font-size: 58px; color: #FFFFFF; letter-spacing: 0.02em; }
+    #c07-pill { position: absolute; left: 150px; top: 1155px; width: 780px; height: 110px; border-radius: 55px; border: 3px solid #C9923F; background: rgba(201,146,63,0.12); }
+    #c07-ig { top: 1320px; font-family: "Montserrat"; font-weight: 500; font-size: 34px; color: #F1E6D2; opacity: 0.85; letter-spacing: 0.06em; }
+    #c07-city { top: 1385px; }
+    #c07-fil { position: absolute; left: 390px; top: 960px; width: 300px; height: 3px; background: #C9923F; }
+
+  </style>
+  <div id="root" data-composition-id="07-contact" data-start="0" data-duration="7.8" data-width="1080" data-height="1920">
+    <div id="c07-clip" class="clip" data-start="0" data-duration="7.8" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="c07-bg"></div>
+    <div class="c07-band" id="c07-b1" style="top:130px; height:80px"><svg width="1080" height="80"><defs><pattern id="c07-b1p" width="200" height="200" patternUnits="userSpaceOnUse"><rect width="200" height="200" fill="#140D08"/><g fill="#C9923F"><circle cx="22" cy="22" r="6"/><circle cx="22" cy="50" r="6"/><circle cx="22" cy="78" r="6"/><circle cx="50" cy="22" r="6"/><circle cx="50" cy="50" r="6"/><circle cx="50" cy="78" r="6"/><circle cx="78" cy="22" r="6"/><circle cx="78" cy="50" r="6"/><circle cx="78" cy="78" r="6"/><rect x="116" y="12" width="8" height="76" rx="4"/><rect x="136" y="12" width="8" height="76" rx="4"/><rect x="156" y="12" width="8" height="76" rx="4"/><rect x="176" y="12" width="8" height="76" rx="4"/><rect x="0" y="94" width="200" height="10" rx="4"/><rect x="94" y="0" width="10" height="200" rx="4"/><circle cx="116" cy="116" r="5"/><circle cx="180" cy="116" r="5"/><circle cx="116" cy="180" r="5"/><circle cx="180" cy="180" r="5"/></g><g stroke="#C9923F" stroke-width="9" stroke-linecap="round" fill="none"><path d="M 14 130 L 80 190 M 80 130 L 14 190"/><path d="M 112 140 L 128 124 L 144 140 L 160 124 L 176 140 L 192 124 M 112 168 L 128 152 L 144 168 L 160 152 L 176 168 L 192 152"/></g></pattern></defs><rect width="1080" height="80" fill="url(#c07-b1p)" transform="scale(1)"/></svg></div>
+    <div class="c07-band" id="c07-b2" style="top:1680px; height:80px"><svg width="1080" height="80"><defs><pattern id="c07-b2p" width="200" height="200" patternUnits="userSpaceOnUse"><rect width="200" height="200" fill="#140D08"/><g fill="#C9923F"><circle cx="22" cy="22" r="6"/><circle cx="22" cy="50" r="6"/><circle cx="22" cy="78" r="6"/><circle cx="50" cy="22" r="6"/><circle cx="50" cy="50" r="6"/><circle cx="50" cy="78" r="6"/><circle cx="78" cy="22" r="6"/><circle cx="78" cy="50" r="6"/><circle cx="78" cy="78" r="6"/><rect x="116" y="12" width="8" height="76" rx="4"/><rect x="136" y="12" width="8" height="76" rx="4"/><rect x="156" y="12" width="8" height="76" rx="4"/><rect x="176" y="12" width="8" height="76" rx="4"/><rect x="0" y="94" width="200" height="10" rx="4"/><rect x="94" y="0" width="10" height="200" rx="4"/><circle cx="116" cy="116" r="5"/><circle cx="180" cy="116" r="5"/><circle cx="116" cy="180" r="5"/><circle cx="180" cy="180" r="5"/></g><g stroke="#C9923F" stroke-width="9" stroke-linecap="round" fill="none"><path d="M 14 130 L 80 190 M 80 130 L 14 190"/><path d="M 112 140 L 128 124 L 144 140 L 160 124 L 176 140 L 192 124 M 112 168 L 128 152 L 144 168 L 160 152 L 176 168 L 192 152"/></g></pattern></defs><rect width="1080" height="80" fill="url(#c07-b2p)" transform="scale(1)"/></svg></div>
+    <div class="c07-a c07-c c07-sc" id="c07-name">Cassia</div>
+    <div class="c07-a c07-c c07-sc" id="c07-dr">Dressing</div>
+    <div id="c07-fil"></div>
+    <div class="c07-a c07-c" id="c07-cta">Affirmez votre classe</div>
+    <div id="c07-pill"></div>
+    <div class="c07-a c07-c" id="c07-wa"><svg width="54" height="54" viewBox="0 0 32 32"><path fill="#25D366" d="M16 3C9 3 3.3 8.6 3.3 15.6c0 2.4.7 4.7 1.9 6.6L3 29l7-2.2c1.8 1 3.9 1.6 6 1.6 7 0 12.7-5.6 12.7-12.6S23 3 16 3z"/><path fill="#fff" d="M12.2 9.6c-.3-.6-.6-.6-.9-.6h-.8c-.3 0-.7.1-1 .5-.4.4-1.3 1.3-1.3 3.1s1.3 3.6 1.5 3.9c.2.3 2.6 4.1 6.4 5.6 3.1 1.2 3.8 1 4.5.9.7-.1 2.2-.9 2.5-1.8.3-.9.3-1.6.2-1.8-.1-.2-.3-.3-.7-.5l-2.5-1.2c-.3-.1-.6-.2-.8.2-.2.4-.9 1.2-1.1 1.4-.2.2-.4.3-.8.1-.4-.2-1.6-.6-3-1.9-1.1-1-1.9-2.2-2.1-2.6-.2-.4 0-.6.2-.8l.6-.7c.2-.2.3-.4.4-.6.1-.3.1-.5 0-.7l-1.1-2.7z"/></svg><b>+223 94 55 85 40</b></div>
+    <div class="c07-a c07-c" id="c07-ig">@cassia_dress</div>
+    <div class="c07-a c07-kick c07-c" id="c07-city">BAMAKO · COMMANDEZ MAINTENANT</div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="07-contact"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="07-contact"] ' + s);
+      tl.fromTo([R("#c07-b1"), R("#c07-b2")], { clipPath: "inset(0% 50% 0% 50%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.9, ease: "power2.inOut" }, 0);
+      tl.fromTo(R("#c07-b1 svg"), { x: 0 }, { x: -200, duration: 7.8, ease: "none" }, 0);
+      tl.fromTo(R("#c07-b2 svg"), { x: -200 }, { x: 0, duration: 7.8, ease: "none" }, 0);
+      tl.fromTo(R("#c07-name"), { opacity: 0, clipPath: "inset(0% 100% 0% 0%)" }, { opacity: 1, clipPath: "inset(0% 0% 0% 0%)", duration: 1.0, ease: "power2.inOut" }, 0.15);
+      tl.fromTo(R("#c07-dr"), { opacity: 0, clipPath: "inset(0% 100% 0% 0%)" }, { opacity: 1, clipPath: "inset(0% 0% 0% 0%)", duration: 0.7, ease: "power2.inOut" }, 0.7);
+      tl.fromTo(R("#c07-fil"), { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "power2.inOut" }, 1.0);
+      tl.fromTo(R("#c07-cta"), { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 1.1);
+      tl.fromTo(R("#c07-pill"), { opacity: 0, scaleX: 0.6 }, { opacity: 1, scaleX: 1, duration: 0.6, ease: "power3.out" }, 3.0);
+      tl.fromTo(R("#c07-wa"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 3.15);
+      tl.fromTo(R("#c07-ig"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 3.6);
+      tl.fromTo(R("#c07-city"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 3.8);
+      tl.to(R("#c07-pill"), { boxShadow: "0 0 50px rgba(201,146,63,0.55)", duration: 0.6, ease: "sine.inOut", yoyo: true, repeat: 4 }, 4.4);
+
+      tl.to({}, { duration: 7.8 }, 0);
+      window.__timelines["07-contact"] = tl;
+    })();
+  </script>
+</template>

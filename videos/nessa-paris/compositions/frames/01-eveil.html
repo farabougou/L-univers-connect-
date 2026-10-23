@@ -1,0 +1,95 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Cormorant"; font-weight: 300; src: url("assets/fonts/cormorant-garamond-latin-300-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 300; font-style: italic; src: url("assets/fonts/cormorant-garamond-latin-300-italic.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 400; font-style: italic; src: url("assets/fonts/cormorant-garamond-latin-400-italic.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 500; src: url("assets/fonts/cormorant-garamond-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 400; src: url("assets/fonts/montserrat-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 500; src: url("assets/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; }
+
+    .s01-a { position: absolute; }
+    .s01-c { left: 0; right: 0; text-align: center; }
+    .s01-cv { position: absolute; left: 0; top: 0; }
+    .s01-d { font-family: "Cormorant"; font-weight: 300; color: #F5E6D3; white-space: nowrap; line-height: 1.05; }
+    .s01-i { font-family: "Cormorant"; font-weight: 300; font-style: italic; color: #F5E6D3; white-space: nowrap; line-height: 1.05; }
+    .s01-cap { font-family: "Montserrat"; font-weight: 500; font-size: 25px; letter-spacing: 0.34em; color: #D4AF37; white-space: nowrap; text-transform: uppercase; }
+    .s01-w { display: inline-block; }
+    .s01-frame { position: absolute; overflow: hidden; background: #000; -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 72%, rgba(0,0,0,0) 100%); mask-image: linear-gradient(180deg, #000 0%, #000 72%, rgba(0,0,0,0) 100%); }
+    .s01-frame img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+    .s01-frame canvas { position: absolute; left: 0; top: 0; }
+    .s01-line { position: absolute; height: 1px; background: linear-gradient(90deg, rgba(212,175,55,0), #D4AF37, rgba(212,175,55,0)); }
+    .s01-glow { position: absolute; border-radius: 50%; background: radial-gradient(closest-side, rgba(212,175,55,0.38), rgba(212,175,55,0.08) 55%, rgba(212,175,55,0)); }
+    .s01-word { position: absolute; left: 0; right: 0; text-align: center; font-family: "Cormorant"; font-weight: 500; color: #F5E6D3; white-space: nowrap; line-height: 1; }
+    .s01-word span { display: inline-block; }
+    .s01-bk { position: absolute; border-radius: 50%; }
+    .s01-gold { --st-glow: rgba(212,175,55,0.45); }
+
+
+    #s01-orb { left: 90px; top: 560px; width: 900px; height: 900px; }
+    #s01-drop { position: absolute; left: 520px; top: 1070px; width: 40px; height: 40px; border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%, #FFF6E2, #D4AF37 55%, rgba(212,175,55,0.2)); box-shadow: 0 0 30px rgba(212,175,55,0.9), 0 0 90px rgba(212,175,55,0.5); }
+    #s01-svg { position: absolute; left: 0; top: 0; }
+
+  </style>
+  <div id="root" data-composition-id="01-eveil" data-start="0" data-duration="5.2" data-width="1080" data-height="1920">
+    <div id="s01-clip" class="clip" data-start="0" data-duration="5.2" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="st-stage">
+    <div class="st-layer" id="s01-Lbg">
+      <canvas class="s01-cv" id="s01-v" width="1080" height="1920"></canvas>
+      <div class="s01-glow" id="s01-orb" style="left:90px; top:560px; width:900px; height:900px"></div>
+    </div>
+    <div class="st-layer" id="s01-Lmid">
+      <svg id="s01-svg" width="1080" height="1920"><ellipse id="s01-r0" cx="540" cy="1090" rx="420" ry="64" fill="none" stroke="#D4AF37" stroke-width="2.0"/><ellipse id="s01-r1" cx="540" cy="1090" rx="420" ry="64" fill="none" stroke="#D4AF37" stroke-width="1.5"/><ellipse id="s01-r2" cx="540" cy="1090" rx="420" ry="64" fill="none" stroke="#D4AF37" stroke-width="1.0"/></svg>
+      <div id="s01-drop" data-hf-motion-blur></div>
+    </div>
+    <div class="st-layer" id="s01-Lfg">
+      <i class="s01-bk" style="left:96px; top:1599px; width:124px; height:124px; background: radial-gradient(circle, rgba(212,175,55,0.39), rgba(212,175,55,0) 70%)"></i>
+      <i class="s01-bk" style="left:49px; top:92px; width:132px; height:132px; background: radial-gradient(circle, rgba(245,230,211,0.44), rgba(245,230,211,0) 70%)"></i>
+      <i class="s01-bk" style="left:-58px; top:860px; width:119px; height:119px; background: radial-gradient(circle, rgba(245,230,211,0.38), rgba(245,230,211,0) 70%)"></i>
+      <i class="s01-bk" style="left:986px; top:96px; width:43px; height:43px; background: radial-gradient(circle, rgba(245,230,211,0.47), rgba(245,230,211,0) 70%)"></i>
+      <i class="s01-bk" style="left:-26px; top:448px; width:88px; height:88px; background: radial-gradient(circle, rgba(212,175,55,0.46), rgba(212,175,55,0) 70%)"></i>
+      <i class="s01-bk" style="left:276px; top:80px; width:132px; height:132px; background: radial-gradient(circle, rgba(245,230,211,0.48), rgba(245,230,211,0) 70%)"></i>
+      <i class="s01-bk" style="left:156px; top:1866px; width:135px; height:135px; background: radial-gradient(circle, rgba(212,175,55,0.35), rgba(212,175,55,0) 70%)"></i>
+      <i class="s01-bk" style="left:430px; top:1567px; width:114px; height:114px; background: radial-gradient(circle, rgba(212,175,55,0.40), rgba(212,175,55,0) 70%)"></i>
+      <i class="s01-bk" style="left:964px; top:1597px; width:96px; height:96px; background: radial-gradient(circle, rgba(212,175,55,0.48), rgba(212,175,55,0) 70%)"></i>
+    </div>
+    </div>
+    <div class="st-layer" id="s01-Ltxt">
+    <div class="s01-word" id="s01-nm" style="top:720px; font-size:200px"><span id="s01-nm0" style="margin: 0 0.12em">N</span><span id="s01-nm1" style="margin: 0 0.12em">E</span><span id="s01-nm2" style="margin: 0 0.12em">S</span><span id="s01-nm3" style="margin: 0 0.12em">S</span><span id="s01-nm4" style="margin: 0 0.12em">A</span></div>
+    <div class="s01-a s01-c s01-cap" id="s01-p" style="top:950px; font-size:30px; letter-spacing:0.9em; padding-left:0.9em">Paris</div>
+    <div class="s01-a s01-c s01-i" id="s01-t" style="top:1200px; font-size:66px">Soins visage &amp; corps</div>
+    </div>
+
+  </div>
+  <script>
+    (function () {
+      const S = STUDIO;
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="01-eveil"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="01-eveil"] ' + s);
+      const __r0 = AURA.vapour(R("#s01-v"), {"x": 540, "y": 2050, "rise": 1550, "size": 360, "alpha": 0.085, "n": 80, "life": 7.0, "sx": 1000, "fin": 0.3, "seed": 4});
+      const __p = { t: 0 };
+      tl.fromTo(__p, { t: 0 }, { t: 5.2, duration: 5.2, ease: "none", onUpdate: () => { __r0(__p.t); } }, 0);
+      __r0(__p.t);
+      S.life(tl, RA(".s01-bk"), 0, 5.2, { x: 12, y: 16, rotate: 0, scale: 0.03, period: 7, seed: 5 });
+      S.camera(tl, [{ el: R("#s01-Lbg"), depth: 0.35 }, { el: R("#s01-Lmid"), depth: 1 }, { el: R("#s01-Lfg"), depth: 1.7 }, { el: R("#s01-Ltxt"), depth: 0.45, blur: false }], { start: 0, end: 5.2, dof: { k: 9, max: 12 }, drift: { x: 4, y: 4, r: 0.08, period: 9 }, keys: [{ t: 0, s: 1.1, y: 60, rx: 6, f: 1.7 }, { t: 1.3, s: 1.02, y: 0, rx: 0, f: 1.0, ease: S.ease.silk }, { t: 5.2, s: 1.06, ease: S.ease.breath }] });
+      tl.fromTo(R("#s01-orb"), { scale: 0.35, opacity: 0.25 }, { scale: 1, opacity: 1, duration: 3.0, ease: S.ease.silk }, 1.1);
+      tl.fromTo(R("#s01-drop"), { y: -1180, scaleY: 1.8, opacity: 0 }, { y: 0, scaleY: 1, opacity: 1, duration: 1.1, ease: "power2.in" }, 0.05);
+      tl.to(R("#s01-drop"), { scaleX: 1.9, scaleY: 0.35, opacity: 0, duration: 0.45, ease: S.ease.silk }, 1.15);
+      tl.fromTo(R("#s01-r0"), { attr: { rx: 6, ry: 1 }, opacity: 0.9 }, { attr: { rx: 420, ry: 64 }, opacity: 0, duration: 2.6, ease: S.ease.silk }, 1.15);
+      tl.fromTo(R("#s01-r1"), { attr: { rx: 6, ry: 1 }, opacity: 0.9 }, { attr: { rx: 420, ry: 64 }, opacity: 0, duration: 2.6, ease: S.ease.silk }, 1.35);
+      tl.fromTo(R("#s01-r2"), { attr: { rx: 6, ry: 1 }, opacity: 0.9 }, { attr: { rx: 420, ry: 64 }, opacity: 0, duration: 2.6, ease: S.ease.silk }, 1.55);
+      S.converge(tl, [R("#s01-nm0"), R("#s01-nm1"), R("#s01-nm2"), R("#s01-nm3"), R("#s01-nm4")], 1.3, { spread: 70, blur: 22, duration: 2.2, stagger: 0.12 });
+      S.rise(tl, R("#s01-p"), 1.9, { y: 0, blur: 6, duration: 1.4 });
+      S.rise(tl, S.split(R("#s01-t"), { by: "words" }), 2.55, { y: 24, blur: 12, stagger: 0.08, duration: 1.4 });
+      S.leave(tl, [R("#s01-nm"), R("#s01-p"), R("#s01-t")], 3.95, { y: -60, blur: 22, duration: 0.75, ease: S.ease.accel });
+      tl.to(R("#s01-orb"), { opacity: 0, scale: 1.3, duration: 0.8, ease: S.ease.accel }, 4.4);
+
+      tl.to({}, { duration: 5.2 }, 0);
+      window.__timelines["01-eveil"] = tl;
+    })();
+  </script>
+</template>

@@ -1,0 +1,117 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Playfair Display"; font-weight: 400; src: url("assets/fonts/playfair-display-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Playfair Display"; font-weight: 600; src: url("assets/fonts/playfair-display-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Playfair Display"; font-weight: 700; src: url("assets/fonts/playfair-display-latin-700-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 400; src: url("assets/fonts/montserrat-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 500; src: url("assets/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 600; src: url("assets/fonts/montserrat-latin-600-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Montserrat", sans-serif; color: #FFFFFF; background: #000; }
+
+    .s02-a { position: absolute; }
+    .s02-full { position: absolute; inset: 0; }
+    .s02-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+    .s02-kick { font-family: "Montserrat"; font-weight: 500; font-size: 24px; letter-spacing: 0.26em; color: #E9C221; white-space: nowrap; }
+    .s02-l1, .s02-l2 { position: absolute; left: 120px; font-family: "Playfair Display"; font-weight: 600; font-size: 76px; line-height: 1.1; color: #FFFFFF; white-space: nowrap; }
+    .s02-l2 { color: #E9C221; }
+    /* ── site reconstruction (mobile home, 800 px wide) ── */
+    .s02-home { position: absolute; left: 0; top: 0; width: 800px; height: 1130px; background: #000; overflow: hidden; }
+    .s02-hd { height: 112px; display: flex; align-items: center; padding: 0 36px; background: #000; border-bottom: 1px solid #1d1d1d; }
+    .s02-hd img { display: block; height: 72px; }
+    .s02-bg { margin-left: auto; display: flex; flex-direction: column; gap: 9px; }
+    .s02-bg i { display: block; width: 40px; height: 3px; background: #FFFFFF; }
+    .s02-img { position: relative; height: 500px; overflow: hidden; background: radial-gradient(70% 70% at 62% 38%, #4a3712 0%, #1a1308 45%, #070605 100%); }
+    .s02-txtb { padding: 52px 48px 0; }
+    .s02-ttl { font-family: "Playfair Display"; font-weight: 600; font-size: 70px; line-height: 1.08; color: #FFFFFF; margin-top: 18px; }
+    .s02-ttl em { font-style: normal; color: #E9C221; }
+    .s02-p { font-family: "Montserrat"; font-weight: 400; font-size: 27px; line-height: 1.55; color: #C9C9C9; margin-top: 22px; }
+    .s02-btns { display: flex; flex-direction: column; gap: 18px; margin-top: 38px; }
+    .s02-btn { display: flex; align-items: center; justify-content: center; height: 78px; font-family: "Montserrat"; font-weight: 600; font-size: 22px; letter-spacing: 0.14em; color: #000; background: #E9C221; white-space: nowrap; }
+    .s02-btn.ol { color: #E9C221; background: transparent; border: 2px solid #E9C221; }
+    /* arch windows */
+    .s02-arch { position: absolute; left: 180px; top: 470px; width: 720px; height: 1120px; border-radius: 360px 360px 28px 28px; overflow: hidden; border: 2px solid rgba(233,194,33,0.55); }
+    .s02-in { position: absolute; inset: 0; }
+    .s02-arch svg.ic { position: absolute; left: 110px; top: 250px; width: 500px; height: 500px; }
+    .s02-al { position: absolute; left: 50px; right: 50px; bottom: 70px; text-align: center; }
+    .s02-al span { display: block; font-family: "Montserrat"; font-weight: 500; font-size: 24px; letter-spacing: 0.26em; color: #E9C221; }
+    .s02-al b { display: block; margin-top: 16px; font-family: "Playfair Display"; font-weight: 600; font-size: 58px; line-height: 1.12; color: #FFFFFF; }
+
+
+    #s02-stage { position: absolute; left: 140px; top: 200px; width: 800px; height: 1130px; perspective: 2400px; transform-origin: 0 0; }
+    #s02-stk { position: absolute; inset: 0; transform-style: preserve-3d; }
+    .s02-ly { position: absolute; left: 0; width: 800px; }
+    #s02-L0 { top: 0; height: 612px; background: #000; overflow: hidden; }
+    #s02-L1 { top: 612px; padding: 52px 48px 0; }
+    #s02-L2 { top: 810px; padding: 0 48px; }
+    #s02-L3 { top: 960px; padding: 0 48px; }
+    #s02-base { position: absolute; inset: 0; background: #000; border-radius: 48px; border: 2px solid rgba(233,194,33,0.35); }
+    .s02-lab { display: flex; align-items: center; gap: 14px; }
+    .s02-lab i { display: block; width: 44px; height: 2px; background: #E9C221; }
+    .s02-lab b { display: block; font-family: "Playfair Display"; font-weight: 600; font-size: 38px; color: #FFFFFF; }
+    .s02-lab span { display: block; font-family: "Montserrat"; font-weight: 400; font-size: 22px; color: #BDBDBD; white-space: nowrap; }
+    .s02-col { top: 0; width: 270px; height: 1920px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 330px; border-right: 1px solid rgba(255,255,255,0.08); }
+    .s02-col b { display: block; font-family: "Playfair Display"; font-weight: 600; font-size: 40px; text-align: center; }
+    .s02-col span { display: block; margin-top: 8px; font-family: "Montserrat"; font-weight: 500; font-size: 24px; letter-spacing: 0.08em; text-align: center; opacity: 0.85; }
+    #s02-flat { background: #E9C221; }
+
+  </style>
+  <div id="root" data-composition-id="02-sens" data-start="0" data-duration="7.6" data-width="1080" data-height="1920">
+    <div id="s02-clip" class="clip" data-start="0" data-duration="7.6" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="s02-full" style="background:linear-gradient(180deg,#000 0%,#0b0b0b 60%,#121212 100%)"></div>
+    <div class="s02-l1" id="s02-s1" style="top:200px">Le design</div>
+    <div class="s02-l2" id="s02-s2" style="top:286px">éveille les sens.</div>
+    <div id="s02-stage"><div id="s02-base"></div><div id="s02-stk">
+      <div class="s02-ly" id="s02-L0"><div class="s02-hd"><img src="assets/images/sensexpress-logo.png" alt="SensExpress"><div class="s02-bg"><i></i><i></i><i></i></div></div><div class="s02-img"><svg class="s02-a" style="left:0;top:0" width="800" height="500" viewBox="0 0 800 500">
+          <path d="M 470 470 V 170 A 120 120 0 0 1 710 170 V 470" stroke="rgba(233,194,33,0.35)" stroke-width="2" fill="rgba(233,194,33,0.05)"/>
+          <path d="M 590 470 V 60" stroke="rgba(233,194,33,0.18)" stroke-width="2"/>
+          <path d="M 60 400 H 420 M 90 400 V 470 M 390 400 V 470" stroke="rgba(233,194,33,0.55)" stroke-width="3" fill="none"/>
+          <rect x="222" y="268" width="56" height="132" rx="26" fill="#0d0d0d" stroke="#E9C221" stroke-width="2"/>
+          <rect x="222" y="372" width="56" height="7" fill="#E9C221"/>
+          <path d="M 250 262 C 236 230 268 214 252 186 C 238 160 270 146 258 118" stroke="rgba(255,240,210,0.55)" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M 262 258 C 284 236 270 214 292 196" stroke="rgba(233,194,33,0.6)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        </svg></div></div>
+      <div class="s02-ly" id="s02-L1"><div class="s02-kick" style="font-size:22px">MARKETING OLFACTIF AU MALI</div><div class="s02-ttl">Éveillez vos <em>sens</em></div></div>
+      <div class="s02-ly" id="s02-L2"><div class="s02-p" style="margin:0">Diffuseurs et fragrances pour hôtels, bureaux, maison et voiture.</div></div>
+      <div class="s02-ly" id="s02-L3"><div class="s02-btns" style="margin:0"><div class="s02-btn">DÉCOUVRIR NOS SOLUTIONS</div><div class="s02-btn ol">CONTACTER UN CONSEILLER</div></div></div>
+    </div></div>
+    <div class="s02-a s02-lab" id="s02-lb0" style="left:760px; top:678px"><i></i><div><b>Image</b><span>ambiance du site</span></div></div>
+    <div class="s02-a s02-lab" id="s02-lb1" style="left:760px; top:901px"><i></i><div><b>Titre</b><span>Playfair Display</span></div></div>
+    <div class="s02-a s02-lab" id="s02-lb2" style="left:760px; top:1001px"><i></i><div><b>Texte</b><span>Montserrat</span></div></div>
+    <div class="s02-a s02-lab" id="s02-lb3" style="left:760px; top:1116px"><i></i><div><b>Bouton</b><span>or #E9C221</span></div></div>
+    <div class="s02-full" id="s02-flat"></div>
+    <div class="s02-a s02-col" id="s02-c0" style="left:0px; background:#E9C221; color:#000"><div><b>Or</b><span>#E9C221</span></div></div>
+    <div class="s02-a s02-col" id="s02-c1" style="left:270px; background:#000000; color:#fff"><div><b>Noir</b><span>#000000</span></div></div>
+    <div class="s02-a s02-col" id="s02-c2" style="left:540px; background:#121212; color:#fff"><div><b>Gris sombre</b><span>#121212</span></div></div>
+    <div class="s02-a s02-col" id="s02-c3" style="left:810px; background:#FFFFFF; color:#000"><div><b>Blanc</b><span>#FFFFFF</span></div></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="02-sens"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="02-sens"] ' + s);
+      tl.fromTo(R("#s02-s1"), { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 0.25);
+      tl.fromTo(R("#s02-s2"), { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 0.5);
+      // match cut from 01: the page arrives full size, then steps back to make room
+      tl.fromTo(R("#s02-stage"), { x: 0, y: 0, scale: 1 }, { x: -60, y: 270, scale: 0.72, duration: 0.9, ease: "power3.inOut" }, 0.1);
+      tl.to(R("#s02-base"), { opacity: 0, duration: 0.5 }, 0.9);
+      tl.fromTo(R("#s02-stk"), { rotationY: 0, rotationX: 0 }, { rotationY: -24, rotationX: 10, duration: 1.1, ease: "power2.inOut" }, 1.0);
+      [0, 1, 2, 3].forEach((i) => tl.fromTo(R("#s02-L" + i), { z: 0, x: 0 }, { z: 150 - i * 90, x: i * 36, duration: 1.1, ease: "power2.inOut", immediateRender: false }, 1.0));
+      [0, 1, 2, 3].forEach((i) => tl.fromTo(R("#s02-lb" + i), { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, 1.7 + i * 0.22));
+      tl.to(RA(".s02-lab"), { opacity: 0, duration: 0.4, ease: "power2.in" }, 3.35);
+      // a flat of gold links to the palette, which opens into four columns
+      tl.fromTo(R("#s02-flat"), { clipPath: "inset(100% 0% 0% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.6, ease: "power3.inOut" }, 3.55);
+      [0, 1, 2, 3].forEach((i) => tl.fromTo(R("#s02-c" + i), { y: 1920 }, { y: 0, duration: 0.55, ease: "power3.out" }, 4.1 + i * 0.1));
+      tl.set(R("#s02-flat"), { opacity: 0 }, 4.7);
+      tl.to(R("#s02-stk"), { rotationY: 0, rotationX: 0, duration: 0.01 }, 4.7);
+      [0, 1, 2, 3].forEach((i) => tl.set(R("#s02-L" + i), { z: 0, x: 0 }, 4.7));
+      [0, 1, 2, 3].forEach((i) => tl.to(R("#s02-c" + i), { y: -1920, duration: 0.6, ease: "power3.in" }, 5.45 + i * 0.09));
+      tl.fromTo(R("#s02-base"), { opacity: 0 }, { opacity: 1, duration: 0.5 }, 5.6);
+
+      tl.to({}, { duration: 7.6 }, 0);
+      window.__timelines["02-sens"] = tl;
+    })();
+  </script>
+</template>

@@ -1,0 +1,66 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Anton"; src: url("assets/fonts/anton-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Black Ops One"; src: url("assets/fonts/black-ops-one-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Permanent Marker"; src: url("assets/fonts/permanent-marker-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 500; src: url("assets/fonts/oswald-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 700; src: url("assets/fonts/oswald-latin-700-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: #0B0908; }
+
+    .f01-a { position: absolute; }
+    .f01-c { left: 0; right: 0; text-align: center; }
+    .f01-full { position: absolute; inset: 0; }
+    .f01-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+    .f01-h { font-family: "Anton"; color: #F4E9D8; text-transform: uppercase; line-height: 0.92; white-space: nowrap; letter-spacing: 0.005em; }
+    .f01-st { font-family: "Black Ops One"; color: #F4E9D8; line-height: 1; white-space: nowrap; }
+    .f01-gr { padding: 0.22em 0.04em; margin-top: -0.22em; -webkit-mask-image: url(assets/images/grunge.png); -webkit-mask-size: 640px 640px; mask-image: url(assets/images/grunge.png); mask-size: 640px 640px; }
+    .f01-mk { font-family: "Permanent Marker"; color: #F4E9D8; white-space: nowrap; }
+    .f01-in { font-family: "Oswald"; font-weight: 500; color: #F4E9D8; white-space: nowrap; letter-spacing: 0.04em; }
+    .f01-kick { font-family: "Oswald"; font-weight: 700; font-size: 32px; letter-spacing: 0.34em; color: #FFB627; white-space: nowrap; text-transform: uppercase; }
+    .f01-coal { position: absolute; inset: 0; background: radial-gradient(70% 45% at 50% 62%, #2a140a 0%, #0B0908 70%); }
+    .f01-slate { position: absolute; inset: 0; background: url(assets/images/slate.jpg) center / cover; }
+    .f01-food { position: absolute; display: block; filter: drop-shadow(0 26px 30px rgba(0,0,0,0.55)); }
+    .f01-band { position: absolute; -webkit-mask: url(assets/images/brush.png) center / 100% 100% no-repeat; mask: url(assets/images/brush.png) center / 100% 100% no-repeat; }
+    .f01-band span { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; white-space: nowrap; }
+    .f01-m { position: absolute; overflow: hidden; box-sizing: content-box; padding-top: 70px; margin-top: -70px; }
+    .f01-m > * { display: inline-block; }
+
+
+  </style>
+  <div id="root" data-composition-id="01-accroche" data-start="0" data-duration="3.85" data-width="1080" data-height="1920">
+    <div id="f01-clip" class="clip" data-start="0" data-duration="3.85" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="f01-coal"></div>
+    <canvas class="f01-cv" id="f01-fl" width="1080" height="1920"></canvas>
+    <canvas class="f01-cv" id="f01-emb" width="1080" height="1920"></canvas>
+    <div id="f01-shk" class="f01-full">
+      <div class="f01-a f01-kick f01-c" id="f01-k" style="top:600px">Founerou Grill's · Ivry</div>
+      <div class="f01-a f01-c f01-h f01-gr" id="f01-l1" data-layout-allow-overlap style="top:670px; font-size:250px">Ça grille</div>
+      <div class="f01-a f01-c f01-h f01-gr" id="f01-l2" data-layout-allow-overlap style="top:930px; font-size:250px; color:#F26A1B">à Ivry !</div>
+      <div class="f01-a f01-c f01-mk" id="f01-l3" style="top:1205px; font-size:74px; color:#FFB627; transform: rotate(-4deg)">jusqu'à 2h du mat'</div>
+    </div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="01-accroche"] ' + s);
+      const __e = FG.embers(R("#f01-emb"), { n: 110, seed: 3, alpha: 0.95 });
+      const __l = FG.flames(R("#f01-fl"), { y: 1960, height: 760, n: 260, size: 110, alpha: 0.17, seed: 5 });
+      const __f = { t: 0 };
+      tl.fromTo(__f, { t: 0 }, { t: 3.9, duration: 3.9, ease: "none", onUpdate: () => { __e(__f.t); __l(__f.t); } }, 0);
+      __e(__f.t); __l(__f.t);
+      tl.fromTo(R("#f01-k"), { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.05);
+      tl.fromTo(R("#f01-l1"), { opacity: 0, scale: 1.8, filter: "blur(14px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.32, ease: "expo.out" }, 0.35);
+      tl.fromTo(R("#f01-shk"), { x: -16, y: 10 }, { x: 0, y: 0, duration: 0.45, ease: "elastic.out(1.2, 0.3)", immediateRender: false }, 0.4);
+      tl.fromTo(R("#f01-l2"), { opacity: 0, scale: 1.8, filter: "blur(14px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.32, ease: "expo.out" }, 0.95);
+      tl.fromTo(R("#f01-shk"), { x: -19, y: 12 }, { x: 0, y: 0, duration: 0.45, ease: "elastic.out(1.2, 0.3)", immediateRender: false }, 1.0);
+      tl.fromTo(R("#f01-l3"), { opacity: 0, scale: 0.6, rotation: -14 }, { opacity: 1, scale: 1, rotation: -4, duration: 0.45, ease: "back.out(2.2)" }, 1.6);
+      tl.to([R("#f01-k"), R("#f01-l1"), R("#f01-l2"), R("#f01-l3")], { y: -260, opacity: 0, filter: "blur(16px)", duration: 0.32, ease: "power3.in", stagger: 0.03 }, 3.3);
+
+      tl.to({}, { duration: 3.85 }, 0);
+      window.__timelines["01-accroche"] = tl;
+    })();
+  </script>
+</template>

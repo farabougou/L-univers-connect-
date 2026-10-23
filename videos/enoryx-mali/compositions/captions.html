@@ -1,0 +1,234 @@
+<template id="captions-template" data-composition-id="captions" data-width="1080" data-height="1920">
+<script src="assets/vendor/gsap.min.js"></script>
+
+
+<style data-brand-tokens>
+      @font-face { font-family: 'Inter'; src: url('assets/fonts/Inter-400.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: block; }
+      @font-face { font-family: 'Inter'; src: url('assets/fonts/Inter-500.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: block; }
+      @font-face { font-family: 'Inter'; src: url('assets/fonts/Inter-600.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: block; }
+      @font-face { font-family: 'Inter'; src: url('assets/fonts/Inter-700.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: block; }
+      @font-face { font-family: 'Inter'; src: url('assets/fonts/Inter-800.woff2') format('woff2'); font-weight: 800; font-style: normal; font-display: block; }
+      @font-face { font-family: 'Inter'; src: url('assets/fonts/Inter-900.woff2') format('woff2'); font-weight: 900; font-style: normal; font-display: block; }
+      :root {
+      --ink-black: #050B1A;
+      --ink-black-alt: #0C1730;
+      --fire-orange: #38BDF8;
+      --cream: #F8FAFC;
+      --cream-muted: #94A3B8;
+      --enoryx-blue: #1D4ED8;
+      --drift-orange: #EA580C;
+      --normal-green: #16A34A;
+      --cream-hint: #484E50;
+      --border-dark: #1E2A44;
+      --ink-on-orange-muted: rgba(17,17,17,0.75);
+      --ink-on-orange-hint: rgba(17,17,17,0.55);
+      --ink-on-orange-faint: rgba(17,17,17,0.40);
+      --ink-on-orange-border: rgba(17,17,17,0.20);
+      --cap-ink: #050B1A;
+      --cap-canvas: #F8FAFC;
+      --cap-accent: #38BDF8;
+      --cap-accent-2: #38BDF8;
+      --font-display: "Inter", system-ui, serif;
+      --font-body: "Inter", system-ui, sans-serif;
+      --cap-band-top: 1600px;
+      --cap-band-height: 320px;
+      }
+    </style>
+
+<style>
+  #captions-root {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .caption-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    pointer-events: none;
+  }
+  /* the keep-out band, from captionBand(H) — frame content stays above it */
+  .caption-stage {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: var(--cap-band-top, 900px);
+    height: var(--cap-band-height, 180px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .caption-group {
+    /* every group is absolutely stacked over the SAME band — exactly one shown at a
+       time via opacity. Must be absolute: in-flow groups would lay out side-by-side. */
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+  }
+
+  /* THE ink-black plate — single 1px fire-orange hairline (broadside's lone accent),
+     SHARP corners (0 radius), NO shadow (the plane is flat) */
+  .caption-pill {
+    max-width: 80%;
+    padding: 18px 44px 22px;
+    background: var(--cap-ink, #111111);
+    border: 1px solid var(--cap-accent, #e85d26);
+    border-radius: 0;
+  }
+  .caption-line {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.04em 0.3em;
+    font-family: "Inter", system-ui, sans-serif;
+    font-weight: 900;
+    font-size: clamp(38px, 4.2vw, 56px);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    text-transform: none;
+  }
+
+  /* upcoming — faint cream, no block (massive lowercase Barlow 900 as graphic primitive) */
+  .caption-word {
+    display: inline-block;
+    padding: 0 0.08em;
+    color: color-mix(in srgb, var(--cap-canvas, #f0ece5) 42%, var(--cap-ink, #111111));
+  }
+  /* current word — THE register flip: a hard flat fire-orange block (box-shadow spread =
+     a sharp rectangle w/o layout shift; no blur), ink reading on top — the lone accent */
+  .caption-word.is-active {
+    color: var(--cap-ink, #111111);
+    background: var(--cap-accent, #e85d26);
+    box-shadow: 0 0 0 0.06em var(--cap-accent, #e85d26);
+  }
+  /* already spoken — solid cream, the orange block cleared */
+  .caption-word.is-spoken {
+    color: var(--cap-canvas, #f0ece5);
+    background: transparent;
+    box-shadow: none;
+  }
+
+  /* optional per-word accents (dormant until a word-classer tags them) */
+  /* brand / key term — fire-orange ink, the cream-on-ink register's only inflection */
+  .caption-word.cap-brand {
+    color: var(--cap-accent, #e85d26);
+  }
+  /* numerals / data — the IBM Plex Mono chrome voice, uppercase + tracked, recessed */
+  .caption-word.cap-num {
+    font-family: "Inter", ui-monospace, monospace;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: color-mix(in srgb, var(--cap-canvas, #f0ece5) 72%, var(--cap-ink, #111111));
+  }
+  /* emphasis — a fire-orange hairline underline (no second hue; the lone accent again) */
+  .caption-word.cap-cta {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-decoration-color: var(--cap-accent-2, #e85d26);
+    text-underline-offset: 0.1em;
+  }
+
+  @media (max-aspect-ratio: 9/16) {
+    .caption-pill {
+      max-width: 92%;
+    }
+    .caption-line {
+      font-size: clamp(32px, 5.2vw, 46px);
+    }
+  }
+</style>
+
+<div
+  id="captions-root"
+  data-composition-id="captions"
+  data-timeline-locked
+  data-start="0"
+  data-duration="58.96"
+  data-fps="30"
+  data-width="1080"
+  data-height="1920"
+>
+  <div class="caption-layer" aria-hidden="true">
+    <div id="caption-stage" class="caption-stage"></div>
+  </div>
+</div>
+
+<script>
+  // captions.mjs injects the engine's scene-aware groups + real duration here.
+  var GROUPS = [{"id":"caption-group-0","frame":1,"start":0.06,"end":0.68,"text":"Au Mali,","words":[{"id":"caption-word-0-0","text":"Au","start":0.06,"end":0.25},{"id":"caption-word-0-1","text":"Mali,","start":0.25,"end":0.581}]},{"id":"caption-group-1","frame":1,"start":0.68,"end":1.947,"text":"l'électricité coûte cher.","words":[{"id":"caption-word-1-0","text":"l'électricité","start":0.68,"end":1.425},{"id":"caption-word-1-1","text":"coûte","start":1.426,"end":1.757},{"id":"caption-word-1-2","text":"cher.","start":1.757,"end":1.947}]},{"id":"caption-group-2","frame":1,"start":1.947,"end":3.129,"text":"Et pendant les","words":[{"id":"caption-word-2-0","text":"Et","start":1.947,"end":2.487},{"id":"caption-word-2-1","text":"pendant","start":2.487,"end":2.819},{"id":"caption-word-2-2","text":"les","start":2.819,"end":3.009}]},{"id":"caption-group-3","frame":1,"start":3.27,"end":3.571,"text":"coupures,","words":[{"id":"caption-word-3-0","text":"coupures,","start":3.27,"end":3.571}]},{"id":"caption-group-4","frame":1,"start":3.571,"end":4.192,"text":"c'est le","words":[{"id":"caption-word-4-0","text":"c'est","start":3.571,"end":4.001},{"id":"caption-word-4-1","text":"le","start":4.001,"end":4.192}]},{"id":"caption-group-5","frame":1,"start":4.192,"end":5.799,"text":"groupe électrogène qui brûle","words":[{"id":"caption-word-5-0","text":"groupe","start":4.192,"end":4.523},{"id":"caption-word-5-1","text":"électrogène","start":4.523,"end":5.277},{"id":"caption-word-5-2","text":"qui","start":5.277,"end":5.467},{"id":"caption-word-5-3","text":"brûle","start":5.467,"end":5.798}]},{"id":"caption-group-6","frame":1,"start":5.799,"end":6.44,"text":"du gasoil.","words":[{"id":"caption-word-6-0","text":"du","start":5.799,"end":5.989},{"id":"caption-word-6-1","text":"gasoil.","start":5.989,"end":6.32}]},{"id":"caption-group-7","frame":2,"start":7.21,"end":7.541,"text":"Pourtant,","words":[{"id":"caption-word-7-0","text":"Pourtant,","start":7.21,"end":7.541}]},{"id":"caption-group-8","frame":2,"start":7.541,"end":8.062,"text":"dans beaucoup","words":[{"id":"caption-word-8-0","text":"dans","start":7.541,"end":7.731},{"id":"caption-word-8-1","text":"beaucoup","start":7.731,"end":8.062}]},{"id":"caption-group-9","frame":2,"start":8.062,"end":8.583,"text":"de bureaux,","words":[{"id":"caption-word-9-0","text":"de","start":8.062,"end":8.252},{"id":"caption-word-9-1","text":"bureaux,","start":8.252,"end":8.582}]},{"id":"caption-group-10","frame":2,"start":8.583,"end":9.263,"text":"d'hôtels et","words":[{"id":"caption-word-10-0","text":"d'hôtels","start":8.583,"end":9.073},{"id":"caption-word-10-1","text":"et","start":9.073,"end":9.263}]},{"id":"caption-group-11","frame":2,"start":9.263,"end":10.045,"text":"de cliniques,","words":[{"id":"caption-word-11-0","text":"de","start":9.263,"end":9.453},{"id":"caption-word-11-1","text":"cliniques,","start":9.454,"end":9.925}]},{"id":"caption-group-12","frame":2,"start":10.06,"end":11.698,"text":"les climatiseurs tournent la","words":[{"id":"caption-word-12-0","text":"les","start":10.06,"end":10.465},{"id":"caption-word-12-1","text":"climatiseurs","start":10.465,"end":11.077},{"id":"caption-word-12-2","text":"tournent","start":11.077,"end":11.508},{"id":"caption-word-12-3","text":"la","start":11.508,"end":11.698}]},{"id":"caption-group-13","frame":2,"start":11.698,"end":11.888,"text":"nuit,","words":[{"id":"caption-word-13-0","text":"nuit,","start":11.698,"end":11.888}]},{"id":"caption-group-14","frame":2,"start":11.888,"end":12.408,"text":"dans des","words":[{"id":"caption-word-14-0","text":"dans","start":11.888,"end":12.218},{"id":"caption-word-14-1","text":"des","start":12.218,"end":12.408}]},{"id":"caption-group-15","frame":2,"start":12.408,"end":13.19,"text":"salles vides.","words":[{"id":"caption-word-15-0","text":"salles","start":12.408,"end":12.739},{"id":"caption-word-15-1","text":"vides.","start":12.739,"end":13.07}]},{"id":"caption-group-16","frame":3,"start":13.98,"end":14.362,"text":"Et quand","words":[{"id":"caption-word-16-0","text":"Et","start":13.98,"end":14.171},{"id":"caption-word-16-1","text":"quand","start":14.171,"end":14.362}]},{"id":"caption-group-17","frame":3,"start":14.362,"end":14.885,"text":"une clim","words":[{"id":"caption-word-17-0","text":"une","start":14.362,"end":14.694},{"id":"caption-word-17-1","text":"clim","start":14.694,"end":14.885}]},{"id":"caption-group-18","frame":3,"start":14.885,"end":15.267,"text":"ou un","words":[{"id":"caption-word-18-0","text":"ou","start":14.885,"end":15.076},{"id":"caption-word-18-1","text":"un","start":15.076,"end":15.267}]},{"id":"caption-group-19","frame":3,"start":15.267,"end":16.303,"text":"groupe tombe en","words":[{"id":"caption-word-19-0","text":"groupe","start":15.267,"end":15.599},{"id":"caption-word-19-1","text":"tombe","start":15.73,"end":16.022},{"id":"caption-word-19-2","text":"en","start":16.022,"end":16.303}]},{"id":"caption-group-20","frame":3,"start":16.303,"end":16.755,"text":"panne,","words":[{"id":"caption-word-20-0","text":"panne,","start":16.303,"end":16.755}]},{"id":"caption-group-21","frame":3,"start":16.755,"end":17.137,"text":"on le","words":[{"id":"caption-word-21-0","text":"on","start":16.755,"end":16.946},{"id":"caption-word-21-1","text":"le","start":16.946,"end":17.137}]},{"id":"caption-group-22","frame":3,"start":17.137,"end":18.363,"text":"découvre trop tard.","words":[{"id":"caption-word-22-0","text":"découvre","start":17.137,"end":17.611},{"id":"caption-word-22-1","text":"trop","start":17.611,"end":17.802},{"id":"caption-word-22-2","text":"tard.","start":17.802,"end":18.362}]},{"id":"caption-group-23","frame":3,"start":18.363,"end":19.501,"text":"La réparation coûte","words":[{"id":"caption-word-23-0","text":"La","start":18.363,"end":18.553},{"id":"caption-word-23-1","text":"réparation","start":18.554,"end":19.169},{"id":"caption-word-23-2","text":"coûte","start":19.169,"end":19.501}]},{"id":"caption-group-24","frame":3,"start":19.501,"end":19.692,"text":"cher,","words":[{"id":"caption-word-24-0","text":"cher,","start":19.501,"end":19.692}]},{"id":"caption-group-25","frame":3,"start":19.692,"end":20.294,"text":"et le","words":[{"id":"caption-word-25-0","text":"et","start":19.692,"end":20.103},{"id":"caption-word-25-1","text":"le","start":20.103,"end":20.294}]},{"id":"caption-group-26","frame":3,"start":20.294,"end":21.32,"text":"travail s'arrête.","words":[{"id":"caption-word-26-0","text":"travail","start":20.294,"end":20.626},{"id":"caption-word-26-1","text":"s'arrête.","start":20.626,"end":21.2}]},{"id":"caption-group-27","frame":4,"start":22.11,"end":23.822,"text":"Enoryx surveille tous vos","words":[{"id":"caption-word-27-0","text":"Enoryx","start":22.11,"end":22.681},{"id":"caption-word-27-1","text":"surveille","start":22.681,"end":23.252},{"id":"caption-word-27-2","text":"tous","start":23.37,"end":23.592},{"id":"caption-word-27-3","text":"vos","start":23.592,"end":23.822}]},{"id":"caption-group-28","frame":4,"start":23.822,"end":24.804,"text":"équipements :","words":[{"id":"caption-word-28-0","text":"équipements :","start":23.822,"end":24.803}]},{"id":"caption-group-29","frame":4,"start":24.804,"end":25.655,"text":"climatiseurs,","words":[{"id":"caption-word-29-0","text":"climatiseurs,","start":24.804,"end":25.655}]},{"id":"caption-group-30","frame":4,"start":25.655,"end":26.967,"text":"groupes électrogènes,","words":[{"id":"caption-word-30-0","text":"groupes","start":25.655,"end":26.055},{"id":"caption-word-30-1","text":"électrogènes,","start":26.055,"end":26.967}]},{"id":"caption-group-31","frame":4,"start":26.967,"end":27.768,"text":"chambres froides,","words":[{"id":"caption-word-31-0","text":"chambres","start":26.967,"end":27.368},{"id":"caption-word-31-1","text":"froides,","start":27.368,"end":27.768}]},{"id":"caption-group-32","frame":4,"start":27.768,"end":28.499,"text":"compteurs.","words":[{"id":"caption-word-32-0","text":"compteurs.","start":27.768,"end":28.499}]},{"id":"caption-group-33","frame":4,"start":28.499,"end":28.959,"text":"Vous voyez","words":[{"id":"caption-word-33-0","text":"Vous","start":28.499,"end":28.729},{"id":"caption-word-33-1","text":"voyez","start":28.729,"end":28.959}]},{"id":"caption-group-34","frame":4,"start":28.959,"end":29.189,"text":"tout,","words":[{"id":"caption-word-34-0","text":"tout,","start":28.959,"end":29.189}]},{"id":"caption-group-35","frame":4,"start":29.189,"end":30.11,"text":"à distance.","words":[{"id":"caption-word-35-0","text":"à","start":29.189,"end":29.419},{"id":"caption-word-35-1","text":"distance.","start":29.419,"end":29.99}]},{"id":"caption-group-36","frame":5,"start":30.89,"end":31.57,"text":"Il repère","words":[{"id":"caption-word-36-0","text":"Il","start":30.89,"end":31.085},{"id":"caption-word-36-1","text":"repère","start":31.085,"end":31.569}]},{"id":"caption-group-37","frame":5,"start":31.57,"end":31.96,"text":"ce qui","words":[{"id":"caption-word-37-0","text":"ce","start":31.57,"end":31.765},{"id":"caption-word-37-1","text":"qui","start":31.765,"end":31.96}]},{"id":"caption-group-38","frame":5,"start":31.96,"end":32.639,"text":"consomme trop,","words":[{"id":"caption-word-38-0","text":"consomme","start":31.96,"end":32.444},{"id":"caption-word-38-1","text":"trop,","start":32.444,"end":32.639}]},{"id":"caption-group-39","frame":5,"start":32.639,"end":33.17,"text":"où et","words":[{"id":"caption-word-39-0","text":"où","start":32.639,"end":32.974},{"id":"caption-word-39-1","text":"et","start":32.975,"end":33.17}]},{"id":"caption-group-40","frame":5,"start":33.17,"end":33.365,"text":"quand.","words":[{"id":"caption-word-40-0","text":"quand.","start":33.17,"end":33.365}]},{"id":"caption-group-41","frame":5,"start":33.365,"end":34.55,"text":"Et il estime","words":[{"id":"caption-word-41-0","text":"Et","start":33.365,"end":33.87},{"id":"caption-word-41-1","text":"il","start":33.87,"end":34.065},{"id":"caption-word-41-2","text":"estime","start":34.065,"end":34.549}]},{"id":"caption-group-42","frame":5,"start":34.55,"end":34.94,"text":"ce que","words":[{"id":"caption-word-42-0","text":"ce","start":34.55,"end":34.745},{"id":"caption-word-42-1","text":"que","start":34.745,"end":34.94}]},{"id":"caption-group-43","frame":5,"start":34.94,"end":35.475,"text":"cela vous","words":[{"id":"caption-word-43-0","text":"cela","start":34.94,"end":35.279},{"id":"caption-word-43-1","text":"vous","start":35.28,"end":35.475}]},{"id":"caption-group-44","frame":5,"start":35.475,"end":35.815,"text":"coûte,","words":[{"id":"caption-word-44-0","text":"coûte,","start":35.475,"end":35.814}]},{"id":"caption-group-45","frame":5,"start":35.815,"end":36.52,"text":"en francs CFA.","words":[{"id":"caption-word-45-0","text":"en","start":35.815,"end":36.01},{"id":"caption-word-45-1","text":"francs","start":36.01,"end":36.205},{"id":"caption-word-45-2","text":"CFA.","start":36.205,"end":36.4}]},{"id":"caption-group-46","frame":6,"start":37.28,"end":37.655,"text":"Il voit","words":[{"id":"caption-word-46-0","text":"Il","start":37.28,"end":37.467},{"id":"caption-word-46-1","text":"voit","start":37.467,"end":37.655}]},{"id":"caption-group-47","frame":6,"start":37.655,"end":38.772,"text":"aussi une machine","words":[{"id":"caption-word-47-0","text":"aussi","start":37.655,"end":37.981},{"id":"caption-word-47-1","text":"une","start":37.981,"end":38.307},{"id":"caption-word-47-2","text":"machine","start":38.307,"end":38.772}]},{"id":"caption-group-48","frame":6,"start":38.772,"end":39.554,"text":"qui fatigue,","words":[{"id":"caption-word-48-0","text":"qui","start":38.772,"end":38.959},{"id":"caption-word-48-1","text":"fatigue,","start":38.959,"end":39.554}]},{"id":"caption-group-49","frame":6,"start":39.554,"end":40.854,"text":"avant la panne.","words":[{"id":"caption-word-49-0","text":"avant","start":39.554,"end":39.98},{"id":"caption-word-49-1","text":"la","start":39.98,"end":40.167},{"id":"caption-word-49-2","text":"panne.","start":40.167,"end":40.853}]},{"id":"caption-group-50","frame":6,"start":40.854,"end":42.109,"text":"Votre technicien intervient","words":[{"id":"caption-word-50-0","text":"Votre","start":40.854,"end":41.179},{"id":"caption-word-50-1","text":"technicien","start":41.18,"end":41.644},{"id":"caption-word-50-2","text":"intervient","start":41.644,"end":42.109}]},{"id":"caption-group-51","frame":6,"start":42.109,"end":42.93,"text":"au bon moment.","words":[{"id":"caption-word-51-0","text":"au","start":42.109,"end":42.296},{"id":"caption-word-51-1","text":"bon","start":42.297,"end":42.484},{"id":"caption-word-51-2","text":"moment.","start":42.484,"end":42.81}]},{"id":"caption-group-52","frame":7,"start":43.73,"end":44.299,"text":"Résultat :","words":[{"id":"caption-word-52-0","text":"Résultat :","start":43.73,"end":44.299}]},{"id":"caption-group-53","frame":7,"start":44.299,"end":45.437,"text":"moins de gaspillage,","words":[{"id":"caption-word-53-0","text":"moins","start":44.299,"end":44.638},{"id":"caption-word-53-1","text":"de","start":44.638,"end":44.827},{"id":"caption-word-53-2","text":"gaspillage,","start":44.828,"end":45.437}]},{"id":"caption-group-54","frame":7,"start":45.437,"end":45.815,"text":"moins de","words":[{"id":"caption-word-54-0","text":"moins","start":45.437,"end":45.626},{"id":"caption-word-54-1","text":"de","start":45.626,"end":45.815}]},{"id":"caption-group-55","frame":7,"start":45.815,"end":46.144,"text":"pannes,","words":[{"id":"caption-word-55-0","text":"pannes,","start":45.815,"end":46.144}]},{"id":"caption-group-56","frame":7,"start":46.144,"end":47.372,"text":"et des équipements","words":[{"id":"caption-word-56-0","text":"et","start":46.144,"end":46.333},{"id":"caption-word-56-1","text":"des","start":46.333,"end":46.762},{"id":"caption-word-56-2","text":"équipements","start":46.762,"end":47.371}]},{"id":"caption-group-57","frame":7,"start":47.372,"end":48.39,"text":"mieux entretenus.","words":[{"id":"caption-word-57-0","text":"mieux","start":47.372,"end":47.561},{"id":"caption-word-57-1","text":"entretenus.","start":47.561,"end":48.27}]},{"id":"caption-group-58","frame":8,"start":49.21,"end":49.589,"text":"Bureaux,","words":[{"id":"caption-word-58-0","text":"Bureaux,","start":49.21,"end":49.589}]},{"id":"caption-group-59","frame":8,"start":49.589,"end":49.969,"text":"hôtels,","words":[{"id":"caption-word-59-0","text":"hôtels,","start":49.589,"end":49.968}]},{"id":"caption-group-60","frame":8,"start":49.969,"end":50.729,"text":"hôpitaux,","words":[{"id":"caption-word-60-0","text":"hôpitaux,","start":49.969,"end":50.729}]},{"id":"caption-group-61","frame":8,"start":50.729,"end":51.109,"text":"banques,","words":[{"id":"caption-word-61-0","text":"banques,","start":50.729,"end":51.108}]},{"id":"caption-group-62","frame":8,"start":51.109,"end":51.811,"text":"supermarchés :","words":[{"id":"caption-word-62-0","text":"supermarchés :","start":51.109,"end":51.811}]},{"id":"caption-group-63","frame":8,"start":51.811,"end":53.759,"text":"Enoryx s'adapte à votre","words":[{"id":"caption-word-63-0","text":"Enoryx","start":51.811,"end":52.621},{"id":"caption-word-63-1","text":"s'adapte","start":52.622,"end":53.162},{"id":"caption-word-63-2","text":"à","start":53.162,"end":53.38},{"id":"caption-word-63-3","text":"votre","start":53.38,"end":53.759}]},{"id":"caption-group-64","frame":8,"start":53.759,"end":54.42,"text":"bâtiment.","words":[{"id":"caption-word-64-0","text":"bâtiment.","start":53.759,"end":54.3}]},{"id":"caption-group-65","frame":9,"start":55.2,"end":55.68,"text":"Enoryx.","words":[{"id":"caption-word-65-0","text":"Enoryx.","start":55.2,"end":55.68}]},{"id":"caption-group-66","frame":9,"start":55.68,"end":57.33,"text":"Chaque kilowattheure compte.","words":[{"id":"caption-word-66-0","text":"Chaque","start":55.68,"end":56.017},{"id":"caption-word-66-1","text":"kilowattheure","start":56.017,"end":56.783},{"id":"caption-word-66-2","text":"compte.","start":56.783,"end":57.21}]}];
+  var DURATION = 58.96;
+
+  (function () {
+    var stage = document.getElementById("caption-stage");
+
+    // build DOM: one .caption-group per group, .caption-word per word
+    GROUPS.forEach(function (group, g) {
+      var groupEl = document.createElement("div");
+      groupEl.className = "caption-group";
+      groupEl.id = "caption-group-" + g;
+      var pill = document.createElement("div");
+      pill.className = "caption-pill";
+      var line = document.createElement("div");
+      line.className = "caption-line";
+      (group.words || []).forEach(function (w, i) {
+        var span = document.createElement("span");
+        span.className = "caption-word";
+        span.id = "caption-word-" + g + "-" + i;
+        span.textContent = String(w.text);
+        line.appendChild(span);
+      });
+      pill.appendChild(line);
+      groupEl.appendChild(pill);
+      stage.appendChild(groupEl);
+    });
+
+    window.__timelines = window.__timelines || {};
+    var tl = gsap.timeline({ paused: true });
+
+    GROUPS.forEach(function (group, g) {
+      var groupEl = document.getElementById("caption-group-" + g);
+      var words = group.words || [];
+      var next = GROUPS[g + 1];
+      var isLast = g === GROUPS.length - 1;
+      var start = Math.max(0, Number(group.start));
+      var end = isLast ? DURATION : Math.min(Number(next.start), Number(group.end) + 0.3);
+      if (end <= start) end = start + 0.01;
+
+      // group on/off — exactly one group visible at a time
+      tl.set(groupEl, { opacity: 1 }, start);
+      tl.set(groupEl, { opacity: 0 }, end);
+
+      // 3-state karaoke via className SETS — seek-safe (gsap.set applies on the
+      // engine's frame-by-frame seek; .call callbacks would NOT fire).
+      words.forEach(function (w, i) {
+        var el = document.getElementById("caption-word-" + g + "-" + i);
+        var at = Math.max(start, Number(w.start));
+        tl.set(el, { className: "caption-word" }, start); // upcoming (also resets on reverse-seek)
+        tl.set(el, { className: "caption-word is-active" }, at); // current
+        tl.fromTo(el, { scale: 0.92 }, { scale: 1, duration: 0.1, ease: "power3.out" }, at);
+        if (i + 1 < words.length) {
+          var nextAt = Math.max(start, Number(words[i + 1].start));
+          tl.set(el, { className: "caption-word is-spoken" }, nextAt); // demote when next activates
+        }
+      });
+      if (words.length) {
+        var lastEl = document.getElementById("caption-word-" + g + "-" + (words.length - 1));
+        var lastSpoken = Math.min(end, Number(words[words.length - 1].end) + 0.1);
+        tl.set(lastEl, { className: "caption-word is-spoken" }, lastSpoken);
+      }
+    });
+
+    // full-span anchor so the sub-comp timeline spans the whole video
+    tl.to({}, { duration: DURATION }, 0);
+    window.__timelines["captions"] = tl;
+  })();
+</script>
+
+<style>
+  .caption-line { line-height: 1.1 !important; }
+</style>
+</template>

@@ -1,0 +1,80 @@
+<template>
+  <style>
+@font-face { font-family: "Inter"; font-weight: 400; src: url("assets/fonts/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; src: url("assets/fonts/inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 700; src: url("assets/fonts/inter-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 800; src: url("assets/fonts/inter-latin-800-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 900; src: url("assets/fonts/inter-latin-900-normal.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 500; src: url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Inter", sans-serif; color: #FFFFFF; }
+
+    #k06-bg { position: absolute; inset: 0; background: radial-gradient(110% 60% at 50% 40%, #0c1a3a 0%, #050B1A 65%); }
+    .k06-kick { position: absolute; left: 0; right: 0; text-align: center; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 30px; letter-spacing: 0.16em; color: #38BDF8; }
+    .k06-h { position: absolute; left: 30px; right: 30px; text-align: center; font-weight: 900; letter-spacing: -0.04em; line-height: 1; color: #F8FAFC; white-space: nowrap; }
+    .k06-h em { font-style: normal; color: #38BDF8; }
+    .k06-card { position: absolute; border-radius: 40px; background: rgba(12,23,48,0.92); border: 2px solid #1E2A44; }
+    .k06-mono { font-family: "IBM Plex Mono", monospace; font-weight: 500; letter-spacing: 0.12em; }
+
+    #k06-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; display: block; }
+    .k06-pin { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+    .k06-pin > div { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); }
+
+
+    .k06-tag { display: flex; align-items: center; gap: 12px; padding: 14px 24px; border-radius: 30px; background: rgba(12,23,48,0.9); border: 2px solid #1E2A44; white-space: nowrap; }
+    .k06-tag b { display: block; font-weight: 700; font-size: 32px; color: #F8FAFC; }
+    .k06-tag s { display: block; text-decoration: none; font-weight: 700; font-size: 32px; color: #EA580C; }
+    .k06-tag i { display: block; width: 16px; height: 16px; border-radius: 8px; background: #38BDF8; }
+    .k06-badge { position: absolute; left: 0; right: 0; display: flex; justify-content: center; }
+    .k06-badge div { display: flex; align-items: center; gap: 14px; padding: 18px 34px; border-radius: 40px; font-weight: 900; font-size: 44px; letter-spacing: 0.02em; color: #fff; }
+    .k06-sh { text-shadow: 0 8px 30px rgba(5,11,26,0.9); }
+    .k06-stack { position: absolute; left: 70px; right: 70px; display: flex; flex-direction: column; gap: 22px; }
+    .k06-row { display: flex; align-items: center; gap: 20px; padding: 24px 30px; border-radius: 30px; background: rgba(12,23,48,0.92); border: 2px solid #1E2A44; }
+    .k06-row i { display: flex; flex: none; width: 56px; height: 56px; border-radius: 28px; align-items: center; justify-content: center; font-style: normal; font-weight: 900; font-size: 30px; color: #fff; }
+    .k06-row b { display: block; font-weight: 800; font-size: 40px; color: #F8FAFC; }
+
+
+    #k06-k { top: 140px; }
+    #k06-h { top: 195px; font-size: 104px; }
+    #k06-h em { color: #16A34A; }
+    #k06-al { top: 390px; }
+    #k06-al div { background: rgba(234,88,12,0.16); border: 2px solid #EA580C; color: #fb923c; font-size: 36px; font-weight: 800; }
+    #k06-wo { left: 70px; right: 70px; top: 520px; padding: 32px 38px; }
+    #k06-wo .t { font-family: "IBM Plex Mono", monospace; font-size: 24px; letter-spacing: 0.12em; color: #94A3B8; }
+    #k06-wo h3 { margin-top: 14px; font-weight: 800; font-size: 46px; color: #F8FAFC; }
+    #k06-wo p { margin-top: 8px; font-size: 30px; color: #94A3B8; }
+    #k06-ok { top: 1450px; }
+    #k06-ok div { background: #16A34A; font-size: 40px; }
+
+  </style>
+  <div id="root" data-composition-id="06-prevention" data-start="0" data-duration="6.94" data-width="1080" data-height="1920">
+
+    <div id="k06-bg" class="clip" data-start="0" data-duration="6.94" data-track-index="0"></div>
+    <canvas id="k06-cv" width="1080" height="1920"></canvas>
+    <div class="k06-kick" id="k06-k">PRÉVENIR</div>
+    <div class="k06-h k06-sh" id="k06-h">avant <em>la panne</em></div>
+    <div class="k06-badge" id="k06-al"><div>Alerte : compresseur qui fatigue</div></div>
+    <div class="k06-card" id="k06-wo"><div class="t">INTERVENTION PRÉVUE</div><h3>Technicien envoyé</h3><p>Climatiseur · salle de réunion</p></div>
+    <div class="k06-badge" id="k06-ok"><div>Panne évitée</div></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="06-prevention"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="06-prevention"] ' + s);
+
+      const __r3 = ENX3D.recover(R("#k06-cv"), { k: 4.1, c: 4.6 });
+      const __s3 = { t: 0 };
+      tl.fromTo(__s3, { t: 0 }, { t: 6.44, duration: 6.44, ease: "none", onUpdate: () => __r3(__s3.t) }, 0);
+      __r3(0);
+      tl.fromTo(R("#k06-k"), { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0);
+      tl.fromTo(R("#k06-al div"), { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.7)" }, 1.0);
+      tl.fromTo(R("#k06-h"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 2.25);
+      tl.fromTo(R("#k06-wo"), { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 3.55);
+      tl.fromTo(R("#k06-ok div"), { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.7)" }, 5.2);
+
+      window.__timelines["06-prevention"] = tl;
+    })();
+  </script>
+</template>

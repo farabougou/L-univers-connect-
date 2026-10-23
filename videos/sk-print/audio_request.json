@@ -1,0 +1,38 @@
+{
+  "provider": "kokoro",
+  "speed": "0.95",
+  "lines": [
+    {
+      "id": "01",
+      "text": "Vous avez une idée ?"
+    },
+    {
+      "id": "02",
+      "text": "SK Print lui donne vie."
+    },
+    {
+      "id": "03",
+      "text": "T-shirts, maillots, casquettes : nous personnalisons vos textiles."
+    },
+    {
+      "id": "04",
+      "text": "Flyers, cartes de visite, affiches, bâches et autocollants."
+    },
+    {
+      "id": "05",
+      "text": "Des couleurs éclatantes, un travail soigné, un service rapide."
+    },
+    {
+      "id": "06",
+      "text": "Pour les particuliers, les entreprises et les associations."
+    },
+    {
+      "id": "07",
+      "text": "SK Print, nous imprimons vos idées. Appelez le quatre-vingt-trois, soixante-cinq, quatorze, soixante-dix-huit."
+    }
+  ],
+  "bgm": {
+    "mode": "none"
+  },
+  "voice": "ff_siwis"
+}

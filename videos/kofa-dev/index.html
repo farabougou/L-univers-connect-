@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="assets/vendor/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Inter"; font-weight: 800; src: url("assets/fonts/inter-latin-800-normal.woff2") format("woff2"); }
+      @font-face { font-family: "Inter"; font-weight: 900; src: url("assets/fonts/inter-latin-900-normal.woff2") format("woff2"); }
+      @font-face { font-family: "Plex Mono"; font-weight: 500; src: url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+      #root { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: #000; font-family: "Inter", sans-serif; }
+      #film { position: absolute; inset: 0; }
+      #cam { position: absolute; left: 0; top: 0; width: 1440px; height: 1920px; transform-origin: 0 0; }
+      #photo { position: absolute; left: 0; top: 0; width: 1440px; height: 1920px; filter: brightness(0.5) contrast(1.12) saturate(0.55) sepia(0.15); }
+      .scr { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; transform: matrix3d(0.851932021,-0.0365556322,0,-3.06773063e-05,0.267650984,1.11969274,0,0.000313900083,0,0,1,0,-38.4,-4.8,0,1); object-fit: fill; }
+      #glow { position: absolute; left: 0; top: 760px; width: 1440px; height: 1160px; background: radial-gradient(60% 45% at 50% 18%, rgba(110,140,255,0.22), rgba(235,104,52,0.06) 55%, rgba(0,0,0,0) 80%); mix-blend-mode: screen; }
+      #vig { position: absolute; inset: 0; background: radial-gradient(75% 60% at 50% 42%, rgba(0,0,0,0) 45%, rgba(0,0,0,0.75) 100%); }
+      #grain { position: absolute; left: -200px; top: -200px; width: 1480px; height: 2320px; background: url(assets/images/grain.png); opacity: 0.07; mix-blend-mode: overlay; }
+      #cap { position: absolute; left: 0; right: 0; top: 230px; text-align: center; }
+      #cap span { display: inline-block; padding: 18px 34px; border-radius: 18px; background: rgba(10,10,12,0.72); font: 800 46px/1.2 "Inter"; color: #fff; letter-spacing: -0.01em; }
+      #cap em { font-style: normal; color: #EB6834; }
+      #end { position: absolute; inset: 0; background: rgba(8,8,10,0.86); opacity: 0; }
+      .klogo { width: 150px; height: 150px; border-radius: 40px; background: #2A78D6; color: #fff; font: 900 100px/150px "Inter"; text-align: center; }
+      #endk { position: absolute; left: 0; right: 0; top: 700px; display: flex; justify-content: center; align-items: center; gap: 28px; }
+      #endk b { font: 900 150px/1 "Inter"; color: #fff; letter-spacing: -0.04em; }
+      #e1 { top: 930px; font: 800 58px/1.15 "Inter"; color: #fff; letter-spacing: -0.02em; }
+      #e1 em { font-style: normal; color: #EB6834; }
+      #e2 { position: absolute; left: 140px; top: 1110px; width: 800px; height: 96px; border-radius: 48px; background: #EB6834; font: 800 40px/96px "Inter"; color: #fff; text-align: center; }
+      #e3 { top: 1250px; font: 500 30px "Plex Mono"; color: #c9c9d2; letter-spacing: 0.06em; }
+      .c { position: absolute; left: 0; right: 0; text-align: center; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="31" data-width="1080" data-height="1920" data-fps="25">
+      <div id="film">
+        <div id="cam">
+          <img id="photo" class="clip" data-start="0" data-duration="31" data-track-index="0" src="assets/images/bureau.jpg" alt="">
+          <video id="scr0" class="clip scr" src="assets/clips/ecran.mp4" data-start="0.0" data-duration="8.6" data-media-start="28.6" data-track-index="1" muted playsinline></video>
+          <video id="scr1" class="clip scr" src="assets/clips/ecran.mp4" data-start="8.6" data-duration="10.4" data-media-start="44.6" data-track-index="2" muted playsinline></video>
+          <video id="scr2" class="clip scr" src="assets/clips/ecran.mp4" data-start="19.0" data-duration="7.6" data-media-start="61.4" data-track-index="3" muted playsinline></video>
+          <div id="glow"></div>
+        </div>
+        <div id="vig" data-layout-allow-occlusion></div>
+        <div id="grain" data-layout-allow-occlusion data-layout-allow-overflow></div>
+        <div id="cap" data-layout-allow-overlap><span>Je code <em>KOFA</em>, l'app de livraison<br>de Bamako</span></div>
+        <div id="end" data-layout-allow-occlusion></div>
+        <div id="endk"><div class="klogo">K</div><b>KOFA</b></div>
+        <div class="c" id="e1">Le goût de Bamako,<br><em>livré chez vous.</em></div>
+        <div id="e2">Bientôt disponible à Bamako</div>
+        <div class="c" id="e3">kofa.ml</div>
+      </div>
+      <audio id="el-bgm" src="assets/music.wav" data-start="0" data-duration="31" data-track-index="9" data-volume="0.8"></audio>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines["main"] = tl;
+      gsap.set("#cam", {"x": -60.0, "y": 0.0, "scale": 1.0});
+      tl.fromTo("#cam", {"x": -60.0, "y": 0.0, "scale": 1.0}, { ...{"x": -96.0, "y": -37.6, "scale": 1.06}, duration: 3.0, ease: "none", immediateRender: false }, 0.0);
+      tl.fromTo("#cam", {"x": -96.0, "y": -37.6, "scale": 1.06}, { ...{"x": -1432.1, "y": -228.3, "scale": 1.9}, duration: 1.2, ease: "power2.inOut", immediateRender: false }, 3.0);
+      tl.fromTo("#cam", {"x": -1432.1, "y": -228.3, "scale": 1.9}, { ...{"x": -1587.8, "y": -314.3, "scale": 2.05}, duration: 4.4, ease: "none", immediateRender: false }, 4.2);
+      tl.set("#cam", {"x": -252.6, "y": -152.2, "scale": 2.15}, 8.6);
+      tl.fromTo("#cam", {"x": -252.6, "y": -152.2, "scale": 2.15}, { ...{"x": -307.9, "y": -245.6, "scale": 2.3}, duration: 4.9, ease: "none", immediateRender: false }, 8.6);
+      tl.fromTo("#cam", {"x": -307.9, "y": -245.6, "scale": 2.3}, { ...{"x": -1380.2, "y": -179.7, "scale": 1.85}, duration: 1.1, ease: "power2.inOut", immediateRender: false }, 13.5);
+      tl.fromTo("#cam", {"x": -1380.2, "y": -179.7, "scale": 1.85}, { ...{"x": -1484.0, "y": -237.0, "scale": 1.95}, duration: 4.4, ease: "none", immediateRender: false }, 14.6);
+      tl.set("#cam", {"x": -160.4, "y": -29.8, "scale": 1.9}, 19.0);
+      tl.fromTo("#cam", {"x": -160.4, "y": -29.8, "scale": 1.9}, { ...{"x": -234.1, "y": -137.7, "scale": 2.1}, duration: 4.6, ease: "none", immediateRender: false }, 19.0);
+      tl.fromTo("#cam", {"x": -234.1, "y": -137.7, "scale": 2.1}, { ...{"x": -60.0, "y": 0.0, "scale": 1.0}, duration: 1.2, ease: "power2.inOut", immediateRender: false }, 23.6);
+      tl.fromTo("#cam", {"x": -60.0, "y": 0.0, "scale": 1.0}, { ...{"x": -84.0, "y": -38.4, "scale": 1.04}, duration: 6.2, ease: "none", immediateRender: false }, 24.8);
+      tl.fromTo("#cam", { filter: "blur(10px)" }, { filter: "blur(0px)", duration: 0.22, ease: "power2.out", immediateRender: false }, 8.6);
+      tl.fromTo("#cam", { filter: "blur(10px)" }, { filter: "blur(0px)", duration: 0.22, ease: "power2.out", immediateRender: false }, 19.0);
+      tl.fromTo("#photo", { opacity: 0 }, { opacity: 1, duration: 0.8, ease: "power1.out" }, 0);
+      tl.fromTo("#grain", { x: 0, y: 0 }, { x: -180, y: -140, duration: 31, ease: "steps(775)" }, 0);
+      tl.fromTo("#cap span", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.4);
+      tl.to("#cap span", { opacity: 0, y: -16, duration: 0.4, ease: "power2.in" }, 3.6);
+      tl.fromTo("#end", { opacity: 0 }, { opacity: 1, duration: 0.7, ease: "power2.out" }, 26.2);
+      tl.fromTo("#endk", { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.6, ease: "back.out(1.6)" }, 26.599999999999998);
+      tl.fromTo("#e1", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 27.099999999999998);
+      tl.fromTo("#e2", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.8)" }, 27.7);
+      tl.fromTo("#e3", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 28.2);
+      tl.set({}, {}, 31);
+    </script>
+  </body>
+</html>

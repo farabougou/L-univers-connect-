@@ -1,0 +1,83 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Cormorant"; font-weight: 300; src: url("assets/fonts/cormorant-garamond-latin-300-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 300; font-style: italic; src: url("assets/fonts/cormorant-garamond-latin-300-italic.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 400; font-style: italic; src: url("assets/fonts/cormorant-garamond-latin-400-italic.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 500; src: url("assets/fonts/cormorant-garamond-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 400; src: url("assets/fonts/montserrat-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 500; src: url("assets/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; }
+
+    .s02-a { position: absolute; }
+    .s02-c { left: 0; right: 0; text-align: center; }
+    .s02-cv { position: absolute; left: 0; top: 0; }
+    .s02-d { font-family: "Cormorant"; font-weight: 300; color: #F5E6D3; white-space: nowrap; line-height: 1.05; }
+    .s02-i { font-family: "Cormorant"; font-weight: 300; font-style: italic; color: #F5E6D3; white-space: nowrap; line-height: 1.05; }
+    .s02-cap { font-family: "Montserrat"; font-weight: 500; font-size: 25px; letter-spacing: 0.34em; color: #D4AF37; white-space: nowrap; text-transform: uppercase; }
+    .s02-w { display: inline-block; }
+    .s02-frame { position: absolute; overflow: hidden; background: #000; -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 72%, rgba(0,0,0,0) 100%); mask-image: linear-gradient(180deg, #000 0%, #000 72%, rgba(0,0,0,0) 100%); }
+    .s02-frame img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+    .s02-frame canvas { position: absolute; left: 0; top: 0; }
+    .s02-line { position: absolute; height: 1px; background: linear-gradient(90deg, rgba(212,175,55,0), #D4AF37, rgba(212,175,55,0)); }
+    .s02-glow { position: absolute; border-radius: 50%; background: radial-gradient(closest-side, rgba(212,175,55,0.38), rgba(212,175,55,0.08) 55%, rgba(212,175,55,0)); }
+    .s02-word { position: absolute; left: 0; right: 0; text-align: center; font-family: "Cormorant"; font-weight: 500; color: #F5E6D3; white-space: nowrap; line-height: 1; }
+    .s02-word span { display: inline-block; }
+    .s02-bk { position: absolute; border-radius: 50%; }
+    .s02-gold { --st-glow: rgba(212,175,55,0.45); }
+
+
+  </style>
+  <div id="root" data-composition-id="02-lumiere" data-start="0" data-duration="4.2" data-width="1080" data-height="1920">
+    <div id="s02-clip" class="clip" data-start="0" data-duration="4.2" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="st-stage">
+    <div class="st-layer" id="s02-Lbg">
+      <canvas class="s02-cv" id="s02-s" width="1080" height="1920"></canvas>
+    </div>
+    <div class="st-layer" id="s02-Lmid">
+    </div>
+    <div class="st-layer" id="s02-Lfg">
+      <i class="s02-bk" style="left:1049px; top:1784px; width:46px; height:46px; background: radial-gradient(circle, rgba(245,230,211,0.34), rgba(245,230,211,0) 70%)"></i>
+      <i class="s02-bk" style="left:124px; top:832px; width:83px; height:83px; background: radial-gradient(circle, rgba(245,230,211,0.52), rgba(245,230,211,0) 70%)"></i>
+      <i class="s02-bk" style="left:1041px; top:1041px; width:89px; height:89px; background: radial-gradient(circle, rgba(212,175,55,0.40), rgba(212,175,55,0) 70%)"></i>
+      <i class="s02-bk" style="left:-28px; top:895px; width:75px; height:75px; background: radial-gradient(circle, rgba(245,230,211,0.43), rgba(245,230,211,0) 70%)"></i>
+      <i class="s02-bk" style="left:-32px; top:638px; width:55px; height:55px; background: radial-gradient(circle, rgba(245,230,211,0.46), rgba(245,230,211,0) 70%)"></i>
+      <i class="s02-bk" style="left:864px; top:1391px; width:140px; height:140px; background: radial-gradient(circle, rgba(245,230,211,0.53), rgba(245,230,211,0) 70%)"></i>
+      <i class="s02-bk" style="left:350px; top:1845px; width:146px; height:146px; background: radial-gradient(circle, rgba(245,230,211,0.37), rgba(245,230,211,0) 70%)"></i>
+      <i class="s02-bk" style="left:508px; top:1742px; width:95px; height:95px; background: radial-gradient(circle, rgba(212,175,55,0.55), rgba(212,175,55,0) 70%)"></i>
+    </div>
+    </div>
+    <div class="st-layer" id="s02-Ltxt">
+    <div class="s02-a s02-c s02-d" id="s02-l1" style="top:690px; font-size:120px" ><span class="s02-w">Votre</span> <span class="s02-w">peau</span></div>
+    <div class="s02-a s02-c s02-d" id="s02-l2" style="top:820px; font-size:120px" ><span class="s02-w">a</span> <span class="s02-w">sa</span> <span class="s02-w">propre</span></div>
+    <div class="s02-a s02-c s02-i st-glow s02-gold" id="s02-l3" style="top:960px; font-size:180px; color:#D4AF37">lumière.</div>
+    <div class="s02-line" id="s02-ln" style="left:390px; top:1200px; width:300px"></div>
+    </div>
+
+  </div>
+  <script>
+    (function () {
+      const S = STUDIO;
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="02-lumiere"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="02-lumiere"] ' + s);
+      const __r0 = AURA.silk(R("#s02-s"), { y: 980, spread: 520, n: 4, alpha: 0.13, seed: 12 });
+      const __p = { t: 0 };
+      tl.fromTo(__p, { t: 0 }, { t: 4.2, duration: 4.2, ease: "none", onUpdate: () => { __r0(__p.t); } }, 0);
+      __r0(__p.t);
+      S.life(tl, RA(".s02-bk"), 0, 4.2, { x: 12, y: 16, rotate: 0, scale: 0.03, period: 7, seed: 5 });
+      S.camera(tl, [{ el: R("#s02-Lbg"), depth: 0.5 }, { el: R("#s02-Lmid"), depth: 1 }, { el: R("#s02-Lfg"), depth: 1.7 }, { el: R("#s02-Ltxt"), depth: 0.8, blur: false }], { start: 0, end: 4.2, dof: { k: 9, max: 12 }, drift: { x: 4, y: 4, r: 0.08, period: 9 }, keys: [{ t: 0, s: 1.05, rx: 5, f: 1.0 }, { t: 4.2, s: 1.0, rx: 0, ease: S.ease.breath }] });
+      tl.fromTo(R("#s02-s"), { opacity: 0 }, { opacity: 1, duration: 1.6, ease: S.ease.breath }, 0);
+      S.rise(tl, RA("#s02-l1 .s02-w"), 0.3, { y: 34, blur: 14, stagger: 0.1, duration: 1.5 });
+      S.rise(tl, RA("#s02-l2 .s02-w"), 0.95, { y: 34, blur: 14, stagger: 0.1, duration: 1.5 });
+      S.rise(tl, S.split(R("#s02-l3")), 1.72, { y: 40, blur: 22, stagger: 0.05, duration: 1.8, from: "center", max: 0.7 });
+      tl.fromTo(R("#s02-ln"), { scaleX: 0, opacity: 0 }, { scaleX: 1, opacity: 1, duration: 1.4, ease: S.ease.silk }, 2.05);
+      S.leave(tl, [R("#s02-l1"), R("#s02-l2"), R("#s02-l3"), R("#s02-ln")], 3.40, { y: -44, blur: 18, duration: 0.75, ease: S.ease.accel });
+      tl.to(R("#s02-s"), { opacity: 0, duration: 0.8, ease: S.ease.accel }, 3.4);
+
+      tl.to({}, { duration: 4.2 }, 0);
+      window.__timelines["02-lumiere"] = tl;
+    })();
+  </script>
+</template>

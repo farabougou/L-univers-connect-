@@ -1,0 +1,94 @@
+<template>
+  <style>
+@font-face { font-family: "Inter"; font-weight: 400; src: url("assets/fonts/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; src: url("assets/fonts/inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 700; src: url("assets/fonts/inter-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 800; src: url("assets/fonts/inter-latin-800-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 900; src: url("assets/fonts/inter-latin-900-normal.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 500; src: url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Inter", sans-serif; color: #FFFFFF; }
+
+    #k05-bg { position: absolute; inset: 0; background: radial-gradient(100% 60% at 50% 55%, #1a120e 0%, #0E0E10 65%); }
+    #k05-kick { position: absolute; top: 150px; left: 0; right: 0; text-align: center; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 30px; letter-spacing: 0.14em; color: #EB6834; }
+    #k05-title { position: absolute; top: 200px; left: 40px; right: 40px; text-align: center; font-weight: 900; font-size: 112px; letter-spacing: -0.04em; line-height: 1; color: #FFFFFF; white-space: nowrap; }
+    #k05-title em { font-style: normal; color: #EB6834; }
+    #k05-phone { position: absolute; left: 200px; top: 400px; width: 680px; height: 1180px; border-radius: 86px; background: #1A1A1D; border: 3px solid #34343a; box-shadow: 0 40px 120px rgba(0,0,0,0.6), 0 0 0 12px #121214; overflow: hidden; }
+    #k05-screen { position: absolute; inset: 18px; border-radius: 70px; background: #0E0E10; overflow: hidden; }
+    #k05-notch { position: absolute; top: 22px; left: 50%; width: 180px; margin-left: -90px; height: 46px; border-radius: 23px; background: #000; }
+    .k05-bar { position: absolute; top: 90px; left: 36px; right: 36px; display: flex; align-items: center; gap: 18px; }
+    .k05-bar i { display: flex; width: 64px; height: 64px; border-radius: 18px; background: #2A78D6; color: #fff; font-style: normal; font-weight: 900; font-size: 38px; align-items: center; justify-content: center; }
+    .k05-bar b { display: block; font-weight: 800; font-size: 40px; color: #fff; }
+    .k05-bar s { display: block; margin-left: auto; text-decoration: none; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 22px; letter-spacing: 0.12em; color: #A1A1A6; }
+
+    #k05-shield { position: absolute; top: 230px; left: 50%; width: 200px; height: 236px; margin-left: -100px; }
+    #k05-lab { position: absolute; top: 520px; left: 0; right: 0; text-align: center; font-weight: 700; font-size: 42px; color: #fff; }
+    #k05-hint { position: absolute; top: 585px; left: 40px; right: 40px; text-align: center; font-weight: 400; font-size: 28px; color: #A1A1A6; }
+    #k05-boxes { position: absolute; top: 680px; left: 46px; right: 46px; display: flex; justify-content: space-between; }
+    .k05-box { width: 124px; height: 160px; border-radius: 30px; background: #1A1A1D; border: 4px solid #34343a; display: flex; align-items: center; justify-content: center; }
+    .k05-box b { display: block; font-weight: 900; font-size: 104px; color: #fff; line-height: 1; }
+    #k05-ok { position: absolute; top: 900px; left: 50%; width: 460px; margin-left: -230px; height: 96px; border-radius: 48px; background: #1BAF7A; display: flex; align-items: center; justify-content: center; gap: 16px; }
+    #k05-ok b { display: block; font-weight: 800; font-size: 38px; color: #fff; }
+    #k05-hand { position: absolute; top: 1040px; left: 0; right: 0; text-align: center; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 22px; letter-spacing: 0.14em; color: #A1A1A6; }
+
+  </style>
+  <div id="root" data-composition-id="05-code" data-start="0" data-duration="7.06" data-width="1080" data-height="1920">
+
+    <div id="k05-bg" class="clip" data-start="0" data-duration="7.06" data-track-index="0"></div>
+    <div id="k05-kick">ATOUT 3</div>
+    <div id="k05-title">code à <em>4 chiffres</em></div>
+    <div id="k05-phone"><div id="k05-screen">
+      <div id="k05-notch"></div>
+      <div class="k05-bar"><i>K</i><b>Réception</b><s>À LA PORTE</s></div>
+      <svg id="k05-shield" viewBox="0 0 100 118"><defs><clipPath id="k05-cp"><path d="M50 4 L92 20 V56 C92 84 72 104 50 114 C28 104 8 84 8 56 V20 Z"/></clipPath></defs>
+        <path d="M50 4 L92 20 V56 C92 84 72 104 50 114 C28 104 8 84 8 56 V20 Z" fill="#1A1A1D" stroke="#EB6834" stroke-width="5" id="k05-sh-o"/>
+        <rect id="k05-fill" x="0" y="0" width="100" height="118" fill="#1BAF7A" clip-path="url(#k05-cp)"/>
+        <path id="k05-lock" d="M36 52 V44 a14 14 0 0 1 28 0 V52 M32 52 H68 V80 H32 Z" fill="none" stroke="#fff" stroke-width="6" stroke-linejoin="round"/>
+        <path id="k05-tick" d="M32 60 L45 73 L70 46" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div id="k05-lab">Votre code de confirmation</div>
+      <div id="k05-hint">À donner au livreur à la réception</div>
+      <div id="k05-boxes">
+        <div class="k05-box"><b>4</b></div><div class="k05-box"><b>8</b></div><div class="k05-box"><b>2</b></div><div class="k05-box"><b>7</b></div>
+      </div>
+      <div id="k05-ok"><svg width="40" height="32" viewBox="0 0 40 32"><path d="M4 16 L15 27 L36 5" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Commande remise</b></div>
+      <div id="k05-hand">LIVRAISON SÉCURISÉE</div>
+    </div></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="05-code"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="05-code"] ' + s);
+
+      const boxes = RA(".k05-box"), digits = RA(".k05-box b");
+      const tick = R("#k05-tick"); const tl0 = tick.getTotalLength();
+      gsap.set(tick, { strokeDasharray: tl0, strokeDashoffset: tl0 });
+      tl.fromTo(R("#k05-kick"), { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 0);
+      tl.fromTo(R("#k05-title"), { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 0.05);
+      tl.fromTo(R("#k05-phone"), { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" }, 0);
+      tl.fromTo(R("#k05-shield"), { scale: 0.7, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.55, ease: "back.out(1.6)" }, 0.3);
+      gsap.set(R("#k05-fill"), { attr: { y: 118 } });
+      tl.fromTo(R("#k05-lab"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 0.5);
+      tl.fromTo(R("#k05-hint"), { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.75);
+      tl.fromTo(boxes, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.06, ease: "power3.out" }, 0.9);
+      const D = [1.65, 1.95, 2.25, 2.55];
+      digits.forEach((d, i) => {
+        tl.fromTo(d, { scale: 2.2, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(2.2)" }, D[i]);
+        tl.fromTo(boxes[i], { borderColor: "#EB6834" }, { borderColor: "#EB6834", immediateRender: false, duration: 0.01 }, D[i]);
+        tl.fromTo(boxes[i], { scale: 1.08 }, { scale: 1, immediateRender: false, duration: 0.3, ease: "power2.out" }, D[i]);
+      });
+      const G = 3.9;
+      tl.to(boxes, { borderColor: "#1BAF7A", backgroundColor: "#0f2a20", duration: 0.35, stagger: 0.05 }, G);
+      tl.to(R("#k05-fill"), { attr: { y: 0 }, duration: 0.6, ease: "power2.out" }, G);
+      tl.to(R("#k05-sh-o"), { stroke: "#1BAF7A", duration: 0.3 }, G);
+      tl.to(R("#k05-lock"), { opacity: 0, duration: 0.2 }, G + 0.3);
+      tl.to(tick, { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" }, G + 0.4);
+      tl.fromTo(R("#k05-ok"), { y: 40, opacity: 0, scale: 0.9 }, { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.5)" }, G + 0.45);
+      tl.fromTo(R("#k05-hand"), { opacity: 0 }, { opacity: 1, duration: 0.4 }, G + 0.9);
+
+      window.__timelines["05-code"] = tl;
+    })();
+  </script>
+</template>

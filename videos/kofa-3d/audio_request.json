@@ -1,0 +1,46 @@
+{
+  "provider": "kokoro",
+  "speed": "0.95",
+  "lines": [
+    {
+      "id": "01",
+      "text": "Vous avez faim ?"
+    },
+    {
+      "id": "02",
+      "text": "KOFA. Le goût de Bamako, livré chez vous."
+    },
+    {
+      "id": "03",
+      "text": "Repas, courses, colis, grillades."
+    },
+    {
+      "id": "04",
+      "text": "Vous choisissez en quelques gestes, sur votre téléphone."
+    },
+    {
+      "id": "05",
+      "text": "Et vous suivez votre livreur en direct."
+    },
+    {
+      "id": "06",
+      "text": "Une adresse compliquée ? Laissez-lui une note vocale."
+    },
+    {
+      "id": "07",
+      "text": "À la porte, votre code à quatre chiffres sécurise la remise."
+    },
+    {
+      "id": "08",
+      "text": "Et depuis l'étranger, faites plaisir à votre famille à Bamako."
+    },
+    {
+      "id": "09",
+      "text": "KOFA, bientôt disponible à Bamako."
+    }
+  ],
+  "bgm": {
+    "mode": "none"
+  },
+  "voice": "ff_siwis"
+}

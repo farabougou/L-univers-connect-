@@ -1,0 +1,78 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Anton"; src: url("assets/fonts/anton-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Black Ops One"; src: url("assets/fonts/black-ops-one-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Permanent Marker"; src: url("assets/fonts/permanent-marker-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 500; src: url("assets/fonts/oswald-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 700; src: url("assets/fonts/oswald-latin-700-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: #0B0908; }
+
+    .f02-a { position: absolute; }
+    .f02-c { left: 0; right: 0; text-align: center; }
+    .f02-full { position: absolute; inset: 0; }
+    .f02-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+    .f02-h { font-family: "Anton"; color: #F4E9D8; text-transform: uppercase; line-height: 0.92; white-space: nowrap; letter-spacing: 0.005em; }
+    .f02-st { font-family: "Black Ops One"; color: #F4E9D8; line-height: 1; white-space: nowrap; }
+    .f02-gr { padding: 0.22em 0.04em; margin-top: -0.22em; -webkit-mask-image: url(assets/images/grunge.png); -webkit-mask-size: 640px 640px; mask-image: url(assets/images/grunge.png); mask-size: 640px 640px; }
+    .f02-mk { font-family: "Permanent Marker"; color: #F4E9D8; white-space: nowrap; }
+    .f02-in { font-family: "Oswald"; font-weight: 500; color: #F4E9D8; white-space: nowrap; letter-spacing: 0.04em; }
+    .f02-kick { font-family: "Oswald"; font-weight: 700; font-size: 32px; letter-spacing: 0.34em; color: #FFB627; white-space: nowrap; text-transform: uppercase; }
+    .f02-coal { position: absolute; inset: 0; background: radial-gradient(70% 45% at 50% 62%, #2a140a 0%, #0B0908 70%); }
+    .f02-slate { position: absolute; inset: 0; background: url(assets/images/slate.jpg) center / cover; }
+    .f02-food { position: absolute; display: block; filter: drop-shadow(0 26px 30px rgba(0,0,0,0.55)); }
+    .f02-band { position: absolute; -webkit-mask: url(assets/images/brush.png) center / 100% 100% no-repeat; mask: url(assets/images/brush.png) center / 100% 100% no-repeat; }
+    .f02-band span { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; white-space: nowrap; }
+    .f02-m { position: absolute; overflow: hidden; box-sizing: content-box; padding-top: 70px; margin-top: -70px; }
+    .f02-m > * { display: inline-block; }
+
+
+    #f02-glow { position: absolute; left: -100px; right: -100px; top: 520px; height: 900px; background: radial-gradient(50% 50% at 50% 50%, rgba(242,106,27,0.42), rgba(215,38,30,0.12) 55%, rgba(0,0,0,0) 75%); }
+    #f02-eur { top: 1130px; font-size: 520px; color: #F26A1B; text-shadow: 0 0 60px rgba(242,106,27,0.55); }
+
+  </style>
+  <div id="root" data-composition-id="02-brochette" data-start="0" data-duration="5.05" data-width="1080" data-height="1920">
+    <div id="f02-clip" class="clip" data-start="0" data-duration="5.05" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="f02-slate"></div>
+    <div class="f02-full" style="background:linear-gradient(180deg, rgba(11,9,8,0.75), rgba(11,9,8,0.2) 40%, rgba(11,9,8,0.85))"></div>
+    <div id="f02-glow"></div>
+    <canvas class="f02-cv" id="f02-fl" width="1080" height="1920"></canvas>
+    <canvas class="f02-cv" id="f02-emb" width="1080" height="1920"></canvas>
+    <div id="f02-shk" class="f02-full">
+      <div class="f02-a f02-kick f02-c" id="f02-k" style="top:250px">Notre offre</div>
+      <div class="f02-a f02-c f02-m" style="top:300px; height:230px"><span class="f02-h f02-gr" id="f02-t" style="font-size:215px">Brochette</span></div>
+    <img class="f02-food" id="f02-hero" src="assets/images/food/brochettes.png" alt="" style="left:40px; top:600px; width:1000px; ">
+      <div class="f02-a f02-c f02-st f02-gr" id="f02-eur" data-layout-allow-overlap>1€</div>
+      <div class="f02-a f02-mk" id="f02-only" data-layout-allow-overlap style="left:640px; top:1170px; font-size:68px; color:#F4E9D8; transform: rotate(-8deg)">seulement !</div>
+      <div class="f02-a f02-c f02-in" id="f02-sub" style="top:1745px; font-size:40px; opacity:0.9">Poulet grillé · poivrons · oignons</div>
+    </div>
+    <canvas class="f02-cv" id="f02-sp" width="1080" height="1920"></canvas>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="02-brochette"] ' + s);
+      const __e = FG.embers(R("#f02-emb"), { n: 80, seed: 8 });
+      const __l = FG.flames(R("#f02-fl"), { y: 1990, height: 520, n: 180, size: 100, alpha: 0.13, seed: 2 });
+      const __s = FG.sparks(R("#f02-sp"), { x: 540, y: 1400, t0: 1.5, n: 90, seed: 4 });
+      const __f = { t: 0 };
+      tl.fromTo(__f, { t: 0 }, { t: 5.1, duration: 5.1, ease: "none", onUpdate: () => { __e(__f.t); __l(__f.t); __s(__f.t); } }, 0);
+      __e(__f.t); __l(__f.t); __s(__f.t);
+      tl.fromTo(R("#f02-k"), { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.2);
+      tl.fromTo(R("#f02-t"), { yPercent: 105 }, { yPercent: 0, duration: 0.45, ease: "power4.out" }, 0.25);
+      tl.fromTo(R("#f02-hero"), { x: 1250, rotation: -20, filter: "blur(18px) drop-shadow(0 26px 30px rgba(0,0,0,0.55))" }, { x: 0, rotation: -7, filter: "blur(0px) drop-shadow(0 26px 30px rgba(0,0,0,0.55))", duration: 0.6, ease: "power3.out" }, 0.45);
+      tl.to(R("#f02-hero"), { y: -18, rotation: -5, scale: 1.04, duration: 4.0, ease: "sine.inOut" }, 1.05);
+      tl.fromTo(R("#f02-glow"), { opacity: 0.4 }, { opacity: 1, duration: 0.25, yoyo: true, repeat: 7, ease: "sine.inOut" }, 0.4);
+      tl.fromTo(R("#f02-eur"), { opacity: 0, scale: 2.6, filter: "blur(18px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.34, ease: "expo.out" }, 1.5);
+      tl.fromTo(R("#f02-shk"), { x: -22, y: 14 }, { x: 0, y: 0, duration: 0.45, ease: "elastic.out(1.2, 0.3)", immediateRender: false }, 1.52);
+      tl.fromTo(R("#f02-only"), { opacity: 0, scale: 0.5, rotation: -20 }, { opacity: 1, scale: 1, rotation: -8, duration: 0.45, ease: "back.out(2.4)" }, 1.95);
+      tl.fromTo(R("#f02-sub"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 2.3);
+      tl.to(R("#f02-shk"), { x: -1100, filter: "blur(18px)", duration: 0.3, ease: "power3.in" }, 4.55);
+
+      tl.to({}, { duration: 5.05 }, 0);
+      window.__timelines["02-brochette"] = tl;
+    })();
+  </script>
+</template>

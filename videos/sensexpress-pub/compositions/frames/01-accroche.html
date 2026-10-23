@@ -1,0 +1,65 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Playfair Display"; font-weight: 400; src: url("assets/fonts/playfair-display-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Playfair Display"; font-weight: 600; src: url("assets/fonts/playfair-display-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 400; src: url("assets/fonts/montserrat-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 500; src: url("assets/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 600; src: url("assets/fonts/montserrat-latin-600-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Montserrat", sans-serif; color: #FFFFFF; background: #000; }
+
+    .p01-a { position: absolute; }
+    .p01-full { position: absolute; inset: 0; }
+    .p01-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+    .p01-bgd { position: absolute; inset: 0; background: radial-gradient(90% 60% at 50% 45%, #1d160a 0%, #0b0907 55%, #000 100%); }
+    .p01-kick { font-family: "Montserrat"; font-weight: 500; font-size: 24px; letter-spacing: 0.28em; color: #E9C221; white-space: nowrap; }
+    .p01-l1, .p01-l2 { position: absolute; left: 120px; font-family: "Playfair Display"; font-weight: 600; font-size: 80px; line-height: 1.1; color: #FFFFFF; white-space: nowrap; }
+    .p01-l2 { color: #E9C221; }
+    .p01-c { left: 0; right: 0; text-align: center; }
+    .p01-ph { position: absolute; overflow: hidden; }
+    .p01-ph .b { position: absolute; inset: -50px; background-size: cover; background-position: center; filter: blur(30px) brightness(0.55) saturate(1.1); }
+    .p01-ph img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; }
+    .p01-ph img.ct { object-fit: contain; }
+    .p01-ph img.cv { object-fit: cover; }
+    .p01-ln { position: absolute; inset: 0; pointer-events: none; border: 2px solid rgba(233,194,33,0.6); }
+
+
+    .p01-mk { position: absolute; left: 0; right: 0; overflow: hidden; text-align: center; height: 110px; }
+    .p01-mk span { display: inline-block; font-family: "Playfair Display"; font-weight: 600; font-size: 86px; line-height: 110px; color: #FFFFFF; white-space: nowrap; }
+    #p01-m2 span { color: #E9C221; }
+    #p01-sweep { position: absolute; left: -400px; top: 760px; width: 300px; height: 320px; background: linear-gradient(90deg, rgba(255,240,190,0), rgba(255,240,190,0.22), rgba(255,240,190,0)); transform: skewX(-18deg); }
+
+  </style>
+  <div id="root" data-composition-id="01-accroche" data-start="0" data-duration="5.1" data-width="1080" data-height="1920">
+    <div id="p01-clip" class="clip" data-start="0" data-duration="5.1" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="p01-bgd"></div>
+    <canvas class="p01-cv" id="p01-mist" width="1080" height="1920"></canvas>
+    <canvas class="p01-cv" id="p01-dust" width="1080" height="1920"></canvas>
+    <div class="p01-a p01-kick p01-c" id="p01-k" style="top:770px">SENSEXPRESS · MARKETING OLFACTIF</div>
+    <div class="p01-mk" id="p01-m1" style="top:815px"><span>Et si votre marque</span></div>
+    <div class="p01-mk" id="p01-m2" style="top:925px"><span>avait un parfum ?</span></div>
+    <div id="p01-sweep"></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="01-accroche"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="01-accroche"] ' + s);
+      const __d = SX.dust(R("#p01-dust"), { n: 80, alpha: 0.7, seed: 5 });
+      const __m = SX.mist(R("#p01-mist"), { x: 540, y: 1700, spread: 300, rise: 1300, size: 110, alpha: 0.08, n: 44, seed: 9 });
+      const __fs = { t: 0 };
+      tl.fromTo(__fs, { t: 0 }, { t: 5.1, duration: 5.1, ease: "none", onUpdate: () => { __d(__fs.t); __m(__fs.t); } }, 0);
+      __d(__fs.t); __m(__fs.t); 
+      tl.fromTo(R("#p01-k"), { opacity: 0, scale: 1.06 }, { opacity: 1, scale: 1, duration: 1.0, ease: "power2.out" }, 0.2);
+      tl.fromTo(R("#p01-m1 span"), { yPercent: 110 }, { yPercent: 0, duration: 0.8, ease: "power3.out" }, 0.55);
+      tl.fromTo(R("#p01-m2 span"), { yPercent: 110 }, { yPercent: 0, duration: 0.8, ease: "power3.out" }, 1.05);
+      tl.fromTo(R("#p01-sweep"), { x: 0 }, { x: 1700, duration: 1.3, ease: "power2.inOut" }, 1.9);
+      tl.to([R("#p01-k"), R("#p01-m1"), R("#p01-m2")], { opacity: 0, filter: "blur(8px)", scale: 1.04, duration: 0.6, ease: "power2.in" }, 4.0);
+
+      tl.to({}, { duration: 5.1 }, 0);
+      window.__timelines["01-accroche"] = tl;
+    })();
+  </script>
+</template>

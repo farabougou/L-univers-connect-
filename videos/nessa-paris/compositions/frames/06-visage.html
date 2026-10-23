@@ -1,0 +1,105 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Cormorant"; font-weight: 300; src: url("assets/fonts/cormorant-garamond-latin-300-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 300; font-style: italic; src: url("assets/fonts/cormorant-garamond-latin-300-italic.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 400; font-style: italic; src: url("assets/fonts/cormorant-garamond-latin-400-italic.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 500; src: url("assets/fonts/cormorant-garamond-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 400; src: url("assets/fonts/montserrat-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 500; src: url("assets/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; }
+
+    .s06-a { position: absolute; }
+    .s06-c { left: 0; right: 0; text-align: center; }
+    .s06-cv { position: absolute; left: 0; top: 0; }
+    .s06-d { font-family: "Cormorant"; font-weight: 300; color: #F5E6D3; white-space: nowrap; line-height: 1.05; }
+    .s06-i { font-family: "Cormorant"; font-weight: 300; font-style: italic; color: #F5E6D3; white-space: nowrap; line-height: 1.05; }
+    .s06-cap { font-family: "Montserrat"; font-weight: 500; font-size: 25px; letter-spacing: 0.34em; color: #D4AF37; white-space: nowrap; text-transform: uppercase; }
+    .s06-w { display: inline-block; }
+    .s06-frame { position: absolute; overflow: hidden; background: #000; -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 72%, rgba(0,0,0,0) 100%); mask-image: linear-gradient(180deg, #000 0%, #000 72%, rgba(0,0,0,0) 100%); }
+    .s06-frame img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+    .s06-frame canvas { position: absolute; left: 0; top: 0; }
+    .s06-line { position: absolute; height: 1px; background: linear-gradient(90deg, rgba(212,175,55,0), #D4AF37, rgba(212,175,55,0)); }
+    .s06-glow { position: absolute; border-radius: 50%; background: radial-gradient(closest-side, rgba(212,175,55,0.38), rgba(212,175,55,0.08) 55%, rgba(212,175,55,0)); }
+    .s06-word { position: absolute; left: 0; right: 0; text-align: center; font-family: "Cormorant"; font-weight: 500; color: #F5E6D3; white-space: nowrap; line-height: 1; }
+    .s06-word span { display: inline-block; }
+    .s06-bk { position: absolute; border-radius: 50%; }
+    .s06-gold { --st-glow: rgba(212,175,55,0.45); }
+
+
+  </style>
+  <div id="root" data-composition-id="06-visage" data-start="0" data-duration="5.9" data-width="1080" data-height="1920">
+    <div id="s06-clip" class="clip" data-start="0" data-duration="5.9" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="st-stage">
+    <div class="st-layer" id="s06-Lbg">
+    </div>
+    <div class="st-layer" id="s06-Lmid">
+      <div class="s06-frame" id="s06-f0" style="left:40px; top:520px; width:320px; height:520px; border-radius:160px 160px 22px 22px"><img id="s06-f0i" src="assets/images/nila.jpg" alt=""><canvas id="s06-f0v" width="320" height="520"></canvas><div class="st-sheen" id="s06-f0sh"></div></div>
+      <div class="s06-frame" id="s06-f1" style="left:380px; top:520px; width:320px; height:520px; border-radius:160px 160px 22px 22px"><img id="s06-f1i" src="assets/images/perfectskin.jpg" alt=""><canvas id="s06-f1v" width="320" height="520"></canvas><div class="st-sheen" id="s06-f1sh"></div></div>
+      <div class="s06-frame" id="s06-f2" style="left:720px; top:520px; width:320px; height:520px; border-radius:160px 160px 22px 22px"><img id="s06-f2i" src="assets/images/hydra.jpg" alt=""><canvas id="s06-f2v" width="320" height="520"></canvas><div class="st-sheen" id="s06-f2sh"></div></div>
+    </div>
+    <div class="st-layer" id="s06-Lfg">
+      <i class="s06-bk" style="left:860px; top:1552px; width:93px; height:93px; background: radial-gradient(circle, rgba(212,175,55,0.39), rgba(212,175,55,0) 70%)"></i>
+      <i class="s06-bk" style="left:373px; top:1457px; width:70px; height:70px; background: radial-gradient(circle, rgba(245,230,211,0.54), rgba(245,230,211,0) 70%)"></i>
+      <i class="s06-bk" style="left:248px; top:1518px; width:115px; height:115px; background: radial-gradient(circle, rgba(212,175,55,0.56), rgba(212,175,55,0) 70%)"></i>
+      <i class="s06-bk" style="left:48px; top:1513px; width:129px; height:129px; background: radial-gradient(circle, rgba(212,175,55,0.44), rgba(212,175,55,0) 70%)"></i>
+      <i class="s06-bk" style="left:750px; top:1522px; width:147px; height:147px; background: radial-gradient(circle, rgba(212,175,55,0.33), rgba(212,175,55,0) 70%)"></i>
+      <i class="s06-bk" style="left:44px; top:1659px; width:98px; height:98px; background: radial-gradient(circle, rgba(245,230,211,0.35), rgba(245,230,211,0) 70%)"></i>
+      <i class="s06-bk" style="left:750px; top:63px; width:126px; height:126px; background: radial-gradient(circle, rgba(212,175,55,0.32), rgba(212,175,55,0) 70%)"></i>
+      <i class="s06-bk" style="left:1100px; top:139px; width:87px; height:87px; background: radial-gradient(circle, rgba(212,175,55,0.53), rgba(212,175,55,0) 70%)"></i>
+      <i class="s06-bk" style="left:1078px; top:491px; width:148px; height:148px; background: radial-gradient(circle, rgba(245,230,211,0.57), rgba(245,230,211,0) 70%)"></i>
+      <i class="s06-bk" style="left:849px; top:357px; width:42px; height:42px; background: radial-gradient(circle, rgba(212,175,55,0.35), rgba(212,175,55,0) 70%)"></i>
+    </div>
+    </div>
+    <div class="st-layer" id="s06-Ltxt">
+    <div class="s06-a s06-c s06-i" id="s06-t" style="top:300px; font-size:110px" ><span class="s06-w">Le</span> <span class="s06-w">rituel</span> <span class="s06-w">visage</span></div>
+    <div class="s06-a s06-i" id="s06-n0" style="left:40px; width:320px; text-align:center; top:1060px; font-size:66px">Nettoyer</div>
+    <div class="s06-a s06-cap" id="s06-s0" style="left:40px; width:320px; text-align:center; top:1150px; font-size:18px; letter-spacing:0.24em">Savon Nila</div>
+    <div class="s06-a s06-i" id="s06-n1" style="left:380px; width:320px; text-align:center; top:1060px; font-size:66px">Réparer</div>
+    <div class="s06-a s06-cap" id="s06-s1" style="left:380px; width:320px; text-align:center; top:1150px; font-size:18px; letter-spacing:0.24em">Perfect Skin</div>
+    <div class="s06-a s06-i" id="s06-n2" style="left:720px; width:320px; text-align:center; top:1060px; font-size:66px">Hydrater</div>
+    <div class="s06-a s06-cap" id="s06-s2" style="left:720px; width:320px; text-align:center; top:1150px; font-size:18px; letter-spacing:0.24em">Hydra Face Cream</div>
+    <div class="s06-a s06-c s06-d" id="s06-cl" style="top:1300px; font-size:72px" ><span class="s06-w">Plus</span> <span class="s06-w">nette.</span> <span class="s06-w">Plus</span> <span class="s06-w">lumineuse.</span></div>
+    <div class="s06-line" id="s06-ln" style="left:390px; top:1430px; width:300px"></div>
+    </div>
+
+  </div>
+  <script>
+    (function () {
+      const S = STUDIO;
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="06-visage"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="06-visage"] ' + s);
+      const __r0 = AURA.vapour(R("#s06-f0v"), {"x": 160.0, "y": 530.4, "rise": 468, "size": 110, "alpha": 0.13, "n": 34, "life": 5.5, "sx": 256, "fin": 0.3, "seed": 50});
+      const __r1 = AURA.vapour(R("#s06-f1v"), {"x": 160.0, "y": 530.4, "rise": 468, "size": 110, "alpha": 0.13, "n": 34, "life": 5.5, "sx": 256, "fin": 0.3, "seed": 51});
+      const __r2 = AURA.vapour(R("#s06-f2v"), {"x": 160.0, "y": 530.4, "rise": 468, "size": 110, "alpha": 0.13, "n": 34, "life": 5.5, "sx": 256, "fin": 0.3, "seed": 52});
+      const __p = { t: 0 };
+      tl.fromTo(__p, { t: 0 }, { t: 5.9, duration: 5.9, ease: "none", onUpdate: () => { __r0(__p.t); __r1(__p.t); __r2(__p.t); } }, 0);
+      __r0(__p.t); __r1(__p.t); __r2(__p.t);
+      S.life(tl, RA(".s06-bk"), 0, 5.9, { x: 12, y: 16, rotate: 0, scale: 0.03, period: 7, seed: 5 });
+      S.camera(tl, [{ el: R("#s06-Lbg"), depth: 0.35 }, { el: R("#s06-Lmid"), depth: 1 }, { el: R("#s06-Lfg"), depth: 1.7 }, { el: R("#s06-Ltxt"), depth: 0.45, blur: false }], { start: 0, end: 5.9, dof: { k: 9, max: 12 }, drift: { x: 4, y: 4, r: 0.08, period: 9 }, keys: [{ t: 0, y: -70, s: 1.08, rx: -6, f: 1.0 }, { t: 5.9, y: 10, s: 1.0, rx: 0, ease: S.ease.breath }] });
+      tl.fromTo(R("#s06-f0"), { opacity: 0, y: 80, filter: "blur(16px)", clipPath: "inset(40% 34% 40% 34% round 320px 320px 320px 320px)" }, { opacity: 1, y: 0, filter: "blur(0px)", clipPath: "inset(0% 0% 0% 0% round 160px 160px 22px 22px)", duration: 1.5, ease: S.ease.silk }, 0.40);
+      tl.fromTo(R("#s06-f0i"), { scale: 1.2 }, { scale: 1.0, duration: 4.5, ease: "power2.out" }, 0.40);
+      S.rise(tl, S.split(R("#s06-n0")), 0.6000000000000001, { y: 28, blur: 12, stagger: 0.03, duration: 1.3, from: "start", max: 0.7 });
+      S.rise(tl, R("#s06-s0"), 0.9, { y: 12, blur: 6, duration: 1.0 });
+      tl.fromTo(R("#s06-f1"), { opacity: 0, y: 80, filter: "blur(16px)", clipPath: "inset(40% 34% 40% 34% round 320px 320px 320px 320px)" }, { opacity: 1, y: 0, filter: "blur(0px)", clipPath: "inset(0% 0% 0% 0% round 160px 160px 22px 22px)", duration: 1.5, ease: S.ease.silk }, 1.09);
+      tl.fromTo(R("#s06-f1i"), { scale: 1.2 }, { scale: 1.0, duration: 4.5, ease: "power2.out" }, 1.09);
+      S.rise(tl, S.split(R("#s06-n1")), 1.29, { y: 28, blur: 12, stagger: 0.03, duration: 1.3, from: "start", max: 0.7 });
+      S.rise(tl, R("#s06-s1"), 1.59, { y: 12, blur: 6, duration: 1.0 });
+      tl.fromTo(R("#s06-f2"), { opacity: 0, y: 80, filter: "blur(16px)", clipPath: "inset(40% 34% 40% 34% round 320px 320px 320px 320px)" }, { opacity: 1, y: 0, filter: "blur(0px)", clipPath: "inset(0% 0% 0% 0% round 160px 160px 22px 22px)", duration: 1.5, ease: S.ease.silk }, 1.78);
+      tl.fromTo(R("#s06-f2i"), { scale: 1.2 }, { scale: 1.0, duration: 4.5, ease: "power2.out" }, 1.78);
+      S.rise(tl, S.split(R("#s06-n2")), 1.98, { y: 28, blur: 12, stagger: 0.03, duration: 1.3, from: "start", max: 0.7 });
+      S.rise(tl, R("#s06-s2"), 2.2800000000000002, { y: 12, blur: 6, duration: 1.0 });
+      S.life(tl, [R("#s06-f0"), R("#s06-f1"), R("#s06-f2")], 2.0, 5.9, { y: 6, rotate: 0.3, scale: 0.004, period: 5, seed: 17 });
+      S.sweep(tl, [R("#s06-f0sh"), R("#s06-f1sh"), R("#s06-f2sh")], 3.0, { duration: 1.6 });
+      S.rise(tl, S.split(R("#s06-t")), 2.55, { y: 34, blur: 16, stagger: 0.035, duration: 1.5, from: "start", max: 0.7 });
+      S.rise(tl, RA("#s06-cl .s06-w"), 3.3, { y: 24, blur: 12, stagger: 0.09, duration: 1.2 });
+      tl.fromTo(R("#s06-ln"), { scaleX: 0, opacity: 0 }, { scaleX: 1, opacity: 1, duration: 1.1, ease: S.ease.silk }, 3.6);
+      S.leave(tl, [R("#s06-t"), R("#s06-f0"), R("#s06-f1"), R("#s06-f2"), R("#s06-n0"), R("#s06-n1"), R("#s06-n2"), R("#s06-s0"), R("#s06-s1"), R("#s06-s2"), R("#s06-cl"), R("#s06-ln")], 5.10, { y: -44, blur: 18, duration: 0.75, ease: S.ease.accel });
+
+      tl.to({}, { duration: 5.9 }, 0);
+      window.__timelines["06-visage"] = tl;
+    })();
+  </script>
+</template>

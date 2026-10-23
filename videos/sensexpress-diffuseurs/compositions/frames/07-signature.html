@@ -1,0 +1,71 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Cormorant"; font-weight: 300; src: url("assets/fonts/cormorant-garamond-latin-300-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 300; font-style: italic; src: url("assets/fonts/cormorant-garamond-latin-300-italic.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 400; font-style: italic; src: url("assets/fonts/cormorant-garamond-latin-400-italic.woff2") format("woff2"); }
+    @font-face { font-family: "Cormorant"; font-weight: 500; src: url("assets/fonts/cormorant-garamond-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 400; src: url("assets/fonts/montserrat-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Montserrat"; font-weight: 500; src: url("assets/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; }
+
+    .s07-a { position: absolute; }
+    .s07-c { left: 0; right: 0; text-align: center; }
+    .s07-cv { position: absolute; left: 0; top: 0; }
+    .s07-d { font-family: "Cormorant"; font-weight: 300; color: #F5E6D3; white-space: nowrap; line-height: 1.05; }
+    .s07-i { font-family: "Cormorant"; font-weight: 300; font-style: italic; color: #F5E6D3; white-space: nowrap; line-height: 1.05; }
+    .s07-cap { font-family: "Montserrat"; font-weight: 500; font-size: 25px; letter-spacing: 0.34em; color: #D4AF37; white-space: nowrap; text-transform: uppercase; }
+    .s07-w { display: inline-block; }
+    .s07-frame { position: absolute; overflow: hidden; background: #000; -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 72%, rgba(0,0,0,0) 100%); mask-image: linear-gradient(180deg, #000 0%, #000 72%, rgba(0,0,0,0) 100%); }
+    .s07-frame img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+    .s07-frame canvas { position: absolute; left: 0; top: 0; }
+    .s07-line { position: absolute; height: 1px; background: linear-gradient(90deg, rgba(212,175,55,0), #D4AF37, rgba(212,175,55,0)); }
+    .s07-glow { position: absolute; border-radius: 50%; background: radial-gradient(closest-side, rgba(212,175,55,0.38), rgba(212,175,55,0.08) 55%, rgba(212,175,55,0)); }
+
+
+    #s07-ring { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; transform-origin: 540px 900px; }
+    .s07-dot { position: absolute; width: 210px; height: 210px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 2px rgba(212,175,55,0.7), 0 0 40px rgba(212,175,55,0.25); }
+    .s07-dot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    #s07-svg { position: absolute; left: 0; top: 0; }
+
+  </style>
+  <div id="root" data-composition-id="07-signature" data-start="0" data-duration="3.6" data-width="1080" data-height="1920">
+    <div id="s07-clip" class="clip" data-start="0" data-duration="3.6" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div id="s07-ring">
+      <svg id="s07-svg" width="1080" height="1920"><circle id="s07-c" cx="540" cy="900" r="330" fill="none" stroke="#D4AF37" stroke-width="1.5" stroke-opacity="0.8"/></svg>
+      <div class="s07-dot" id="s07-d0" style="left:435px; top:465px"><img src="assets/images/prince.jpg" alt=""></div>
+      <div class="s07-dot" id="s07-d1" style="left:721px; top:630px"><img src="assets/images/duchesse.jpg" alt=""></div>
+      <div class="s07-dot" id="s07-d2" style="left:721px; top:960px"><img src="assets/images/monarque.jpg" alt=""></div>
+      <div class="s07-dot" id="s07-d3" style="left:435px; top:1125px"><img src="assets/images/nomade.jpg" alt=""></div>
+      <div class="s07-dot" id="s07-d4" style="left:149px; top:960px"><img src="assets/images/duosens.jpg" alt=""></div>
+      <div class="s07-dot" id="s07-d5" style="left:149px; top:630px"><img src="assets/images/senspro.jpg" alt=""></div>
+    </div>
+    <div class="s07-a s07-c s07-i" id="s07-t1" style="top:820px; font-size:74px">Six diffuseurs.</div>
+    <div class="s07-a s07-c s07-d" id="s07-t2" style="top:905px; font-size:60px; color:#D4AF37">Une signature.</div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="07-signature"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="07-signature"] ' + s);
+      const C = R("#s07-c"), L = 2 * Math.PI * 330;
+      tl.fromTo(C, { attr: { "stroke-dasharray": L + " " + L, "stroke-dashoffset": L } }, { attr: { "stroke-dashoffset": 0 }, duration: 1.4, ease: "power2.inOut" }, 0.05);
+      tl.fromTo(R("#s07-ring"), { rotation: -20 }, { rotation: 18, duration: 3.6, ease: "none" }, 0);
+      tl.fromTo(R("#s07-d0"), { opacity: 0, scale: 0.4, filter: "blur(14px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 1.0, ease: "expo.out" }, 0.15);
+      tl.fromTo(R("#s07-d1"), { opacity: 0, scale: 0.4, filter: "blur(14px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 1.0, ease: "expo.out" }, 0.25);
+      tl.fromTo(R("#s07-d2"), { opacity: 0, scale: 0.4, filter: "blur(14px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 1.0, ease: "expo.out" }, 0.35);
+      tl.fromTo(R("#s07-d3"), { opacity: 0, scale: 0.4, filter: "blur(14px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 1.0, ease: "expo.out" }, 0.45);
+      tl.fromTo(R("#s07-d4"), { opacity: 0, scale: 0.4, filter: "blur(14px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 1.0, ease: "expo.out" }, 0.55);
+      tl.fromTo(R("#s07-d5"), { opacity: 0, scale: 0.4, filter: "blur(14px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 1.0, ease: "expo.out" }, 0.65);
+      tl.fromTo(R("#s07-t1"), { opacity: 0, y: 20, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "expo.out", stagger: 0 }, 0.55);
+      tl.fromTo(R("#s07-t2"), { opacity: 0, y: 20, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "expo.out", stagger: 0 }, 1.5);
+      tl.to(R("#s07-ring"), { scale: 0.05, opacity: 0, filter: "blur(20px)", duration: 1.0, ease: "power3.in" }, 2.4);
+      tl.to([R("#s07-t1"), R("#s07-t2")], { opacity: 0, y: -10, filter: "blur(16px)", duration: 0.8, ease: "power2.in", stagger: 0.04 }, 2.45);
+
+      tl.to({}, { duration: 3.6 }, 0);
+      window.__timelines["07-signature"] = tl;
+    })();
+  </script>
+</template>

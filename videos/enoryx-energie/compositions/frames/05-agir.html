@@ -1,0 +1,90 @@
+<template>
+  <style>
+@font-face { font-family: "Inter"; font-weight: 400; src: url("assets/fonts/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; src: url("assets/fonts/inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 700; src: url("assets/fonts/inter-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 800; src: url("assets/fonts/inter-latin-800-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 900; src: url("assets/fonts/inter-latin-900-normal.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 500; src: url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Inter", sans-serif; color: #FFFFFF; }
+
+    #k05-bg { position: absolute; inset: 0; background: radial-gradient(110% 60% at 50% 40%, #0c1a3a 0%, #050B1A 65%); }
+    .k05-kick { position: absolute; left: 0; right: 0; text-align: center; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 30px; letter-spacing: 0.16em; color: #38BDF8; }
+    .k05-h { position: absolute; left: 30px; right: 30px; text-align: center; font-weight: 900; letter-spacing: -0.04em; line-height: 1; color: #F8FAFC; white-space: nowrap; }
+    .k05-h em { font-style: normal; color: #38BDF8; }
+    .k05-card { position: absolute; border-radius: 40px; background: rgba(12,23,48,0.92); border: 2px solid #1E2A44; }
+    .k05-mono { font-family: "IBM Plex Mono", monospace; font-weight: 500; letter-spacing: 0.12em; }
+
+    #k05-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; display: block; }
+    .k05-pin { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+    .k05-pin > div { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); }
+
+    #k05-k { top: 150px; }
+    #k05-hero { top: 205px; font-size: 140px; }
+    #k05-hero em { color: #16A34A; }
+    #k05-wo { left: 60px; right: 60px; top: 420px; height: 470px; padding: 40px 44px; }
+    #k05-wo .t { display: flex; align-items: center; gap: 18px; }
+    #k05-wo .t span { display: block; font-family: "IBM Plex Mono", monospace; font-size: 26px; letter-spacing: 0.12em; color: #94A3B8; }
+    #k05-wo .t i { display: block; margin-left: auto; padding: 8px 18px; border-radius: 20px; background: rgba(234,88,12,0.18); color: #fb923c; font-style: normal; font-family: "IBM Plex Mono", monospace; font-size: 22px; letter-spacing: 0.1em; }
+    #k05-wo h3 { margin-top: 26px; font-weight: 800; font-size: 54px; line-height: 1.1; color: #F8FAFC; }
+    #k05-wo p { margin-top: 12px; font-size: 30px; color: #94A3B8; }
+    #k05-steps { position: absolute; left: 44px; right: 44px; bottom: 44px; display: flex; align-items: center; }
+    .k05-st { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 180px; }
+    .k05-st i { display: block; width: 44px; height: 44px; border-radius: 22px; border: 4px solid #1E2A44; background: #050B1A; }
+    .k05-st b { display: block; font-weight: 600; font-size: 26px; color: #94A3B8; }
+    .k05-ln { flex: 1; height: 6px; border-radius: 3px; background: #1E2A44; margin-bottom: 40px; position: relative; overflow: hidden; }
+    .k05-ln u { position: absolute; inset: 0; background: #16A34A; transform-origin: 0 50%; }
+    #k05-ch { left: 60px; right: 60px; top: 930px; height: 560px; }
+    #k05-csvg { position: absolute; left: 30px; top: 40px; width: 900px; height: 480px; overflow: visible; }
+    #k05-ok { position: absolute; left: 0; right: 0; top: 1520px; display: flex; justify-content: center; }
+    #k05-ok div { display: flex; align-items: center; gap: 14px; padding: 18px 30px; border-radius: 40px; background: #16A34A; }
+    #k05-ok b { display: block; font-weight: 800; font-size: 34px; color: #fff; }
+
+  </style>
+  <div id="root" data-composition-id="05-agir" data-start="0" data-duration="5.61" data-width="1080" data-height="1920">
+
+    <div id="k05-bg" class="clip" data-start="0" data-duration="5.61" data-track-index="0"></div>
+    <canvas id="k05-cv" width="1080" height="1920"></canvas>
+    <div class="k05-kick" id="k05-k">MAINTENANCE</div>
+    <div class="k05-h" id="k05-hero">agir <em>à temps</em></div>
+    <div class="k05-card" id="k05-wo">
+      <div class="t"><span>ORDRE DE TRAVAIL</span><i>DEPUIS L'ALERTE</i></div>
+      <h3>Réglage de consigne</h3>
+      <p>Centrale de traitement d'air · niveau 2</p>
+      <div id="k05-steps">
+        <div class="k05-st"><i></i><b>Créé</b></div><div class="k05-ln"><u></u></div>
+        <div class="k05-st"><i></i><b>En cours</b></div><div class="k05-ln"><u></u></div>
+        <div class="k05-st"><i></i><b>Clôturé</b></div>
+      </div>
+    </div>
+    
+    <div id="k05-ok"><div><svg width="34" height="28" viewBox="0 0 34 28"><path d="M3 14 L12 23 L31 4" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Retour à la normale</b></div></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="05-agir"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="05-agir"] ' + s);
+
+      const steps = RA(".k05-st i"), labs = RA(".k05-st b"), lns = RA(".k05-ln u");
+      gsap.set(lns, { scaleX: 0 });
+      const __r3 = ENX3D.recover(R("#k05-cv"));
+      const __s3 = { t: 0 };
+      tl.fromTo(__s3, { t: 0 }, { t: 5.01, duration: 5.01, ease: "none", onUpdate: () => __r3(__s3.t) }, 0);
+      __r3(0);
+      tl.fromTo(R("#k05-k"), { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 0);
+      tl.fromTo(R("#k05-wo"), { opacity: 0, y: 80, scale: 0.95 }, { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "power3.out" }, 0.4);
+      [0.9, 1.6, 2.5].forEach((t, i) => {
+        tl.to(steps[i], { backgroundColor: "#16A34A", borderColor: "#16A34A", duration: 0.25 }, t);
+        tl.to(labs[i], { color: "#F8FAFC", duration: 0.25 }, t);
+        if (i < 2) tl.to(lns[i], { scaleX: 1, duration: 0.5, ease: "power2.inOut" }, t + 0.1);
+      });
+      tl.fromTo(R("#k05-hero"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 2.6);
+      tl.fromTo(R("#k05-ok div"), { opacity: 0, y: 30, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "back.out(1.7)" }, 3.5);
+
+      window.__timelines["05-agir"] = tl;
+    })();
+  </script>
+</template>

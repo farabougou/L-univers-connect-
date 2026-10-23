@@ -1,0 +1,71 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Anton"; src: url("assets/fonts/anton-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Black Ops One"; src: url("assets/fonts/black-ops-one-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Permanent Marker"; src: url("assets/fonts/permanent-marker-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 500; src: url("assets/fonts/oswald-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 700; src: url("assets/fonts/oswald-latin-700-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: #0B0908; }
+
+    .f07-a { position: absolute; }
+    .f07-c { left: 0; right: 0; text-align: center; }
+    .f07-full { position: absolute; inset: 0; }
+    .f07-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+    .f07-h { font-family: "Anton"; color: #F4E9D8; text-transform: uppercase; line-height: 0.92; white-space: nowrap; letter-spacing: 0.005em; }
+    .f07-st { font-family: "Black Ops One"; color: #F4E9D8; line-height: 1; white-space: nowrap; }
+    .f07-gr { padding: 0.22em 0.04em; margin-top: -0.22em; -webkit-mask-image: url(assets/images/grunge.png); -webkit-mask-size: 640px 640px; mask-image: url(assets/images/grunge.png); mask-size: 640px 640px; }
+    .f07-mk { font-family: "Permanent Marker"; color: #F4E9D8; white-space: nowrap; }
+    .f07-in { font-family: "Oswald"; font-weight: 500; color: #F4E9D8; white-space: nowrap; letter-spacing: 0.04em; }
+    .f07-kick { font-family: "Oswald"; font-weight: 700; font-size: 32px; letter-spacing: 0.34em; color: #FFB627; white-space: nowrap; text-transform: uppercase; }
+    .f07-coal { position: absolute; inset: 0; background: radial-gradient(70% 45% at 50% 62%, #2a140a 0%, #0B0908 70%); }
+    .f07-slate { position: absolute; inset: 0; background: url(assets/images/slate.jpg) center / cover; }
+    .f07-food { position: absolute; display: block; filter: drop-shadow(0 26px 30px rgba(0,0,0,0.55)); }
+    .f07-band { position: absolute; -webkit-mask: url(assets/images/brush.png) center / 100% 100% no-repeat; mask: url(assets/images/brush.png) center / 100% 100% no-repeat; }
+    .f07-band span { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; white-space: nowrap; }
+    .f07-m { position: absolute; overflow: hidden; box-sizing: content-box; padding-top: 70px; margin-top: -70px; }
+    .f07-m > * { display: inline-block; }
+
+
+    #f07-ring { position: absolute; left: 320px; top: 250px; width: 440px; height: 440px; border-radius: 50%; box-shadow: 0 0 90px rgba(30,107,58,0.6); }
+
+  </style>
+  <div id="root" data-composition-id="07-halal" data-start="0" data-duration="4.45" data-width="1080" data-height="1920">
+    <div id="f07-clip" class="clip" data-start="0" data-duration="4.45" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="f07-coal"></div>
+    <canvas class="f07-cv" id="f07-emb" width="1080" height="1920"></canvas>
+    <div id="f07-shk" class="f07-full">
+      <div id="f07-ring"></div>
+    <img class="f07-food" id="f07-hal" src="assets/images/food/halal.png" alt="" style="left:340px; top:270px; width:400px; border-radius:50%">
+      <div class="f07-a f07-c f07-h" id="f07-t1" style="top:760px; font-size:120px">Certifié halal</div>
+      <div class="f07-a" id="f07-rule" style="left:390px; top:910px; width:300px; height:6px; background:#F26A1B"></div>
+      <div class="f07-a f07-c f07-h f07-gr" id="f07-t2" style="top:960px; font-size:190px; color:#F26A1B">Ouvert 7j/7</div>
+      <div class="f07-a f07-c f07-h" id="f07-t3" style="top:1170px; font-size:150px">de 11h à 2h</div>
+      <div class="f07-a f07-c f07-mk" id="f07-t4" style="top:1370px; font-size:66px; color:#FFB627; transform: rotate(-4deg)">même tard le soir !</div>
+    </div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="07-halal"] ' + s);
+      const __e = FG.embers(R("#f07-emb"), { n: 80, seed: 17 });
+      const __f = { t: 0 };
+      tl.fromTo(__f, { t: 0 }, { t: 3.5, duration: 3.5, ease: "none", onUpdate: () => { __e(__f.t); } }, 0);
+      __e(__f.t);
+      tl.fromTo(R("#f07-hal"), { rotationY: 200, scale: 0.4, opacity: 0 }, { rotationY: 0, scale: 1, opacity: 1, duration: 0.7, ease: "back.out(1.6)" }, 0.1);
+      tl.fromTo(R("#f07-ring"), { opacity: 0 }, { opacity: 1, duration: 0.5 }, 0.5);
+      tl.fromTo(R("#f07-t1"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 0.55);
+      tl.fromTo(R("#f07-rule"), { scaleX: 0 }, { scaleX: 1, duration: 0.4, ease: "power2.inOut" }, 0.8);
+      tl.fromTo(R("#f07-t2"), { opacity: 0, scale: 1.7, filter: "blur(14px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.32, ease: "expo.out" }, 1.0);
+      tl.fromTo(R("#f07-shk"), { x: -16, y: 10 }, { x: 0, y: 0, duration: 0.45, ease: "elastic.out(1.2, 0.3)", immediateRender: false }, 1.05);
+      tl.fromTo(R("#f07-t3"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 1.35);
+      tl.fromTo(R("#f07-t4"), { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2.2)" }, 1.8);
+      tl.to(R("#f07-shk"), { y: -1500, filter: "blur(18px)", duration: 0.28, ease: "power3.in" }, 3.95);
+
+      tl.to({}, { duration: 4.45 }, 0);
+      window.__timelines["07-halal"] = tl;
+    })();
+  </script>
+</template>

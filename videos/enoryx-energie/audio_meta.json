@@ -1,0 +1,332 @@
+{
+  "bgm": {
+    "path": "assets/music-enoryx.wav",
+    "source": "host"
+  },
+  "bgm_pending": false,
+  "voices": [
+    {
+      "frame": 1,
+      "path": "assets/voice/01.wav",
+      "duration_s": 4.971,
+      "words": [
+        {
+          "text": "La",
+          "start": 0.04,
+          "end": 0.234
+        },
+        {
+          "text": "nuit,",
+          "start": 0.234,
+          "end": 0.428
+        },
+        {
+          "text": "le",
+          "start": 0.428,
+          "end": 0.732
+        },
+        {
+          "text": "chauffage",
+          "start": 0.732,
+          "end": 1.213
+        },
+        {
+          "text": "tourne",
+          "start": 1.214,
+          "end": 1.551
+        },
+        {
+          "text": "encore.",
+          "start": 1.551,
+          "end": 2.392
+        },
+        {
+          "text": "Le",
+          "start": 2.393,
+          "end": 2.586
+        },
+        {
+          "text": "gaspillage",
+          "start": 2.587,
+          "end": 3.212
+        },
+        {
+          "text": "d'énergie",
+          "start": 3.212,
+          "end": 3.693
+        },
+        {
+          "text": "est",
+          "start": 3.693,
+          "end": 3.887
+        },
+        {
+          "text": "souvent",
+          "start": 3.887,
+          "end": 4.225
+        },
+        {
+          "text": "invisible.",
+          "start": 4.225,
+          "end": 4.85
+        }
+      ]
+    },
+    {
+      "frame": 2,
+      "path": "assets/voice/02.wav",
+      "duration_s": 4.203,
+      "words": [
+        {
+          "text": "Le",
+          "start": 0.04,
+          "end": 0.264
+        },
+        {
+          "text": "décret",
+          "start": 0.264,
+          "end": 0.654
+        },
+        {
+          "text": "tertiaire",
+          "start": 0.654,
+          "end": 1.421
+        },
+        {
+          "text": "impose",
+          "start": 1.421,
+          "end": 1.977
+        },
+        {
+          "text": "moins",
+          "start": 1.977,
+          "end": 2.201
+        },
+        {
+          "text": "quarante",
+          "start": 2.201,
+          "end": 2.897
+        },
+        {
+          "text": "pour",
+          "start": 2.897,
+          "end": 3.121
+        },
+        {
+          "text": "cent",
+          "start": 3.122,
+          "end": 3.346
+        },
+        {
+          "text": "d'ici",
+          "start": 3.346,
+          "end": 3.736
+        },
+        {
+          "text": "2030.",
+          "start": 3.736,
+          "end": 4.07
+        }
+      ]
+    },
+    {
+      "frame": 3,
+      "path": "assets/voice/03.wav",
+      "duration_s": 3.456,
+      "words": [
+        {
+          "text": "Enoryx",
+          "start": 0.04,
+          "end": 0.471
+        },
+        {
+          "text": "connecte",
+          "start": 0.471,
+          "end": 1.002
+        },
+        {
+          "text": "vos",
+          "start": 1.003,
+          "end": 1.176
+        },
+        {
+          "text": "équipements",
+          "start": 1.176,
+          "end": 1.736
+        },
+        {
+          "text": "et",
+          "start": 1.736,
+          "end": 2.09
+        },
+        {
+          "text": "les",
+          "start": 2.09,
+          "end": 2.264
+        },
+        {
+          "text": "surveille",
+          "start": 2.264,
+          "end": 2.695
+        },
+        {
+          "text": "en",
+          "start": 2.695,
+          "end": 2.869
+        },
+        {
+          "text": "continu.",
+          "start": 2.869,
+          "end": 3.3
+        }
+      ]
+    },
+    {
+      "frame": 4,
+      "path": "assets/voice/04.wav",
+      "duration_s": 3.861,
+      "words": [
+        {
+          "text": "Il",
+          "start": 0.02,
+          "end": 0.195
+        },
+        {
+          "text": "compare",
+          "start": 0.196,
+          "end": 0.631
+        },
+        {
+          "text": "chaque",
+          "start": 0.631,
+          "end": 1.076
+        },
+        {
+          "text": "consommation",
+          "start": 1.076,
+          "end": 1.642
+        },
+        {
+          "text": "à",
+          "start": 1.642,
+          "end": 1.817
+        },
+        {
+          "text": "la",
+          "start": 1.817,
+          "end": 1.993
+        },
+        {
+          "text": "météo",
+          "start": 1.993,
+          "end": 2.298
+        },
+        {
+          "text": "et",
+          "start": 2.298,
+          "end": 2.674
+        },
+        {
+          "text": "détecte",
+          "start": 2.674,
+          "end": 3.109
+        },
+        {
+          "text": "les",
+          "start": 3.109,
+          "end": 3.284
+        },
+        {
+          "text": "dérives.",
+          "start": 3.285,
+          "end": 3.72
+        }
+      ]
+    },
+    {
+      "frame": 5,
+      "path": "assets/voice/05.wav",
+      "duration_s": 4.011,
+      "words": [
+        {
+          "text": "Puis",
+          "start": 0.05,
+          "end": 0.249
+        },
+        {
+          "text": "il",
+          "start": 0.249,
+          "end": 0.447
+        },
+        {
+          "text": "déclenche",
+          "start": 0.448,
+          "end": 0.941
+        },
+        {
+          "text": "l'intervention,",
+          "start": 0.941,
+          "end": 1.581
+        },
+        {
+          "text": "avant",
+          "start": 1.581,
+          "end": 1.927
+        },
+        {
+          "text": "que",
+          "start": 1.927,
+          "end": 2.386
+        },
+        {
+          "text": "la",
+          "start": 2.386,
+          "end": 2.585
+        },
+        {
+          "text": "facture",
+          "start": 2.585,
+          "end": 3.188
+        },
+        {
+          "text": "ne",
+          "start": 3.188,
+          "end": 3.387
+        },
+        {
+          "text": "s'envole.",
+          "start": 3.387,
+          "end": 3.88
+        }
+      ]
+    },
+    {
+      "frame": 6,
+      "path": "assets/voice/06.wav",
+      "duration_s": 2.133,
+      "words": [
+        {
+          "text": "Enoryx.",
+          "start": 0.04,
+          "end": 0.507
+        },
+        {
+          "text": "Chaque",
+          "start": 0.508,
+          "end": 0.835
+        },
+        {
+          "text": "kilowattheure",
+          "start": 0.836,
+          "end": 1.582
+        },
+        {
+          "text": "compte.",
+          "start": 1.582,
+          "end": 2.0
+        }
+      ]
+    }
+  ],
+  "sfx": []
+}

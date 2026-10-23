@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-24 -24 160 140" width="1280" height="1120">
+  <!-- Logo Mams, version néon du masque : le tube suit le contour d'un M épais (halo, tube, cœur clair) -->
+  <defs>
+    <path id="m" d="M 6 88 L 22 41 C 25 32, 33 30, 38 38 L 46 52 C 50 59, 56 59, 61 53 L 91 15 C 96 9, 102 11, 102 18 L 104 89" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <mask id="tube" maskUnits="userSpaceOnUse" x="-24" y="-24" width="160" height="140">
+      <use href="#m" stroke="#fff" stroke-width="22"/><use href="#m" stroke="#000" stroke-width="8"/>
+    </mask>
+    <mask id="core" maskUnits="userSpaceOnUse" x="-24" y="-24" width="160" height="140">
+      <use href="#m" stroke="#fff" stroke-width="16.4"/><use href="#m" stroke="#000" stroke-width="13.6"/>
+    </mask>
+    <filter id="halo" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5.5"/></filter>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="0.6"/></filter>
+  </defs>
+  <rect x="-24" y="-24" width="160" height="140" fill="#FF4F1F" mask="url(#tube)" filter="url(#halo)" opacity="0.9"/>
+  <rect x="-24" y="-24" width="160" height="140" fill="#FF5A24" mask="url(#tube)"/>
+  <rect x="-24" y="-24" width="160" height="140" fill="#FFD3B5" mask="url(#core)" filter="url(#soft)"/>
+</svg>

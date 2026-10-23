@@ -1,0 +1,140 @@
+<template>
+  <style>
+
+    @font-face { font-family: "Oswald"; font-weight: 400; src: url("assets/fonts/oswald-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 500; src: url("assets/fonts/oswald-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 600; src: url("assets/fonts/oswald-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Oswald"; font-weight: 700; src: url("assets/fonts/oswald-latin-700-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Roboto"; font-weight: 400; src: url("assets/fonts/roboto-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Roboto"; font-weight: 500; src: url("assets/fonts/roboto-latin-500-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Roboto"; font-weight: 700; src: url("assets/fonts/roboto-latin-700-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Roboto", sans-serif; color: #FFFFFF; }
+
+    .k05-abs { position: absolute; }
+    .k05-bgd { position: absolute; inset: 0; background: radial-gradient(90% 80% at 70% 40%, #0b1f36 0%, #06111F 70%); }
+    .k05-bgl { position: absolute; inset: 0; background: #F4F8FC; }
+    .k05-bgw { position: absolute; inset: 0; background: #FFFFFF; }
+    .k05-kick { display: flex; align-items: center; gap: 18px; font-family: "Roboto"; font-weight: 500; font-size: 24px; letter-spacing: 0.24em; color: #1EAAE2; white-space: nowrap; }
+    .k05-kick i { display: block; width: 56px; height: 3px; background: #1EAAE2; }
+    .k05-st { font-family: "Oswald"; font-weight: 600; font-size: 88px; line-height: 1.08; text-transform: uppercase; color: #FFFFFF; white-space: nowrap; }
+    .k05-st em { font-style: normal; color: #1EAAE2; }
+    .k05-st.dk { color: #152235; }
+    .k05-fil { display: flex; align-items: center; gap: 14px; }
+    .k05-fil i { display: block; width: 110px; height: 4px; border-radius: 2px; background: #1EAAE2; }
+    .k05-fil u { display: block; width: 14px; height: 14px; border-radius: 7px; background: #1EAAE2; }
+    .k05-fil u.o { background: #F07828; }
+    .k05-ex { font-family: "Roboto"; font-weight: 400; font-size: 34px; line-height: 1.45; color: #9FB3C8; }
+    .k05-ex.dk { color: #46586E; }
+    /* site components */
+    .k05-site { position: absolute; left: 0; top: 0; width: 1440px; background: #06111F; overflow: hidden; transform-origin: 0 0; }
+    .k05-hd { height: 96px; background: #FFFFFF; display: flex; align-items: center; padding: 0 56px; gap: 40px; }
+    .k05-hd img { display: block; height: 66px; }
+    .k05-hd nav { display: flex; gap: 34px; margin-left: auto; font-family: "Roboto"; font-weight: 500; font-size: 17px; letter-spacing: 0.08em; color: #152235; }
+    .k05-btn { display: inline-flex; align-items: center; gap: 12px; padding: 16px 28px; border-radius: 3px; font-family: "Roboto"; font-weight: 700; font-size: 17px; letter-spacing: 0.12em; text-transform: uppercase; color: #FFFFFF; background: #1EAAE2; white-space: nowrap; }
+    .k05-btn.ol { background: transparent; border: 2px solid #8a96a3; }
+    .k05-btn svg { display: block; }
+    .k05-bar { height: 6px; background: linear-gradient(90deg, #1EAAE2 0 33%, #D93A2B 33% 66%, #F07828 66% 100%); }
+    .k05-hero { position: relative; height: 700px; padding: 150px 80px 0; background:
+        radial-gradient(40% 55% at 82% 70%, rgba(240,120,40,0.22), rgba(240,120,40,0) 70%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0 2px, rgba(255,255,255,0) 2px 180px),
+        linear-gradient(180deg, #0a1a2c 0%, #06111F 100%); }
+    .k05-hk { display: flex; align-items: center; gap: 22px; font-family: "Roboto"; font-weight: 700; font-size: 20px; letter-spacing: 0.3em; color: #1EAAE2; }
+    .k05-hk i { display: block; width: 64px; height: 3px; background: #1EAAE2; }
+    .k05-ht { margin-top: 34px; font-family: "Oswald"; font-weight: 600; font-size: 84px; line-height: 1.08; color: #FFFFFF; white-space: nowrap; }
+    .k05-ht em { font-style: italic; color: #1EAAE2; }
+    .k05-hp { margin-top: 26px; font-family: "Roboto"; font-weight: 400; font-size: 24px; line-height: 1.6; color: #C9D3DE; }
+    .k05-hb { margin-top: 38px; display: flex; gap: 20px; }
+    /* browser chrome */
+    .k05-br { position: absolute; border-radius: 18px; overflow: hidden; background: #FFFFFF; box-shadow: 0 40px 90px rgba(0,0,0,0.45); }
+    .k05-brt { height: 44px; background: #EEF2F6; display: flex; align-items: center; gap: 10px; padding: 0 18px; }
+    .k05-brt u { display: block; width: 13px; height: 13px; border-radius: 7px; background: #c7d0da; }
+    .k05-brt b { display: block; margin-left: 24px; padding: 6px 22px; border-radius: 14px; background: #FFFFFF; font-family: "Roboto"; font-weight: 500; font-size: 17px; color: #46586E; }
+    .k05-brv { position: relative; overflow: hidden; }
+    /* cards */
+    .k05-card { position: absolute; border-radius: 18px; background: #FFFFFF; box-shadow: 0 24px 60px rgba(21,34,53,0.14); border: 1px solid #E3EAF2; }
+    .k05-ic { display: flex; width: 96px; height: 96px; border-radius: 18px; align-items: center; justify-content: center; background: #E6F5FC; }
+    .k05-ct { font-family: "Oswald"; font-weight: 600; font-size: 44px; color: #152235; text-transform: uppercase; white-space: nowrap; }
+    .k05-cp { font-family: "Roboto"; font-weight: 400; font-size: 26px; line-height: 1.45; color: #46586E; }
+    .k05-cl { display: flex; align-items: center; gap: 10px; font-family: "Roboto"; font-weight: 700; font-size: 20px; letter-spacing: 0.14em; color: #1EAAE2; }
+    .k05-cur { position: absolute; left: 0; top: 0; width: 40px; height: 40px; }
+
+
+    #k05-r5 { position: absolute; left: 0; top: 0; }
+    .k05-lb { position: absolute; left: 170px; font-family: "Oswald"; font-weight: 500; font-size: 48px; color: #152235; text-transform: uppercase; white-space: nowrap; }
+    #k05-cta { position: absolute; left: 170px; top: 1090px; }
+    #k05-cta .k05-btn { font-size: 28px; padding: 26px 44px; }
+    #k05-dsk { left: 80px; top: 440px; width: 920px; height: 600px; }
+    #k05-ph { position: absolute; left: 390px; top: 1080px; width: 300px; height: 640px; border-radius: 40px; border: 10px solid #152235; background: #06111F; overflow: hidden; box-shadow: 0 40px 90px rgba(21,34,53,0.35); }
+    #k05-ph .k05-site { width: 280px; }
+    #k05-ph .k05-hd { height: 76px; padding: 0 18px; }
+    #k05-ph .k05-hd img { height: 48px; }
+    #k05-ph .k05-hero { height: 760px; padding: 60px 22px 0; }
+    #k05-ph .k05-hk { font-size: 13px; letter-spacing: 0.2em; gap: 10px; } #k05-ph .k05-hk i { width: 30px; }
+    #k05-ph .k05-ht { font-size: 36px; margin-top: 18px; white-space: normal; }
+    #k05-ph .k05-hp { font-size: 17px; } #k05-ph .k05-hb { flex-direction: column; gap: 12px; margin-top: 22px; }
+    #k05-ph .k05-btn { font-size: 14px; padding: 14px 18px; }
+    #k05-burger { margin-left: auto; width: 44px; height: 44px; border: 2px solid #e3eaf2; border-radius: 4px; display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 0 9px; }
+    #k05-burger i { display: block; height: 3px; background: #152235; }
+
+  </style>
+  <div id="root" data-composition-id="05-action" data-start="0" data-duration="12.5" data-width="1080" data-height="1920">
+    <div id="k05-bgclip" class="clip" data-start="0" data-duration="12.5" data-track-index="0" style="position:absolute; inset:0"></div>
+    <div class="k05-bgl"></div>
+    <div class="k05-abs" id="k05-sk" style="left:80px; top:150px"><div class="k05-kick"><i></i>05 — ACTION</div></div>
+    <div class="k05-abs k05-st dk" id="k05-s1" style="left:80px; top:202px">Un parcours</div>
+    <div class="k05-abs k05-st dk" id="k05-s2" style="left:80px; top:297px"><em>vers l'action.</em></div>
+    <svg id="k05-r5" width="1080" height="1920" viewBox="0 0 1080 1920">
+      <path id="k05-p5" d="M 120 540 V 1060" stroke="#1EAAE2" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <circle id="k05-d0" cx="120" cy="560" r="14" fill="#1EAAE2"/><circle id="k05-d1" cx="120" cy="720" r="14" fill="#1EAAE2"/><circle id="k05-d2" cx="120" cy="880" r="14" fill="#1EAAE2"/><circle id="k05-d3" cx="120" cy="1140" r="16" fill="#F07828"/></svg>
+    <div id="k05-steps5">
+      <div class="k05-lb" id="k05-l0" style="top:526px">Services</div>
+      <div class="k05-lb" id="k05-l1" style="top:686px">Départs</div>
+      <div class="k05-lb" id="k05-l2" style="top:846px">Suivi</div>
+    </div>
+    <div id="k05-cta"><div class="k05-btn" id="k05-cb">Demander un devis <svg width="20" height="20" viewBox="0 0 20 20"><path d="M3 10 H16 M11 5 L16 10 L11 15" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+    <div class="k05-cur" id="k05-cur"><svg width="40" height="40" viewBox="0 0 40 40"><path d="M6 3 L6 32 L13 25 L18 36 L23 34 L18 23 L28 23 Z" fill="#FFFFFF" stroke="#152235" stroke-width="2.2" stroke-linejoin="round"/></svg></div>
+    <div class="k05-br" id="k05-dsk"><div class="k05-brt"><u></u><u></u><u></u><b>ktf-shipping.com</b></div>
+      <div class="k05-brv" style="height:556px"><div class="k05-site" style="transform: scale(0.6389)"><div class="k05-hd"><img src="assets/images/ktf-logo.png" alt="KTF"><nav><span>SERVICES</span><span>DÉPARTS</span><span>SUIVI</span><span>À PROPOS</span><span>CONTACT</span></nav><div class="k05-btn" id="k05-hdbtn">Demander un devis</div></div>
+        <div class="k05-bar"></div>
+        <div class="k05-hero">
+          <div class="k05-hk" id="k05-hk"><i></i>SOLUTIONS LOGISTIQUES — EUROPE &amp; AFRIQUE</div>
+          <div class="k05-ht" id="k05-ht"><em>TRANSPORT</em> AÉRIEN, MARITIME<br>&amp; ROUTIER</div>
+          <div class="k05-fil" style="margin-top:30px" id="k05-hf"><i></i><u></u></div>
+          <div class="k05-hp" id="k05-hp">KTF Shipping, votre partenaire de confiance entre l'Europe<br>et toute l'Afrique de l'Ouest.</div>
+          <div class="k05-hb" id="k05-hb"><div class="k05-btn"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M3 10 H16 M11 5 L16 10 L11 15" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Nos services</div><div class="k05-btn ol"><svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="6.5" stroke="#fff" stroke-width="2.2" fill="none"/><circle cx="11" cy="11" r="2.4" fill="#fff"/><path d="M11 1 V4 M11 18 V21 M1 11 H4 M18 11 H21" stroke="#fff" stroke-width="2.2"/></svg>Suivre mon envoi</div></div>
+        </div></div></div></div>
+    <div id="k05-ph"><div class="k05-site"><div class="k05-hd"><img src="assets/images/ktf-logo.png" alt="KTF"><div id="k05-burger"><i></i><i></i><i></i></div></div><div class="k05-bar"></div>
+      <div class="k05-hero"><div class="k05-hk"><i></i>SOLUTIONS LOGISTIQUES</div><div class="k05-ht"><em>TRANSPORT</em> AÉRIEN, MARITIME &amp; ROUTIER</div><div class="k05-fil" style="margin-top:18px"><i style="width:60px"></i><u style="width:10px;height:10px"></u></div>
+      <div class="k05-hp">KTF Shipping, votre partenaire de confiance entre l'Europe et toute l'Afrique de l'Ouest.</div><div class="k05-hb"><div class="k05-btn"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M3 10 H16 M11 5 L16 10 L11 15" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Nos services</div><div class="k05-btn ol"><svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="6.5" stroke="#fff" stroke-width="2.2" fill="none"/><circle cx="11" cy="11" r="2.4" fill="#fff"/><path d="M11 1 V4 M11 18 V21 M1 11 H4 M18 11 H21" stroke="#fff" stroke-width="2.2"/></svg>Suivre mon envoi</div></div></div></div></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="05-action"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="05-action"] ' + s);
+      tl.fromTo(R("#k05-sk"), { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, 0.3);
+      tl.fromTo(R("#k05-s1"), { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.4);
+      tl.fromTo(R("#k05-s2"), { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.6499999999999999);
+      const p5 = R("#k05-p5"), L5 = p5.getTotalLength();
+      tl.fromTo(p5, { attr: { "stroke-dasharray": L5, "stroke-dashoffset": L5 } }, { attr: { "stroke-dashoffset": 0 }, duration: 2.4, ease: "power1.inOut" }, 0.8);
+      [0, 1, 2].forEach((i) => {
+        tl.fromTo(R("#k05-d" + i), { opacity: 0, scale: 0, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 0.8 + i * 0.75);
+        tl.fromTo(R("#k05-l" + i), { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.45, ease: "power2.out" }, 0.85 + i * 0.75);
+      });
+      tl.fromTo(R("#k05-d3"), { opacity: 0, scale: 0, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(2)" }, 3.15);
+      tl.fromTo(R("#k05-cta"), { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, 3.25);
+      tl.fromTo(R("#k05-cur"), { x: 900, y: 1820, opacity: 0 }, { x: 470, y: 1140, opacity: 1, duration: 0.9, ease: "power2.inOut" }, 3.7);
+      tl.to(R("#k05-cur"), { scale: 0.85, duration: 0.1, yoyo: true, repeat: 1 }, 4.65);
+      tl.to(R("#k05-cb"), { backgroundColor: "#1590C2", boxShadow: "0 0 0 8px rgba(30,170,226,0.25)", duration: 0.2 }, 4.65);
+      // wide view, then the vertical composition: same markers on both formats
+      tl.to([R("#k05-r5"), R("#k05-steps5"), R("#k05-cta"), R("#k05-cur")], { opacity: 0, duration: 0.5, ease: "power2.in" }, 5.6);
+      tl.fromTo(R("#k05-dsk"), { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 6.0);
+      tl.fromTo(R("#k05-ph"), { opacity: 0, y: 80 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 7.6);
+      
+      tl.to({}, { duration: 12.5 }, 0);
+      window.__timelines["05-action"] = tl;
+    })();
+  </script>
+</template>

@@ -1,0 +1,13 @@
+
+# secrets (API keys) must never be committed
+.env
+.env.*
+
+# état local de HyperFrames (verrous, historique des vérifications)
+.hyperframes/
+# dossiers temporaires d'un rendu HyperFrames en cours
+videos/*/renders/work-*/
+videos/*/renders/.*.hf-transaction-*/
+
+# caches Python des scripts .src
+__pycache__/

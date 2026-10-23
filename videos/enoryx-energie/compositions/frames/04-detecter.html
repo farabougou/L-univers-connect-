@@ -1,0 +1,74 @@
+<template>
+  <style>
+@font-face { font-family: "Inter"; font-weight: 400; src: url("assets/fonts/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; src: url("assets/fonts/inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 700; src: url("assets/fonts/inter-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 800; src: url("assets/fonts/inter-latin-800-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 900; src: url("assets/fonts/inter-latin-900-normal.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 500; src: url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
+
+    #root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Inter", sans-serif; color: #FFFFFF; }
+
+    #k04-bg { position: absolute; inset: 0; background: radial-gradient(110% 60% at 50% 40%, #0c1a3a 0%, #050B1A 65%); }
+    .k04-kick { position: absolute; left: 0; right: 0; text-align: center; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 30px; letter-spacing: 0.16em; color: #38BDF8; }
+    .k04-h { position: absolute; left: 30px; right: 30px; text-align: center; font-weight: 900; letter-spacing: -0.04em; line-height: 1; color: #F8FAFC; white-space: nowrap; }
+    .k04-h em { font-style: normal; color: #38BDF8; }
+    .k04-card { position: absolute; border-radius: 40px; background: rgba(12,23,48,0.92); border: 2px solid #1E2A44; }
+    .k04-mono { font-family: "IBM Plex Mono", monospace; font-weight: 500; letter-spacing: 0.12em; }
+
+    #k04-cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; display: block; }
+    .k04-pin { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+    .k04-pin > div { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); }
+
+    .k04-alert { position: static; }
+
+    #k04-k { top: 150px; }
+    #k04-hero { top: 205px; font-size: 140px; }
+    #k04-card { left: 60px; right: 60px; top: 420px; height: 110px; background: rgba(12,23,48,0.7); }
+    #k04-svg { position: absolute; left: 30px; top: 110px; width: 900px; height: 700px; overflow: visible; }
+    #k04-leg { position: absolute; left: 44px; top: 36px; display: flex; gap: 34px; }
+    #k04-leg span { display: flex; align-items: center; gap: 12px; font-family: "IBM Plex Mono", monospace; font-size: 24px; letter-spacing: 0.08em; color: #94A3B8; }
+    #k04-leg i { display: block; width: 36px; height: 6px; border-radius: 3px; }
+    #k04-meteo { position: absolute; right: 36px; top: 26px; display: flex; align-items: center; gap: 12px; padding: 10px 20px; border-radius: 30px; background: #0f2147; border: 2px solid #1E2A44; }
+    #k04-meteo b { display: block; font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 24px; color: #38BDF8; letter-spacing: 0.08em; }
+    .k04-alert { position: absolute; display: flex; align-items: center; gap: 14px; padding: 18px 26px; border-radius: 26px; background: #EA580C; box-shadow: 0 16px 40px rgba(234,88,12,0.35); }
+    .k04-alert b { display: block; font-weight: 800; font-size: 32px; color: #fff; white-space: nowrap; }
+    .k04-alert i { display: flex; width: 38px; height: 38px; border-radius: 19px; background: #fff; color: #EA580C; font-style: normal; font-weight: 900; font-size: 28px; align-items: center; justify-content: center; }
+
+  </style>
+  <div id="root" data-composition-id="04-detecter" data-start="0" data-duration="5.36" data-width="1080" data-height="1920">
+
+    <div id="k04-bg" class="clip" data-start="0" data-duration="5.36" data-track-index="0"></div>
+    <canvas id="k04-cv" width="1080" height="1920"></canvas>
+    <div class="k04-kick" id="k04-k">DÉTECTION AUTOMATIQUE</div>
+    <div class="k04-h" id="k04-hero">les <em>dérives</em></div>
+    <div class="k04-card" id="k04-card">
+      <div id="k04-leg"><span><i style="background:#38BDF8"></i>RÉFÉRENCE</span><span><i style="background:#F8FAFC"></i>RÉEL</span></div>
+      <div id="k04-meteo"><svg width="22" height="40" viewBox="0 0 22 40"><rect x="7" y="2" width="8" height="26" rx="4" fill="none" stroke="#38BDF8" stroke-width="3"/><circle cx="11" cy="31" r="7" fill="#38BDF8"/></svg><b>CORRIGÉ MÉTÉO</b></div>
+    </div>
+    <div class="k04-pin" id="k04-p1"><div><div class="k04-alert" id="k04-a1"><i>!</i><b>Écart à la consigne</b></div></div></div>
+    <div class="k04-pin" id="k04-p2"><div style="transform: translate(-50%, 0)"><div class="k04-alert" id="k04-a2"><i>!</i><b>Cycles courts</b></div></div></div>
+
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const R = (s) => document.querySelector('[data-composition-id="04-detecter"] ' + s);
+      const RA = (s) => document.querySelectorAll('[data-composition-id="04-detecter"] ' + s);
+
+      const P = [R("#k04-p1"), R("#k04-p2")];
+      const __r3 = ENX3D.detect(R("#k04-cv"), P);
+      const __s3 = { t: 0 };
+      tl.fromTo(__s3, { t: 0 }, { t: 4.86, duration: 4.86, ease: "none", onUpdate: () => __r3(__s3.t) }, 0);
+      __r3(0);
+      tl.fromTo(R("#k04-k"), { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 0);
+      tl.fromTo(R("#k04-card"), { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.05);
+      tl.fromTo(R("#k04-meteo"), { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, 1.95);
+      tl.fromTo(R("#k04-hero"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 2.6);
+      tl.fromTo(R("#k04-a1"), { opacity: 0, y: 20, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "back.out(1.7)" }, 2.9);
+      tl.fromTo(R("#k04-a2"), { opacity: 0, y: 20, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "back.out(1.7)" }, 3.35);
+
+      window.__timelines["04-detecter"] = tl;
+    })();
+  </script>
+</template>
