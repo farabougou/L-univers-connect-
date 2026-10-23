@@ -10,7 +10,8 @@
  */
 
 import { ASSET_STATUS_ORDER, type AssetStatusDistribution } from "./health";
-import { SEVERITIES, type Severity, type SeverityCounts } from "./portfolio";
+import { colors } from "./formStyles";
+import { SEVERITIES, SEVERITY_COLOR, type Severity, type SeverityCounts } from "./portfolio";
 import { type AssetStatus } from "@/components/StatusBadge";
 
 /** La gravité la plus élevée présente, ou `null` si rien n'est ouvert. */
@@ -39,3 +40,19 @@ export function healthSegments(distribution: AssetStatusDistribution): HealthSeg
     percent: (distribution[status].length / total) * 100,
   }));
 }
+
+/** Le nombre total de signaux, toutes gravités confondues. */
+export function severityTotal(counts: SeverityCounts): number {
+  return SEVERITIES.reduce((sum, severity) => sum + counts[severity], 0);
+}
+
+/**
+ * La couleur d'une tuile de signaux : celle de la gravité la plus élevée réellement
+ * ouverte ; sans rien d'ouvert, la couleur neutre donnée (jamais un vert qui laisserait
+ * croire que tout va bien).
+ */
+export function severityAccent(counts: SeverityCounts, neutral: string = colors.accent): string {
+  const severity = highestSeverity(counts);
+  return severity ? SEVERITY_COLOR[severity] : neutral;
+}
+

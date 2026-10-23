@@ -2185,6 +2185,23 @@ sans nouvelle route : mêmes données (`GET /telemetry/portfolio-latest`), lectu
 **Grille produit (ADR 014)** : Backend N/A (le champ `username` de `/me` mis à part), API additive,
 Web DONE, Mobile N/A, Edge N/A, Tests DONE (web 241, mobile 155, backend 1461), Documentation DONE.
 
+### Console web : écran Alarmes et constats (23/10/2026)
+
+Écran où l'on traite ce qui demande une action. **REFACTOR** sans nouvelle route : mêmes appels
+(`GET /alarms`, `GET /findings`), avec la même présentation que l'accueil pour que la situation se
+lise avant les tableaux.
+
+| Ce qui change | Détail |
+| --- | --- |
+| Bande de synthèse | Quatre tuiles au-dessus des tableaux : alarmes ouvertes, constats ouverts, à acquitter, en cours de traitement (`summarizeSignals`, tests). Les deux premières portent la répartition par gravité et la couleur de la gravité la plus élevée réellement ouverte ; sans rien d'ouvert, couleur neutre. « À acquitter » additionne alarmes et constats non acquittés ; « En cours de traitement » ceux dont le traitement est commencé. La bande n'apparaît que s'il y a au moins une alarme ou un constat : aucune tuile à zéro sur un écran vide |
+| Code partagé | Les pastilles de gravité (`SeverityBadges`), le total et la couleur d'accent (`severityTotal`, `severityAccent`) quittent la page d'accueil pour être utilisés par les deux écrans : un seul calcul, donc un seul comportement à tester |
+| Textes | Aucune clé ajoutée : les quatre libellés existaient déjà en français et en anglais (`web.dashboard.kpi_alarms`, `kpi_findings`, `ack_state.unacknowledged`, `handling_status.in_progress`) |
+
+**Grille produit (ADR 014)** : Backend N/A, API N/A, Web DONE, Mobile N/A, Edge N/A, Tests DONE
+(web 249, mobile 159), Documentation DONE. Vérifié visuellement sur ordinateur (1280 px) et sur téléphone
+(390 px, tuiles sur deux colonnes) avec des données de démonstration inventées. Les actions d'acquittement et de retour à la normale ne sont pas
+modifiées.
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente

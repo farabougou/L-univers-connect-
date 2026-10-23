@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { KpiTile } from "@/components/KpiTile";
+import { SeverityBadges } from "@/components/SeverityBadges";
 import { SignalActions } from "@/components/SignalActions";
 import { apiFetch, requireAccessToken } from "@/lib/api";
 import {
@@ -18,6 +20,8 @@ import {
   SEVERITY_COLOR,
   prioritizeAlarms,
 } from "@/lib/portfolio";
+import { summarizeSignals } from "@/lib/signals";
+import { severityAccent, severityTotal } from "@/lib/situation";
 import { formatDateTime, formatNumber } from "@/i18n/translator";
 
 import {
@@ -117,6 +121,8 @@ export default async function AlarmsPage({
     findings.length,
   );
 
+  const summary = summarizeSignals(alarms, findings);
+
   const signalActions = {
     acknowledgeSignal,
     clearAlarm,
@@ -133,6 +139,44 @@ export default async function AlarmsPage({
         {t("web.alarms_page.title")}
       </h1>
       {error && <p style={{ color: colors.danger }}>{error}</p>}
+
+      {alarms.length + findings.length > 0 && (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+            gap: 16,
+            marginBottom: 24,
+          }}
+        >
+          <KpiTile
+            label={t("web.dashboard.kpi_alarms")}
+            value={String(severityTotal(summary.alarmSeverity))}
+            accent={severityAccent(summary.alarmSeverity)}
+          >
+            <SeverityBadges counts={summary.alarmSeverity} t={t} />
+          </KpiTile>
+          <KpiTile
+            label={t("web.dashboard.kpi_findings")}
+            value={String(severityTotal(summary.findingSeverity))}
+            accent={severityAccent(summary.findingSeverity)}
+          >
+            <SeverityBadges counts={summary.findingSeverity} t={t} />
+          </KpiTile>
+          <KpiTile
+            label={t("ack_state.unacknowledged")}
+            value={String(summary.awaitingAck)}
+            accent={
+              summary.awaitingAck > 0 ? SEVERITY_COLOR.warning : colors.accent
+            }
+          />
+          <KpiTile
+            label={t("handling_status.in_progress")}
+            value={String(summary.inProgress)}
+            accent={colors.accent}
+          />
+        </div>
+      )}
 
       <section
         style={{

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { BrandMark } from "@/components/BrandMark";
 import { HealthBar } from "@/components/HealthBar";
 import { KpiTile } from "@/components/KpiTile";
+import { SeverityBadges } from "@/components/SeverityBadges";
 import { RecentActivityFeed } from "@/components/RecentActivityFeed";
 import {
   ASSET_STATUS_COLOR,
@@ -52,18 +53,16 @@ import {
   repeatingFailures,
 } from "@/lib/maintenance";
 import { type EquipmentStatus, statusMessage } from "@/lib/passport";
-import { healthSegments, highestSeverity } from "@/lib/situation";
+import { healthSegments, severityAccent, severityTotal } from "@/lib/situation";
 import { roleLabels } from "@/lib/roles";
 import {
   type Alarm,
   type Finding,
   type FunctionalLocation as PortfolioLocation,
   type Severity,
-  type SeverityCounts,
   type Site,
   type WorkOrder,
   type Device,
-  SEVERITIES,
   SEVERITY_COLOR,
   aggregatePortfolio,
   prioritizeAlarms,
@@ -1211,48 +1210,6 @@ function Kpi({
     >
       {content}
     </Link>
-  );
-}
-
-function severityTotal(counts: SeverityCounts): number {
-  return SEVERITIES.reduce((sum, severity) => sum + counts[severity], 0);
-}
-
-// La barre de la tuile prend la couleur de la gravité la plus élevée
-// réellement ouverte ; sans rien d'ouvert, la couleur neutre (jamais un vert
-// qui laisserait croire que tout va bien).
-function severityAccent(counts: SeverityCounts): string {
-  const severity = highestSeverity(counts);
-  return severity ? SEVERITY_COLOR[severity] : colors.accent;
-}
-
-function SeverityBadges({
-  counts,
-  t,
-}: {
-  counts: SeverityCounts;
-  t: (key: string, params?: Record<string, string>) => string;
-}) {
-  const present = SEVERITIES.filter((severity) => counts[severity] > 0);
-  if (present.length === 0) {
-    return (
-      <span style={{ color: colors.textMuted }}>
-        {t("web.dashboard.alerts_none")}
-      </span>
-    );
-  }
-  return (
-    <span style={{ display: "inline-flex", gap: 6, flexWrap: "wrap" }}>
-      {present.map((severity) => (
-        <span
-          key={severity}
-          title={t(`severity.${severity}`)}
-          style={badgeStyle(SEVERITY_COLOR[severity])}
-        >
-          {counts[severity]} {t(`severity.${severity}`)}
-        </span>
-      ))}
-    </span>
   );
 }
 

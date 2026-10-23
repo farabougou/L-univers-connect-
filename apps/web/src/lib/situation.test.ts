@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { type AssetStatusDistribution } from "./health";
 import { type SeverityCounts } from "./portfolio";
-import { healthSegments, highestSeverity } from "./situation";
+import { healthSegments, highestSeverity, severityAccent, severityTotal } from "./situation";
 
 function counts(overrides: Partial<SeverityCounts>): SeverityCounts {
   return { critical: 0, major: 0, warning: 0, info: 0, ...overrides };
@@ -71,3 +71,22 @@ describe("healthSegments", () => {
     expect(segments.find((segment) => segment.status === "critical")?.count).toBe(1);
   });
 });
+
+describe("severityTotal", () => {
+  it("additionne toutes les gravités", () => {
+    expect(severityTotal(counts({ critical: 2, major: 1, warning: 2, info: 1 }))).toBe(6);
+    expect(severityTotal(counts({}))).toBe(0);
+  });
+});
+
+describe("severityAccent", () => {
+  it("prend la couleur de la gravité la plus élevée ouverte", () => {
+    expect(severityAccent(counts({ critical: 1 }), "neutre")).toBe("#dc2626");
+    expect(severityAccent(counts({ major: 1, warning: 4 }), "neutre")).toBe("#ea580c");
+  });
+
+  it("garde la couleur neutre quand rien n'est ouvert (jamais un vert rassurant)", () => {
+    expect(severityAccent(counts({}), "neutre")).toBe("neutre");
+  });
+});
+
