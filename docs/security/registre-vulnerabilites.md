@@ -22,6 +22,32 @@ majeure, qui n'est pas une correction).
 Aucune vulnérabilité critique. Aucune n'est exploitable sur le serveur de production dans
 l'état actuel du code.
 
+## Revue du 23/10/2026 (deux jours plus tard)
+
+Mêmes outils, même lecture. Les bases d'avis ont bougé : un avis est apparu côté API, d'autres
+ont disparu côté JavaScript.
+
+| Composant | 21/10 | 23/10 | Ce qui a changé |
+| --- | --- | --- | --- |
+| API (Python) | 0 | **0** après correction | 11 avis sur `pypdf` 6.19.0 apparus entre-temps, **corrigés** en passant à `pypdf` 6.21.2 (même version majeure, `requirements.txt`). Exposition faible : `pypdf` ne lit que le formulaire CERFA vierge livré avec l'application (`app/fgas_pdf.py`), jamais un PDF envoyé par une personne. `pip-audit` sur `requirements.txt` et `requirements-dev.txt` : aucune vulnérabilité connue ; les 20 tests du PDF et de son API passent |
+| Web | 5 | 3 (**0 en production**) | Les 5 paquets de la chaîne `braces` ne figurent plus dans l'audit. Trois avis nouveaux, tous des outils de développement : `vitest` et `@vitest/mocker` (moyenne : enregistrement de simulacres non authentifié, chemin Windows), `zod` (haute : épuisement de mémoire sur de grandes collections ; absent de `npm audit --omit=dev`) |
+| Mobile | 29 | 13 (11 en production seule) | `braces` ne figure plus dans l'audit. Nouveaux : `zod` (haute, via `@expo/cli` : outillage de construction, pas l'application) ; `vitest` et `@vitest/mocker` (outils de test, comme sur le web). Les autres (`@expo/cli`, `node-forge`, `uuid` via `xcode`, `expo`, `expo-router`, `query-string`, `decode-uri-component`) sont ceux du 21/10 ; le seul présent dans l'application reste `decode-uri-component`, décrit plus bas |
+
+**Pas de correction JavaScript dans cette revue, volontairement.** Pour `vitest` et `zod`, `npm audit`
+annonce un correctif simple, mais sa simulation (`npm audit fix --dry-run`) réécrit le fichier de
+verrouillage de façon massive (des dizaines de binaires d'autres systèmes d'exploitation ajoutés) :
+une modification impossible à relire dans une revue, pour un risque limité aux postes de
+développement et à la CI. À faire dans une étape dédiée, sur une branche à part, avec la suite de
+tests et un essai de construction. Les propositions pour Expo (`expo@44.0.6`,
+`expo-router@58.0.25`) restent rejetées : ce sont des rétrogradations ou des sauts de version
+majeure.
+
+**À décider par Mohamed : `main` ne contient presque rien.** La branche `main` du dépôt ne porte
+que `CLAUDE.md` et le cahier des charges ; tout le code et l'historique vivent sur la branche de
+travail (déployée par Railway) et la demande de fusion n° 1. Rien n'est perdu, mais le dépôt n'a
+qu'un seul exemplaire du code à jour : fusionner la demande n° 1 dans `main` quand Mohamed le
+décidera.
+
 ## API (Python) — `pip-audit`
 
 **Résolu le 21/10/2026** par le remplacement de `python-jose` par PyJWT (décision de Mohamed,
