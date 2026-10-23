@@ -367,3 +367,263 @@ def test_a_tenant_cannot_archive_another_tenants_site(tenant_id) -> None:
             )
         with engine.begin() as connection:
             connection.execute(text("DELETE FROM tenants WHERE id = :id"), {"id": other_tenant_id})
+
+
+# --- Archivage d'un site : ses équipements suivent (décision de Mohamed, 23/10/2026) ---------
+#
+# Constat sur le staging : archiver un site laissait ses équipements actifs (3 équipements
+# restés actifs sur des sites archivés). Règle retenue : aucun équipement actif sur un site
+# archivé. Le désarchivage d'un site ne restitue que les équipements archivés AVEC lui, jamais
+# ceux qu'une personne avait archivés elle-même auparavant.
+
+
+def _create_site(headers: dict[str, str], name: str) -> str:
+    return client.post(
+        "/sites", json={"name": name, "timezone": "Europe/Paris"}, headers=headers
+    ).json()["id"]
+
+
+def _create_location(headers: dict[str, str], site_id: str, code: str) -> str:
+    response = client.post(
+        "/functional-locations",
+        json={"site_id": site_id, "code": code, "name": f"Équipement {code}"},
+        headers=headers,
+    )
+    assert response.status_code == 201, response.text
+    return response.json()["id"]
+
+
+def _active_location_ids(headers: dict[str, str]) -> set[str]:
+    return {item["id"] for item in client.get("/functional-locations", headers=headers).json()}
+
+
+def _all_locations(headers: dict[str, str]) -> dict[str, dict]:
+    response = client.get("/functional-locations?include_archived=true", headers=headers)
+    return {item["id"]: item for item in response.json()}
+
+
+def test_archiving_a_site_archives_its_equipment_and_only_its_own(tenant_id) -> None:
+    headers = _auth_headers(tenant_id, ["admin_tenant"])
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        site_id = _create_site(headers, "Site à archiver")
+        other_site_id = _create_site(headers, "Site conservé")
+        first = _create_location(headers, site_id, "CTA-A1")
+        second = _create_location(headers, site_id, "CTA-A2")
+        kept = _create_location(headers, other_site_id, "CTA-B1")
+
+        assert client.post(f"/sites/{site_id}/archive", headers=headers).status_code == 200
+
+        active = _active_location_ids(headers)
+        assert first not in active and second not in active
+        assert kept in active
+        everything = _all_locations(headers)
+        assert everything[first]["archived_at"] is not None
+        assert everything[second]["archived_at"] is not None
+        assert everything[kept]["archived_at"] is None
+
+
+def test_unarchiving_a_site_restores_only_the_equipment_archived_with_it(tenant_id) -> None:
+    """Un équipement qu'une personne avait archivé elle-même reste archivé : le désarchivage
+    du site ne peut pas deviner qu'elle voulait le remettre en service."""
+    headers = _auth_headers(tenant_id, ["admin_tenant"])
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        site_id = _create_site(headers, "Site réversible")
+        archived_by_hand = _create_location(headers, site_id, "CTA-MAIN")
+        archived_with_site = _create_location(headers, site_id, "CTA-SITE")
+        assert (
+            client.post(
+                f"/functional-locations/{archived_by_hand}/archive", headers=headers
+            ).status_code
+            == 200
+        )
+
+        client.post(f"/sites/{site_id}/archive", headers=headers)
+        unarchived = client.post(f"/sites/{site_id}/unarchive", headers=headers)
+        assert unarchived.status_code == 200
+
+        active = _active_location_ids(headers)
+        assert archived_with_site in active
+        assert archived_by_hand not in active
+        everything = _all_locations(headers)
+        assert everything[archived_with_site]["archived_at"] is None
+        assert everything[archived_by_hand]["archived_at"] is not None
+
+
+def test_archiving_by_hand_an_equipment_archived_with_its_site_makes_it_stay_archived(
+    tenant_id,
+) -> None:
+    """Archiver soi-même un équipement déjà archivé avec son site est une décision explicite :
+    il ne revient plus avec le site."""
+    headers = _auth_headers(tenant_id, ["admin_tenant"])
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        site_id = _create_site(headers, "Site décision explicite")
+        location_id = _create_location(headers, site_id, "CTA-DECIDE")
+        client.post(f"/sites/{site_id}/archive", headers=headers)
+
+        response = client.post(f"/functional-locations/{location_id}/archive", headers=headers)
+        assert response.status_code == 200
+
+        client.post(f"/sites/{site_id}/unarchive", headers=headers)
+        assert location_id not in _active_location_ids(headers)
+
+
+def test_archiving_an_already_archived_site_archives_equipment_left_active(tenant_id) -> None:
+    """Réparation des données antérieures à la règle : un site archivé qui porte encore un
+    équipement actif (cas du staging) est remis d'aplomb par un nouvel archivage, qui reste
+    idempotent pour le site lui-même."""
+    headers = _auth_headers(tenant_id, ["admin_tenant"])
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        site_id = _create_site(headers, "Site déjà archivé")
+        location_id = _create_location(headers, site_id, "CTA-RESTE")
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_id)
+        connection.execute(
+            text("UPDATE sites SET archived_at = now(), archived_by = 'ancien' WHERE id = :id"),
+            {"id": site_id},
+        )
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        assert location_id in _active_location_ids(headers)
+
+        assert client.post(f"/sites/{site_id}/archive", headers=headers).status_code == 200
+
+        assert location_id not in _active_location_ids(headers)
+        client.post(f"/sites/{site_id}/unarchive", headers=headers)
+        assert location_id in _active_location_ids(headers)
+
+
+def test_an_equipment_cannot_be_unarchived_while_its_site_is_archived(tenant_id) -> None:
+    headers = _auth_headers(tenant_id, ["admin_tenant"])
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        site_id = _create_site(headers, "Site archivé")
+        location_id = _create_location(headers, site_id, "CTA-BLOQUE")
+        client.post(f"/sites/{site_id}/archive", headers=headers)
+
+        refused = client.post(f"/functional-locations/{location_id}/unarchive", headers=headers)
+
+        assert refused.status_code == 409
+        assert refused.json()["code"] == "SITE_ARCHIVED"
+        assert location_id not in _active_location_ids(headers)
+
+
+def test_an_equipment_archived_by_hand_can_be_unarchived_once_its_site_is_back(
+    tenant_id,
+) -> None:
+    headers = _auth_headers(tenant_id, ["admin_tenant"])
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        site_id = _create_site(headers, "Site de retour")
+        location_id = _create_location(headers, site_id, "CTA-RETOUR")
+        client.post(f"/functional-locations/{location_id}/archive", headers=headers)
+        client.post(f"/sites/{site_id}/archive", headers=headers)
+        client.post(f"/sites/{site_id}/unarchive", headers=headers)
+
+        restored = client.post(f"/functional-locations/{location_id}/unarchive", headers=headers)
+
+        assert restored.status_code == 200
+        assert location_id in _active_location_ids(headers)
+
+
+def test_an_equipment_cannot_be_created_on_an_archived_site(tenant_id) -> None:
+    headers = _auth_headers(tenant_id, ["admin_tenant"])
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        site_id = _create_site(headers, "Site fermé")
+        client.post(f"/sites/{site_id}/archive", headers=headers)
+
+        refused = client.post(
+            "/functional-locations",
+            json={"site_id": site_id, "code": "CTA-NEUF", "name": "Équipement neuf"},
+            headers=headers,
+        )
+
+        assert refused.status_code == 409
+        assert refused.json()["code"] == "SITE_ARCHIVED"
+        assert _all_locations(headers) == {}
+
+
+def test_archiving_a_site_audits_each_equipment_with_its_cause(tenant_id) -> None:
+    headers = _auth_headers(tenant_id, ["admin_tenant"])
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        site_id = _create_site(headers, "Site audité en cascade")
+        first = _create_location(headers, site_id, "CTA-AU1")
+        second = _create_location(headers, site_id, "CTA-AU2")
+        client.post(f"/sites/{site_id}/archive", headers=headers)
+        client.post(f"/sites/{site_id}/unarchive", headers=headers)
+
+    with engine.begin() as connection:
+        set_tenant_context(connection, tenant_id)
+        rows = connection.execute(
+            text(
+                "SELECT action, entity_type, entity_id, payload FROM audit_log "
+                "WHERE action LIKE 'functional_location.%archived' OR action LIKE 'site.%archived' "
+                "ORDER BY seq"
+            )
+        ).all()
+    by_action = {}
+    for action, entity_type, entity_id, payload in rows:
+        by_action.setdefault(action, []).append((entity_type, entity_id, payload))
+
+    cause = {"cause": "site", "site_id": site_id}
+    assert sorted(entity_id for _, entity_id, _ in by_action["functional_location.archived"]) == (
+        sorted([first, second])
+    )
+    assert all(payload == cause for _, _, payload in by_action["functional_location.archived"])
+    assert sorted(entity_id for _, entity_id, _ in by_action["functional_location.unarchived"]) == (
+        sorted([first, second])
+    )
+    assert all(payload == cause for _, _, payload in by_action["functional_location.unarchived"])
+    assert by_action["site.archived"] == [("site", site_id, {"functional_locations": 2})]
+    assert by_action["site.unarchived"] == [("site", site_id, {"functional_locations": 2})]
+
+
+def test_a_tenant_cannot_archive_another_tenants_equipment_through_its_site(tenant_id) -> None:
+    """Isolation (CLAUDE.md, règle 2) : le site d'un autre client est introuvable, et son
+    équipement reste actif."""
+    other_tenant_id = uuid.uuid4()
+    other_site_id = uuid.uuid4()
+    other_location_id = uuid.uuid4()
+    with engine.begin() as connection:
+        connection.execute(
+            text("INSERT INTO tenants (id, name, slug) VALUES (:id, :name, :slug)"),
+            {"id": other_tenant_id, "name": "Autre client", "slug": f"autre-{other_tenant_id}"},
+        )
+        set_tenant_context(connection, other_tenant_id)
+        connection.execute(
+            text("INSERT INTO sites (id, tenant_id, name) VALUES (:id, :tenant_id, :name)"),
+            {"id": other_site_id, "tenant_id": other_tenant_id, "name": "Site de l'autre client"},
+        )
+        connection.execute(
+            text(
+                "INSERT INTO functional_locations (id, tenant_id, site_id, code, name, kind) "
+                "VALUES (:id, :tenant_id, :site_id, 'CTA-X', 'Équipement de l''autre', 'equipment')"
+            ),
+            {"id": other_location_id, "tenant_id": other_tenant_id, "site_id": other_site_id},
+        )
+
+    headers = _auth_headers(tenant_id, ["admin_tenant"])
+    try:
+        with patch("app.auth.fetch_jwks", return_value=JWKS):
+            assert (
+                client.post(f"/sites/{other_site_id}/archive", headers=headers).status_code == 404
+            )
+            assert (
+                client.post(f"/sites/{other_site_id}/unarchive", headers=headers).status_code == 404
+            )
+
+        with engine.begin() as connection:
+            set_tenant_context(connection, other_tenant_id)
+            archived_at = connection.execute(
+                text("SELECT archived_at FROM functional_locations WHERE id = :id"),
+                {"id": other_location_id},
+            ).scalar()
+        assert archived_at is None
+    finally:
+        with engine.begin() as connection:
+            set_tenant_context(connection, other_tenant_id)
+            connection.execute(
+                text("DELETE FROM functional_locations WHERE tenant_id = :id"),
+                {"id": other_tenant_id},
+            )
+            connection.execute(
+                text("DELETE FROM sites WHERE tenant_id = :id"), {"id": other_tenant_id}
+            )
+        with engine.begin() as connection:
+            connection.execute(text("DELETE FROM tenants WHERE id = :id"), {"id": other_tenant_id})

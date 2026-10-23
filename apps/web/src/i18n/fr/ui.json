@@ -718,6 +718,7 @@
       "activate_rule": "Activer",
       "add_property": "Ajouter une caractéristique",
       "archive": "Archiver",
+      "archive_site_hint": "Archiver un site archive aussi ses équipements. Désarchiver le site remet en service ceux qui ont été archivés avec lui.",
       "archived_equipment_title": {
         "one": "{count} équipement archivé",
         "other": "{count} équipements archivés"
@@ -1005,7 +1006,8 @@
       "tag_hint": "Ce QR ne contient qu’un code sans signification. Il peut être imprimé et collé sur l’équipement.",
       "tag_section_title": "Étiquette",
       "title": "Registre d’actifs",
-      "unarchive": "Désarchiver"
+      "unarchive": "Désarchiver",
+      "unarchive_site_first": "Site archivé : désarchivez-le d’abord."
     },
     "sidebar": {
       "group_automation": "Automatisation",

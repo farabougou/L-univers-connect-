@@ -171,6 +171,8 @@ export default async function RegistrePage({
   // (CLAUDE.md, règle 3).
   const sites = allSites.filter((site) => !site.archived_at);
   const archivedSites = allSites.filter((site) => site.archived_at);
+  // Un équipement d'un site archivé ne peut être remis en service qu'avec son site.
+  const archivedSiteIds = new Set(archivedSites.map((site) => site.id));
   const locations = allLocations.filter((location) => !location.archived_at);
   const archivedLocations = allLocations.filter(
     (location) => location.archived_at,
@@ -322,6 +324,11 @@ export default async function RegistrePage({
             </tbody>
           </table>
         </div>
+      )}
+      {sites.length > 0 && (
+        <p style={{ color: colors.textMuted, marginTop: 0 }}>
+          {t("web.registre.archive_site_hint")}
+        </p>
       )}
 
       {archivedSites.length > 0 && (
@@ -1060,16 +1067,22 @@ export default async function RegistrePage({
                       {siteName(location.site_id)}
                     </td>
                     <td style={cellStyle}>
-                      <form action={unarchiveEquipment}>
-                        <input
-                          type="hidden"
-                          name="functional_location_id"
-                          value={location.id}
-                        />
-                        <button type="submit">
-                          {t("web.registre.unarchive")}
-                        </button>
-                      </form>
+                      {archivedSiteIds.has(location.site_id) ? (
+                        <span style={{ color: colors.textMuted }}>
+                          {t("web.registre.unarchive_site_first")}
+                        </span>
+                      ) : (
+                        <form action={unarchiveEquipment}>
+                          <input
+                            type="hidden"
+                            name="functional_location_id"
+                            value={location.id}
+                          />
+                          <button type="submit">
+                            {t("web.registre.unarchive")}
+                          </button>
+                        </form>
+                      )}
                     </td>
                   </tr>
                 ))}

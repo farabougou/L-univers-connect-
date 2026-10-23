@@ -718,6 +718,7 @@
       "activate_rule": "Activate",
       "add_property": "Add a property",
       "archive": "Archive",
+      "archive_site_hint": "Archiving a site also archives its equipment. Unarchiving the site restores the equipment that was archived with it.",
       "archived_equipment_title": {
         "one": "{count} archived equipment",
         "other": "{count} archived equipment"
@@ -1005,7 +1006,8 @@
       "tag_hint": "This QR code only contains a meaningless code. It can be printed and stuck on the equipment.",
       "tag_section_title": "Tag",
       "title": "Asset registry",
-      "unarchive": "Unarchive"
+      "unarchive": "Unarchive",
+      "unarchive_site_first": "Site archived: unarchive it first."
     },
     "sidebar": {
       "group_automation": "Automation",

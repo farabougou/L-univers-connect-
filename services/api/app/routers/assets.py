@@ -170,10 +170,13 @@ def archive_site_route(
     tenant_id: Annotated[uuid.UUID, Depends(get_tenant_id)],
     claims: Annotated[dict, Depends(require_any_role(*_MANAGE_REGISTRY_ROLES))],
 ) -> SiteOut:
-    """Masque le site des listes par défaut ; réversible (voir /unarchive),
-    jamais une suppression (CLAUDE.md, règle non négociable 3)."""
+    """Masque le site des listes par défaut, avec ses équipements ; réversible
+    (voir /unarchive), jamais une suppression (CLAUDE.md, règle non négociable 3).
+
+    Chaque équipement archivé avec le site a sa propre entrée d'audit, avec la cause :
+    l'historique d'un équipement dit pourquoi il a disparu des listes."""
     try:
-        archive_site(connection, site_id=site_id, archived_by=_actor(claims))
+        archived = archive_site(connection, site_id=site_id, archived_by=_actor(claims))
     except SiteNotFound as exc:
         raise api_error(exc, 404) from exc
     append_audit_entry(
@@ -183,7 +186,10 @@ def archive_site_route(
         action="site.archived",
         entity_type="site",
         entity_id=str(site_id),
-        payload={},
+        payload={"functional_locations": len(archived)},
+    )
+    _audit_site_cascade(
+        connection, tenant_id, _actor(claims), "functional_location.archived", site_id, archived
     )
     return _read_site(connection, site_id)
 
@@ -196,7 +202,7 @@ def unarchive_site_route(
     claims: Annotated[dict, Depends(require_any_role(*_MANAGE_REGISTRY_ROLES))],
 ) -> SiteOut:
     try:
-        unarchive_site(connection, site_id=site_id)
+        restored = unarchive_site(connection, site_id=site_id)
     except SiteNotFound as exc:
         raise api_error(exc, 404) from exc
     append_audit_entry(
@@ -206,9 +212,32 @@ def unarchive_site_route(
         action="site.unarchived",
         entity_type="site",
         entity_id=str(site_id),
-        payload={},
+        payload={"functional_locations": len(restored)},
+    )
+    _audit_site_cascade(
+        connection, tenant_id, _actor(claims), "functional_location.unarchived", site_id, restored
     )
     return _read_site(connection, site_id)
+
+
+def _audit_site_cascade(
+    connection: Connection,
+    tenant_id: uuid.UUID,
+    actor: str,
+    action: str,
+    site_id: uuid.UUID,
+    location_ids: list[uuid.UUID],
+) -> None:
+    for location_id in location_ids:
+        append_audit_entry(
+            connection,
+            tenant_id=tenant_id,
+            actor=actor,
+            action=action,
+            entity_type="functional_location",
+            entity_id=str(location_id),
+            payload={"cause": "site", "site_id": str(site_id)},
+        )
 
 
 _MODEL_COLUMNS = (
@@ -542,6 +571,8 @@ def unarchive_functional_location_route(
         unarchive_functional_location(connection, functional_location_id=functional_location_id)
     except FunctionalLocationNotFound as exc:
         raise api_error(exc, 404) from exc
+    except FunctionalLocationConflict as exc:
+        raise api_error(exc, 409) from exc
     append_audit_entry(
         connection,
         tenant_id=tenant_id,

@@ -215,6 +215,7 @@
     "SIGNAL_ALREADY_CLEARED": "This signal has already returned to normal.",
     "SIGNAL_CONDITION_STILL_ACTIVE": "This signal cannot be closed while its condition is active. Wait for the return to normal or declare a false positive.",
     "SIGNAL_HANDLING_UNKNOWN": "Unknown handling status: “{value}”.",
+    "SITE_ARCHIVED": "This site is archived, so it cannot hold an active equipment. Unarchive the site first, then try again.",
     "SITE_NOT_FOUND": "The requested site could not be found.",
     "SPACE_CODE_ALREADY_USED": "The code “{code}” is already in use on this site.",
     "SPACE_ENDED": "This space has been closed.",

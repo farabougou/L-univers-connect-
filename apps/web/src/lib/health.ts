@@ -37,11 +37,13 @@ function emptyDistribution(): AssetStatusDistribution {
 
 /**
  * Ne garde que les équipements affichés ailleurs sur la page. L'API renvoie
- * l'état de tout équipement non archivé, y compris ceux qui restent sur un
- * site archivé (archiver un site n'archive pas ses équipements) ; or le
- * décompte des équipements de l'accueil, le tableau des sites et les alarmes
- * ne couvrent que les sites actifs. Sans ce filtre, la page affichait « 1
- * équipement » à côté de « 4 inconnus ».
+ * l'état de tout équipement non archivé ; or le décompte des équipements de
+ * l'accueil, le tableau des sites et les alarmes ne couvrent que les sites
+ * actifs. Sans ce filtre, la page affichait « 1 équipement » à côté de
+ * « 4 inconnus » : des équipements étaient restés actifs sur des sites archivés.
+ * Depuis le 23/10/2026, archiver un site archive ses équipements et une
+ * migration a rangé les anciens ; le filtre est gardé par prudence (aucun écart
+ * possible entre deux décomptes d'une même page).
  */
 export function statusesOfLocations(
   statuses: PortfolioEquipmentStatus[],

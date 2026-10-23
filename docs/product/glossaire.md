@@ -50,6 +50,7 @@
 | Passeport | Asset passport | `passport` | Fiche de synthèse d'un équipement, calculée selon les droits de la personne. | Fiche équipement | Règlement ESPR (passeport produit) |
 | Code d'inventaire | Asset code | `asset_code` | Code interne du client pour un exemplaire. | Référence (réservé au modèle) | — |
 | Prestataire | Provider | `provider` | Organisation externe qui assure la maintenance d'un site, d'un espace, d'une position fonctionnelle ou d'un exemplaire (relation « maintainedBy »). Un répertoire, pas un compte : n'a pas d'accès à la plateforme. | Fournisseur (réservé au fabricant d'un modèle), sous-traitant comme terme générique | — |
+| Archivé | Archived | `archived_at`, `archived_with_site` | État d'un site ou d'un équipement retiré des listes courantes et des menus de création, sans rien supprimer : l'historique reste consultable et l'archivage se défait (« Désarchiver »). Archiver un site archive aussi ses équipements ; désarchiver le site ne remet en service que ceux qui ont été archivés avec lui, jamais ceux qu'une personne avait archivés elle-même. Un équipement ne peut pas être remis en service tant que son site est archivé. | Supprimé, Désactivé, Inactif (suggèrent une suppression ou un arrêt de l'équipement) | Règle 3 de CLAUDE.md (rien n'est écrasé) |
 
 ## 3. Cycle de vie d'un exemplaire
 

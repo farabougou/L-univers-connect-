@@ -28,25 +28,48 @@ class SiteNotFound(DomainError, LookupError):
     status = 404
 
 
-def archive_site(connection: Connection, *, site_id: uuid.UUID, archived_by: str) -> None:
+def archive_site(
+    connection: Connection, *, site_id: uuid.UUID, archived_by: str
+) -> list[uuid.UUID]:
     """Masque un site des listes par défaut, sans toucher à son historique ni
     à ses relations : jamais une suppression (CLAUDE.md, règle non
-    négociable 3 — rien n'est écrasé). Idempotent : archiver un site déjà
-    archivé ne change rien et ne lève pas d'erreur."""
+    négociable 3 — rien n'est écrasé).
+
+    Ses équipements encore actifs sont archivés avec lui (décision du
+    23/10/2026) et marqués « archivés avec le site » : aucun équipement actif
+    ne reste sur un site archivé, et le désarchivage du site ne remet en
+    service que ceux-là. Retourne les équipements archivés par cette
+    opération, pour que la route les audite un par un.
+
+    Idempotent pour le site : archiver un site déjà archivé ne change rien et
+    ne lève pas d'erreur. L'archivage des équipements est rejoué quand même,
+    ce qui range un équipement resté actif sur un site archivé avant la règle."""
+    now = datetime.now(UTC)
     updated = connection.execute(
         text(
             "UPDATE sites SET archived_at = :now, archived_by = :by "
             "WHERE id = :id AND archived_at IS NULL"
         ),
-        {"now": datetime.now(UTC), "by": archived_by, "id": site_id},
+        {"now": now, "by": archived_by, "id": site_id},
     ).rowcount
     if not updated and not _site_exists(connection, site_id):
         raise SiteNotFound("SITE_NOT_FOUND")
+    archived = connection.execute(
+        text(
+            "UPDATE functional_locations SET archived_at = :now, archived_by = :by, "
+            "archived_with_site = true WHERE site_id = :id AND archived_at IS NULL RETURNING id"
+        ),
+        {"now": now, "by": archived_by, "id": site_id},
+    ).scalars()
+    return sorted(archived, key=str)
 
 
-def unarchive_site(connection: Connection, *, site_id: uuid.UUID) -> None:
-    """Réversible par construction : remet le site dans les listes par défaut,
-    rien d'autre n'a jamais été modifié pendant l'archivage."""
+def unarchive_site(connection: Connection, *, site_id: uuid.UUID) -> list[uuid.UUID]:
+    """Réversible par construction : remet le site dans les listes par défaut.
+
+    Les équipements archivés AVEC le site reviennent avec lui ; ceux qu'une
+    personne avait archivés elle-même restent archivés (elle ne voulait peut-être
+    pas les voir revenir). Retourne les équipements remis en service."""
     updated = connection.execute(
         text(
             "UPDATE sites SET archived_at = NULL, archived_by = NULL "
@@ -56,6 +79,14 @@ def unarchive_site(connection: Connection, *, site_id: uuid.UUID) -> None:
     ).rowcount
     if not updated and not _site_exists(connection, site_id):
         raise SiteNotFound("SITE_NOT_FOUND")
+    restored = connection.execute(
+        text(
+            "UPDATE functional_locations SET archived_at = NULL, archived_by = NULL, "
+            "archived_with_site = false WHERE site_id = :id AND archived_with_site RETURNING id"
+        ),
+        {"id": site_id},
+    ).scalars()
+    return sorted(restored, key=str)
 
 
 def _site_exists(connection: Connection, site_id: uuid.UUID) -> bool:
@@ -67,30 +98,62 @@ def _site_exists(connection: Connection, site_id: uuid.UUID) -> bool:
 def archive_functional_location(
     connection: Connection, *, functional_location_id: uuid.UUID, archived_by: str
 ) -> None:
-    """Même principe que `archive_site`, pour un équipement/emplacement."""
+    """Même principe que `archive_site`, pour un équipement/emplacement.
+
+    Archiver soi-même un équipement déjà archivé avec son site est une décision
+    explicite : il cesse d'être « archivé avec le site » et ne reviendra plus avec lui."""
     updated = connection.execute(
         text(
-            "UPDATE functional_locations SET archived_at = :now, archived_by = :by "
-            "WHERE id = :id AND archived_at IS NULL"
+            "UPDATE functional_locations SET archived_at = :now, archived_by = :by, "
+            "archived_with_site = false WHERE id = :id AND archived_at IS NULL"
         ),
         {"now": datetime.now(UTC), "by": archived_by, "id": functional_location_id},
     ).rowcount
-    if not updated and get_functional_location(connection, functional_location_id) is None:
-        raise FunctionalLocationNotFound("FUNCTIONAL_LOCATION_NOT_FOUND")
+    if not updated:
+        kept = connection.execute(
+            text(
+                "UPDATE functional_locations SET archived_with_site = false "
+                "WHERE id = :id AND archived_with_site"
+            ),
+            {"id": functional_location_id},
+        ).rowcount
+        if not kept and get_functional_location(connection, functional_location_id) is None:
+            raise FunctionalLocationNotFound("FUNCTIONAL_LOCATION_NOT_FOUND")
 
 
 def unarchive_functional_location(
     connection: Connection, *, functional_location_id: uuid.UUID
 ) -> None:
-    updated = connection.execute(
+    """Remet un équipement en service, sauf si son site est archivé : aucun
+    équipement actif ne reste sur un site archivé (désarchivez d'abord le site).
+
+    Le verrou partagé sur le site empêche un archivage du site concurrent de
+    passer entre la vérification et la mise à jour (il attend la fin de celle-ci,
+    puis archive aussi cet équipement)."""
+    row = (
+        connection.execute(
+            text(
+                "SELECT f.archived_at IS NOT NULL AS archived, "
+                "s.archived_at IS NOT NULL AS site_archived "
+                "FROM functional_locations f JOIN sites s ON s.id = f.site_id "
+                "WHERE f.id = :id FOR SHARE OF s"
+            ),
+            {"id": functional_location_id},
+        )
+        .mappings()
+        .first()
+    )
+    if row is None:
+        raise FunctionalLocationNotFound("FUNCTIONAL_LOCATION_NOT_FOUND")
+    if row["archived"] and row["site_archived"]:
+        raise FunctionalLocationConflict("SITE_ARCHIVED")
+    connection.execute(
         text(
-            "UPDATE functional_locations SET archived_at = NULL, archived_by = NULL "
-            "WHERE id = :id AND archived_at IS NOT NULL"
+            "UPDATE functional_locations SET archived_at = NULL, archived_by = NULL, "
+            "archived_with_site = false WHERE id = :id AND archived_at IS NOT NULL"
         ),
         {"id": functional_location_id},
-    ).rowcount
-    if not updated and get_functional_location(connection, functional_location_id) is None:
-        raise FunctionalLocationNotFound("FUNCTIONAL_LOCATION_NOT_FOUND")
+    )
 
 
 def create_functional_location(
@@ -109,11 +172,20 @@ def create_functional_location(
     fourni. Utilisée à la fois par la console web (saisie directe) et par
     l'import IFC (une fois une proposition acceptée) : un seul chemin de
     création, jamais deux modèles de la même chose."""
-    site_exists = connection.execute(
-        text("SELECT 1 FROM sites WHERE id = :id"), {"id": site_id}
-    ).scalar()
-    if not site_exists:
+    # Verrou partagé : un archivage du site concurrent attend la fin de cette création,
+    # puis archive aussi le nouvel équipement.
+    site = (
+        connection.execute(
+            text("SELECT archived_at IS NOT NULL AS archived FROM sites WHERE id = :id FOR SHARE"),
+            {"id": site_id},
+        )
+        .mappings()
+        .first()
+    )
+    if site is None:
         raise FunctionalLocationNotFound("SITE_NOT_FOUND")
+    if site["archived"]:
+        raise FunctionalLocationConflict("SITE_ARCHIVED")
     if parent_id is not None:
         # Lecture sous RLS : un parent d'un autre tenant est introuvable. La clé
         # étrangère seule ne suffirait pas, elle ignore l'isolation des tenants.
