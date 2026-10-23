@@ -145,8 +145,13 @@ def me(
     tenant_name = connection.execute(
         text("SELECT name FROM tenants WHERE id = :id"), {"id": claims.get("tenant_id")}
     ).scalar()
+    username = claims.get("preferred_username")
     return {
         "sub": claims.get("sub"),
+        # Nom d'utilisateur lisible (revendication standard `preferred_username`), pour que
+        # l'interface n'affiche jamais l'identifiant technique `sub` à une personne. Absent
+        # ou invalide : null, jamais un nom inventé.
+        "username": username if isinstance(username, str) and username else None,
         "roles": claims.get("realm_access", {}).get("roles", []),
         "tenant_id": claims.get("tenant_id"),
         # Nom lisible du client, jamais son identifiant technique affiché à

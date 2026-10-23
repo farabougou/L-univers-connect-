@@ -3,7 +3,13 @@
 import Link from "next/link";
 import { useState } from "react";
 
-import { ACTIVITY_KINDS, filterActivityEntries, type ActivityFeedEntry, type ActivityKind } from "@/lib/activity";
+import {
+  ACTIVITY_KINDS,
+  activityDetailParts,
+  filterActivityEntries,
+  type ActivityFeedEntry,
+  type ActivityKind,
+} from "@/lib/activity";
 import { colors } from "@/lib/formStyles";
 
 /**
@@ -76,15 +82,18 @@ export function RecentActivityFeed({
             >
               <span>
                 <strong>{kindLabels[entry.kind]}</strong>
-                {" — "}
-                {entry.locationId && entry.locationLabel ? (
-                  <Link href={`/registre/${entry.locationId}`} style={{ color: colors.accent }}>
-                    {entry.locationLabel}
-                  </Link>
-                ) : (
-                  "—"
-                )}
-                {entry.title ? ` — ${entry.title}` : ""}
+                {activityDetailParts(entry).map((part) => (
+                  <span key={part.type}>
+                    {" — "}
+                    {part.type === "location" ? (
+                      <Link href={`/registre/${part.id}`} style={{ color: colors.accent }}>
+                        {part.label}
+                      </Link>
+                    ) : (
+                      part.text
+                    )}
+                  </span>
+                ))}
               </span>
               <span style={{ color: colors.textMuted, whiteSpace: "nowrap" }}>{entry.formattedAt}</span>
             </li>

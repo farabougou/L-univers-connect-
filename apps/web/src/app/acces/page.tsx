@@ -35,7 +35,12 @@ import { roleLabels } from "@/lib/roles";
  * secret.
  */
 
-type Me = { sub: string | null; roles: string[]; tenant_id: string | null };
+type Me = {
+  sub: string | null;
+  username?: string | null;
+  roles: string[];
+  tenant_id: string | null;
+};
 
 const PRODUCT_ROLES = [
   "technicien",
@@ -68,7 +73,7 @@ export default async function AccessPage() {
       <section style={{ ...cardStyle, marginBottom: 24 }}>
         <h2 style={sectionTitleStyle}>{t("web.access_page.you_title")}</h2>
         <p>
-          {t("web.access_page.you_identity", { identity: me.sub ?? "—" })}
+          {t("web.access_page.you_identity", { identity: me.username ?? me.sub ?? "—" })}
           <br />
           {t("web.access_page.you_roles", {
             roles: me.roles.length > 0 ? roleLabels(me.roles, t) : "—",

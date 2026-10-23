@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -74,3 +75,35 @@ def test_admin_route_accepts_admin_tenant_role() -> None:
         response = client.get("/admin/ping", headers={"Authorization": f"Bearer {token}"})
 
     assert response.status_code == 200
+
+
+def test_me_gives_the_username_when_the_token_carries_one() -> None:
+    """L'interface affiche ce nom lisible, jamais l'identifiant technique (`sub`) : même
+    principe que le nom du client (`tenant_name`) plutôt que son identifiant."""
+    token = make_token(roles=["technicien"], username="demo.technicien")
+
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        response = client.get("/me", headers={"Authorization": f"Bearer {token}"})
+
+    assert response.status_code == 200
+    assert response.json()["username"] == "demo.technicien"
+    assert response.json()["sub"] == "technicien-test"  # inchangé : champ historique
+
+
+def test_me_username_is_null_without_the_claim_and_never_invented() -> None:
+    token = make_token(roles=["technicien"])
+
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        response = client.get("/me", headers={"Authorization": f"Bearer {token}"})
+
+    assert response.json()["username"] is None
+
+
+@pytest.mark.parametrize("claim", [123, ["a"], {"x": 1}, True, ""])
+def test_me_ignores_a_username_claim_that_is_not_a_non_empty_string(claim) -> None:
+    token = make_token(roles=["technicien"], username=claim)
+
+    with patch("app.auth.fetch_jwks", return_value=JWKS):
+        response = client.get("/me", headers={"Authorization": f"Bearer {token}"})
+
+    assert response.json()["username"] is None

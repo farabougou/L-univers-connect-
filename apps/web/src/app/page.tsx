@@ -76,6 +76,7 @@ import {
 
 type Me = {
   sub: string;
+  username?: string | null;
   tenant_id: string;
   roles: string[];
 };
@@ -373,7 +374,7 @@ export default async function PortfolioPage({
               }}
             >
               {t("web.dashboard.signed_in_as", {
-                user: me.sub,
+                user: me.username ?? me.sub,
                 roles: roleLabels(me.roles, t),
               })}
             </p>

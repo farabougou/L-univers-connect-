@@ -36,6 +36,7 @@ def make_token(
     expired: bool = False,
     private_key: bytes | None = None,
     sub: str = "technicien-test",
+    username: object = None,
 ) -> str:
     now = int(time.time())
     claims = {
@@ -47,6 +48,8 @@ def make_token(
         "realm_access": {"roles": roles or ["technicien"]},
         "tenant_id": tenant_id,
     }
+    if username is not None:
+        claims["preferred_username"] = username
     return jwt.encode(
         claims, private_key or PRIVATE_KEY_PEM, algorithm="RS256", headers={"kid": KEY_ID}
     )

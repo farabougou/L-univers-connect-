@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  activityDetailParts,
   filterActivityEntries,
   toActivityFeedEntries,
   type ActivityFeedEntry,
@@ -94,3 +95,50 @@ describe("filterActivityEntries", () => {
     expect(filterActivityEntries(entries, new Set())).toEqual([]);
   });
 });
+
+describe("activityDetailParts", () => {
+  function feedEntry(overrides: Partial<ActivityFeedEntry>): ActivityFeedEntry {
+    return {
+      kind: "intervention",
+      key: "intervention-1",
+      formattedAt: "26/09/2026 14:47",
+      locationId: null,
+      locationLabel: null,
+      title: null,
+      ...overrides,
+    };
+  }
+
+  it("ne renvoie rien quand ni l'équipement ni le titre ne sont connus (jamais « — — »)", () => {
+    expect(activityDetailParts(feedEntry({}))).toEqual([]);
+  });
+
+  it("renvoie l'équipement puis le titre, dans cet ordre, quand les deux sont connus", () => {
+    const parts = activityDetailParts(
+      feedEntry({ locationId: "loc-1", locationLabel: "CTA-01 — CTA toiture", title: "Défaut" }),
+    );
+
+    expect(parts).toEqual([
+      { type: "location", id: "loc-1", label: "CTA-01 — CTA toiture" },
+      { type: "title", text: "Défaut" },
+    ]);
+  });
+
+  it("ne garde que l'équipement quand il n'y a pas de titre", () => {
+    expect(
+      activityDetailParts(feedEntry({ locationId: "loc-1", locationLabel: "CTA-01 — CTA toiture" })),
+    ).toEqual([{ type: "location", id: "loc-1", label: "CTA-01 — CTA toiture" }]);
+  });
+
+  it("ne garde que le titre quand l'équipement n'existe plus dans le portefeuille", () => {
+    expect(activityDetailParts(feedEntry({ title: "Remplacement du compresseur" }))).toEqual([
+      { type: "title", text: "Remplacement du compresseur" },
+    ]);
+  });
+
+  it("traite un titre vide ou fait d'espaces comme absent", () => {
+    expect(activityDetailParts(feedEntry({ title: "" }))).toEqual([]);
+    expect(activityDetailParts(feedEntry({ title: "   " }))).toEqual([]);
+  });
+});
+

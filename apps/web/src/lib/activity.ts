@@ -65,6 +65,29 @@ export function toActivityFeedEntries(
   });
 }
 
+export type ActivityDetailPart =
+  | { type: "location"; id: string; label: string }
+  | { type: "title"; text: string };
+
+/**
+ * Les éléments connus d'une entrée, après son type : l'équipement (lien) puis
+ * le titre. Un élément inconnu n'apparaît pas : l'accueil affichait
+ * « Intervention — — » quand ni l'un ni l'autre n'existait, des tirets qui
+ * laissaient croire qu'une information manquait à l'écran plutôt qu'au
+ * système.
+ */
+export function activityDetailParts(entry: ActivityFeedEntry): ActivityDetailPart[] {
+  const parts: ActivityDetailPart[] = [];
+  if (entry.locationId && entry.locationLabel) {
+    parts.push({ type: "location", id: entry.locationId, label: entry.locationLabel });
+  }
+  const title = entry.title?.trim();
+  if (title) {
+    parts.push({ type: "title", text: title });
+  }
+  return parts;
+}
+
 export function filterActivityEntries(
   entries: ActivityFeedEntry[],
   kinds: ReadonlySet<ActivityKind>,
