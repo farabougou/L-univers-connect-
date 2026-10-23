@@ -50,5 +50,5 @@ applis mobiles. Il est sur TikTok sous **@kofamali** (55 000 abonnés).
   - `videos/fanta-shop` : pub de la boutique Fanta shop (@fantafofana61), voix off ElevenLabs « Anna », 9:16
     (`index.html`) et 16:9 (`paysage/`, dont `assets` est un lien vers `../assets`).
   - `videos/farmasi` : pub Farmasi « un rituel pour chaque instant » (36 s, 9:16 et 16:9), images du site officiel ;
-    voix off à venir (texte dans `.src/voix-off.txt`).
+    voix off ElevenLabs « Anna » découpée en phrases par `.src/mix.py`.
 - Branche de travail : `claude/upbeat-noether-hso8ah`. Sur son PC : `Documents\Univers-videos`, puis `git pull`.

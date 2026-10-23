@@ -150,7 +150,7 @@
         <div class="st-vignette"></div>
         <canvas id="grain" class="st-grain" width="1920" height="1080" style="opacity:0.06"></canvas>
       </div>
-      <audio id="music" src="assets/music.wav" data-start="0" data-duration="36.0" data-track-index="10" data-volume="1"></audio>
+      <audio id="mix" src="assets/mix.wav" data-start="0" data-duration="36.0" data-track-index="10" data-volume="1"></audio>
     </div>
     <script>
       window.__timelines = window.__timelines || {};
@@ -176,7 +176,7 @@
         tl.fromTo("#dw0", { scale: 0.92, rotation: -8 }, { scale: 1.0, rotation: 0, duration: 3.9, ease: S.ease.glide }, 0);
         line("#h0 .hd:nth-child(1)", 0.4);
         line("#h0 .hd:nth-child(2)", 1.8);
-        tl.fromTo("#h0 em", { textShadow: "0 0 0px rgba(255,90,104,0)" }, { textShadow: "0 0 34px rgba(255,90,104,0.7)", duration: 0.5, ease: S.ease.silk }, 3.2);
+        tl.fromTo("#h0 em", { textShadow: "0 0 0px rgba(255,90,104,0)" }, { textShadow: "0 0 34px rgba(255,90,104,0.7)", duration: 0.5, ease: S.ease.silk }, 2.9);
         S.leave(tl, ["#h0", "#wm0"], C.s1 - 0.7, { y: -20, blur: 8, duration: 0.35, stagger: 0.05 });
         const d0h = $("#d0h"), d0m = $("#d0m");
         const hands0 = (t) => { if (t > C.s1 + 0.5) return; const p = S.ease.glide(cl((t - 0.8) / 2.9)), m = 360 * 7 * p;
@@ -211,8 +211,8 @@
         S.life(tl, $$("#l1p .pin"), C.s1 + 1.8, C.s2 + HW, { y: 3, x: 1, rotate: 0.15, period: 5, seed: 7 });
         [6.1, 9.7].forEach((t) => $$("#l1p .st-sheen").forEach((s, i) => S.sweep(tl, s, t + i * 0.08, { duration: 1.3 })));
         time(1, C.s1 + 0.35);
-        S.rise(tl, "#lb1", 4.75, { y: 14, blur: 6, duration: 0.6 });
-        S.rise(tl, "#pn1", 5.85, { y: 14, blur: 6, duration: 0.6 });
+        S.rise(tl, "#lb1", 4.55, { y: 14, blur: 6, duration: 0.6 });
+        S.rise(tl, "#pn1", 5.65, { y: 14, blur: 6, duration: 0.6 });
         S.converge(tl, $$("#br1 .st-char"), 6.75, { spread: 26, duration: 0.9, stagger: 0.03 });
         S.leave(tl, ["#t1"], C.s2 - 0.75, { y: -24, blur: 8, duration: 0.35 });
 
@@ -229,21 +229,21 @@
         S.sweep(tl, $("#p2-serenity .st-sheen"), 15.6, { duration: 1.3 });
         S.sweep(tl, $("#p2-aloe .st-sheen"), 15.75, { duration: 1.3 });
         time(2, C.s2 + 0.35);
-        S.rise(tl, "#lb2", 12.45, { y: 14, blur: 6, duration: 0.6 });
-        S.converge(tl, $$("#br2 .st-char"), 12.95, { spread: 30, duration: 0.9, stagger: 0.035 });
+        S.rise(tl, "#lb2", 12.2, { y: 14, blur: 6, duration: 0.6 });
+        S.converge(tl, $$("#br2 .st-char"), 12.75, { spread: 30, duration: 0.9, stagger: 0.035 });
         line("#tg2", 13.7, { duration: 0.6 });
         const lv = S.spring({ response: 0.9, damping: 0.45 });
-        tl.fromTo("#lv2", { scaleX: 0, rotation: 9 }, { scaleX: 1, rotation: 0, duration: lv.duration, ease: lv.ease }, 14.9);
+        tl.fromTo("#lv2", { scaleX: 0, rotation: 9 }, { scaleX: 1, rotation: 0, duration: lv.duration, ease: lv.ease }, 14.95);
         S.leave(tl, ["#t2"], C.s3 - 0.75, { y: -24, blur: 8, duration: 0.35 });
 
         // ── 3. 00:00 la magie : cloche, poussière d'or, éclats sur les produits ──
         tl.fromTo("#cam3", { scale: 1.0, y: 0 }, { scale: 1.08, y: -20, duration: C.s4 - C.s3 + 0.7, ease: S.ease.glide }, C.s3 - HW);
         time(3, C.s3 + 0.15);
         tl.fromTo("#tm3", { filter: "brightness(1.8)" }, { filter: "brightness(1)", duration: 1.2, ease: S.ease.silk }, C.s3 + 0.2);
-        S.rise(tl, "#lb3", 20.3, { y: 14, blur: 6, duration: 0.6 });
-        line("#tg3", 21.35, { duration: 0.7 });
-        S.converge(tl, $$("#br3 .st-char"), 22.8, { spread: 34, duration: 1.0, stagger: 0.035 });
-        S.rise(tl, "#k3", 23.95, { y: 12, blur: 6, duration: 0.6 });
+        S.rise(tl, "#lb3", 20.05, { y: 14, blur: 6, duration: 0.6 });
+        line("#tg3", 20.85, { duration: 0.7 });
+        S.converge(tl, $$("#br3 .st-char"), 22.75, { spread: 34, duration: 1.0, stagger: 0.035 });
+        S.rise(tl, "#k3", 24.0, { y: 12, blur: 6, duration: 0.6 });
         S.leave(tl, ["#t3"], C.s4 - 0.75, { y: -24, blur: 8, duration: 0.35 });
 
         // ── 4. la marque : le cadran revient, ses trois arcs prennent les couleurs des trois moments ──
@@ -255,16 +255,16 @@
         const ls = S.spring({ response: 0.6, damping: 0.7 });
         tl.fromTo("#sym4", { scale: 0.2, opacity: 0, rotation: -20 }, { scale: 1, opacity: 1, rotation: 0, duration: ls.duration, ease: ls.ease }, 27.85);
         tl.fromTo("#wm4", { clipPath: "inset(0% 100% 0% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.8, ease: S.ease.silk }, 28.15);
-        [29.0, 29.6, 30.3].forEach((t, i) => {
+        [28.95, 29.52, 30.3].forEach((t, i) => {
           S.rise(tl, "#tw" + i, t, { y: 26, blur: 8, duration: 0.6 });
           tl.fromTo("#d4a" + i, { strokeDashoffset: 116 }, { strokeDashoffset: 0, duration: 0.7, ease: S.ease.glide }, t - 0.05);
         });
-        S.rise(tl, "#url", 31.45, { y: 24, blur: 8, duration: 0.6 });
-        S.rise(tl, "#inf", 32.3, { y: 12, blur: 6, duration: 0.6 });
+        S.rise(tl, "#url", 32.3, { y: 24, blur: 8, duration: 0.6 });
+        S.rise(tl, "#inf", 33.0, { y: 12, blur: 6, duration: 0.6 });
         S.life(tl, $$("#sym4, #url"), 31.0, TOTAL, { y: 3, x: 1, rotate: 0.2, period: 5, seed: 4 });
-        tl.set("#sig svg", { opacity: 1 }, 33.4);
-        tl.fromTo("#sig path", { strokeDashoffset: 100 }, { strokeDashoffset: 0, duration: 0.7, ease: S.ease.glide }, 33.4);
-        S.rise(tl, "#sig span", 33.7, { y: 10, blur: 6, duration: 0.6 });
+        tl.set("#sig svg", { opacity: 1 }, 34.0);
+        tl.fromTo("#sig path", { strokeDashoffset: 100 }, { strokeDashoffset: 0, duration: 0.7, ease: S.ease.glide }, 34.0);
+        S.rise(tl, "#sig span", 34.3, { y: 10, blur: 6, duration: 0.6 });
 
         // ── particules : poussière dorée au matin, bulles à midi, or et scintillements à minuit et à la fin ──
         const fx = $("#fx"), g = fx.getContext("2d"), FW = fx.width, FH = fx.height, r = S.rng(17), k2 = FW / 540;

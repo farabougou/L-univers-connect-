@@ -98,7 +98,7 @@ add(bell(hz(45)), CUT['s3'] + 0.05, g=0.3); add(shimmer(2.0), CUT['s3'] + 0.1, g
 FIN = [(48, [60, 64, 67, 72]), (43, [59, 62, 67, 71]), (45, [60, 64, 69, 72]), (41, [60, 65, 69, 72])]
 section(CUT['s4'], TOTAL, FIN, 'fin')
 add(impact(), CUT['s4'] + 0.6, g=0.42); add(shimmer(2.0), CUT['s4'] + 0.6, g=0.07)
-for t0, m in ((29.4, 84), (30.0, 88), (30.6, 91)): add(celesta(hz(m)), t0, g=0.07)   # beauté · bien-être · opportunité
+for t0, m in ((28.95, 84), (29.52, 88), (30.3, 91)): add(celesta(hz(m)), t0, g=0.07)   # beauté · bien-être · opportunité (calés sur la voix)
 add(pad([hz(48), hz(55), hz(60), hz(64), hz(67), hz(72)], 3.2, 0.6), 33.6, g=0.16)
 for t0, m in ((33.6, 84), (33.75, 79), (33.9, 76), (34.05, 72)): add(musicbox(hz(m)), t0, g=0.08)
 # ── balayages d'horloge : souffle + tic à la coupe ──

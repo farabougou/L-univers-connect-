@@ -9,3 +9,12 @@ VOIX = [(0.3, 3.9, 'Et si chaque instant de votre journée devenait un rituel ?'
         (12.5, 16.0, 'À midi, Nutriplus, pour un quotidien plus équilibré.'),
         (20.3, 25.2, 'Et à minuit… la magie commence. Midnight Ritual, en édition limitée.'),
         (28.2, 34.0, 'Farmasi. Beauté, bien-être, opportunité. Rendez-vous sur fr.farmasi.com.')]
+# Voix off reçue (assets/voix-off.mp3, ElevenLabs « Anna », 22,2 s d'un seul souffle) : découpée en phrases par mix.py.
+# (nom, début dans le MP3, fin dans le MP3, position dans le film) — chaque limite tombe dans un silence du MP3.
+VO = [('rituel', 0.0, 3.5, 0.4),        # Et si chaque instant de votre journée devenait un rituel ?
+      ('matin', 3.5, 7.3, 4.25),        # Le matin, le soin Age Reversist de Dr. C. Tuna.
+      ('midi', 7.3, 11.0, 12.15),       # À midi, Nutriplus, pour un quotidien plus équilibré.
+      ('minuit', 11.0, 13.72, 19.95),   # Et à minuit, la magie commence.
+      ('midnight', 13.72, 16.45, 22.8), # Midnight Ritual, en édition limitée.
+      ('farmasi', 16.45, 19.78, 28.1),  # Farmasi. Beauté, bien-être, opportunité.
+      ('site', 19.78, 22.2, 31.5)]      # Rendez-vous sur fr.farmasi.com.

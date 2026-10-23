@@ -1,0 +1,278 @@
+[
+  {
+    "text": "Et",
+    "start": 0.12,
+    "end": 0.14,
+    "id": "w0"
+  },
+  {
+    "text": "si",
+    "start": 0.14,
+    "end": 0.23,
+    "id": "w1"
+  },
+  {
+    "text": "chaque",
+    "start": 0.3,
+    "end": 0.6,
+    "id": "w2"
+  },
+  {
+    "text": "instant",
+    "start": 0.6,
+    "end": 1.02,
+    "id": "w3"
+  },
+  {
+    "text": "de",
+    "start": 1.02,
+    "end": 1.14,
+    "id": "w4"
+  },
+  {
+    "text": "votre",
+    "start": 1.14,
+    "end": 1.44,
+    "id": "w5"
+  },
+  {
+    "text": "journée",
+    "start": 1.44,
+    "end": 1.88,
+    "id": "w6"
+  },
+  {
+    "text": "devenait",
+    "start": 1.88,
+    "end": 2.43,
+    "id": "w7"
+  },
+  {
+    "text": "un",
+    "start": 2.43,
+    "end": 2.57,
+    "id": "w8"
+  },
+  {
+    "text": "rituel?",
+    "start": 2.57,
+    "end": 3.18,
+    "id": "w9"
+  },
+  {
+    "text": "Le",
+    "start": 3.78,
+    "end": 3.82,
+    "id": "w10"
+  },
+  {
+    "text": "matin,",
+    "start": 3.82,
+    "end": 4.48,
+    "id": "w11"
+  },
+  {
+    "text": "le",
+    "start": 4.48,
+    "end": 4.63,
+    "id": "w12"
+  },
+  {
+    "text": "soin",
+    "start": 4.63,
+    "end": 4.92,
+    "id": "w13"
+  },
+  {
+    "text": "Age",
+    "start": 4.95,
+    "end": 5.15,
+    "id": "w14"
+  },
+  {
+    "text": "Reversist",
+    "start": 5.15,
+    "end": 5.84,
+    "id": "w15"
+  },
+  {
+    "text": "de",
+    "start": 5.84,
+    "end": 6.04,
+    "id": "w16"
+  },
+  {
+    "text": "Dr.",
+    "start": 6.04,
+    "end": 6.54,
+    "id": "w17"
+  },
+  {
+    "text": "Settuna.",
+    "start": 6.54,
+    "end": 7.32,
+    "id": "w18"
+  },
+  {
+    "text": "À",
+    "start": 7.32,
+    "end": 7.46,
+    "id": "w19"
+  },
+  {
+    "text": "midi,",
+    "start": 7.46,
+    "end": 7.97,
+    "id": "w20"
+  },
+  {
+    "text": "Nutri",
+    "start": 8.02,
+    "end": 8.51,
+    "id": "w21"
+  },
+  {
+    "text": "Plus",
+    "start": 8.52,
+    "end": 8.96,
+    "id": "w22"
+  },
+  {
+    "text": "pour",
+    "start": 8.96,
+    "end": 9.23,
+    "id": "w23"
+  },
+  {
+    "text": "un",
+    "start": 9.23,
+    "end": 9.36,
+    "id": "w24"
+  },
+  {
+    "text": "quotidien",
+    "start": 9.36,
+    "end": 9.91,
+    "id": "w25"
+  },
+  {
+    "text": "plus",
+    "start": 9.98,
+    "end": 10.24,
+    "id": "w26"
+  },
+  {
+    "text": "équilibré.",
+    "start": 10.24,
+    "end": 10.88,
+    "id": "w27"
+  },
+  {
+    "text": "Et",
+    "start": 11.02,
+    "end": 11.08,
+    "id": "w28"
+  },
+  {
+    "text": "à",
+    "start": 11.08,
+    "end": 11.11,
+    "id": "w29"
+  },
+  {
+    "text": "minuit,",
+    "start": 11.18,
+    "end": 12,
+    "id": "w30"
+  },
+  {
+    "text": "la",
+    "start": 12,
+    "end": 12.16,
+    "id": "w31"
+  },
+  {
+    "text": "magie",
+    "start": 12.19,
+    "end": 12.6,
+    "id": "w32"
+  },
+  {
+    "text": "commence.",
+    "start": 12.6,
+    "end": 13.6,
+    "id": "w33"
+  },
+  {
+    "text": "Midnight",
+    "start": 13.74,
+    "end": 14.31,
+    "id": "w34"
+  },
+  {
+    "text": "Ritual",
+    "start": 14.32,
+    "end": 14.86,
+    "id": "w35"
+  },
+  {
+    "text": "en",
+    "start": 14.86,
+    "end": 15.04,
+    "id": "w36"
+  },
+  {
+    "text": "édition",
+    "start": 15.04,
+    "end": 15.67,
+    "id": "w37"
+  },
+  {
+    "text": "limitée.",
+    "start": 15.67,
+    "end": 16.32,
+    "id": "w38"
+  },
+  {
+    "text": "Pharmasi,",
+    "start": 16.46,
+    "end": 17.38,
+    "id": "w39"
+  },
+  {
+    "text": "beauté,",
+    "start": 17.38,
+    "end": 17.94,
+    "id": "w40"
+  },
+  {
+    "text": "bien-être,",
+    "start": 17.95,
+    "end": 18.74,
+    "id": "w41"
+  },
+  {
+    "text": "opportunité.",
+    "start": 18.74,
+    "end": 19.6,
+    "id": "w42"
+  },
+  {
+    "text": "Rendez-vous",
+    "start": 19.74,
+    "end": 20.47,
+    "id": "w43"
+  },
+  {
+    "text": "sur",
+    "start": 20.57,
+    "end": 20.73,
+    "id": "w44"
+  },
+  {
+    "text": "fr.farmasi.com.",
+    "start": 20.73,
+    "end": 22.36,
+    "id": "w45"
+  }
+]
