@@ -31,17 +31,16 @@ ont disparu côté JavaScript.
 | Composant | 21/10 | 23/10 | Ce qui a changé |
 | --- | --- | --- | --- |
 | API (Python) | 0 | **0** après correction | 11 avis sur `pypdf` 6.19.0 apparus entre-temps, **corrigés** en passant à `pypdf` 6.21.2 (même version majeure, `requirements.txt`). Exposition faible : `pypdf` ne lit que le formulaire CERFA vierge livré avec l'application (`app/fgas_pdf.py`), jamais un PDF envoyé par une personne. `pip-audit` sur `requirements.txt` et `requirements-dev.txt` : aucune vulnérabilité connue ; les 20 tests du PDF et de son API passent |
-| Web | 5 | 3 (**0 en production**) | Les 5 paquets de la chaîne `braces` ne figurent plus dans l'audit. Trois avis nouveaux, tous des outils de développement : `vitest` et `@vitest/mocker` (moyenne : enregistrement de simulacres non authentifié, chemin Windows), `zod` (haute : épuisement de mémoire sur de grandes collections ; absent de `npm audit --omit=dev`) |
-| Mobile | 29 | 13 (11 en production seule) | `braces` ne figure plus dans l'audit. Nouveaux : `zod` (haute, via `@expo/cli` : outillage de construction, pas l'application) ; `vitest` et `@vitest/mocker` (outils de test, comme sur le web). Les autres (`@expo/cli`, `node-forge`, `uuid` via `xcode`, `expo`, `expo-router`, `query-string`, `decode-uri-component`) sont ceux du 21/10 ; le seul présent dans l'application reste `decode-uri-component`, décrit plus bas |
+| Web | 5 | **0** (production et développement) | Les 5 paquets de la chaîne `braces` ne figurent plus dans l'audit. Trois avis étaient apparus sur des outils de développement : `vitest` et `@vitest/mocker` (moyenne : enregistrement de simulacres non authentifié, chemin Windows), `zod` (haute : épuisement de mémoire ; absent de `npm audit --omit=dev`). **Corrigés le 23/10/2026** par `npm update vitest @vitest/mocker zod` (fichier de verrouillage seul, 264 lignes, `package.json` inchangé) ; 256 tests, typage, lint et construction de production passent |
+| Mobile | 29 | **11** (tous en production) | `braces` ne figure plus dans l'audit. Nouveau : `zod` (haute, via `@expo/cli` : outillage de construction, pas l'application). `vitest` et `@vitest/mocker` (outils de test) étaient aussi apparus : **corrigés le 23/10/2026** (`npm update vitest @vitest/mocker`, 159 tests et typage passent). Les 11 restants (`@expo/cli`, `node-forge`, `uuid` via `xcode`, `expo`, `expo-router`, `query-string`, `decode-uri-component`) sont ceux du 21/10 ; le seul présent dans l'application reste `decode-uri-component`, décrit plus bas |
 
-**Pas de correction JavaScript dans cette revue, volontairement.** Pour `vitest` et `zod`, `npm audit`
-annonce un correctif simple, mais sa simulation (`npm audit fix --dry-run`) réécrit le fichier de
-verrouillage de façon massive (des dizaines de binaires d'autres systèmes d'exploitation ajoutés) :
-une modification impossible à relire dans une revue, pour un risque limité aux postes de
-développement et à la CI. À faire dans une étape dédiée, sur une branche à part, avec la suite de
-tests et un essai de construction. Les propositions pour Expo (`expo@44.0.6`,
-`expo-router@58.0.25`) restent rejetées : ce sont des rétrogradations ou des sauts de version
-majeure.
+**Correction JavaScript : ciblée, jamais `npm audit fix`.** La simulation de `npm audit fix`
+réécrit le fichier de verrouillage de façon massive (des dizaines de binaires d'autres systèmes
+d'exploitation) ; `npm update vitest @vitest/mocker zod` ne change, lui, que les paquets
+concernés. Les 11 avis restants du mobile viennent de l'outillage Expo : les propositions de
+`npm audit` (`expo@44.0.6`, `expo-router@58.0.25`) restent rejetées, ce sont des rétrogradations
+ou des sauts de version majeure ; la sortie est une montée de version d'Expo, à planifier avec un
+essai de construction sur téléphone (non faisable ici).
 
 **À décider par Mohamed : `main` ne contient presque rien.** La branche `main` du dépôt ne porte
 que `CLAUDE.md` et le cahier des charges ; tout le code et l'historique vivent sur la branche de
