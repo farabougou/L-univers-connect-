@@ -43,6 +43,7 @@ import {
   type PortfolioEquipmentStatus,
 } from "@/lib/health";
 import { getLocale, getTranslator } from "@/lib/i18n";
+import { unitSymbol } from "@/lib/units";
 import {
   type MaintenanceIntervention,
   countCriticalOpen,
@@ -814,7 +815,7 @@ export default async function PortfolioPage({
                   <div key={summary.unit} style={{ display: "flex", gap: 32 }}>
                     <Kpi
                       label={t("web.dashboard.energy_consumption_label", {
-                        unit: summary.unit,
+                        unit: unitSymbol(summary.unit),
                       })}
                       value={
                         summary.totalConsumption === null

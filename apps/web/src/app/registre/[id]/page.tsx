@@ -19,6 +19,7 @@ import {
 } from "@/lib/formStyles";
 import { SEVERITY_COLOR, type Severity } from "@/lib/portfolio";
 import { errorMessage, getLocale, getTranslator } from "@/lib/i18n";
+import { unitSymbol } from "@/lib/units";
 import {
   type DesiredState,
   type EquipmentStatus,
@@ -2188,7 +2189,7 @@ function UnitView({
             {typeof property.value === "number"
               ? formatNumber(locale, property.value)
               : property.value}
-            {property.unit ? ` ${property.unit}` : ""}
+            {property.unit ? ` ${unitSymbol(property.unit)}` : ""}
             {" — "}
             {t(`property_source.${property.source}`)}
           </p>
@@ -2699,7 +2700,7 @@ function EnergyBlock({
           </p>
           <EnergyBarChart
             periods={chartPeriods}
-            unit={latest?.raw_consumption_unit ?? ""}
+            unit={unitSymbol(latest?.raw_consumption_unit ?? "")}
             rawLabel={t("web.registre.energy_chart_raw_legend")}
             normalizedLabel={t("web.registre.energy_chart_normalized_legend")}
           />

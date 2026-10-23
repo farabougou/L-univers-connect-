@@ -16,6 +16,7 @@ import {
   type PortfolioEnergyMeter,
 } from "@/lib/energy";
 import { getLocale, getTranslator } from "@/lib/i18n";
+import { unitSymbol } from "@/lib/units";
 import { formatDate, formatNumber } from "@/i18n/translator";
 
 /**
@@ -105,7 +106,7 @@ export default async function EnergyPage() {
                   </div>
                   <div style={{ color: colors.textMuted, fontSize: 13 }}>
                     {t("web.dashboard.energy_consumption_label", {
-                      unit: summary.unit,
+                      unit: unitSymbol(summary.unit),
                     })}
                   </div>
                 </div>
@@ -176,7 +177,7 @@ export default async function EnergyPage() {
                           data-label={t("web.energy_page.col_unit")}
                           style={cellStyle}
                         >
-                          {meter.unit}
+                          {unitSymbol(meter.unit)}
                         </td>
                         <td
                           data-label={t("web.energy_page.col_consumption")}

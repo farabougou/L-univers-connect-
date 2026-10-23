@@ -13,6 +13,7 @@ import {
   tableScrollStyle,
 } from "@/lib/formStyles";
 import { errorMessage, getLocale, getTranslator } from "@/lib/i18n";
+import { unitSymbol } from "@/lib/units";
 import { canManage as computeCanManage, type Me } from "@/lib/roles";
 
 import { deletePlacement, validatePlacement } from "./actions";
@@ -188,7 +189,7 @@ export default async function PlanEditorPage({
     const status = t(`plan_editor.marker_status_${placement.status}`);
     const hasLiveValue = Boolean(value && value.point_value !== null);
     const valueText = hasLiveValue
-      ? `${value!.point_value}${value!.point_unit ?? ""}`
+      ? `${value!.point_value}${value!.point_unit ? ` ${unitSymbol(value!.point_unit)}` : ""}`
       : null;
     const valueSuffix = valueText
       ? ` — ${t("plan_editor.live_value_label")}: ${valueText}`

@@ -11,6 +11,7 @@ import {
   tableScrollStyle,
 } from "@/lib/formStyles";
 import { getLocale, getTranslator } from "@/lib/i18n";
+import { unitSymbol } from "@/lib/units";
 import { formatDate, formatNumber } from "@/i18n/translator";
 import { canManage as computeCanManage, type Me } from "@/lib/roles";
 
@@ -144,7 +145,7 @@ export default async function AutomationPage() {
                       style={cellStyle}
                     >
                       {formatNumber(locale, state.value)}
-                      {state.point_unit ? ` ${state.point_unit}` : ""}
+                      {state.point_unit ? ` ${unitSymbol(state.point_unit)}` : ""}
                     </td>
                     <td
                       data-label={t("web.automation_page.col_window")}
