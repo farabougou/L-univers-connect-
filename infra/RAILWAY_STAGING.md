@@ -151,14 +151,30 @@ Hypothèses, non tranchées (l'assistant n'a pas accès aux variables ni aux jou
    proxys Railway), donc chaque requête tombe dans un compteur différent ;
 3. un réglage inattendu (`RATE_LIMIT_STORAGE_URI` ou autre).
 
-**À relever dans le tableau de bord Railway** (service API) : le nombre de réplicas, la présence
-de `CLIENT_IP_HEADER` et de `RATE_LIMIT_STORAGE_URI`, et la ligne `capacity.checked` du journal
-de démarrage (elle indique le nombre de réplicas attendu et l'en-tête configuré). Conséquence
+**Élément nouveau du 23/10/2026.** Après la correction du quota par défaut, `/me` refuse
+exactement à la 121e requête sur le staging (mesure avec un jeton réel). Avec plusieurs
+instances, les compteurs en mémoire se seraient additionnés : le service API n'a donc **qu'une
+instance** et l'hypothèse 1 est écartée. Il reste l'hypothèse 2 (l'adresse de connexion vue par
+l'application change d'une requête à l'autre) ou 3 (réglage inattendu). `/devices/auth` classe
+par adresse IP, justement la valeur instable : avec le même `X-Real-IP` fixe et `CLIENT_IP_HEADER`
+vide, chaque requête retombe dans un compteur différent.
+
+**Conséquence : activer `CLIENT_IP_HEADER=X-Real-IP` est précisément ce qui peut rendre la limite
+effective, et l'essai devient faisable.** Si Railway écrase bien l'en-tête par l'adresse réelle du
+client, la clé devient stable : la phase témoin observe le 429 à la 11e requête, puis la phase
+d'usurpation conclut. Le risque de la fenêtre d'essai est nul : aujourd'hui, aucune limite n'est
+effective sur cette route ; si l'en-tête est usurpable, la situation reste celle d'aujourd'hui, et
+le réglage est retiré. Procédure : (1) service API, Variables, ajouter `CLIENT_IP_HEADER` =
+`X-Real-IP`, redéployer ; (2) lancer `scripts/spoof_test.py` (voir plus haut) ; (3) conserver le
+réglage si le verdict est `NOT_SPOOFABLE`, le retirer sinon, et joindre la preuve JSON ici.
+
+**À relever dans le tableau de bord Railway** (service API) pour confirmer : la présence de
+`CLIENT_IP_HEADER` et de `RATE_LIMIT_STORAGE_URI`, et la ligne `capacity.checked` du journal de
+démarrage (elle indique le nombre de réplicas attendu et l'en-tête configuré). Conséquence
 pratique : **la protection contre l'essai de secrets sur `POST /devices/auth` n'est pas
 effective sur le staging aujourd'hui.** Les secrets d'appareil sont aléatoires et comparés en
 temps constant, et le mode par clé publique n'a pas de secret à deviner, mais la défense en
-profondeur annoncée manque. `CLIENT_IP_HEADER` reste vide : l'activer ne règle pas ce point et
-l'essai ne pourrait pas conclure.
+profondeur annoncée manque.
 
 Pourquoi ne pas simplement mettre `FORWARDED_ALLOW_IPS` : **ne jamais** mettre
 `FORWARDED_ALLOW_IPS=*` (uvicorn retiendrait la première adresse de
