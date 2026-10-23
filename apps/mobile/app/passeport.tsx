@@ -14,6 +14,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { config } from "../src/lib/config";
 import { useAuth } from "../src/lib/auth";
 import { locale, t } from "../src/lib/i18n";
+import { unitSymbol } from "../src/lib/units";
 import { formatDate, formatDateTime, formatNumber } from "../src/i18n/translator";
 import {
   type EquipmentStatus,
@@ -344,7 +345,7 @@ function PassportView({
                 <Text>
                   {point.name} —{" "}
                   {point.latest
-                    ? `${formatNumber(locale, point.latest.value)} ${point.unit} (${formatDateTime(
+                    ? `${formatNumber(locale, point.latest.value)} ${unitSymbol(point.unit)} (${formatDateTime(
                         locale,
                         point.latest.measured_at,
                         timeZone,

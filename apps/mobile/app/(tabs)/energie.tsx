@@ -4,6 +4,7 @@ import { ActivityIndicator, FlatList, StyleSheet, View } from "react-native";
 import { config } from "../../src/lib/config";
 import { useAuth } from "../../src/lib/auth";
 import { locale, t } from "../../src/lib/i18n";
+import { unitSymbol } from "../../src/lib/units";
 import { formatDate, formatNumber } from "../../src/i18n/translator";
 import { type EnergyMeter, fetchEnergyPortfolio } from "../../src/lib/energy";
 import { colors } from "../../src/design/colors";
@@ -87,7 +88,7 @@ function MeterRow({ meter }: { meter: EnergyMeter }) {
         {meter.consumption !== null
           ? t("mobile.energy.consumption", {
               value: formatNumber(locale, meter.consumption),
-              unit: meter.unit,
+              unit: unitSymbol(meter.unit),
             })
           : t("mobile.energy.no_data")}
       </Text>
@@ -95,7 +96,7 @@ function MeterRow({ meter }: { meter: EnergyMeter }) {
         <Text style={styles.muted}>
           {t("mobile.energy.previous_consumption", {
             value: formatNumber(locale, meter.previousConsumption),
-            unit: meter.unit,
+            unit: unitSymbol(meter.unit),
           })}
         </Text>
       )}
