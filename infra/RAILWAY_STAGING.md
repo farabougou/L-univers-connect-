@@ -579,7 +579,8 @@ Cloudflare R2 du stockage des photos (`STORAGE_*`). Aucun secret n'est dans le d
 | Action | Où | État |
 | --- | --- | --- |
 | Changer le mot de passe administrateur de Keycloak | Console Keycloak | à confirmer |
-| Désactiver `demo.technicien` et `demo.admin` (mot de passe public dans `infra/README.md`) | Console Keycloak, ou `scripts/staging_account.py disable-demo-users --yes` | à confirmer |
+| Désactiver `demo.technicien` et `demo.admin` (mot de passe public dans `infra/README.md`) | Console Keycloak, ou `scripts/staging_account.py disable-demo-users --yes` | à confirmer (**le plus urgent** : `demo.admin` porte le rôle `admin_tenant` avec un mot de passe public) |
+| Activer la détection de force brute du royaume (Realm settings → Security defenses → Brute force detection : 5 échecs, attente croissante jusqu'à 15 minutes) | Console Keycloak. `realm-staging.json` contient maintenant ce réglage, mais un fichier d'import ne s'applique qu'à un royaume neuf : le royaume en place doit être réglé à la main | à faire (23/10/2026 : absente du royaume importé, donc aucune limite aux essais de mot de passe) |
 | Révoquer le jeton R2 `paios-staging-photos` et en créer un nouveau | Cloudflare, puis variables `STORAGE_*` | à confirmer |
 | Renouveler `DEVICE_TOKEN_SECRET` (`openssl rand -hex 32`, 64 caractères) | Variable Railway, puis redéploiement ; les appareils redemandent un jeton | à confirmer |
 | Renouveler les mots de passe des bases (API et Keycloak) | Railway, puis redéploiement des deux services | à confirmer |
