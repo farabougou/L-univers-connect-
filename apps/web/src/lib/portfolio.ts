@@ -31,6 +31,12 @@ export function addSeverity(counts: SeverityCounts, severity: string): void {
   }
 }
 
+export function countSeverities(items: { severity: string }[]): SeverityCounts {
+  const counts = emptySeverityCounts();
+  for (const item of items) addSeverity(counts, item.severity);
+  return counts;
+}
+
 export function mergeSeverityCounts(a: SeverityCounts, b: SeverityCounts): SeverityCounts {
   return {
     critical: a.critical + b.critical,
@@ -80,6 +86,13 @@ export type SitePortfolio = {
   devices: DeviceCounts | null;
 };
 
+/**
+ * Totaux de l'accueil. Les alarmes, constats et ordres de travail ouverts sont comptés EN
+ * ENTIER, rattachés ou non à un site actif : une alarme sur un équipement archivé (par exemple
+ * avec son site), ou sans équipement (espace, point), reste ouverte et ne disparaît pas du
+ * total. Seules les lignes par site (`bySite`) sont limitées aux équipements connus des sites
+ * actifs. Le nombre d'équipements, lui, ne compte que les sites actifs.
+ */
 export type PortfolioTotals = {
   equipmentCount: number;
   alarmSeverity: SeverityCounts;
@@ -157,20 +170,13 @@ export function aggregatePortfolio(
   }
 
   const bySite = sites.map((site) => bySiteId.get(site.id)!).filter(Boolean);
-  const totals = bySite.reduce<PortfolioTotals>(
-    (acc, entry) => ({
-      equipmentCount: acc.equipmentCount + entry.equipmentCount,
-      alarmSeverity: mergeSeverityCounts(acc.alarmSeverity, entry.alarmSeverity),
-      findingSeverity: mergeSeverityCounts(acc.findingSeverity, entry.findingSeverity),
-      openWorkOrders: acc.openWorkOrders + entry.openWorkOrders,
-    }),
-    {
-      equipmentCount: 0,
-      alarmSeverity: emptySeverityCounts(),
-      findingSeverity: emptySeverityCounts(),
-      openWorkOrders: 0,
-    },
-  );
+  const totals: PortfolioTotals = {
+    equipmentCount: bySite.reduce((sum, entry) => sum + entry.equipmentCount, 0),
+    alarmSeverity: countSeverities(alarms),
+    findingSeverity: countSeverities(findings),
+    openWorkOrders: workOrders.filter((workOrder) => OPEN_WORK_ORDER_STATUSES.has(workOrder.status))
+      .length,
+  };
 
   return { bySite, totals };
 }

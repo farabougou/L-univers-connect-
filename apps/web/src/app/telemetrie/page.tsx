@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { apiFetch, requireAccessToken } from "@/lib/api";
+import { EquipmentLink } from "@/components/EquipmentLink";
 import { KpiTile } from "@/components/KpiTile";
 import { ASSET_STATUS_COLOR } from "@/components/StatusBadge";
 import {
@@ -14,6 +15,7 @@ import {
   tableScrollStyle,
 } from "@/lib/formStyles";
 import { getLocale, getTranslator } from "@/lib/i18n";
+import { indexLocations } from "@/lib/locations";
 import { summarizeTelemetry, type TelemetryEntry } from "@/lib/telemetry";
 import { unitSymbol } from "@/lib/units";
 import { formatDateTime, formatNumber } from "@/i18n/translator";
@@ -31,7 +33,12 @@ import { formatDateTime, formatNumber } from "@/i18n/translator";
  * détail complet d'un point, la fiche équipement reste la référence.
  */
 
-type FunctionalLocation = { id: string; code: string; name: string };
+type FunctionalLocation = {
+  id: string;
+  code: string;
+  name: string;
+  archived_at?: string | null;
+};
 
 export default async function TelemetryPage() {
   const accessToken = await requireAccessToken();
@@ -40,7 +47,7 @@ export default async function TelemetryPage() {
 
   const [telemetryResponse, locationsResponse] = await Promise.all([
     apiFetch("/telemetry/portfolio-latest", accessToken),
-    apiFetch("/functional-locations", accessToken),
+    apiFetch("/functional-locations?include_archived=true", accessToken),
   ]);
   const entries: TelemetryEntry[] = telemetryResponse.ok
     ? await telemetryResponse.json()
@@ -48,9 +55,7 @@ export default async function TelemetryPage() {
   const locations: FunctionalLocation[] = locationsResponse.ok
     ? await locationsResponse.json()
     : [];
-  const locationById = new Map(
-    locations.map((location) => [location.id, location]),
-  );
+  const { byId: locationById } = indexLocations(locations);
   const summary = summarizeTelemetry(entries);
 
   return (
@@ -143,16 +148,7 @@ export default async function TelemetryPage() {
                           data-label={t("mobile.passport.equipment")}
                           style={cellStyle}
                         >
-                          {location ? (
-                            <Link
-                              href={`/registre/${location.id}`}
-                              style={{ color: colors.accent }}
-                            >
-                              {location.code} — {location.name}
-                            </Link>
-                          ) : (
-                            "—"
-                          )}
+                          <EquipmentLink location={location} t={t} />
                         </td>
                         <td
                           data-label={t("web.telemetry_page.col_point")}

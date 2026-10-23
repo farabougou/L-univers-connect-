@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { EquipmentLink } from "@/components/EquipmentLink";
 import { KpiTile } from "@/components/KpiTile";
 import { SeverityBadges } from "@/components/SeverityBadges";
 import { SignalActions } from "@/components/SignalActions";
@@ -15,6 +16,7 @@ import {
   tableScrollStyle,
 } from "@/lib/formStyles";
 import { errorMessage, getLocale, getTranslator } from "@/lib/i18n";
+import { indexLocations } from "@/lib/locations";
 import {
   type Severity,
   SEVERITY_COLOR,
@@ -67,7 +69,12 @@ type FindingDetail = {
   last_seen_at: string;
 };
 
-type FunctionalLocation = { id: string; code: string; name: string };
+type FunctionalLocation = {
+  id: string;
+  code: string;
+  name: string;
+  archived_at?: string | null;
+};
 
 async function _openSignals<T extends { severity: string }>(
   accessToken: string,
@@ -99,14 +106,12 @@ export default async function AlarmsPage({
   const [alarms, findings, locationsResponse] = await Promise.all([
     _openSignals<AlarmDetail>(accessToken, "/alarms"),
     _openSignals<FindingDetail>(accessToken, "/findings"),
-    apiFetch("/functional-locations", accessToken),
+    apiFetch("/functional-locations?include_archived=true", accessToken),
   ]);
   const locations: FunctionalLocation[] = locationsResponse.ok
     ? await locationsResponse.json()
     : [];
-  const locationById = new Map(
-    locations.map((location) => [location.id, location]),
-  );
+  const { byId: locationById } = indexLocations(locations);
 
   // Même tri que le bloc « Alarmes prioritaires » du Global Command Center
   // (gravité puis ancienneté) — mais ici sans limite, cette page montre tout
@@ -243,16 +248,7 @@ export default async function AlarmsPage({
                         data-label={t("web.dashboard.equipment")}
                         style={cellStyle}
                       >
-                        {location ? (
-                          <Link
-                            href={`/registre/${location.id}`}
-                            style={{ color: colors.accent }}
-                          >
-                            {location.code} — {location.name}
-                          </Link>
-                        ) : (
-                          "—"
-                        )}
+                        <EquipmentLink location={location} t={t} />
                       </td>
                       <td
                         data-label={t("web.dashboard.col_message")}
@@ -348,16 +344,7 @@ export default async function AlarmsPage({
                         data-label={t("web.dashboard.equipment")}
                         style={cellStyle}
                       >
-                        {location ? (
-                          <Link
-                            href={`/registre/${location.id}`}
-                            style={{ color: colors.accent }}
-                          >
-                            {location.code} — {location.name}
-                          </Link>
-                        ) : (
-                          "—"
-                        )}
+                        <EquipmentLink location={location} t={t} />
                       </td>
                       <td
                         data-label={t("web.dashboard.col_message")}

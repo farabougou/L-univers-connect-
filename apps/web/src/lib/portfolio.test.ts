@@ -43,10 +43,10 @@ describe("aggregatePortfolio", () => {
     expect(entryB.alarmSeverity).toEqual({ critical: 0, major: 1, warning: 0, info: 0 });
   });
 
-  it("ignore un constat dont le sujet n'est pas un équipement connu", () => {
+  it("ne rattache à aucun site un constat dont le sujet n'est pas un équipement connu, mais le compte dans les totaux", () => {
     // Un constat porté par un espace ou un point (subject_node_id ne
     // correspond à aucun functional_location) ne casse rien : il n'est
-    // simplement pas encore rattaché à un site.
+    // pas rattaché à un site, mais il reste ouvert, donc compté.
     const { bySite, totals } = aggregatePortfolio(
       [siteA],
       [locA1],
@@ -57,7 +57,51 @@ describe("aggregatePortfolio", () => {
     );
 
     expect(bySite[0].findingSeverity).toEqual(emptySeverityCounts());
-    expect(totals.findingSeverity).toEqual(emptySeverityCounts());
+    expect(totals.findingSeverity).toEqual({ ...emptySeverityCounts(), critical: 1 });
+  });
+
+  it("compte dans les totaux une alarme sur un équipement archivé ou sans équipement, jamais dans un site", () => {
+    // L'équipement archivé (ou son site) n'est plus dans la liste active : l'alarme ouverte
+    // n'est rattachée à aucune ligne de site, mais elle ne disparaît pas des totaux.
+    const { bySite, totals } = aggregatePortfolio(
+      [siteA],
+      [locA1],
+      [
+        { functional_location_id: "loc-archive", severity: "major" },
+        { functional_location_id: null, severity: "warning" },
+        { functional_location_id: "loc-a1", severity: "critical" },
+      ],
+      [],
+      [],
+      null,
+    );
+
+    expect(bySite[0].alarmSeverity).toEqual({ ...emptySeverityCounts(), critical: 1 });
+    expect(totals.alarmSeverity).toEqual({ critical: 1, major: 1, warning: 1, info: 0 });
+  });
+
+  it("compte dans les totaux un ordre de travail ouvert sur un équipement archivé, jamais un ordre clos", () => {
+    const { bySite, totals } = aggregatePortfolio(
+      [siteA],
+      [locA1],
+      [],
+      [],
+      [
+        { functional_location_id: "loc-archive", status: "open" },
+        { functional_location_id: null, status: "in_progress" },
+        { functional_location_id: "loc-archive", status: "closed" },
+      ],
+      null,
+    );
+
+    expect(bySite[0].openWorkOrders).toBe(0);
+    expect(totals.openWorkOrders).toBe(2);
+  });
+
+  it("garde le nombre d'équipements des totaux limité aux sites actifs", () => {
+    const { totals } = aggregatePortfolio([siteA], [locA1, locA2, locB1], [], [], [], null);
+
+    expect(totals.equipmentCount).toBe(2);
   });
 
   it("ignore une gravité hors du référentiel plutôt que de planter", () => {

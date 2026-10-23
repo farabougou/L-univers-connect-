@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { EquipmentLink } from "@/components/EquipmentLink";
 import { BrandMark } from "@/components/BrandMark";
 import { HealthBar } from "@/components/HealthBar";
 import { KpiTile } from "@/components/KpiTile";
@@ -44,6 +45,7 @@ import {
   type PortfolioEquipmentStatus,
 } from "@/lib/health";
 import { getLocale, getTranslator } from "@/lib/i18n";
+import { indexLocations } from "@/lib/locations";
 import { unitSymbol } from "@/lib/units";
 import {
   type MaintenanceIntervention,
@@ -81,7 +83,13 @@ type Me = {
   roles: string[];
 };
 
-type FunctionalLocation = PortfolioLocation & { code: string; name: string };
+type FunctionalLocation = PortfolioLocation & {
+  code: string;
+  name: string;
+  archived_at?: string | null;
+};
+
+type SiteRecord = Site & { archived_at?: string | null };
 
 type SearchResult = {
   kind: "site" | "space" | "functional_location" | "tag" | "work_order";
@@ -169,8 +177,8 @@ export default async function PortfolioPage({
     recentActivityResponse,
   ] = await Promise.all([
     apiFetch("/me", accessToken),
-    apiFetch("/sites", accessToken),
-    apiFetch("/functional-locations", accessToken),
+    apiFetch("/sites?include_archived=true", accessToken),
+    apiFetch("/functional-locations?include_archived=true", accessToken),
     apiFetch("/work-orders", accessToken),
     apiFetch("/devices", accessToken),
     apiFetch("/interventions", accessToken),
@@ -184,10 +192,14 @@ export default async function PortfolioPage({
   }
 
   const me: Me = await meResponse.json();
-  const sites: Site[] = sitesResponse.ok ? await sitesResponse.json() : [];
-  const locations: FunctionalLocation[] = locationsResponse.ok
+  // Les sites et équipements archivés sont demandés pour pouvoir nommer ceux d'une alarme ou
+  // d'une intervention encore visible ; les décomptes et tableaux ne gardent que les actifs.
+  const allSites: SiteRecord[] = sitesResponse.ok ? await sitesResponse.json() : [];
+  const { active: sites, byId: siteNameById } = indexLocations(allSites);
+  const allLocations: FunctionalLocation[] = locationsResponse.ok
     ? await locationsResponse.json()
     : [];
+  const { active: locations, byId: locationById } = indexLocations(allLocations);
   const workOrders: WorkOrderDetail[] = workOrdersResponse.ok
     ? await workOrdersResponse.json()
     : [];
@@ -217,12 +229,10 @@ export default async function PortfolioPage({
 
   const siteById = new Map(sites.map((site) => [site.id, site]));
   const locationsBySite = new Map<string, FunctionalLocation[]>();
-  const locationById = new Map<string, FunctionalLocation>();
   for (const location of locations) {
     const list = locationsBySite.get(location.site_id) ?? [];
     list.push(location);
     locationsBySite.set(location.site_id, list);
-    locationById.set(location.id, location);
   }
 
   // Bloc « Alarmes prioritaires » (directive UI/dashboard, section 11) :
@@ -320,6 +330,16 @@ export default async function PortfolioPage({
     workOrders,
     devices,
   );
+  // Alarmes et constats ouverts comptés dans les totaux mais absents des lignes par site
+  // (équipement archivé ou absent) : dits plutôt que laissés en écart inexpliqué.
+  const unattributedSignals =
+    severityTotal(totals.alarmSeverity) +
+    severityTotal(totals.findingSeverity) -
+    portfolio.reduce(
+      (sum, entry) =>
+        sum + severityTotal(entry.alarmSeverity) + severityTotal(entry.findingSeverity),
+      0,
+    );
 
   const selectedSite = selectedSiteId
     ? sites.find((site) => site.id === selectedSiteId)
@@ -581,24 +601,21 @@ export default async function PortfolioPage({
                         data-label={t("web.dashboard.equipment")}
                         style={cellStyle}
                       >
-                        {location ? (
-                          <Link
-                            href={`/registre/${location.id}`}
-                            style={{ color: colors.accent }}
-                          >
-                            {location.code} — {location.name}
-                          </Link>
-                        ) : (
-                          "—"
-                        )}
+                        <EquipmentLink location={location} t={t} />
                       </td>
                       <td
                         data-label={t("web.dashboard.site_column")}
                         style={cellStyle}
                       >
-                        {location
-                          ? (siteById.get(location.site_id)?.name ?? "—")
-                          : "—"}
+                        {(() => {
+                          const site = location
+                            ? siteNameById.get(location.site_id)
+                            : undefined;
+                          if (!site) return "—";
+                          return site.archived_at
+                            ? `${site.name} · ${t("common.archived")}`
+                            : site.name;
+                        })()}
                       </td>
                       <td
                         data-label={t("web.dashboard.col_message")}
@@ -694,16 +711,7 @@ export default async function PortfolioPage({
                         fontSize: 13,
                       }}
                     >
-                      {location ? (
-                        <Link
-                          href={`/registre/${location.id}`}
-                          style={{ color: colors.accent }}
-                        >
-                          {location.code} — {location.name}
-                        </Link>
-                      ) : (
-                        "—"
-                      )}
+                      <EquipmentLink location={location} t={t} />
                       <span style={{ color: colors.textMuted }}>
                         {t("web.dashboard.maintenance_repeating_count", {
                           count: entry.count,
@@ -747,9 +755,7 @@ export default async function PortfolioPage({
                         }}
                       >
                         <span>
-                          {location
-                            ? `${location.code} — ${location.name}`
-                            : "—"}
+                          <EquipmentLink location={location} t={t} link={false} />
                         </span>
                         <span style={{ color: colors.textMuted }}>
                           {formatDateTime(
@@ -1065,6 +1071,18 @@ export default async function PortfolioPage({
               </tbody>
             </table>
           </div>
+          {unattributedSignals > 0 && (
+            <p
+              style={{
+                color: colors.textMuted,
+                fontSize: 13,
+                margin: 0,
+                padding: "12px 24px 16px",
+              }}
+            >
+              {t("web.dashboard.unattributed_signals", { count: unattributedSignals })}
+            </p>
+          )}
         </section>
       )}
 

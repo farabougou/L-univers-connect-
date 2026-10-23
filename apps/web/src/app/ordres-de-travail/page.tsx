@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { EquipmentLink } from "@/components/EquipmentLink";
 import { formatDateTime, type Translator } from "@/i18n/translator";
 import { apiFetch, requireAccessToken } from "@/lib/api";
 import {
@@ -15,6 +16,7 @@ import {
   tableScrollStyle,
 } from "@/lib/formStyles";
 import { errorMessage, getLocale, getTranslator } from "@/lib/i18n";
+import { indexLocations } from "@/lib/locations";
 import {
   recentClosures,
   repeatingFailures,
@@ -36,7 +38,12 @@ import { createWorkOrder, updateWorkOrderStatus } from "./actions";
  */
 
 type WorkOrder = MaintenanceWorkOrder;
-type FunctionalLocation = { id: string; code: string; name: string };
+type FunctionalLocation = {
+  id: string;
+  code: string;
+  name: string;
+  archived_at?: string | null;
+};
 
 const TYPES = ["corrective", "preventive", "predictive", "inspection"];
 const PRIORITIES = ["low", "medium", "high", "urgent"];
@@ -68,7 +75,7 @@ export default async function MaintenancePage({
   const [response, locationsResponse, interventionsResponse] =
     await Promise.all([
       apiFetch("/work-orders", accessToken),
-      apiFetch("/functional-locations", accessToken),
+      apiFetch("/functional-locations?include_archived=true", accessToken),
       apiFetch("/interventions", accessToken),
     ]);
   const workOrders: WorkOrder[] = response.ok ? await response.json() : [];
@@ -78,8 +85,9 @@ export default async function MaintenancePage({
   const interventions: MaintenanceIntervention[] = interventionsResponse.ok
     ? await interventionsResponse.json()
     : [];
+  const { byId: locationById } = indexLocations(locations);
   const location = (id: string | null) =>
-    locations.find((candidate) => candidate.id === id);
+    id === null ? undefined : locationById.get(id);
 
   const allRepeatingFailures = repeatingFailures(workOrders);
   const allRecentClosures = recentClosures(interventions, interventions.length);
@@ -185,16 +193,7 @@ export default async function MaintenancePage({
                         data-label={t("mobile.passport.equipment")}
                         style={cellStyle}
                       >
-                        {target ? (
-                          <Link
-                            href={`/registre/${target.id}`}
-                            style={{ color: colors.accent }}
-                          >
-                            {target.code}
-                          </Link>
-                        ) : (
-                          "—"
-                        )}
+                        <EquipmentLink location={target} t={t} codeOnly />
                       </td>
                     </tr>
                   );
@@ -273,16 +272,7 @@ export default async function MaintenancePage({
                       fontSize: 13,
                     }}
                   >
-                    {target ? (
-                      <Link
-                        href={`/registre/${target.id}`}
-                        style={{ color: colors.accent }}
-                      >
-                        {target.code} — {target.name}
-                      </Link>
-                    ) : (
-                      "—"
-                    )}
+                    <EquipmentLink location={target} t={t} />
                     <span style={{ color: colors.textMuted }}>
                       {t("web.dashboard.maintenance_repeating_count", {
                         count: entry.count,
@@ -327,7 +317,7 @@ export default async function MaintenancePage({
                       }}
                     >
                       <span>
-                        {target ? `${target.code} — ${target.name}` : "—"}
+                        <EquipmentLink location={target} t={t} link={false} />
                       </span>
                       <span style={{ color: colors.textMuted }}>
                         {formatDateTime(

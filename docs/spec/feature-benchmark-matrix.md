@@ -2226,6 +2226,26 @@ Web DONE, Mobile N/A (aucune action d'archivage sur mobile), Edge N/A, Tests DON
 dont l'isolation entre clients ; 3 régressions volontaires du code détectées), Documentation DONE
 (ce document, glossaire : « Archivé »).
 
+### Console web : équipements archivés nommés, alarmes toujours comptées (23/10/2026)
+
+Suite directe de l'archivage en cascade, relevée en la vérifiant à l'écran : un équipement archivé
+(avec son site, par exemple) disparaît des listes par défaut, alors que les alarmes, constats,
+ordres de travail, mesures et consommations qui le concernent restent ouverts. **REFACTOR** de
+l'affichage, sans nouvelle route.
+
+| Ce qui change | Détail |
+| --- | --- |
+| Nom de l'équipement | Les écrans retrouvaient le nom dans la liste active seulement : une alarme sur un équipement archivé affichait « — ». Ils demandent maintenant `?include_archived=true` et nomment l'équipement, avec la mention « archivé » en toutes lettres (`EquipmentLink`, `indexLocations`, 4 tests). Concerne l'accueil (alarmes prioritaires, colonne Site, clôtures), Alarmes et constats, Télémétrie, Énergie et Ordres de travail. Sans équipement connu du tout, le tiret reste : le système n'invente rien |
+| Totaux de l'accueil | Défaut préexistant : `aggregatePortfolio` ne comptait une alarme, un constat ou un ordre de travail que s'il était rattaché à un équipement d'un site actif. Une alarme sur un équipement archivé, ou sans équipement (espace, point), manquait donc dans les tuiles de l'accueil alors que l'écran Alarmes et constats la comptait : une alarme ouverte pouvait être sous-comptée. Les totaux comptent désormais tout ce qui est ouvert (4 tests ajoutés ou réécrits, dont 3 qui échouaient avant la correction) ; les lignes par site restent limitées aux équipements connus des sites actifs, et le nombre d'équipements ne compte que les sites actifs |
+| Écart expliqué | Quand le total dépasse la somme des lignes par site, une phrase le dit sous le tableau (« N alarmes ou constats ouverts ne sont rattachés à aucun site actif… ») au lieu de laisser un écart inexpliqué |
+| Textes | `common.archived`, `web.dashboard.unattributed_signals` (formes « un » et « autre ») en français et en anglais |
+| Décision laissée ouverte (DEFER) | Une alarme ouverte n'est jamais masquée parce que son équipement est archivé : elle demande une action tant qu'elle n'est pas close. Faut-il en plus clore automatiquement les alarmes d'un équipement archivé, et exclure ses mesures des vues de portefeuille (Télémétrie, Énergie) ? Décision produit à prendre avec Mohamed ; aujourd'hui ces mesures restent listées et nommées « archivé » |
+
+**Grille produit (ADR 014)** : Backend N/A, API N/A, Web DONE, Mobile N/A, Edge N/A, Tests DONE
+(web 256), Documentation DONE. Vérifié à l'écran sur l'accueil, Alarmes et constats, Télémétrie et
+Ordres de travail avec des données inventées (alarme, mesure et ordre de travail sur des
+équipements archivés).
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente

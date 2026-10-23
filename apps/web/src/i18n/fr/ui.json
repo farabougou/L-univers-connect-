@@ -56,6 +56,7 @@
   },
   "common": {
     "app_name": "Enoryx",
+    "archived": "archivé",
     "back": "Retour",
     "home": "Accueil",
     "loading": "Chargement…",
@@ -592,7 +593,11 @@
       "site_equipment_title": "Équipements — {name}",
       "spatial_link": "Plans et BIM",
       "status_column": "État",
-      "telemetry_link": "Télémétrie"
+      "telemetry_link": "Télémétrie",
+      "unattributed_signals": {
+        "one": "{count} alarme ou constat ouvert n’est rattaché à aucun site actif (équipement archivé ou absent). Il figure dans les totaux, pas dans ce tableau.",
+        "other": "{count} alarmes ou constats ouverts ne sont rattachés à aucun site actif (équipement archivé ou absent). Ils figurent dans les totaux, pas dans ce tableau."
+      }
     },
     "documents_page": {
       "category": {

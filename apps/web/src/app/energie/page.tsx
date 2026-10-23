@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { EquipmentLink } from "@/components/EquipmentLink";
 import { apiFetch, requireAccessToken } from "@/lib/api";
 import {
   cardStyle,
@@ -16,6 +17,7 @@ import {
   type PortfolioEnergyMeter,
 } from "@/lib/energy";
 import { getLocale, getTranslator } from "@/lib/i18n";
+import { indexLocations } from "@/lib/locations";
 import { unitSymbol } from "@/lib/units";
 import { formatDate, formatNumber } from "@/i18n/translator";
 
@@ -30,7 +32,12 @@ import { formatDate, formatNumber } from "@/i18n/translator";
  * construit pour le tableau de bord (app/energy/aggregation.py).
  */
 
-type FunctionalLocation = { id: string; code: string; name: string };
+type FunctionalLocation = {
+  id: string;
+  code: string;
+  name: string;
+  archived_at?: string | null;
+};
 
 export default async function EnergyPage() {
   const accessToken = await requireAccessToken();
@@ -39,7 +46,7 @@ export default async function EnergyPage() {
 
   const [energyResponse, locationsResponse] = await Promise.all([
     apiFetch("/energy/portfolio-summary", accessToken),
-    apiFetch("/functional-locations", accessToken),
+    apiFetch("/functional-locations?include_archived=true", accessToken),
   ]);
   const energySummary: {
     reference_date: string;
@@ -48,9 +55,7 @@ export default async function EnergyPage() {
   const locations: FunctionalLocation[] = locationsResponse.ok
     ? await locationsResponse.json()
     : [];
-  const locationById = new Map(
-    locations.map((location) => [location.id, location]),
-  );
+  const { byId: locationById } = indexLocations(locations);
 
   const meters = energySummary?.meters ?? [];
   const byUnit = summarizeEnergyByUnit(meters);
@@ -162,16 +167,7 @@ export default async function EnergyPage() {
                           data-label={t("mobile.passport.equipment")}
                           style={cellStyle}
                         >
-                          {location ? (
-                            <Link
-                              href={`/registre/${location.id}`}
-                              style={{ color: colors.accent }}
-                            >
-                              {location.code} — {location.name}
-                            </Link>
-                          ) : (
-                            "—"
-                          )}
+                          <EquipmentLink location={location} t={t} />
                         </td>
                         <td
                           data-label={t("web.energy_page.col_unit")}

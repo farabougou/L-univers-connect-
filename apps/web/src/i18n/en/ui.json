@@ -56,6 +56,7 @@
   },
   "common": {
     "app_name": "Enoryx",
+    "archived": "archived",
     "back": "Back",
     "home": "Home",
     "loading": "Loading…",
@@ -592,7 +593,11 @@
       "site_equipment_title": "Equipment — {name}",
       "spatial_link": "Plans and BIM",
       "status_column": "Status",
-      "telemetry_link": "Telemetry"
+      "telemetry_link": "Telemetry",
+      "unattributed_signals": {
+        "one": "{count} open alarm or finding is not linked to any active site (archived or missing equipment). It is included in the totals, not in this table.",
+        "other": "{count} open alarms or findings are not linked to any active site (archived or missing equipment). They are included in the totals, not in this table."
+      }
     },
     "documents_page": {
       "category": {
