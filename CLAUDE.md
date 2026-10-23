@@ -38,8 +38,10 @@ applis mobiles. Il est sur TikTok sous **@kofamali** (55 000 abonnés).
 ## Vidéos (HyperFrames)
 - Système maison : `videos/_studio` (studio.js), skills `studio-quality`, `studio-motion-system` et `studio-polish-pass`.
 - Nouveau projet : `hyperframes@0.8.177`.
-- Rendu en 60 i/s, son à -14 LUFS avec une crête sous -1 dB, formats 4:5 et 1:1 avec
-  `videos/_studio/livraison.py`.
+- **Toujours livrer deux formats : 9:16 (vertical) et 16:9 (horizontal)**, chacun avec sa propre mise en page
+  (même `gen.py`, table de formats ; le 16:9 dans `paysage/`, `assets` en lien vers `../assets`).
+- Rendu en 60 i/s, son à -14 LUFS avec une crête sous -1 dB. Formats 4:5 et 1:1 seulement s'il les demande
+  (`videos/_studio/livraison.py`).
 - Projets en cours :
   - `videos/motion-reel` : showreel de 33 s ;
   - `videos/mams-avatar` : présentation de l'avatar ;
