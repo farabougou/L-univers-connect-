@@ -2162,12 +2162,28 @@ une présentation plus lisible d'un coup d'œil.
 | Barre de santé des actifs | Une barre segmentée sous les tuiles, couleurs de l'état universel (`ASSET_STATUS_COLOR`), légende avec pastille et nombre, description complète pour les lecteurs d'écran, lien « Voir le détail par état » vers le détail existant. Seuls les équipements dont l'état est connu sont comptés : aucun score global inventé |
 | Disposition | Énergie et Santé des actifs côte à côte sur ordinateur, empilées sur téléphone ; tuiles sur deux colonnes sur téléphone. Les pastilles ne se coupent plus sur deux lignes |
 | Cohérence des décomptes | Défaut préexistant révélé par la capture du staging : les tuiles comptaient 1 équipement (sites actifs seulement) alors que la santé des actifs en comptait 4, car trois équipements sont restés sur des sites archivés (archiver un site n'archive pas ses équipements). La santé ne couvre plus que les équipements des sites actifs (`statusesOfLocations`, 3 tests) ; le total du détail par état suit la même base |
+| En-tête et activité récente | L'en-tête affichait l'identifiant technique de la personne (36 caractères) : `GET /me` renvoie `username` (revendication `preferred_username`, null si absente, jamais inventé ; évolution additive de l'API, 5 tests). L'activité récente affichait « Intervention — — » sans équipement ni titre : seuls les éléments connus s'affichent (`activityDetailParts`, 5 tests) |
 | Textes | Trois clés ajoutées en français et en anglais (`health_bar_item`, `health_bar_label`, `health_see_detail`) ; liste des états formée avec `Intl.ListFormat` dans la langue de la personne |
 
 **Grille produit (ADR 014)** : Backend N/A, API N/A, Web DONE, Mobile N/A, Edge N/A, Tests DONE
 (`apps/web/src/lib/situation.test.ts`, 7 tests ; catalogues ; 224 tests web, 155 mobile),
 Documentation DONE. Vérifié visuellement sur ordinateur (1280 px) et sur téléphone (390 px), en
 français et en anglais, avec des données de démonstration inventées.
+
+### Console web : écran Télémétrie (23/10/2026)
+
+Écran du pilote SDM120 (c'est là que la puissance et l'énergie du compteur se vérifient). **REFACTOR**
+sans nouvelle route : mêmes données (`GET /telemetry/portfolio-latest`), lecture plus rapide.
+
+| Ce qui change | Détail |
+| --- | --- |
+| Résumé en tuiles | Points, à jour, données anciennes, jamais mesurés (`summarizeTelemetry`, 5 tests). Un point jamais mesuré n'est ni « à jour » ni « ancien » ; un point dont la fraîcheur est inconnue n'est classé « à jour » que sur preuve. La barre d'une tuile ne prend une couleur d'état que s'il y a quelque chose à signaler |
+| Symboles d'unité | La valeur s'affichait avec le code UCUM (« 41,2 Cel », « kW.h »). `unitSymbol` donne le symbole d'usage (°C, kWh) et garde le code d'une unité inconnue, jamais un symbole inventé. Un test compare la table à celle de l'API (`app/point_vocabulary.py`) pour qu'elles ne dérivent pas ; mutation détectée. Appliqué à l'écran Télémétrie seulement : le bloc Énergie de l'accueil, la page Énergie et la fiche équipement affichent encore le code, à migrer (DEFER) |
+| Valeur | En gras, plus grande |
+| Glossaire | « À jour » et « Donnée ancienne » ajoutés (`docs/product/glossaire.md`) avant leur apparition à l'écran, comme l'exige la directive de langage |
+
+**Grille produit (ADR 014)** : Backend N/A (le champ `username` de `/me` mis à part), API additive,
+Web DONE, Mobile N/A, Edge N/A, Tests DONE (web 241, mobile 155, backend 1461), Documentation DONE.
 
 ## Mise à jour de ce document
 

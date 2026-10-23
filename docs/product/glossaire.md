@@ -77,6 +77,8 @@
 | Mesure | Measurement | `measurement` (`origin = measured`) | Valeur d'un point à un instant, acquise automatiquement. | Donnée brute | — |
 | Relevé manuel | Manual reading | `origin = manual` | Valeur saisie par une personne. | — | — |
 | Valeur estimée / calculée / simulée | Estimated / derived / simulated value | `origin` | Valeur qui n'est pas une mesure ; toujours affichée comme telle. | Présenter comme une mesure | — |
+| À jour | Up to date | `stale = false` | Point dont la dernière mesure est arrivée dans le délai attendu de son intervalle. Ne dit rien de l'état de l'équipement ni de la justesse de la valeur. | Normal, OK, en ligne (états distincts) | — |
+| Donnée ancienne | Stale data | `stale = true` | Point dont la dernière mesure est plus ancienne que ne le permet son intervalle attendu. La dernière valeur connue reste affichée, avec sa date. | Périmée, morte, hors service | — |
 | Qualité de la donnée | Data quality | `quality_flags` | Indicateurs attachés à une valeur (horloge suspecte, arrivée tardive, hors plage, point non validé). | — | — |
 | Score de confiance | Trust score | `trust` | Note de 0 à 100 de la fiabilité récente d'un point. | Fiabilité (sans chiffre) | — |
 | Unité | Unit | code UCUM | Unité de la valeur de référence, toujours liée à une grandeur physique. | Texte libre | UCUM |

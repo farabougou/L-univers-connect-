@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { apiFetch, requireAccessToken } from "@/lib/api";
+import { KpiTile } from "@/components/KpiTile";
 import { ASSET_STATUS_COLOR } from "@/components/StatusBadge";
 import {
   badgeStyle,
@@ -13,6 +14,8 @@ import {
   tableScrollStyle,
 } from "@/lib/formStyles";
 import { getLocale, getTranslator } from "@/lib/i18n";
+import { summarizeTelemetry, type TelemetryEntry } from "@/lib/telemetry";
+import { unitSymbol } from "@/lib/units";
 import { formatDateTime, formatNumber } from "@/i18n/translator";
 
 /**
@@ -27,18 +30,6 @@ import { formatDateTime, formatNumber } from "@/i18n/translator";
  * fraîcheur simple (périmé ou non selon l'intervalle attendu) — pour le
  * détail complet d'un point, la fiche équipement reste la référence.
  */
-
-type TelemetryEntry = {
-  point_id: string;
-  functional_location_id: string | null;
-  code: string;
-  name: string;
-  point_class: string | null;
-  unit: string | null;
-  value: number | null;
-  measured_at: string | null;
-  stale: boolean | null;
-};
 
 type FunctionalLocation = { id: string; code: string; name: string };
 
@@ -60,6 +51,7 @@ export default async function TelemetryPage() {
   const locationById = new Map(
     locations.map((location) => [location.id, location]),
   );
+  const summary = summarizeTelemetry(entries);
 
   return (
     <main style={pageContainerStyle}>
@@ -77,103 +69,140 @@ export default async function TelemetryPage() {
           </p>
         </section>
       ) : (
-        <section style={{ ...cardStyle, padding: 0, overflow: "hidden" }}>
-          <div style={{ padding: "20px 24px 0" }}>
-            <h2 style={sectionTitleStyle}>
-              {t("web.telemetry_page.points_title")}
-            </h2>
+        <>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+              gap: 16,
+              marginBottom: 24,
+            }}
+          >
+            <KpiTile
+              label={t("web.telemetry_page.points_title")}
+              value={String(summary.total)}
+              accent={colors.accent}
+            />
+            <KpiTile
+              label={t("web.telemetry_page.kpi_current")}
+              value={String(summary.current)}
+              accent={colors.accent}
+            />
+            <KpiTile
+              label={t("web.telemetry_page.stale")}
+              value={String(summary.stale)}
+              accent={summary.stale > 0 ? ASSET_STATUS_COLOR.stale : colors.accent}
+            />
+            <KpiTile
+              label={t("web.telemetry_page.never_measured")}
+              value={String(summary.neverMeasured)}
+              accent={
+                summary.neverMeasured > 0 ? ASSET_STATUS_COLOR.unknown : colors.accent
+              }
+            />
           </div>
-          <div style={tableScrollStyle}>
-            <table
-              className="responsive-table"
-              style={{ width: "100%", borderCollapse: "collapse" }}
-            >
-              <thead>
-                <tr>
-                  <th style={headerCellStyle}>
-                    {t("mobile.passport.equipment")}
-                  </th>
-                  <th style={headerCellStyle}>
-                    {t("web.telemetry_page.col_point")}
-                  </th>
-                  <th style={headerCellStyle}>
-                    {t("web.telemetry_page.col_class")}
-                  </th>
-                  <th style={headerCellStyle}>
-                    {t("web.telemetry_page.col_value")}
-                  </th>
-                  <th style={headerCellStyle}>
-                    {t("web.dashboard.col_since")}
-                  </th>
-                  <th style={headerCellStyle} />
-                </tr>
-              </thead>
-              <tbody>
-                {entries.map((entry) => {
-                  const location = entry.functional_location_id
-                    ? locationById.get(entry.functional_location_id)
-                    : undefined;
-                  return (
-                    <tr key={entry.point_id}>
-                      <td
-                        data-label={t("mobile.passport.equipment")}
-                        style={cellStyle}
-                      >
-                        {location ? (
-                          <Link
-                            href={`/registre/${location.id}`}
-                            style={{ color: colors.accent }}
-                          >
-                            {location.code} — {location.name}
-                          </Link>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td
-                        data-label={t("web.telemetry_page.col_point")}
-                        style={cellStyle}
-                      >
-                        {entry.code} — {entry.name}
-                      </td>
-                      <td
-                        data-label={t("web.telemetry_page.col_class")}
-                        style={cellStyle}
-                      >
-                        {entry.point_class
-                          ? t(`point_class.${entry.point_class}`)
-                          : "—"}
-                      </td>
-                      <td
-                        data-label={t("web.telemetry_page.col_value")}
-                        style={cellStyle}
-                      >
-                        {entry.value === null
-                          ? t("web.telemetry_page.no_value")
-                          : `${formatNumber(locale, entry.value)}${entry.unit ? ` ${entry.unit}` : ""}`}
-                      </td>
-                      <td
-                        data-label={t("web.dashboard.col_since")}
-                        style={cellStyle}
-                      >
-                        {entry.measured_at
-                          ? formatDateTime(locale, entry.measured_at)
-                          : t("web.telemetry_page.never_measured")}
-                      </td>
-                      <td style={cellStyle}>
-                        {entry.stale && (
-                          <span style={badgeStyle(ASSET_STATUS_COLOR.stale)}>
-                            {t("web.telemetry_page.stale")}
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </section>
+          <section style={{ ...cardStyle, padding: 0, overflow: "hidden" }}>
+            <div style={{ padding: "20px 24px 0" }}>
+              <h2 style={sectionTitleStyle}>
+                {t("web.telemetry_page.points_title")}
+              </h2>
+            </div>
+            <div style={tableScrollStyle}>
+              <table
+                className="responsive-table"
+                style={{ width: "100%", borderCollapse: "collapse" }}
+              >
+                <thead>
+                  <tr>
+                    <th style={headerCellStyle}>
+                      {t("mobile.passport.equipment")}
+                    </th>
+                    <th style={headerCellStyle}>
+                      {t("web.telemetry_page.col_point")}
+                    </th>
+                    <th style={headerCellStyle}>
+                      {t("web.telemetry_page.col_class")}
+                    </th>
+                    <th style={headerCellStyle}>
+                      {t("web.telemetry_page.col_value")}
+                    </th>
+                    <th style={headerCellStyle}>
+                      {t("web.dashboard.col_since")}
+                    </th>
+                    <th style={headerCellStyle} />
+                  </tr>
+                </thead>
+                <tbody>
+                  {entries.map((entry) => {
+                    const location = entry.functional_location_id
+                      ? locationById.get(entry.functional_location_id)
+                      : undefined;
+                    return (
+                      <tr key={entry.point_id}>
+                        <td
+                          data-label={t("mobile.passport.equipment")}
+                          style={cellStyle}
+                        >
+                          {location ? (
+                            <Link
+                              href={`/registre/${location.id}`}
+                              style={{ color: colors.accent }}
+                            >
+                              {location.code} — {location.name}
+                            </Link>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                        <td
+                          data-label={t("web.telemetry_page.col_point")}
+                          style={cellStyle}
+                        >
+                          {entry.code} — {entry.name}
+                        </td>
+                        <td
+                          data-label={t("web.telemetry_page.col_class")}
+                          style={cellStyle}
+                        >
+                          {entry.point_class
+                            ? t(`point_class.${entry.point_class}`)
+                            : "—"}
+                        </td>
+                        <td
+                          data-label={t("web.telemetry_page.col_value")}
+                          style={{
+                            ...cellStyle,
+                            fontWeight: 600,
+                            fontSize: 15,
+                          }}
+                        >
+                          {entry.value === null
+                            ? t("web.telemetry_page.no_value")
+                            : `${formatNumber(locale, entry.value)}${entry.unit ? ` ${unitSymbol(entry.unit)}` : ""}`}
+                        </td>
+                        <td
+                          data-label={t("web.dashboard.col_since")}
+                          style={cellStyle}
+                        >
+                          {entry.measured_at
+                            ? formatDateTime(locale, entry.measured_at)
+                            : t("web.telemetry_page.never_measured")}
+                        </td>
+                        <td style={cellStyle}>
+                          {entry.stale && (
+                            <span style={badgeStyle(ASSET_STATUS_COLOR.stale)}>
+                              {t("web.telemetry_page.stale")}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </>
       )}
     </main>
   );

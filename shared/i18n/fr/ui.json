@@ -1029,6 +1029,7 @@
       "col_class": "Classe",
       "col_point": "Point",
       "col_value": "Valeur",
+      "kpi_current": "À jour",
       "never_measured": "Jamais mesuré",
       "no_points": "Aucun point validé sur ce portefeuille.",
       "no_value": "Indisponible",

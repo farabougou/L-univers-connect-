@@ -1029,6 +1029,7 @@
       "col_class": "Class",
       "col_point": "Point",
       "col_value": "Value",
+      "kpi_current": "Up to date",
       "never_measured": "Never measured",
       "no_points": "No validated point on this portfolio.",
       "no_value": "Unavailable",
