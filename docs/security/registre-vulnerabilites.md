@@ -2,7 +2,8 @@
 
 Établi le 21/10/2026 à partir de `npm audit` (web, mobile) et `pip-audit` (API), sur le
 commit qui porte ce fichier. À refaire à chaque jalon : les chiffres changent avec les bases
-d'avis, pas seulement avec notre code.
+d'avis, pas seulement avec notre code. Commande : `sh infra/audit-dependances.sh` (API et web en
+production doivent rester à zéro ; le mobile est affiché et se compare à ce registre).
 
 Lecture : « gravité » est celle de l'outil d'audit. « Exposition » dit où le code vulnérable
 s'exécute réellement : sur le serveur ou l'appareil d'un client (production), ou
