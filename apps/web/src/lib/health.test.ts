@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { distributeByAssetStatus, type PortfolioEquipmentStatus } from "./health";
+import {
+  distributeByAssetStatus,
+  statusesOfLocations,
+  type PortfolioEquipmentStatus,
+} from "./health";
 
 function status(overrides: Partial<PortfolioEquipmentStatus>): PortfolioEquipmentStatus {
   return {
@@ -74,5 +78,38 @@ describe("distributeByAssetStatus", () => {
     ]);
     expect(distribution.attention).toEqual([]);
     expect(distribution.maintenance).toEqual([]);
+  });
+});
+
+describe("statusesOfLocations", () => {
+  it("ne garde que les équipements dont l'identifiant est dans l'ensemble donné", () => {
+    const statuses = [
+      status({ functional_location_id: "a" }),
+      status({ functional_location_id: "b" }),
+      status({ functional_location_id: "c" }),
+    ];
+
+    const kept = statusesOfLocations(statuses, new Set(["a", "c"]));
+
+    expect(kept.map((entry) => entry.functional_location_id)).toEqual(["a", "c"]);
+  });
+
+  it("renvoie une liste vide quand aucun équipement n'est visible", () => {
+    expect(statusesOfLocations([status({ functional_location_id: "a" })], new Set())).toEqual([]);
+  });
+
+  it("garde la santé cohérente avec le nombre d'équipements affichés (équipements d'un site archivé exclus)", () => {
+    const statuses = [
+      status({ functional_location_id: "sur-site-actif" }),
+      status({ functional_location_id: "sur-site-archive-1", reason: "no_status_point" }),
+      status({ functional_location_id: "sur-site-archive-2", reason: "no_status_point" }),
+    ];
+
+    const distribution = distributeByAssetStatus(
+      statusesOfLocations(statuses, new Set(["sur-site-actif"])),
+    );
+
+    expect(distribution.unknown).toEqual([]);
+    expect(distribution.normal).toEqual(["sur-site-actif"]);
   });
 });

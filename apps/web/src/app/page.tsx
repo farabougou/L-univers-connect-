@@ -39,6 +39,7 @@ import {
 import {
   ASSET_STATUS_ORDER,
   distributeByAssetStatus,
+  statusesOfLocations,
   type PortfolioEquipmentStatus,
 } from "@/lib/health";
 import { getLocale, getTranslator } from "@/lib/i18n";
@@ -260,7 +261,19 @@ export default async function PortfolioPage({
   // jamais un appel par équipement depuis le navigateur (directive,
   // section 29). Ne déclenche aucune alerte : lecture pure, comme le
   // passeport équipement.
-  const healthDistribution = distributeByAssetStatus(equipmentStatuses);
+  // Seuls les équipements des sites actifs, comme le décompte des tuiles.
+  const visibleLocationIds = new Set(
+    locations
+      .filter((location) => siteById.has(location.site_id))
+      .map((location) => location.id),
+  );
+  const healthDistribution = distributeByAssetStatus(
+    statusesOfLocations(equipmentStatuses, visibleLocationIds),
+  );
+  const healthTotal = ASSET_STATUS_ORDER.reduce(
+    (sum, assetStatus) => sum + healthDistribution[assetStatus].length,
+    0,
+  );
   const healthBarSegments = healthSegments(healthDistribution).map(
     (segment) => {
       const label = t(`asset_status.${segment.status}`);
@@ -832,7 +845,7 @@ export default async function PortfolioPage({
 
         <section id="sante" style={{ ...cardStyle }}>
           <h2 style={sectionTitleStyle}>{t("web.dashboard.health_title")}</h2>
-          {locations.length === 0 ? (
+          {healthTotal === 0 ? (
             <p style={{ color: colors.textMuted }}>
               {t("web.dashboard.no_equipment")}
             </p>
@@ -840,8 +853,8 @@ export default async function PortfolioPage({
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               {ASSET_STATUS_ORDER.map((assetStatus) => {
                 const ids = healthDistribution[assetStatus];
-                const percent = locations.length
-                  ? (ids.length / locations.length) * 100
+                const percent = healthTotal
+                  ? (ids.length / healthTotal) * 100
                   : 0;
                 return (
                   <details key={assetStatus}>

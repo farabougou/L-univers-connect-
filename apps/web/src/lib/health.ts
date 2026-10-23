@@ -36,6 +36,21 @@ function emptyDistribution(): AssetStatusDistribution {
 }
 
 /**
+ * Ne garde que les équipements affichés ailleurs sur la page. L'API renvoie
+ * l'état de tout équipement non archivé, y compris ceux qui restent sur un
+ * site archivé (archiver un site n'archive pas ses équipements) ; or le
+ * décompte des équipements de l'accueil, le tableau des sites et les alarmes
+ * ne couvrent que les sites actifs. Sans ce filtre, la page affichait « 1
+ * équipement » à côté de « 4 inconnus ».
+ */
+export function statusesOfLocations(
+  statuses: PortfolioEquipmentStatus[],
+  locationIds: ReadonlySet<string>,
+): PortfolioEquipmentStatus[] {
+  return statuses.filter((status) => locationIds.has(status.functional_location_id));
+}
+
+/**
  * Répartit les identifiants d'équipement par catégorie de l'état universel,
  * via `equipmentStatusToAssetStatus` (même règle que la cellule de statut de
  * la vue Portfolio) — jamais une seconde logique de classement.
