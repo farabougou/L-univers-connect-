@@ -162,7 +162,7 @@ Retour à la normale : oui. La latence ne monte pas de 1 à 4 clients : la capac
 atteinte, ce qui n'est pas une mesure de saturation. **Aucun refus 429 sur 539 requêtes en
 environ 40 secondes, alors que le quota annoncé est de 120 par minute** : c'est ce qui a révélé
 que le quota par défaut ne couvre pas les routes des sous-routeurs (voir `infra/RAILWAY_STAGING.md`,
-correction du 22/10/2026). Les mesures ci-dessus portent donc sur l'API sans plafond de débit.
+correction du 22/10/2026). Les mesures ci-dessus portent donc sur l'API sans plafond de débit (corrigé le 23/10/2026 ; le flux `/sync/*` a depuis son propre plafond de 600 par minute, que cette mesure n'atteignait pas non plus).
 
 Limites : une seule route, un compte de démonstration (peu de données dans son client), latence
 mesurée depuis le bac à sable d'exécution, pas depuis Bamako.

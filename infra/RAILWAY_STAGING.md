@@ -180,8 +180,23 @@ simultanées, et toutes ces routes exigent un jeton valide. Ce qui manque : un p
 par personne ou par appareil sur le reste de l'API. Écart documenté par
 `tests/test_rate_limit_coverage.py` (témoin `/me` qui passe, trois routes de sous-routeurs en
 `xfail` strict : la CI échouera le jour où le mécanisme sera corrigé, pour forcer à retirer la
-marque). **Correction non faite : elle change le comportement de toute l'API et demande un choix
-de politique (voir la décision proposée à Mohamed).**
+marque).
+
+**Corrigé le 23/10/2026** (`app/rate_limit.py`) : `find_route_handler` retrouve la fonction de
+chaque route par l'aide publique de FastAPI (`iter_route_contexts`), et
+`DefaultRateLimitMiddleware` l'utilise à la place de la recherche de `slowapi`. Le quota par
+défaut garde sa politique d'origine : 120 requêtes par minute, par personne ou appareil, et
+**par route**. `tests/test_rate_limit_coverage.py` parcourt les 177 routes de l'application
+(aucune ne peut redevenir exemptée en silence lors d'une mise à jour) et vérifie le refus à la
+121e requête sur plusieurs familles de routes ; le `xfail` a été retiré. Exception voulue : le
+flux `/sync/*` du mobile a son propre plafond de **600 par minute** (`SYNC_RATE_LIMIT`), car le
+premier parcours pagine en masse (500 lignes au plus par page) et l'application ne gère pas le
+refus 429 : le quota général l'aurait interrompu à 24 000 lignes. Aucun rafraîchissement
+automatique n'existe dans le web ni le mobile, et les démons Edge appellent chaque route 1 à 3
+fois par minute : l'usage normal reste très en dessous.
+
+**Ce que cette correction ne règle pas :** la limite de 10 par minute de `POST /devices/auth`
+n'est toujours pas observable sur le staging (voir plus bas), cause à relever dans Railway.
 
 ### Capacité et plusieurs processus (audit V5 du 20/10/2026)
 

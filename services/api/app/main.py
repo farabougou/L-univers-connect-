@@ -4,7 +4,6 @@ from typing import Annotated, Any
 from fastapi import Depends, FastAPI, Response
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.gzip import GZipMiddleware
-from slowapi.middleware import SlowAPIMiddleware
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
@@ -17,7 +16,7 @@ from app.deps import get_tenant_connection
 from app.errors import ApiError, install_error_handlers
 from app.metrics import render_latest
 from app.observability import RequestLoggingMiddleware, configure_logging
-from app.rate_limit import install_rate_limiting, limiter
+from app.rate_limit import DefaultRateLimitMiddleware, install_rate_limiting, limiter
 from app.routers.analytics import router as analytics_router
 from app.routers.assets import router as asset_registry_router
 from app.routers.bacnet_discovery import router as bacnet_discovery_router
@@ -61,7 +60,7 @@ install_rate_limiting(app)
 # journalisation (BaseHTTPMiddleware) transforme toute réponse en flux, et la
 # compression s'appliquerait à des réponses de quelques octets.
 app.add_middleware(GZipMiddleware, minimum_size=1024)
-app.add_middleware(SlowAPIMiddleware)
+app.add_middleware(DefaultRateLimitMiddleware)
 app.add_middleware(
     AdmissionControlMiddleware,
     max_in_flight=effective_max_in_flight(settings),

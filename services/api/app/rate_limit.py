@@ -22,11 +22,17 @@ déclaration, toutes les requêtes anonymes partagent l'adresse du proxy.
 """
 
 import ipaddress
+from collections.abc import Callable
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
+from fastapi.routing import iter_route_contexts
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware, _should_exempt, sync_check_limits
 from slowapi.util import get_remote_address
+from starlette.middleware.base import RequestResponseEndpoint
+from starlette.routing import Match
+from starlette.types import Scope
 
 from app.auth import decode_device_token, decode_token_with_cached_keys
 from app.config import settings
@@ -99,3 +105,46 @@ async def _rate_limit_handler(request: Request, exc: RateLimitExceeded):
 def install_rate_limiting(app: FastAPI) -> None:
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_handler)
+
+
+def find_route_handler(app: FastAPI, scope: Scope) -> Callable | None:
+    """Fonction de la route qui traitera la requête, ou None si aucune ne correspond.
+
+    Pourquoi ne pas laisser `slowapi` le faire : depuis FastAPI 0.141, les routes d'un
+    sous-routeur sont rangées dans des objets internes sans attribut `endpoint`. La recherche
+    de `slowapi` ne les voit plus et, faute de fonction, exempte la requête en silence : le
+    quota par défaut ne couvrait que `/me` et les routes décorées (constat du 22/10/2026 sur le
+    staging). `iter_route_contexts` est l'aide publique de FastAPI pour parcourir toutes les
+    routes avec leur chemin complet. Première correspondance gagnante, comme le routage lui-même.
+    tests/test_rate_limit_coverage.py vérifie que chaque route de l'application est retrouvée."""
+    for context in iter_route_contexts(app.routes):
+        if context.endpoint is None:
+            continue
+        match, _ = context.matches(scope)
+        if match == Match.FULL:
+            return context.endpoint
+    return None
+
+
+class DefaultRateLimitMiddleware(SlowAPIMiddleware):
+    """Même contrôle que `SlowAPIMiddleware` (limites par défaut, routes exemptées, routes
+    décorées), avec `find_route_handler` à la place de sa recherche de route."""
+
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        app = request.app
+        limiter = app.state.limiter
+        if not limiter.enabled:
+            return await call_next(request)
+
+        handler = find_route_handler(app, request.scope)
+        if _should_exempt(limiter, handler):
+            return await call_next(request)
+
+        error_response, should_inject_headers = sync_check_limits(limiter, request, handler, app)
+        if error_response is not None:
+            return error_response
+
+        response = await call_next(request)
+        if should_inject_headers:
+            response = limiter._inject_headers(response, request.state.view_rate_limit)
+        return response

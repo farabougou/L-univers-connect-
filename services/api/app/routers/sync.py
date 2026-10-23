@@ -9,13 +9,14 @@ import uuid
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel
 from sqlalchemy.engine import Connection
 
 from app.auth import require_any_role
 from app.deps import get_tenant_connection
 from app.errors import api_error
+from app.rate_limit import limiter, rate_limit_key
 from app.sync_feed import (
     DEFAULT_LIMIT,
     MAX_LIMIT,
@@ -30,6 +31,12 @@ from app.sync_feed import (
 )
 
 router = APIRouter()
+
+# Plafond propre au flux : un premier parcours pagine en masse (500 lignes au plus par page ;
+# 100 000 interventions = 200 pages) et le client mobile ne sait pas attendre un refus 429. Le
+# quota général de 120 par minute l'interromprait à 24 000 lignes. 600 par minute et par
+# personne laissent 300 000 lignes par minute et bornent toujours l'abus.
+SYNC_RATE_LIMIT = "600/minute"
 
 _FIELD_ROLES = ("technicien", "responsable_exploitation", "admin_tenant")
 
@@ -98,7 +105,9 @@ def _decode(after: str | None, since: datetime | None = None):
 
 
 @router.get("/sync/interventions", response_model=InterventionFeedPage)
+@limiter.limit(SYNC_RATE_LIMIT, key_func=rate_limit_key)
 def sync_interventions(
+    request: Request,
     connection: Annotated[Connection, Depends(get_tenant_connection)],
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
     after: AfterParam = None,
@@ -128,7 +137,9 @@ def sync_interventions(
 
 
 @router.get("/sync/functional-locations", response_model=LocationFeedPage)
+@limiter.limit(SYNC_RATE_LIMIT, key_func=rate_limit_key)
 def sync_functional_locations(
+    request: Request,
     connection: Annotated[Connection, Depends(get_tenant_connection)],
     _claims: Annotated[dict, Depends(require_any_role(*_FIELD_ROLES))],
     after: AfterParam = None,
