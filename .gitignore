@@ -8,3 +8,6 @@
 # dossiers temporaires d'un rendu HyperFrames en cours
 videos/*/renders/work-*/
 videos/*/renders/.*.hf-transaction-*/
+
+# caches Python des scripts .src
+__pycache__/
