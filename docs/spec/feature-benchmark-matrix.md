@@ -2246,6 +2246,34 @@ l'affichage, sans nouvelle route.
 Ordres de travail avec des données inventées (alarme, mesure et ordre de travail sur des
 équipements archivés).
 
+### Télémétrie : une valeur qui n'est pas une mesure s'affiche comme telle (24/10/2026)
+
+Anomalie relevée en préparant des données de démonstration pour le staging : `GET
+/telemetry/portfolio-latest` renvoyait la dernière valeur sans son `origin`, et l'écran Télémétrie
+n'affichait aucune mention. Une valeur simulée ou saisie à la main apparaissait donc comme une
+mesure, contre le glossaire (« Valeur estimée / calculée / simulée : toujours affichée comme
+telle »). **REFACTOR**, additif.
+
+| Ce qui change | Détail |
+| --- | --- |
+| API | `origin` (mesurée, manuelle, simulée, calculée, estimée ; absent sans relevé) accompagne la valeur dans `GET /telemetry/portfolio-latest` (champ additif, `latest_usable_bulk` le lit). 5 tests, dont l'origine du **dernier** relevé et non d'un plus ancien |
+| Web | À côté de la valeur : « Relevé manuel », « Valeur simulée », « Valeur calculée » ou « Valeur estimée » (libellés du glossaire, en français et en anglais). Une mesure n'a aucune mention ; une origine inconnue n'affiche jamais de code technique (`originLabelKey`, 4 tests) |
+| Ce qui reste (DEFER) | L'origine n'est pas encore montrée sur la page Énergie ni dans le bloc Énergie de l'accueil (consommations calculées à partir des relevés d'un compteur) : à ajouter avec un cas réel |
+
+### Jeu de données de démonstration du staging (24/10/2026)
+
+**ADD** : `services/api/scripts/seed_staging_demo.py`, pour valider à l'écran, sur le staging lui-même,
+ce que les tests et les captures locales ne prouvent pas. Les données inventées uniquement en
+local ne sont jamais présentées comme une validation du staging.
+
+| Garantie | Détail |
+| --- | --- |
+| Fictif et reconnaissable | Tout nom commence par « DÉMO — » ; toute valeur est déclarée `simulated` et s'affiche « Valeur simulée » |
+| Contenu | Un site actif avec un équipement, deux points validés (température en °C, énergie en kWh), un relevé simulé par point et une alarme ouverte ; un second site avec un équipement, un point, un relevé et une alarme majeure, puis **archivé** : la cascade archive l'équipement, dont l'alarme et la valeur restent visibles, nommées « archivé » |
+| Aucune suppression | L'outil ne crée et n'archive que (règle 3). Pour retirer la démonstration des listes : archiver les deux sites dans la console |
+| Contrôlé | Sans `--yes`, lecture seule : affiche le plan. Aucun jeton ni mot de passe affiché ou écrit ; erreurs réduites au code HTTP et au code d'erreur de l'API. Idempotent pour la structure ; chaque passage ajoute un relevé simulé daté de maintenant |
+| Tests | 12 tests face à une fausse API en mémoire ; 3 régressions volontaires détectées (valeur déclarée « measured », écriture sans `--yes`, archivage avant l'alarme) |
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente
