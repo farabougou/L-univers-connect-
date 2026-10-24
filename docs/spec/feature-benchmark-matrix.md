@@ -2274,6 +2274,16 @@ local ne sont jamais présentées comme une validation du staging.
 | Contrôlé | Sans `--yes`, lecture seule : affiche le plan. Aucun jeton ni mot de passe affiché ou écrit ; erreurs réduites au code HTTP et au code d'erreur de l'API. Idempotent pour la structure ; chaque passage ajoute un relevé simulé daté de maintenant |
 | Tests | 12 tests face à une fausse API en mémoire ; 3 régressions volontaires détectées (valeur déclarée « measured », écriture sans `--yes`, archivage avant l'alarme) |
 
+**Validation sur le staging réel (24/10/2026).** Jeu de démonstration créé sur le staging
+(`demo.admin`, 15 éléments, 1 archivage, rien de supprimé), puis vérifié à l'écran avec
+`demo.technicien` et `demo.admin` : tuiles d'Alarmes et constats ; total des alarmes de l'accueil
+qui compte l'alarme d'un équipement archivé ; Télémétrie « 41,2 °C », « 1 284,6 kWh »,
+« 38,4 °C » chacun suivi de « Valeur simulée » ; équipement archivé nommé « archivé » ; Registre
+avec « Site archivé : désarchivez-le d'abord. » et cascade d'archivage constatée de bout en bout.
+**Non validé sur le staging** : page Énergie et bloc Énergie de l'accueil (pas de consommation
+journalière dans les données de démonstration), acquittement, application mobile. Détail et
+blocages restants : `infra/RAILWAY_STAGING.md`, « Bilan du 24/10/2026 ».
+
 ## Mise à jour de ce document
 
 - À réviser à chaque jalon (M1 → M5) et chaque fois qu'une fonctionnalité concurrente

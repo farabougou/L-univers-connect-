@@ -579,7 +579,7 @@ Cloudflare R2 du stockage des photos (`STORAGE_*`). Aucun secret n'est dans le d
 | Action | Où | État |
 | --- | --- | --- |
 | Changer le mot de passe administrateur de Keycloak | Console Keycloak | à confirmer |
-| Désactiver `demo.technicien` et `demo.admin` (mot de passe public dans `infra/README.md`) | Console Keycloak, ou `scripts/staging_account.py disable-demo-users --yes` | à confirmer (**le plus urgent** : `demo.admin` porte le rôle `admin_tenant` avec un mot de passe public) |
+| Désactiver `demo.technicien` et `demo.admin` (mot de passe public dans `infra/README.md`) | Console Keycloak, ou `scripts/staging_account.py disable-demo-users --yes` | **non fait au 24/10/2026** : la session n'a ni le connecteur Railway ni `KEYCLOAK_ADMIN_PASSWORD` (voir le bilan ci-dessous). **Le plus urgent** : `demo.admin` porte le rôle `admin_tenant` avec un mot de passe public. Réversible : `enabled` repasse à vrai, aucune donnée supprimée |
 | Activer la détection de force brute du royaume (Realm settings → Security defenses → Brute force detection : 5 échecs, attente croissante jusqu'à 15 minutes) | Console Keycloak. `realm-staging.json` contient maintenant ce réglage, mais un fichier d'import ne s'applique qu'à un royaume neuf : le royaume en place doit être réglé à la main | à faire (23/10/2026 : absente du royaume importé, donc aucune limite aux essais de mot de passe) |
 | Révoquer le jeton R2 `paios-staging-photos` et en créer un nouveau | Cloudflare, puis variables `STORAGE_*` | à confirmer |
 | Renouveler `DEVICE_TOKEN_SECRET` (`openssl rand -hex 32`, 64 caractères) | Variable Railway, puis redéploiement ; les appareils redemandent un jeton | à confirmer |
@@ -589,6 +589,70 @@ Cloudflare R2 du stockage des photos (`STORAGE_*`). Aucun secret n'est dans le d
 
 Tant que le mot de passe administrateur de Keycloak n'est pas changé, ne pas créer le compte
 de test (`scripts/staging_account.py`) : il demande ce mot de passe.
+
+## Bilan du 24/10/2026
+
+Établi après la fusion et la validation sur le staging. Ce qui est vérifié sur le staging réel
+est séparé de ce qui ne l'est qu'en local.
+
+### Fait
+
+| Sujet | État |
+| --- | --- |
+| Fusion de la demande n° 1 dans `main` | **Faite** (commit de fusion `96b277d`, historique conservé, CI de `main` verte). Au moment de la fusion, `main` avait exactement le contenu de la branche. Depuis, la branche de travail porte deux commits de plus (origine d'une valeur sur Télémétrie, script de démonstration), à fusionner par une nouvelle demande ; elle est conservée car Railway la déploie |
+| Archivage d'un site, cascade sur ses équipements | Migrations passées sur le staging (23/10/2026) ; vérifié de bout en bout avec le jeu de démonstration (voir ci-dessous) |
+| Origine d'une valeur sur Télémétrie | Déployée sur le staging (API et web) |
+
+### Comptes de démonstration : **NON désactivés**
+
+Blocage : cette session n'a ni le connecteur Railway ni la variable `KEYCLOAK_ADMIN_PASSWORD`
+(vérifié le 24/10/2026). Le mot de passe d'administration de Keycloak est connu du seul
+propriétaire du compte ; il n'est ni récupérable ni à deviner, et il ne doit jamais être écrit
+dans une conversation. Tant que `demo.admin` (rôle `admin_tenant`) et `demo.technicien` sont
+actifs avec le mot de passe publié dans le dépôt, n'importe qui qui connaît ce mot de passe peut
+obtenir des jetons sur le staging. La détection de force brute est absente du fichier d'import
+du royaume ; elle l'est donc très probablement aussi du royaume en place (à vérifier dans la
+console Keycloak, Realm settings, Security defenses).
+
+À faire par le propriétaire, dans cet ordre :
+
+1. Connecter Railway sur <https://claude.ai/customize/connectors>. Un connecteur n'est lu qu'au
+   démarrage d'une session : **ouvrir ensuite une nouvelle session**.
+2. Changer le mot de passe d'administration de Keycloak (console Keycloak), puis le placer dans
+   les réglages de l'environnement cloud (menu de l'environnement dans la barre de titre de la
+   session, puis Edit) sous le nom `KEYCLOAK_ADMIN_PASSWORD` : jamais dans la conversation.
+3. Dans la nouvelle session : `scripts/staging_account.py create` (compte de test dédié), puis
+   `scripts/staging_account.py disable-demo-users --yes` (désactivation, réversible, aucune
+   donnée supprimée), puis le renouvellement des secrets de la liste ci-dessus.
+
+Sans attendre : la console Keycloak permet de désactiver les deux comptes en deux clics
+(Users, puis « Enabled » sur Off).
+
+### Jeu de données de démonstration (staging)
+
+Créé le 24/10/2026 avec `scripts/seed_staging_demo.py`, en tant que `demo.admin` (le seul compte
+du royaume en place qui gère le registre ; il reste actif faute d'avoir pu le désactiver) : 15
+éléments créés, 1 archivage, rien de supprimé. Résumé sans secret : sites, équipements, points,
+relevés et alarmes tous préfixés « DÉMO — ». Pour relancer (structure idempotente, un relevé
+simulé de plus par passage) : `PYTHONPATH=. python scripts/seed_staging_demo.py --api-url ...
+--credentials-file ... --yes`. Pour retirer la démonstration des listes : archiver les deux
+sites dans la console.
+
+**Vérifié à l'écran sur le staging réel** (comptes `demo.technicien` et `demo.admin`) :
+
+- Alarmes et constats : bande de tuiles (2 alarmes ouvertes, 0 constat, 2 à acquitter, 0 en cours
+  de traitement) ; l'alarme de l'équipement archivé est listée, nommée « archivé ».
+- Accueil : le total des alarmes ouvertes compte l'alarme de l'équipement archivé (1 majeure,
+  1 avertissement), qu'aucune ligne de site ne porte ; la phrase d'explication s'affiche.
+- Télémétrie : « 41,2 °C », « 1 284,6 kWh » et « 38,4 °C », chacun suivi de « Valeur simulée » ;
+  l'équipement archivé est nommé et marqué « archivé ».
+- Registre : phrase de règle de l'archivage ; « Site archivé : désarchivez-le d'abord. » à la place
+  du bouton « Désarchiver » ; l'équipement de démonstration a bien été archivé par la cascade
+  (jamais archivé directement).
+
+**Non validé sur le staging** : la page Énergie et le bloc Énergie de l'accueil (aucune
+consommation journalière dans les données de démonstration), les actions d'acquittement, et
+l'application mobile (aucun appareil). Ces points ne sont vérifiés qu'en local ou par les tests.
 
 ## Point qui reste à ta décision
 
