@@ -635,8 +635,8 @@ est séparé de ce qui ne l'est qu'en local.
 
 `demo.admin` (rôle `admin_tenant`) et `demo.technicien` ont été désactivés par le propriétaire du
 compte, dans la console Keycloak (royaume `paios`, Utilisateurs, interrupteur « Activé »). La
-console française affiche « Handicapé » pour « Disabled » (mauvaise traduction automatique) : les
-deux comptes y portent cette mention. Aucune donnée n'a été supprimée ; la désactivation est
+console y affiche « Handicapé » pour « Disabled » (traduction automatique du navigateur, voir « Piège
+de la console Keycloak » plus bas) : les deux comptes y portent cette mention. Aucune donnée n'a été supprimée ; la désactivation est
 réversible (réactiver l'interrupteur).
 
 **Vérifié depuis l'extérieur** : une demande de jeton avec le mot de passe public du dépôt est
@@ -749,8 +749,10 @@ testé qu'avec le vrai compte.
 
 #### Résultat : compte créé à la main (24/10/2026)
 
-**Procédure manuelle suivie** (console Keycloak, royaume `paios`, en français : « Diplômes » est la
-traduction de « Credentials » (identifiants), « Cartographie des rôles » celle de « Role mapping ») :
+**Procédure manuelle suivie** (console Keycloak, royaume `paios`). Les noms français cités ci-dessous
+(« Diplômes » pour *Credentials*, « Cartographie des rôles » pour *Role mapping*) viennent de la
+traduction automatique du navigateur, pas de Keycloak : voir « Piège de la console Keycloak » plus
+bas.
 
 1. Utilisateurs, « Ajouter un utilisateur » : identifiant, adresse, prénom, nom ; compte activé.
 2. Onglet « Cartographie des rôles » : attribuer le seul rôle de royaume `admin_tenant`.
@@ -764,8 +766,9 @@ traduction de « Credentials » (identifiants), « Cartographie des rôles » ce
    personne elle-même dans Keycloak, jamais dans un message. À la première connexion, Keycloak lui
    fait choisir un nouveau mot de passe (case « se déconnecter des autres appareils » sans
    conséquence pour un compte neuf).
-6. **Retirer le rôle `default-roles-paios`** (onglet « Cartographie des rôles », « Désaffecter ») :
-   voir l'incident ci-dessous. Sans cette étape, la connexion échoue.
+6. *Contournement, plus nécessaire depuis le mapper d'audience du 24/10/2026 (voir plus bas)* :
+   retirer le rôle `default-roles-paios` (onglet « Cartographie des rôles », « Désaffecter »).
+   Sans mapper d'audience et sans cette étape, la connexion échoue.
 
 **Incident du 24/10/2026 (10:42 à 11:04 UTC) : connexion impossible malgré un compte correct.**
 Keycloak acceptait la connexion et la console web recevait son jeton (retour `/api/auth/callback`
@@ -779,15 +782,43 @@ l'audience ne contient pas `paios-api`. Les comptes de démonstration, importés
 du 21/10, voir `docs/security/registre-vulnerabilites.md`, « Audience »). Confirmé par l'effet :
 après retrait du rôle, `GET /me` répond 200 pour la console web (11:04 UTC).
 
-**Contournement en place** : le rôle `default-roles-paios` retiré de ce compte, rien d'autre
-modifié (aucun réglage du royaume, aucun code). Il vaut pour ce compte seulement.
+**Contournement (11:00 UTC)** : le rôle `default-roles-paios` retiré de ce compte, rien d'autre
+modifié. Il ne valait que pour ce compte.
 
-**À corriger durablement (décision de Mohamed attendue)** : ajouter dans le royaume un mapper
-d'audience sur le client `paios-api` (`oidc-audience-mapper`, audience `paios-api`, ajouté au
-jeton d'accès), puis le reporter dans `infra/keycloak/realm-staging.json`. Tout futur compte créé à
-la main (techniciens compris) échouera de la même façon tant que ce n'est pas fait. L'outil
-`staging_owner_account.py` créerait lui aussi un compte avec ce rôle par défaut : sa vérification
-`GET /me` aurait signalé l'échec, mais ce chemin n'a pas été exécuté.
+**Correction durable (24/10/2026, vers 13:00 UTC, décision de Mohamed)** : un mapper d'audience
+a été créé dans la console du royaume en service, sur le client `paios-api` (Clients, `paios-api`,
+portées du client, portée dédiée `paios-api-dedicated`, Mappers, « Par configuration », type
+*Audience*) : nom `audience-paios-api`, audience client incluse `paios-api`, ajouté au jeton
+d'accès, pas au jeton d'identification. Les jetons portent désormais `aud` avec `paios-api`, que
+le compte ait ou non le rôle par défaut. **Preuve** : le rôle `default-roles-paios` a été remis sur
+le compte (photo de l'onglet : `default-roles-paios` et `admin_tenant` présents), puis la
+connexion à la console web, en navigation privée, a réussi : `GET /me` à 200 pour la console web
+à 13:07 UTC, alors que le même compte avec ce rôle donnait 401 à 10:54 UTC. Le contrôle de
+l'audience reste tel qu'il était : l'API n'a pas changé (les jetons `aud: ["account"]` refusés et
+`["account", "paios-api"]` acceptés sont déjà testés dans `tests/test_token_verification.py`).
+
+**Modèle de royaume** : le même mapper est ajouté à `infra/keycloak/realm-staging.json`
+(`tests/test_realm_template.py`, 2 tests, régression volontaire détectée). Ce fichier ne sert qu'à
+créer un royaume neuf à l'import : le royaume en service n'a pas été réimporté, son mapper a été
+créé à la main (jetons d'accès et d'identification réglés comme dans le modèle, le reste laissé aux
+valeurs par défaut du formulaire). Tout futur compte créé à la main (techniciens compris)
+fonctionne donc sans retirer de rôle. L'outil `staging_owner_account.py` crée lui aussi des
+comptes avec le rôle par défaut : le mapper règle le cas, mais ce chemin n'a pas été exécuté.
+
+**Reste ouvert** : exiger `aud` dans l'API (deuxième temps du registre de sécurité) n'est pas fait.
+Il faut d'abord que tous les jetons en circulation portent `aud`, y compris ceux des comptes de
+démonstration réactivés un jour et de l'application mobile.
+
+#### Piège de la console Keycloak : traduction automatique du navigateur
+
+La console d'administration de Keycloak est servie en anglais. Edge (ou Chrome) la traduit à la
+volée quand l'icône de traduction est active dans la barre d'adresse : c'est de là que viennent
+« Handicapé » (*Disabled*), « Diplômes » (*Credentials*), « Cartographes » (*Mappers*),
+« Oscilleuses dédiées » (*Dedicated scopes*) et « Données du spectacle » (*Show data*). Cette
+traduction fait aussi planter la console par moments (« Échec d'exécuter removeChild sur Node »,
+constaté le 24/10/2026 en ouvrant la portée dédiée). À faire avant toute manipulation : clic sur
+l'icône de traduction, « Afficher l'original », « Ne jamais traduire ce site », puis recharger
+(F5).
 
 **Vérifié depuis l'extérieur** (24/10/2026, 11:05 UTC) :
 

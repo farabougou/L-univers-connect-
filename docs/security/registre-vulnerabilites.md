@@ -67,7 +67,14 @@ utilisée comme secret HMAC, jeton sans signature, croisement des deux chemins).
 jamais chargé à l'exécution. Le risque était donc surtout celui d'une bibliothèque non maintenue,
 sans correctif à attendre.
 
-### Audience — constat à décider (non corrigé)
+### Audience — premier temps fait sur le staging (24/10/2026), second temps à décider
+
+**Mise à jour du 24/10/2026** : le mapper d'audience (point 1 ci-dessous) est en place dans le
+royaume en service et dans `infra/keycloak/realm-staging.json`. Il a été rendu nécessaire par un
+incident : un compte créé à la main reçoit `default-roles-paios`, donc `aud: ["account"]`, et l'API
+le refusait en 401. Preuve et détail : `infra/RAILWAY_STAGING.md`, « Compte personnel du
+propriétaire ». Le point 2 (exiger `aud`) reste à décider ; le constat d'origine est conservé
+ci-dessous.
 
 Les jetons réels de Keycloak **n'ont aucune revendication `aud`** : constaté le 21/10/2026 sur
 le staging (`aud` absent, `azp` = `paios-api`, revendications `iss`, `exp`, `iat`, `sub`,

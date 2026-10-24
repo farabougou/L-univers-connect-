@@ -46,6 +46,19 @@
             "claim.name": "tenant_id",
             "jsonType.label": "String"
           }
+        },
+        {
+          "name": "audience-paios-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "paios-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true",
+            "lightweight.claim": "false"
+          }
         }
       ]
     }
