@@ -316,6 +316,34 @@ démonstration. Aucun secret ne passe par le dépôt, une conversation ou un jou
 vérifiées) ; **compte non créé** (mot de passe administrateur inaccessible à l'assistant), donc
 aucune mesure authentifiée du staging.
 
+### Quand Railway reconstruit (chemins surveillés, 24/10/2026)
+
+Constat : chaque poussée sur la branche relançait une construction pour l'API **et** pour le web,
+même pour un commit de documentation. Le 24/10/2026 à 09:27 UTC, la construction de l'image de
+l'API a échoué (« Failed to build an image ») pour un commit qui n'avait modifié que deux fichiers
+de documentation : les entrées de l'image (`services/api`, `shared/i18n`, `railway.json`) étaient
+identiques, octet pour octet, à celles du commit précédent, construit et déployé avec succès.
+L'échec n'était donc pas causé par notre code (les journaux de construction ne sont pas lisibles
+sans le connecteur Railway ; le service en place a continué de répondre, un déploiement échoué ne
+remplaçant pas celui qui tourne). Les 11 exécutions de CI précédentes étaient vertes.
+
+Réponse : `build.watchPatterns` dans chaque `railway.json` (documentation Railway : motifs de style
+gitignore, relatifs à la racine du dépôt **même quand un Root Directory est défini**, donc écrits
+avec le chemin complet ; un commit qui ne touche aucun fichier correspondant ne crée aucun
+déploiement).
+
+| Service | Motifs | Pourquoi |
+| --- | --- | --- |
+| API (`railway.json`, Root Directory `/`) | `/services/api/**`, `/shared/i18n/**`, `/railway.json` | Tout ce que le Dockerfile copie, plus sa propre configuration |
+| Web (`apps/web/railway.json`, Root Directory `apps/web`) | `/apps/web/**` | Le web embarque ses catalogues dans `src/i18n` (copiés par `npm run i18n:sync` et suivis par git) |
+
+À vérifier à la première poussée de ce réglage : le commit modifie `railway.json` et
+`apps/web/railway.json`, donc il doit créer **un** déploiement de l'API et **un** du web ; un
+commit de documentation seule ne doit plus en créer. Si un changement de code ne déclenchait plus
+de déploiement, annuler en retirant la ligne `watchPatterns` (retour au comportement d'avant). Un
+fichier lu par l'image doit toujours figurer dans les motifs : l'ajouter ici en même temps qu'au
+Dockerfile.
+
 ## Étape 4 — Service Web (`apps/web`)
 
 1. "New" → "GitHub Repo" → le même dépôt.
