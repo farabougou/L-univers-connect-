@@ -1040,6 +1040,10 @@
       "never_measured": "Never measured",
       "no_points": "No validated point on this portfolio.",
       "no_value": "Unavailable",
+      "origin_derived": "Calculated value",
+      "origin_estimated": "Estimated value",
+      "origin_manual": "Manual reading",
+      "origin_simulated": "Simulated value",
       "points_title": "Points",
       "stale": "Stale data",
       "title": "Telemetry"

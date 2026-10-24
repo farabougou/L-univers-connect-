@@ -18,8 +18,26 @@ export type TelemetryEntry = {
   unit: string | null;
   value: number | null;
   measured_at: string | null;
+  /** Origine du dernier relevé : mesure, relevé manuel, valeur simulée, calculée ou estimée. */
+  origin?: string | null;
   stale: boolean | null;
 };
+
+const ORIGIN_LABEL_KEYS: Record<string, string> = {
+  manual: "web.telemetry_page.origin_manual",
+  simulated: "web.telemetry_page.origin_simulated",
+  derived: "web.telemetry_page.origin_derived",
+  estimated: "web.telemetry_page.origin_estimated",
+};
+
+/**
+ * Clé du libellé à afficher à côté d'une valeur qui n'est pas une mesure (glossaire : « toujours
+ * affichée comme telle »). Une mesure, ou l'absence de relevé, n'a pas de mention ; une origine
+ * inconnue n'affiche pas de code technique.
+ */
+export function originLabelKey(origin: string | null | undefined): string | null {
+  return origin ? (ORIGIN_LABEL_KEYS[origin] ?? null) : null;
+}
 
 export type TelemetrySummary = {
   total: number;

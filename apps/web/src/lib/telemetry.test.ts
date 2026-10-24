@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { summarizeTelemetry, type TelemetryEntry } from "./telemetry";
+import { summarizeTelemetry, type TelemetryEntry, originLabelKey } from "./telemetry";
 
 function entry(overrides: Partial<TelemetryEntry>): TelemetryEntry {
   return {
@@ -59,5 +59,27 @@ describe("summarizeTelemetry", () => {
     expect(summary.current + summary.stale + summary.neverMeasured).toBeLessThanOrEqual(
       summary.total,
     );
+  });
+});
+
+describe("originLabelKey", () => {
+  it("ne dit rien d'une mesure : c'est le cas normal", () => {
+    expect(originLabelKey("measured")).toBeNull();
+  });
+
+  it("ne dit rien sans relevé (origine absente)", () => {
+    expect(originLabelKey(null)).toBeNull();
+    expect(originLabelKey(undefined)).toBeNull();
+  });
+
+  it("nomme toute valeur qui n'est pas une mesure (jamais présentée comme telle)", () => {
+    expect(originLabelKey("manual")).toBe("web.telemetry_page.origin_manual");
+    expect(originLabelKey("simulated")).toBe("web.telemetry_page.origin_simulated");
+    expect(originLabelKey("derived")).toBe("web.telemetry_page.origin_derived");
+    expect(originLabelKey("estimated")).toBe("web.telemetry_page.origin_estimated");
+  });
+
+  it("ignore une origine inconnue plutôt que d'afficher un code technique", () => {
+    expect(originLabelKey("autre-chose")).toBeNull();
   });
 });

@@ -16,7 +16,7 @@ import {
 } from "@/lib/formStyles";
 import { getLocale, getTranslator } from "@/lib/i18n";
 import { indexLocations } from "@/lib/locations";
-import { summarizeTelemetry, type TelemetryEntry } from "@/lib/telemetry";
+import { originLabelKey, summarizeTelemetry, type TelemetryEntry } from "@/lib/telemetry";
 import { unitSymbol } from "@/lib/units";
 import { formatDateTime, formatNumber } from "@/i18n/translator";
 
@@ -175,6 +175,20 @@ export default async function TelemetryPage() {
                           {entry.value === null
                             ? t("web.telemetry_page.no_value")
                             : `${formatNumber(locale, entry.value)}${entry.unit ? ` ${unitSymbol(entry.unit)}` : ""}`}
+                          {entry.value !== null && originLabelKey(entry.origin) && (
+                            <>
+                              {" "}
+                              <span
+                                style={{
+                                  color: colors.textMuted,
+                                  fontWeight: 400,
+                                  fontSize: 13,
+                                }}
+                              >
+                                · {t(originLabelKey(entry.origin) as string)}
+                              </span>
+                            </>
+                          )}
                         </td>
                         <td
                           data-label={t("web.dashboard.col_since")}

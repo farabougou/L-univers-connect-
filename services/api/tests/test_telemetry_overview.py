@@ -66,7 +66,7 @@ def two_tenants():
         purge_tenant(tenant["tenant_id"])
 
 
-def _measure(tenant, value, at):
+def _measure(tenant, value, at, origin="measured"):
     with engine.begin() as connection:
         set_tenant_context(connection, tenant["tenant_id"])
         record_measurement(
@@ -75,7 +75,7 @@ def _measure(tenant, value, at):
             point=get_point(connection, tenant["point"]),
             value=value,
             measured_at=at,
-            origin="measured",
+            origin=origin,
             source="test",
             received_at=at,
         )
@@ -99,12 +99,33 @@ def test_reports_latest_value_and_freshness(two_tenants) -> None:
     assert entry["stale"] is False
 
 
+@pytest.mark.parametrize("origin", ["measured", "manual", "simulated"])
+def test_reports_the_origin_of_the_latest_value(two_tenants, origin) -> None:
+    """Une valeur qui n'est pas une mesure est « toujours affichée comme telle » (glossaire) :
+    l'origine du dernier relevé accompagne donc sa valeur, jamais perdue en route."""
+    tenant_a, _ = two_tenants
+    _measure(tenant_a, 18.0, T0 - timedelta(minutes=10), origin="measured")
+    _measure(tenant_a, 19.5, T0 - timedelta(minutes=2), origin=origin)
+    [entry] = _overview(tenant_a, T0)
+    assert entry["value"] == 19.5
+    assert entry["origin"] == origin
+
+
+def test_origin_follows_the_latest_value_not_an_older_one(two_tenants) -> None:
+    tenant_a, _ = two_tenants
+    _measure(tenant_a, 18.0, T0 - timedelta(minutes=10), origin="simulated")
+    _measure(tenant_a, 19.5, T0 - timedelta(minutes=2), origin="measured")
+    [entry] = _overview(tenant_a, T0)
+    assert entry["origin"] == "measured"
+
+
 def test_reports_none_without_any_measurement(two_tenants) -> None:
     tenant_a, _ = two_tenants
     [entry] = _overview(tenant_a, T0)
     assert entry["value"] is None
     assert entry["measured_at"] is None
     assert entry["stale"] is None
+    assert entry["origin"] is None
 
 
 def test_flags_data_older_than_the_expected_interval_as_stale(two_tenants) -> None:
@@ -153,4 +174,5 @@ def test_route_through_the_api(two_tenants) -> None:
     assert response.status_code == 200, response.text
     body = {row["point_id"]: row for row in response.json()}
     assert body[str(tenant_a["point"])]["value"] == 18.0
+    assert body[str(tenant_a["point"])]["origin"] == "measured"
     assert str(tenant_a["point"]) not in {row["point_id"] for row in other_response.json()}

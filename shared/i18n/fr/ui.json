@@ -1040,6 +1040,10 @@
       "never_measured": "Jamais mesuré",
       "no_points": "Aucun point validé sur ce portefeuille.",
       "no_value": "Indisponible",
+      "origin_derived": "Valeur calculée",
+      "origin_estimated": "Valeur estimée",
+      "origin_manual": "Relevé manuel",
+      "origin_simulated": "Valeur simulée",
       "points_title": "Points",
       "stale": "Donnée ancienne",
       "title": "Télémétrie"

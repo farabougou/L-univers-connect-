@@ -46,6 +46,9 @@ def portfolio_telemetry(connection: Connection, *, at: datetime) -> list[dict[st
             "unit": point["unit"],
             "value": latest["value"] if latest else None,
             "measured_at": latest["measured_at"] if latest else None,
+            # Origine du dernier relevé (mesurée, manuelle, simulée) : une valeur qui n'est pas
+            # une mesure est toujours affichée comme telle (glossaire, « Valeur simulée »).
+            "origin": latest["origin"] if latest else None,
             "stale": None,
         }
         interval = point["expected_interval_seconds"]

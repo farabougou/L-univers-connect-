@@ -47,7 +47,8 @@ def latest_usable_bulk(
     rows = (
         connection.execute(
             text(
-                "SELECT DISTINCT ON (point_id) point_id, value, measured_at FROM measurements "
+                "SELECT DISTINCT ON (point_id) point_id, value, measured_at, origin "
+                "FROM measurements "
                 "WHERE point_id = ANY(:ids) AND measured_at <= :at "
                 "AND NOT (quality_flags && CAST(:doubtful AS varchar[])) "
                 "ORDER BY point_id, measured_at DESC"

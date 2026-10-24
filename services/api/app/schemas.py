@@ -775,6 +775,9 @@ class PortfolioTelemetryEntryOut(BaseModel):
     unit: str | None
     value: float | None
     measured_at: datetime | None
+    # Origine du dernier relevé (measured, manual, simulated, derived, estimated) ; `None` sans
+    # relevé. Une valeur qui n'est pas une mesure est toujours affichée comme telle.
+    origin: str | None = None
     stale: bool | None
 
 
