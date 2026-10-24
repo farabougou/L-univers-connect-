@@ -1,0 +1,13 @@
+{
+  "titles": {
+    "COMMAND_DISPATCHED": "Commande transmise à l’appareil",
+    "COMMAND_FAILED": "Commande échouée ({failure_reason})",
+    "COMMAND_REQUESTED": "Commande demandée (valeur {requested_value})",
+    "COMMAND_TIMED_OUT": "Commande sans réponse dans le délai attendu",
+    "COMMAND_VERIFIED": "Commande vérifiée (valeur {actual_value})",
+    "DATA_BECAME_STALE": "Donnée devenue périmée",
+    "DATA_FRESHNESS_RESTORED": "Fraîcheur de la donnée rétablie",
+    "DEVICE_CAME_ONLINE": "Équipement revenu en ligne",
+    "DEVICE_WENT_OFFLINE": "Équipement passé hors ligne"
+  }
+}

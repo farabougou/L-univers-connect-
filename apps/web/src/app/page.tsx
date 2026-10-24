@@ -1,0 +1,1292 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+
+import { EquipmentLink } from "@/components/EquipmentLink";
+import { BrandMark } from "@/components/BrandMark";
+import { HealthBar } from "@/components/HealthBar";
+import { KpiTile } from "@/components/KpiTile";
+import { SeverityBadges } from "@/components/SeverityBadges";
+import { RecentActivityFeed } from "@/components/RecentActivityFeed";
+import {
+  ASSET_STATUS_COLOR,
+  StatusBadge,
+  equipmentStatusToAssetStatus,
+} from "@/components/StatusBadge";
+import { apiFetch, requireAccessToken } from "@/lib/api";
+import {
+  ACTIVITY_KINDS,
+  toActivityFeedEntries,
+  type ActivityKind,
+  type PortfolioTimelineEntry,
+} from "@/lib/activity";
+import {
+  badgeStyle,
+  cardStyle,
+  cellStyle,
+  colors,
+  COMMUNICATION_COLOR,
+  fieldStyle,
+  headerCellStyle,
+  pageContainerStyle,
+  pageHeaderStyle,
+  sectionTitleStyle,
+  submitStyle,
+  tableScrollStyle,
+} from "@/lib/formStyles";
+import {
+  type PortfolioEnergyMeter,
+  countMetersWithoutData,
+  summarizeEnergyByUnit,
+} from "@/lib/energy";
+import {
+  ASSET_STATUS_ORDER,
+  distributeByAssetStatus,
+  statusesOfLocations,
+  type PortfolioEquipmentStatus,
+} from "@/lib/health";
+import { getLocale, getTranslator } from "@/lib/i18n";
+import { indexLocations } from "@/lib/locations";
+import { unitSymbol } from "@/lib/units";
+import {
+  type MaintenanceIntervention,
+  countCriticalOpen,
+  countInProgress,
+  recentClosures,
+  repeatingFailures,
+} from "@/lib/maintenance";
+import { type EquipmentStatus, statusMessage } from "@/lib/passport";
+import { healthSegments, severityAccent, severityTotal } from "@/lib/situation";
+import { roleLabels } from "@/lib/roles";
+import {
+  type Alarm,
+  type Finding,
+  type FunctionalLocation as PortfolioLocation,
+  type Severity,
+  type Site,
+  type WorkOrder,
+  type Device,
+  SEVERITY_COLOR,
+  aggregatePortfolio,
+  prioritizeAlarms,
+} from "@/lib/portfolio";
+import {
+  type Locale,
+  formatDate,
+  formatDateTime,
+  formatNumber,
+} from "@/i18n/translator";
+
+type Me = {
+  sub: string;
+  username?: string | null;
+  tenant_id: string;
+  roles: string[];
+};
+
+type FunctionalLocation = PortfolioLocation & {
+  code: string;
+  name: string;
+  archived_at?: string | null;
+};
+
+type SiteRecord = Site & { archived_at?: string | null };
+
+type SearchResult = {
+  kind: "site" | "space" | "functional_location" | "tag" | "work_order";
+  id: string;
+  label: string;
+};
+
+// Un segment sans destination connue reste du texte, jamais un lien mort
+// (même principe que Breadcrumb.tsx) : un espace ou un ordre de travail
+// n'ont pas encore de fiche dédiée à laquelle renvoyer.
+function searchResultHref(result: SearchResult): string | null {
+  switch (result.kind) {
+    case "site":
+      return `/?site=${result.id}`;
+    case "functional_location":
+    case "tag":
+      return `/registre/${result.id}`;
+    default:
+      return null;
+  }
+}
+
+// Nombre maximal affiché dans le bloc « Alarmes prioritaires » : éviter la
+// surcharge visuelle (directive, section 18) — le lien de site donne accès
+// au reste.
+const MAX_PRIORITY_ALARMS = 8;
+const MAX_REPEATING_FAILURES = 5;
+const MAX_RECENT_CLOSURES = 5;
+
+type AlarmDetail = Alarm & {
+  id: string;
+  message: string;
+  ack_state: string;
+  raised_at: string;
+};
+
+type WorkOrderDetail = WorkOrder & {
+  id: string;
+  title: string;
+  work_order_type: string;
+  priority: string;
+};
+
+async function _openSignals<T extends { severity: string }>(
+  accessToken: string,
+  path: string,
+): Promise<T[]> {
+  const results = await Promise.all(
+    ["open", "in_progress"].map(async (handlingStatus) => {
+      const response = await apiFetch(
+        `${path}?handling_status=${handlingStatus}`,
+        accessToken,
+      );
+      return response.ok ? ((await response.json()) as T[]) : [];
+    }),
+  );
+  return results.flat();
+}
+
+export default async function PortfolioPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ site?: string; q?: string }>;
+}) {
+  const accessToken = await requireAccessToken();
+  const { t } = await getTranslator();
+  const locale = await getLocale();
+  const { site: selectedSiteId, q: searchQuery } = await searchParams;
+
+  const searchResultsResponse = searchQuery
+    ? await apiFetch(`/search?q=${encodeURIComponent(searchQuery)}`, accessToken)
+    : null;
+  const searchResults: SearchResult[] =
+    searchResultsResponse?.ok ? await searchResultsResponse.json() : [];
+
+  const [
+    meResponse,
+    sitesResponse,
+    locationsResponse,
+    workOrdersResponse,
+    devicesResponse,
+    interventionsResponse,
+    energyResponse,
+    equipmentStatusesResponse,
+    recentActivityResponse,
+  ] = await Promise.all([
+    apiFetch("/me", accessToken),
+    apiFetch("/sites?include_archived=true", accessToken),
+    apiFetch("/functional-locations?include_archived=true", accessToken),
+    apiFetch("/work-orders", accessToken),
+    apiFetch("/devices", accessToken),
+    apiFetch("/interventions", accessToken),
+    apiFetch("/energy/portfolio-summary", accessToken),
+    apiFetch("/functional-locations/status-summary", accessToken),
+    apiFetch("/activity/recent", accessToken),
+  ]);
+
+  if (!meResponse.ok) {
+    redirect("/login");
+  }
+
+  const me: Me = await meResponse.json();
+  // Les sites et équipements archivés sont demandés pour pouvoir nommer ceux d'une alarme ou
+  // d'une intervention encore visible ; les décomptes et tableaux ne gardent que les actifs.
+  const allSites: SiteRecord[] = sitesResponse.ok ? await sitesResponse.json() : [];
+  const { active: sites, byId: siteNameById } = indexLocations(allSites);
+  const allLocations: FunctionalLocation[] = locationsResponse.ok
+    ? await locationsResponse.json()
+    : [];
+  const { active: locations, byId: locationById } = indexLocations(allLocations);
+  const workOrders: WorkOrderDetail[] = workOrdersResponse.ok
+    ? await workOrdersResponse.json()
+    : [];
+  // Réservé aux rôles de gestion côté API (GET /devices) : un rôle terrain
+  // voit le reste de la vue d'ensemble sans cette colonne, jamais une
+  // colonne à zéro fabriquée pour combler l'absence de droit.
+  const devices: Device[] | null = devicesResponse.ok
+    ? await devicesResponse.json()
+    : null;
+  const interventions: MaintenanceIntervention[] = interventionsResponse.ok
+    ? await interventionsResponse.json()
+    : [];
+  const energySummary: {
+    reference_date: string;
+    meters: PortfolioEnergyMeter[];
+  } | null = energyResponse.ok ? await energyResponse.json() : null;
+  const equipmentStatuses: PortfolioEquipmentStatus[] =
+    equipmentStatusesResponse.ok ? await equipmentStatusesResponse.json() : [];
+  const recentActivity: PortfolioTimelineEntry[] = recentActivityResponse.ok
+    ? await recentActivityResponse.json()
+    : [];
+
+  const [alarms, findings] = await Promise.all([
+    _openSignals<AlarmDetail>(accessToken, "/alarms"),
+    _openSignals<Finding>(accessToken, "/findings"),
+  ]);
+
+  const siteById = new Map(sites.map((site) => [site.id, site]));
+  const locationsBySite = new Map<string, FunctionalLocation[]>();
+  for (const location of locations) {
+    const list = locationsBySite.get(location.site_id) ?? [];
+    list.push(location);
+    locationsBySite.set(location.site_id, list);
+  }
+
+  // Bloc « Alarmes prioritaires » (directive UI/dashboard, section 11) :
+  // uniquement les alarmes réellement actives (déjà filtré par
+  // _openSignals), triées par gravité puis par ancienneté — jamais une
+  // simple liste chronologique brute.
+  const priorityAlarms = prioritizeAlarms(alarms, MAX_PRIORITY_ALARMS);
+
+  // Bloc « Maintenance » (directive UI/dashboard, section 12). « En retard »
+  // n'est pas calculé : aucune date d'échéance n'existe sur un ordre de
+  // travail aujourd'hui (voir apps/web/src/lib/maintenance.ts).
+  const maintenanceInProgress = countInProgress(workOrders);
+  const maintenanceCritical = countCriticalOpen(workOrders);
+  const maintenanceRepeating = repeatingFailures(workOrders).slice(
+    0,
+    MAX_REPEATING_FAILURES,
+  );
+  const maintenanceClosures = recentClosures(
+    interventions,
+    MAX_RECENT_CLOSURES,
+  );
+
+  // Bloc « Énergie » (directive UI/dashboard, section 13). Consommation
+  // brute par compteur d'énergie validé, groupée par unité — jamais
+  // d'économies, de CO2 évité, de ROI ni de KPI réglementaire (voir
+  // apps/web/src/lib/energy.ts). Production, batterie et groupe
+  // électrogène ne sont pas modélisés aujourd'hui : ils n'apparaissent pas
+  // ici plutôt qu'une case « indisponible » permanente.
+  const energyMeters = energySummary?.meters ?? [];
+  const energyByUnit = summarizeEnergyByUnit(energyMeters);
+  const energyMetersWithoutData = countMetersWithoutData(energyMeters);
+
+  // Bloc « Santé des actifs » (directive UI/dashboard, section 15).
+  // Répartition Normal/Attention/Critique/Hors ligne/Donnée ancienne/
+  // Inconnu/Maintenance, calculée pour tout le portefeuille en une
+  // poignée de requêtes côté API (voir apps/web/src/lib/health.ts) —
+  // jamais un appel par équipement depuis le navigateur (directive,
+  // section 29). Ne déclenche aucune alerte : lecture pure, comme le
+  // passeport équipement.
+  // Seuls les équipements des sites actifs, comme le décompte des tuiles.
+  const visibleLocationIds = new Set(
+    locations
+      .filter((location) => siteById.has(location.site_id))
+      .map((location) => location.id),
+  );
+  const healthDistribution = distributeByAssetStatus(
+    statusesOfLocations(equipmentStatuses, visibleLocationIds),
+  );
+  const healthTotal = ASSET_STATUS_ORDER.reduce(
+    (sum, assetStatus) => sum + healthDistribution[assetStatus].length,
+    0,
+  );
+  const healthBarSegments = healthSegments(healthDistribution).map(
+    (segment) => {
+      const label = t(`asset_status.${segment.status}`);
+      return {
+        ...segment,
+        label,
+        text: t("web.dashboard.health_bar_item", {
+          status: label,
+          count: String(segment.count),
+        }),
+      };
+    },
+  );
+  const healthBarLabel = t("web.dashboard.health_bar_label", {
+    details: new Intl.ListFormat(locale, {
+      style: "long",
+      type: "conjunction",
+    }).format(healthBarSegments.map((segment) => segment.text)),
+  });
+
+  // Bloc « Activité récente » (directive UI/dashboard, section 16).
+  // Chronologie fusionnée pour tout le portefeuille (interventions, ordres
+  // de travail, alarmes, constats — voir apps/web/src/lib/activity.ts et
+  // app/timeline.py::portfolio_timeline), la plus récente d'abord, filtrable
+  // par catégorie côté client (seule interaction du bloc).
+  const activityFeedEntries = toActivityFeedEntries(
+    recentActivity,
+    locale,
+    locationById,
+  );
+  const activityKindLabels = Object.fromEntries(
+    ACTIVITY_KINDS.map((kind) => [
+      kind,
+      t(`web.dashboard.activity_kind.${kind}`),
+    ]),
+  ) as Record<ActivityKind, string>;
+
+  const { bySite: portfolio, totals } = aggregatePortfolio(
+    sites,
+    locations,
+    alarms,
+    findings,
+    workOrders,
+    devices,
+  );
+  // Alarmes et constats ouverts comptés dans les totaux mais absents des lignes par site
+  // (équipement archivé ou absent) : dits plutôt que laissés en écart inexpliqué.
+  const unattributedSignals =
+    severityTotal(totals.alarmSeverity) +
+    severityTotal(totals.findingSeverity) -
+    portfolio.reduce(
+      (sum, entry) =>
+        sum + severityTotal(entry.alarmSeverity) + severityTotal(entry.findingSeverity),
+      0,
+    );
+
+  const selectedSite = selectedSiteId
+    ? sites.find((site) => site.id === selectedSiteId)
+    : null;
+  const selectedLocations = selectedSite
+    ? (locationsBySite.get(selectedSite.id) ?? [])
+    : [];
+
+  const [alarmCountByLocation, findingCountByLocation, statuses] =
+    await Promise.all([
+      Promise.resolve(
+        _countByLocation(alarms.map((a) => a.functional_location_id)),
+      ),
+      Promise.resolve(_countByLocation(findings.map((f) => f.subject_node_id))),
+      Promise.all(
+        selectedLocations.map(async (location) => {
+          const response = await apiFetch(
+            `/functional-locations/${location.id}/status`,
+            accessToken,
+          );
+          const status: EquipmentStatus | null = response.ok
+            ? await response.json()
+            : null;
+          return [location.id, status] as const;
+        }),
+      ),
+    ]);
+  const statusByLocation = new Map(statuses);
+
+  return (
+    <main style={pageContainerStyle}>
+      <header style={pageHeaderStyle}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            minWidth: 0,
+          }}
+        >
+          <span style={{ color: colors.accent, flexShrink: 0 }}>
+            <BrandMark variant="mono" size={32} label={t("common.app_name")} />
+          </span>
+          <div style={{ minWidth: 0 }}>
+            <h1 style={{ fontSize: 24, margin: 0 }}>{t("common.app_name")}</h1>
+            <p
+              style={{
+                color: colors.textMuted,
+                fontSize: 14,
+                marginTop: 4,
+                overflowWrap: "anywhere",
+              }}
+            >
+              {t("web.dashboard.signed_in_as", {
+                user: me.username ?? me.sub,
+                roles: roleLabels(me.roles, t),
+              })}
+            </p>
+          </div>
+        </div>
+        <a
+          href="/api/auth/logout"
+          style={{ color: colors.textMuted, fontSize: 14 }}
+        >
+          {t("common.sign_out")}
+        </a>
+      </header>
+
+      <form
+        action="/"
+        style={{ display: "flex", gap: 8, marginBottom: 24, maxWidth: 480 }}
+      >
+        <input
+          type="search"
+          name="q"
+          defaultValue={searchQuery ?? ""}
+          placeholder={t("web.dashboard.search_placeholder")}
+          style={{ ...fieldStyle, flex: 1 }}
+        />
+        <button type="submit" style={submitStyle}>
+          {t("web.dashboard.search_submit")}
+        </button>
+      </form>
+
+      {searchQuery && (
+        <section style={{ ...cardStyle, marginBottom: 24 }}>
+          <h2 style={sectionTitleStyle}>
+            {t("web.dashboard.search_results_title", { query: searchQuery })}
+          </h2>
+          {searchResults.length === 0 ? (
+            <p style={{ color: colors.textMuted }}>
+              {t("web.dashboard.search_no_results", { query: searchQuery })}
+            </p>
+          ) : (
+            searchResults.map((result) => {
+              const href = searchResultHref(result);
+              const label = `${t(`search_result_kind.${result.kind}`)} — ${result.label}`;
+              return (
+                <p key={`${result.kind}-${result.id}`} style={{ margin: "0 0 4px" }}>
+                  {href ? (
+                    <Link href={href} style={{ color: colors.accent }}>
+                      {label}
+                    </Link>
+                  ) : (
+                    label
+                  )}
+                </p>
+              );
+            })
+          )}
+        </section>
+      )}
+
+      <section style={{ ...cardStyle, marginBottom: 24 }}>
+        <h2 style={sectionTitleStyle}>{t("web.dashboard.portfolio_title")}</h2>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+            gap: 16,
+          }}
+        >
+          <KpiTile
+            label={t("web.dashboard.kpi_sites")}
+            value={String(sites.length)}
+            accent={colors.accent}
+            href="/registre"
+          />
+          <KpiTile
+            label={t("web.dashboard.kpi_equipment")}
+            value={String(totals.equipmentCount)}
+            accent={colors.accent}
+            href="/registre"
+          />
+          <KpiTile
+            label={t("web.dashboard.kpi_alarms")}
+            value={String(severityTotal(totals.alarmSeverity))}
+            accent={severityAccent(totals.alarmSeverity)}
+            href="/alarmes"
+          >
+            <SeverityBadges counts={totals.alarmSeverity} t={t} />
+          </KpiTile>
+          <KpiTile
+            label={t("web.dashboard.kpi_findings")}
+            value={String(severityTotal(totals.findingSeverity))}
+            accent={severityAccent(totals.findingSeverity)}
+            href="/alarmes"
+          >
+            <SeverityBadges counts={totals.findingSeverity} t={t} />
+          </KpiTile>
+          <KpiTile
+            label={t("web.dashboard.kpi_work_orders")}
+            value={String(totals.openWorkOrders)}
+            accent={colors.accent}
+            href="/ordres-de-travail"
+          />
+        </div>
+        {healthBarSegments.length > 0 && (
+          <div
+            style={{
+              borderTop: `1px solid ${colors.border}`,
+              marginTop: 20,
+              paddingTop: 16,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
+                gap: 12,
+                flexWrap: "wrap",
+                marginBottom: 12,
+              }}
+            >
+              <h3 style={{ ...sectionTitleStyle, margin: 0 }}>
+                {t("web.dashboard.health_title")}
+              </h3>
+              <a
+                href="#sante"
+                style={{ color: colors.accent, fontSize: 13 }}
+              >
+                {t("web.dashboard.health_see_detail")}
+              </a>
+            </div>
+            <HealthBar
+              segments={healthBarSegments}
+              ariaLabel={healthBarLabel}
+            />
+          </div>
+        )}
+      </section>
+
+      <section
+        style={{
+          ...cardStyle,
+          marginBottom: 24,
+          padding: 0,
+          overflow: "hidden",
+        }}
+      >
+        <div style={{ padding: "20px 24px 0" }}>
+          <h2 style={sectionTitleStyle}>
+            {t("web.dashboard.priority_alarms_title")}
+          </h2>
+        </div>
+        {priorityAlarms.length === 0 ? (
+          <p style={{ color: colors.textMuted, padding: "0 24px 20px" }}>
+            {t("web.dashboard.no_priority_alarms")}
+          </p>
+        ) : (
+          <div style={tableScrollStyle}>
+            <table
+              className="responsive-table"
+              style={{ width: "100%", borderCollapse: "collapse" }}
+            >
+              <thead>
+                <tr>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.col_severity")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.equipment")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.site_column")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.col_message")}
+                  </th>
+                  <th style={headerCellStyle}>{t("web.dashboard.col_ack")}</th>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.col_since")}
+                  </th>
+                  <th style={headerCellStyle} />
+                </tr>
+              </thead>
+              <tbody>
+                {priorityAlarms.map((alarm) => {
+                  const location = alarm.functional_location_id
+                    ? locationById.get(alarm.functional_location_id)
+                    : undefined;
+                  return (
+                    <tr key={alarm.id}>
+                      <td
+                        data-label={t("web.dashboard.col_severity")}
+                        style={cellStyle}
+                      >
+                        <span
+                          title={t(`severity.${alarm.severity}`)}
+                          style={badgeStyle(
+                            SEVERITY_COLOR[alarm.severity as Severity],
+                          )}
+                        >
+                          {t(`severity.${alarm.severity}`)}
+                        </span>
+                      </td>
+                      <td
+                        data-label={t("web.dashboard.equipment")}
+                        style={cellStyle}
+                      >
+                        <EquipmentLink location={location} t={t} />
+                      </td>
+                      <td
+                        data-label={t("web.dashboard.site_column")}
+                        style={cellStyle}
+                      >
+                        {(() => {
+                          const site = location
+                            ? siteNameById.get(location.site_id)
+                            : undefined;
+                          if (!site) return "—";
+                          return site.archived_at
+                            ? `${site.name} · ${t("common.archived")}`
+                            : site.name;
+                        })()}
+                      </td>
+                      <td
+                        data-label={t("web.dashboard.col_message")}
+                        style={cellStyle}
+                      >
+                        {alarm.message}
+                      </td>
+                      <td
+                        data-label={t("web.dashboard.col_ack")}
+                        style={cellStyle}
+                      >
+                        {t(`ack_state.${alarm.ack_state}`)}
+                      </td>
+                      <td
+                        data-label={t("web.dashboard.col_since")}
+                        style={cellStyle}
+                      >
+                        {formatDateTime(locale, alarm.raised_at)}
+                      </td>
+                      <td style={cellStyle}>
+                        {location && (
+                          <Link
+                            href={`/registre/${location.id}`}
+                            style={{ color: colors.accent }}
+                          >
+                            {t("web.dashboard.drill_down")} →
+                          </Link>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section style={{ ...cardStyle, marginBottom: 24 }}>
+        <h2 style={sectionTitleStyle}>
+          {t("web.dashboard.maintenance_title")}
+        </h2>
+        <div
+          style={{
+            display: "flex",
+            gap: 32,
+            flexWrap: "wrap",
+            marginBottom: 12,
+          }}
+        >
+          <Kpi
+            label={t("web.dashboard.maintenance_in_progress")}
+            value={String(maintenanceInProgress)}
+          />
+          <Kpi
+            label={t("web.dashboard.maintenance_critical")}
+            value={String(maintenanceCritical)}
+          />
+        </div>
+        <p style={{ color: colors.textMuted, fontSize: 12, marginBottom: 20 }}>
+          {t("web.dashboard.maintenance_overdue_unavailable")}
+        </p>
+        <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
+          <div style={{ flex: "1 1 280px" }}>
+            <h3 style={sectionTitleStyle}>
+              {t("web.dashboard.maintenance_repeating_title")}
+            </h3>
+            {maintenanceRepeating.length === 0 ? (
+              <p style={{ color: colors.textMuted, fontSize: 13 }}>
+                {t("web.dashboard.maintenance_repeating_none")}
+              </p>
+            ) : (
+              <ul
+                style={{
+                  listStyle: "none",
+                  padding: 0,
+                  margin: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                }}
+              >
+                {maintenanceRepeating.map((entry) => {
+                  const location = locationById.get(
+                    entry.functional_location_id,
+                  );
+                  return (
+                    <li
+                      key={entry.functional_location_id}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        fontSize: 13,
+                      }}
+                    >
+                      <EquipmentLink location={location} t={t} />
+                      <span style={{ color: colors.textMuted }}>
+                        {t("web.dashboard.maintenance_repeating_count", {
+                          count: entry.count,
+                        })}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+          <div style={{ flex: "1 1 280px" }}>
+            <h3 style={sectionTitleStyle}>
+              {t("web.dashboard.maintenance_closures_title")}
+            </h3>
+            {maintenanceClosures.length === 0 ? (
+              <p style={{ color: colors.textMuted, fontSize: 13 }}>
+                {t("web.dashboard.maintenance_closures_none")}
+              </p>
+            ) : (
+              <ul
+                style={{
+                  listStyle: "none",
+                  padding: 0,
+                  margin: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 10,
+                }}
+              >
+                {maintenanceClosures.map((intervention) => {
+                  const location = intervention.functional_location_id
+                    ? locationById.get(intervention.functional_location_id)
+                    : undefined;
+                  return (
+                    <li key={intervention.id} style={{ fontSize: 13 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <span>
+                          <EquipmentLink location={location} t={t} link={false} />
+                        </span>
+                        <span style={{ color: colors.textMuted }}>
+                          {formatDateTime(
+                            locale,
+                            intervention.ended_at as string,
+                          )}
+                        </span>
+                      </div>
+                      <div style={{ color: colors.textMuted }}>
+                        {intervention.technician}
+                        {intervention.summary
+                          ? ` — ${intervention.summary}`
+                          : ""}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 420px), 1fr))",
+          gap: 24,
+          marginBottom: 24,
+        }}
+      >
+        <section style={{ ...cardStyle }}>
+          <h2 style={sectionTitleStyle}>{t("web.dashboard.energy_title")}</h2>
+          {energyMeters.length === 0 ? (
+            <p style={{ color: colors.textMuted }}>
+              {t("web.dashboard.energy_no_meters")}
+            </p>
+          ) : (
+            <>
+              <p
+                style={{
+                  color: colors.textMuted,
+                  fontSize: 13,
+                  marginBottom: 16,
+                }}
+              >
+                {t("web.dashboard.energy_reference_date", {
+                  date: energySummary
+                    ? formatDate(locale, energySummary.reference_date)
+                    : "",
+                })}
+              </p>
+              <div
+                style={{
+                  display: "flex",
+                  gap: 32,
+                  flexWrap: "wrap",
+                  marginBottom: 12,
+                }}
+              >
+                {energyByUnit.map((summary) => (
+                  <div key={summary.unit} style={{ display: "flex", gap: 32 }}>
+                    <Kpi
+                      label={t("web.dashboard.energy_consumption_label", {
+                        unit: unitSymbol(summary.unit),
+                      })}
+                      value={
+                        summary.totalConsumption === null
+                          ? t("web.dashboard.energy_unavailable")
+                          : formatNumber(locale, summary.totalConsumption)
+                      }
+                    />
+                    <Kpi
+                      label={t("web.dashboard.energy_trend_label")}
+                      value={
+                        summary.trendPercent === null
+                          ? t("web.dashboard.energy_trend_unavailable")
+                          : `${summary.trendPercent > 0 ? "+" : ""}${formatNumber(locale, summary.trendPercent, 1)} %`
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+              {energyMetersWithoutData > 0 && (
+                <p style={{ color: colors.textMuted, fontSize: 12 }}>
+                  {t("web.dashboard.energy_meters_without_data", {
+                    count: energyMetersWithoutData,
+                  })}
+                </p>
+              )}
+            </>
+          )}
+        </section>
+
+        <section id="sante" style={{ ...cardStyle }}>
+          <h2 style={sectionTitleStyle}>{t("web.dashboard.health_title")}</h2>
+          {healthTotal === 0 ? (
+            <p style={{ color: colors.textMuted }}>
+              {t("web.dashboard.no_equipment")}
+            </p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {ASSET_STATUS_ORDER.map((assetStatus) => {
+                const ids = healthDistribution[assetStatus];
+                const percent = healthTotal
+                  ? (ids.length / healthTotal) * 100
+                  : 0;
+                return (
+                  <details key={assetStatus}>
+                    <summary
+                      style={{
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        padding: "6px 0",
+                      }}
+                    >
+                      <StatusBadge
+                        status={assetStatus}
+                        label={t(`asset_status.${assetStatus}`)}
+                      />
+                      <div
+                        style={{
+                          flex: 1,
+                          background: colors.border,
+                          borderRadius: 4,
+                          height: 8,
+                          overflow: "hidden",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: `${percent}%`,
+                            background: ASSET_STATUS_COLOR[assetStatus],
+                            height: "100%",
+                          }}
+                        />
+                      </div>
+                      <span
+                        style={{
+                          color: colors.textMuted,
+                          fontSize: 13,
+                          minWidth: 24,
+                          textAlign: "right",
+                        }}
+                      >
+                        {ids.length}
+                      </span>
+                    </summary>
+                    {ids.length === 0 ? (
+                      <p
+                        style={{
+                          color: colors.textMuted,
+                          fontSize: 13,
+                          padding: "4px 0 8px 28px",
+                        }}
+                      >
+                        {t("web.dashboard.health_category_empty")}
+                      </p>
+                    ) : (
+                      <ul
+                        style={{
+                          listStyle: "none",
+                          padding: "4px 0 8px 28px",
+                          margin: 0,
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 4,
+                        }}
+                      >
+                        {ids.map((id) => {
+                          const location = locationById.get(id);
+                          return (
+                            <li key={id} style={{ fontSize: 13 }}>
+                              {location ? (
+                                <Link
+                                  href={`/registre/${id}`}
+                                  style={{ color: colors.accent }}
+                                >
+                                  {location.code} — {location.name}
+                                </Link>
+                              ) : (
+                                "—"
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </details>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      </div>
+
+      <section style={{ ...cardStyle, marginBottom: 24 }}>
+        <h2 style={sectionTitleStyle}>{t("web.dashboard.activity_title")}</h2>
+        <RecentActivityFeed
+          entries={activityFeedEntries}
+          kindLabels={activityKindLabels}
+          emptyLabel={t("web.dashboard.activity_empty")}
+        />
+      </section>
+
+      {sites.length === 0 ? (
+        <section style={cardStyle}>
+          <p style={{ color: colors.textMuted }}>
+            {t("web.dashboard.no_sites")}
+          </p>
+        </section>
+      ) : (
+        <section
+          style={{
+            ...cardStyle,
+            marginBottom: 24,
+            padding: 0,
+            overflow: "hidden",
+          }}
+        >
+          <div style={tableScrollStyle}>
+            <table
+              className="responsive-table"
+              style={{ width: "100%", borderCollapse: "collapse" }}
+            >
+              <thead>
+                <tr>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.site_column")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.equipment")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.kpi_alarms")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.kpi_findings")}
+                  </th>
+                  <th style={headerCellStyle}>
+                    {t("web.dashboard.kpi_work_orders")}
+                  </th>
+                  {devices && (
+                    <th style={headerCellStyle}>
+                      {t("web.dashboard.edge_column")}
+                    </th>
+                  )}
+                  <th style={headerCellStyle} />
+                </tr>
+              </thead>
+              <tbody>
+                {portfolio.map((entry) => (
+                  <tr key={entry.site.id}>
+                    <td
+                      data-label={t("web.dashboard.site_column")}
+                      style={{ ...cellStyle, fontWeight: 600 }}
+                    >
+                      {entry.site.name}
+                    </td>
+                    <td
+                      data-label={t("web.dashboard.equipment")}
+                      style={cellStyle}
+                    >
+                      {entry.equipmentCount}
+                    </td>
+                    <td
+                      data-label={t("web.dashboard.kpi_alarms")}
+                      style={cellStyle}
+                    >
+                      <SeverityBadges counts={entry.alarmSeverity} t={t} />
+                    </td>
+                    <td
+                      data-label={t("web.dashboard.kpi_findings")}
+                      style={cellStyle}
+                    >
+                      <SeverityBadges counts={entry.findingSeverity} t={t} />
+                    </td>
+                    <td
+                      data-label={t("web.dashboard.kpi_work_orders")}
+                      style={cellStyle}
+                    >
+                      {entry.openWorkOrders}
+                    </td>
+                    {devices && (
+                      <td
+                        data-label={t("web.dashboard.edge_column")}
+                        style={cellStyle}
+                      >
+                        {entry.devices &&
+                        (entry.devices.online ||
+                          entry.devices.offline ||
+                          entry.devices.unknown) ? (
+                          <DeviceBadges counts={entry.devices} t={t} />
+                        ) : (
+                          <span style={{ color: colors.textMuted }}>
+                            {t("web.dashboard.edge_none")}
+                          </span>
+                        )}
+                      </td>
+                    )}
+                    <td style={cellStyle}>
+                      <Link
+                        href={`/?site=${entry.site.id}`}
+                        style={{ color: colors.accent }}
+                      >
+                        {t("web.dashboard.drill_down")} →
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {unattributedSignals > 0 && (
+            <p
+              style={{
+                color: colors.textMuted,
+                fontSize: 13,
+                margin: 0,
+                padding: "12px 24px 16px",
+              }}
+            >
+              {t("web.dashboard.unattributed_signals", { count: unattributedSignals })}
+            </p>
+          )}
+        </section>
+      )}
+
+      {selectedSite && (
+        <section style={{ ...cardStyle, padding: 0, overflow: "hidden" }}>
+          <div style={{ padding: "20px 24px 0" }}>
+            <h2 style={sectionTitleStyle}>
+              {t("web.dashboard.site_equipment_title", {
+                name: selectedSite.name,
+              })}
+              {" — "}
+              <Link
+                href="/"
+                style={{
+                  color: colors.accent,
+                  textTransform: "none",
+                  fontWeight: 600,
+                }}
+              >
+                {t("web.dashboard.back_to_portfolio")}
+              </Link>
+            </h2>
+          </div>
+          {selectedLocations.length === 0 ? (
+            <p style={{ color: colors.textMuted, padding: "0 24px 20px" }}>
+              {t("web.dashboard.no_equipment")}
+            </p>
+          ) : (
+            <div style={tableScrollStyle}>
+              <table
+                className="responsive-table"
+                style={{ width: "100%", borderCollapse: "collapse" }}
+              >
+                <thead>
+                  <tr>
+                    <th style={headerCellStyle}>{t("web.dashboard.code")}</th>
+                    <th style={headerCellStyle}>{t("web.dashboard.name")}</th>
+                    <th style={headerCellStyle}>
+                      {t("web.dashboard.status_column")}
+                    </th>
+                    <th style={headerCellStyle}>
+                      {t("web.dashboard.alerts_column")}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedLocations.map((location) => {
+                    const status = statusByLocation.get(location.id) ?? null;
+                    const alertCount =
+                      (alarmCountByLocation.get(location.id) ?? 0) +
+                      (findingCountByLocation.get(location.id) ?? 0);
+                    return (
+                      <tr key={location.id}>
+                        <td
+                          data-label={t("web.dashboard.code")}
+                          style={cellStyle}
+                        >
+                          <Link
+                            href={`/registre/${location.id}`}
+                            style={{ color: colors.accent }}
+                          >
+                            {location.code}
+                          </Link>
+                        </td>
+                        <td
+                          data-label={t("web.dashboard.name")}
+                          style={cellStyle}
+                        >
+                          {location.name}
+                        </td>
+                        <td
+                          data-label={t("web.dashboard.status_column")}
+                          style={cellStyle}
+                        >
+                          <StatusCell status={status} locale={locale} t={t} />
+                        </td>
+                        <td
+                          data-label={t("web.dashboard.alerts_column")}
+                          style={cellStyle}
+                        >
+                          {alertCount > 0
+                            ? t("web.dashboard.alerts_open", {
+                                count: String(alertCount),
+                              })
+                            : t("web.dashboard.alerts_none")}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
+    </main>
+  );
+}
+
+function _countByLocation(ids: (string | null)[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const id of ids) {
+    if (!id) continue;
+    counts.set(id, (counts.get(id) ?? 0) + 1);
+  }
+  return counts;
+}
+
+/**
+ * Chaque KPI du tableau de bord doit pouvoir s'ouvrir sur la vue
+ * correspondante (directive UI/dashboard, section 8 : « Chaque KPI doit
+ * être cliquable. Un clic doit ouvrir la vue filtrée correspondante. »).
+ * `href` reste optionnel pour un KPI qui n'a pas encore de page dédiée.
+ */
+function Kpi({
+  label,
+  value,
+  href,
+}: {
+  label: string;
+  value: string;
+  href?: string;
+}) {
+  const content = (
+    <>
+      <div style={{ fontSize: 28, fontWeight: 600, color: colors.textPrimary }}>
+        {value}
+      </div>
+      <div
+        style={{ color: href ? colors.accent : colors.textMuted, fontSize: 13 }}
+      >
+        {label}
+      </div>
+    </>
+  );
+  if (!href) {
+    return <div style={{ minWidth: 120 }}>{content}</div>;
+  }
+  return (
+    <Link
+      href={href}
+      style={{ minWidth: 120, display: "block", textDecoration: "none" }}
+    >
+      {content}
+    </Link>
+  );
+}
+
+function DeviceBadges({
+  counts,
+  t,
+}: {
+  counts: { online: number; offline: number; unknown: number };
+  t: (key: string, params?: Record<string, string>) => string;
+}) {
+  const entries: { key: string; value: number }[] = [
+    { key: "online", value: counts.online },
+    { key: "offline", value: counts.offline },
+    { key: "unknown", value: counts.unknown },
+  ].filter((entry) => entry.value > 0);
+  return (
+    <span style={{ display: "inline-flex", gap: 6, flexWrap: "wrap" }}>
+      {entries.map((entry) => (
+        <span
+          key={entry.key}
+          title={t(`communication_status.${entry.key}`)}
+          style={badgeStyle(COMMUNICATION_COLOR[entry.key])}
+        >
+          {entry.value} {t(`communication_status.${entry.key}`)}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function StatusCell({
+  status,
+  locale,
+  t,
+}: {
+  status: EquipmentStatus | null;
+  locale: Locale;
+  t: (key: string, params?: Record<string, string>) => string;
+}) {
+  if (!status) {
+    return <StatusBadge status="unknown" label={t("asset_status.unknown")} />;
+  }
+  const assetStatus = equipmentStatusToAssetStatus(status);
+  const { key, params } = statusMessage(status);
+  const rendered = Object.fromEntries(
+    Object.entries(params ?? {}).map(([name, value]) => [
+      name,
+      name === "since" ? formatDateTime(locale, value) : t(value),
+    ]),
+  );
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+      <StatusBadge
+        status={assetStatus}
+        label={t(`asset_status.${assetStatus}`)}
+      />
+      <span style={{ color: colors.textMuted, fontSize: 13 }}>
+        {t(key, rendered)}
+      </span>
+    </span>
+  );
+}
