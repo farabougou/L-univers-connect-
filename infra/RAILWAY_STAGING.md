@@ -693,10 +693,12 @@ n'en est pas une. Seule une variable d'environnement est lisible par l'outil.
 
 ### Compte personnel du propriétaire (outil `staging_owner_account.py`)
 
-**Outil prêt et testé, compte pas encore créé** (état au 24/10/2026). Il n'a pas pu être exécuté
-dans la session qui l'a écrit : `KEYCLOAK_ADMIN_PASSWORD` n'y était pas défini et le connecteur
-Railway n'y était pas visible (un connecteur et une variable d'environnement ne sont lus qu'au
-démarrage d'une session).
+**Compte créé à la main dans la console Keycloak le 24/10/2026 et vérifié ; l'outil, prêt et testé,
+n'a pas été exécuté.** Il n'a pas pu l'être : `KEYCLOAK_ADMIN_PASSWORD` n'était défini dans aucune
+session et le connecteur Railway n'y était pas visible (un connecteur et une variable
+d'environnement ne sont lus qu'au démarrage d'une session). La procédure manuelle suivie et son
+résultat sont plus bas, après la procédure de l'outil. L'identifiant et l'adresse du compte ne sont
+pas reproduits ici : ce sont des données personnelles.
 
 **Ce que fait l'outil** (`services/api/scripts/staging_owner_account.py`, 17 tests, 4 régressions
 volontaires détectées) :
@@ -745,8 +747,65 @@ proprement (code 1) face à un compte inexistant sur le vrai staging et n'affich
 passe ; elle refuse de tourner sans identifiants (code 2). Son chemin de réussite ne peut être
 testé qu'avec le vrai compte.
 
-**Résultat de l'exécution : à compléter** (compte créé, jeton délivré, accès à la console web,
-comptes de démonstration toujours désactivés, journaux sans secret).
+#### Résultat : compte créé à la main (24/10/2026)
+
+**Procédure manuelle suivie** (console Keycloak, royaume `paios`, en français : « Diplômes » est la
+traduction de « Credentials » (identifiants), « Cartographie des rôles » celle de « Role mapping ») :
+
+1. Utilisateurs, « Ajouter un utilisateur » : identifiant, adresse, prénom, nom ; compte activé.
+2. Onglet « Cartographie des rôles » : attribuer le seul rôle de royaume `admin_tenant`.
+3. Réglages du royaume, « Attributs non gérés » : **« Seuls les administrateurs peuvent écrire »**.
+   Le réglage par défaut (désactivé) fait disparaître sans message l'attribut `tenant_id` saisi à
+   l'étape suivante. Le choix « administrateurs » plutôt que « l'utilisateur peut modifier » est
+   voulu : une personne ne doit pas pouvoir changer son propre client.
+4. Onglet « Attributs » du compte : `tenant_id` = identifiant du client (sans lui, l'API répond
+   400 `TOKEN_TENANT_MISSING`).
+5. Onglet « Diplômes » : définir un mot de passe **temporaire** (« Temporaire » sur On), tapé par la
+   personne elle-même dans Keycloak, jamais dans un message. À la première connexion, Keycloak lui
+   fait choisir un nouveau mot de passe (case « se déconnecter des autres appareils » sans
+   conséquence pour un compte neuf).
+6. **Retirer le rôle `default-roles-paios`** (onglet « Cartographie des rôles », « Désaffecter ») :
+   voir l'incident ci-dessous. Sans cette étape, la connexion échoue.
+
+**Incident du 24/10/2026 (10:42 à 11:04 UTC) : connexion impossible malgré un compte correct.**
+Keycloak acceptait la connexion et la console web recevait son jeton (retour `/api/auth/callback`
+réussi, aucune erreur `LOGIN_ERROR` pour ce compte), mais l'API répondait 401 `TOKEN_INVALID` à
+chaque requête, alors qu'elle acceptait le jeton d'un compte de démonstration par le même chemin à
+09:19. Cause : un compte créé dans la console (ou par l'API d'administration) reçoit
+automatiquement le rôle `default-roles-paios`, qui contient des rôles du client `account` ; Keycloak
+ajoute alors `aud: ["account"]` au jeton, et `app/auth.py::_check_audience` refuse un jeton dont
+l'audience ne contient pas `paios-api`. Les comptes de démonstration, importés depuis
+`realm-staging.json`, n'ont pas ce rôle et leur jeton n'a donc aucune revendication `aud` (constat
+du 21/10, voir `docs/security/registre-vulnerabilites.md`, « Audience »). Confirmé par l'effet :
+après retrait du rôle, `GET /me` répond 200 pour la console web (11:04 UTC).
+
+**Contournement en place** : le rôle `default-roles-paios` retiré de ce compte, rien d'autre
+modifié (aucun réglage du royaume, aucun code). Il vaut pour ce compte seulement.
+
+**À corriger durablement (décision de Mohamed attendue)** : ajouter dans le royaume un mapper
+d'audience sur le client `paios-api` (`oidc-audience-mapper`, audience `paios-api`, ajouté au
+jeton d'accès), puis le reporter dans `infra/keycloak/realm-staging.json`. Tout futur compte créé à
+la main (techniciens compris) échouera de la même façon tant que ce n'est pas fait. L'outil
+`staging_owner_account.py` créerait lui aussi un compte avec ce rôle par défaut : sa vérification
+`GET /me` aurait signalé l'échec, mais ce chemin n'a pas été exécuté.
+
+**Vérifié depuis l'extérieur** (24/10/2026, 11:05 UTC) :
+
+- connexion à la console web réussie, avec le nouveau mot de passe choisi par la personne ;
+  l'API répond 200 à `GET /me` pour la console web (journaux HTTP de l'API, 11:04 et 11:05) ;
+- `demo.admin` et `demo.technicien` toujours refusés : demande de jeton HTTP 400,
+  « Account disabled » (mots de passe publics lus dans `realm-staging.json`, jamais affichés) ;
+  les événements Keycloak `LOGIN_ERROR` / `user_disabled` du contrôle de 10:45 figurent dans ses
+  journaux ;
+- journaux de Keycloak (depuis 10:30 UTC), de l'API (recherche `password`) et de la console web :
+  aucun mot de passe ni jeton ;
+- le mot de passe administrateur de Keycloak n'a jamais été lu ni affiché : la variable
+  `KEYCLOAK_ADMIN_PASSWORD` reste invisible des sessions.
+
+**Non vérifié** : la ligne « Session de … — rôles : … » de l'accueil n'a pas été photographiée ; le
+compte n'a pas été éprouvé sur les écrans de modification (archivage, ordres de travail). La
+détection des tentatives répétées (`bruteForceProtected`) n'est pas confirmée dans le royaume en
+service.
 
 ### Jeu de données de démonstration (staging)
 
