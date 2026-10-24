@@ -646,9 +646,8 @@ refusée pour les deux comptes (HTTP 400, « Account disabled »), aucun jeton d
 ne peut donc se connecter à la console web du staging tant qu'un compte personnel n'existe pas.
 Étape suivante, par ordre de simplicité :
 
-1. Créer le compte personnel du propriétaire (rôle `admin_tenant`, attribut `tenant_id`
-   `11111111-1111-1111-1111-111111111111`, mot de passe fort choisi par lui, jamais écrit dans une
-   conversation), dans la console Keycloak ou, plus sûrement, avec un outil dédié.
+1. Créer le compte personnel du propriétaire avec l'outil dédié (procédure détaillée juste
+   après).
 2. Créer le compte de test dédié (`scripts/staging_account.py create`, rôle `technicien`) :
    demande `KEYCLOAK_ADMIN_PASSWORD` dans une nouvelle session.
 3. Renouveler les secrets de la liste ci-dessus et vérifier la détection de force brute du royaume
@@ -658,6 +657,63 @@ Pour mémoire, le blocage de la session précédente : ni le connecteur Railway 
 `KEYCLOAK_ADMIN_PASSWORD` n'étaient disponibles (vérifié le 24/10/2026) ; un connecteur n'est lu
 qu'au démarrage d'une session, d'où la nécessité d'ouvrir une nouvelle session après sa
 reconnexion.
+
+### Compte personnel du propriétaire (outil `staging_owner_account.py`)
+
+**Outil prêt et testé, compte pas encore créé** (état au 24/10/2026). Il n'a pas pu être exécuté
+dans la session qui l'a écrit : `KEYCLOAK_ADMIN_PASSWORD` n'y était pas défini et le connecteur
+Railway n'y était pas visible (un connecteur et une variable d'environnement ne sont lus qu'au
+démarrage d'une session).
+
+**Ce que fait l'outil** (`services/api/scripts/staging_owner_account.py`, 17 tests, 4 régressions
+volontaires détectées) :
+
+- refuse `demo.admin`, `demo.technicien` et `loadtest.staging` : un compte personnel est distinct ;
+- crée l'utilisateur dans le royaume `paios` avec **le seul rôle `admin_tenant`** (toutes les routes
+  de l'API l'acceptent, aucune n'est réservée à un autre rôle : moindre privilège) et le client
+  `11111111-1111-1111-1111-111111111111` ;
+- lui donne un mot de passe aléatoire de 32 octets, **jamais affiché ni écrit**, pour prouver que
+  la connexion marche : un jeton est délivré par Keycloak ; l'API (`GET /me`) voit le rôle, l'identifiant
+  et le client ; en option, une commande de contrôle reçoit l'identifiant et le mot de passe par
+  l'environnement de son processus seulement (sans le mot de passe administrateur), sa sortie étant
+  filtrée ;
+- retire ensuite ce mot de passe et impose son changement (`UPDATE_PASSWORD`), **même si une
+  vérification a échoué** ;
+- si le compte existe déjà, ne touche ni à son mot de passe ni à son état.
+
+**Pourquoi le mot de passe n'est pas donné à la personne** : un mot de passe généré par un
+programme et remis par un message ou un fichier passerait par un endroit que la règle du projet
+interdit. La personne choisit le sien, dans Keycloak, et Keycloak lui impose de le changer à la
+première connexion.
+
+**Procédure :**
+
+1. Avoir changé le mot de passe administrateur de Keycloak depuis l'incident du 21/10 (voir la liste
+   de reprise plus haut), puis le placer comme **variable d'environnement** nommée
+   `KEYCLOAK_ADMIN_PASSWORD` dans les réglages de l'environnement cloud, **avant** de démarrer la
+   session : jamais dans une conversation. Le mot de passe saisi pour ouvrir la console Keycloak
+   avec le compte `admin` prouve déjà que ce mot de passe existe et fonctionne côté Railway ; la
+   variable de l'environnement cloud en est une copie pour l'outil.
+2. Dans une nouvelle session (le connecteur Railway n'y est lu qu'au démarrage) :
+   `PYTHONPATH=. python scripts/staging_owner_account.py create --keycloak-url
+   https://KEYCLOAK_STAGING --api-url https://API_STAGING --username IDENTIFIANT -- node
+   infra/staging-web-login-check.mjs https://CONSOLE_WEB_STAGING` (Playwright :
+   `PLAYWRIGHT_NODE_PATH`, éventuellement `PLAYWRIGHT_CHROMIUM_PATH`).
+3. Dans la console Keycloak (royaume `paios`, Utilisateurs, le compte, onglet des identifiants) :
+   définir son mot de passe en laissant « temporaire » activé, puis se connecter à la console web :
+   Keycloak impose d'en choisir un nouveau.
+4. Vérifier que `demo.admin` et `demo.technicien` restent refusés (demande de jeton : HTTP 400,
+   « Account disabled »), et relire les journaux de Keycloak et de l'API pour s'assurer qu'aucun
+   secret n'y figure (recherche du mot de passe administrateur et des mots clés `password`,
+   `secret`, `token`).
+
+**Vérifié sans compte réel** : la commande de contrôle `infra/staging-web-login-check.mjs` échoue
+proprement (code 1) face à un compte inexistant sur le vrai staging et n'affiche pas le mot de
+passe ; elle refuse de tourner sans identifiants (code 2). Son chemin de réussite ne peut être
+testé qu'avec le vrai compte.
+
+**Résultat de l'exécution : à compléter** (compte créé, jeton délivré, accès à la console web,
+comptes de démonstration toujours désactivés, journaux sans secret).
 
 ### Jeu de données de démonstration (staging)
 
