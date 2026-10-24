@@ -599,7 +599,7 @@ est séparé de ce qui ne l'est qu'en local.
 
 | Sujet | État |
 | --- | --- |
-| Fusion de la demande n° 1 dans `main` | **Faite** (commit de fusion `96b277d`, historique conservé, CI de `main` verte). Au moment de la fusion, `main` avait exactement le contenu de la branche. Depuis, la branche de travail porte deux commits de plus (origine d'une valeur sur Télémétrie, script de démonstration), à fusionner par une nouvelle demande ; elle est conservée car Railway la déploie |
+| Fusion de la demande n° 1 dans `main` | **Faite** (commit de fusion `96b277d`, 291 commits conservés un par un ; CI de `main` **verte**, exécution n° 534 terminée avec succès à 09:06 UTC). Au moment de la fusion, `main` avait exactement le contenu de la branche. Depuis, la branche de travail porte deux commits de plus (origine d'une valeur sur Télémétrie, script de démonstration), à fusionner par une nouvelle demande ; elle est conservée car Railway la déploie. Leur CI est verte (exécutions n° 535 et n° 536). Reconstruire la branche sur `main` par une poussée forcée a été refusé par le contrôle de sécurité de la session : la branche reste donc telle quelle, et la prochaine demande de fusion vers `main` n'embarquera que ces commits (`991b5d2` est déjà un ancêtre de `main`) |
 | Archivage d'un site, cascade sur ses équipements | Migrations passées sur le staging (23/10/2026) ; vérifié de bout en bout avec le jeu de démonstration (voir ci-dessous) |
 | Origine d'une valeur sur Télémétrie | Déployée sur le staging (API et web) |
 
@@ -653,6 +653,24 @@ sites dans la console.
 **Non validé sur le staging** : la page Énergie et le bloc Énergie de l'accueil (aucune
 consommation journalière dans les données de démonstration), les actions d'acquittement, et
 l'application mobile (aucun appareil). Ces points ne sont vérifiés qu'en local ou par les tests.
+
+### Branches du dépôt (vérifié le 24/10/2026, rien supprimé, rien fermé)
+
+| Branche | Contenu par rapport à `main` | Railway | Documentation |
+| --- | --- | --- | --- |
+| `claude/pyjwt-migration` | **Rien d'unique** : sa tête (`72c74af`, 21/10/2026, « PyJWT remplace python-jose, ADR 019 ») est un ancêtre de `main` ; 24 commits de `main` lui manquent, c'est normal. **La migration vers PyJWT est faite**, pas à faire : `main` porte `PyJWT[crypto]` 2.15.1 et `cryptography` 50.0.1, `app/auth.py` importe `jwt`, plus aucun `python-jose`. CI de la branche verte (exécution n° 499, 1 317 tests). Aucune demande de fusion | Non vérifiable sans le connecteur Railway (aucune demande de fusion, donc aucun statut lisible sur GitHub) | Citée comme origine de la migration dans `docs/adr/019-…` et `docs/security/registre-vulnerabilites.md` : mention historique, aucune dépendance |
+| `claude/upbeat-noether-hso8ah` | **Un autre projet** : demande de fusion n° 2 (« Add HyperFrames agent skills »), ouverte contre `main`, 96 commits, 2 711 fichiers, +319 283 lignes, environ 1,3 Go suivis. Dossier `videos/` (1 478 fichiers), vidéos `.mp4` à la racine, outils d'agent (`.agents`, `.claude`) : publicités et vidéos de marque (ENORYX, KOFA, KTF-SHIPPING, SENSEXPRESS, SK-PRINT, Farmasi, Fanta shop). Active : dernier commit le 23/10/2026 à 15:44. Embranchée le 22/09/2026 de l'ancien `main`. Aucun motif de secret détecté | Aucun statut Railway sur sa tête, aucune exécution de CI, et son arbre n'a ni `railway.json`, ni `services/api/Dockerfile`, ni `apps/web` : elle ne peut pas être déployée telle quelle. La configuration des services Railway elle-même n'est pas lisible sans le connecteur | Aucune mention |
+
+**Ne pas fusionner la demande n° 2 dans `main` telle quelle.** Elle est en conflit avec `main`
+(`CLAUDE.md` ajouté des deux côtés, et renommé ailleurs puis supprimé de notre côté ;
+`.gitignore`) : une fusion forcée remplacerait les instructions de travail de ce projet, et
+ajouterait environ 1,3 Go de vidéos à son dépôt. Ce travail gagnerait à vivre dans son propre
+dépôt. Décision de Mohamed ; aucune action tant qu'elle n'est pas prise.
+
+**`claude/pyjwt-migration`** pourrait être supprimée sans perte (elle ne contient rien que
+`main` n'ait pas), mais elle est conservée, comme demandé. **À vérifier dès que le connecteur
+Railway est reconnecté :** quelle branche suit chaque service (staging web, API, Keycloak). Une
+fois `main` à jour, la configuration la plus saine est que Railway suive `main`.
 
 ## Point qui reste à ta décision
 
