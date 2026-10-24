@@ -627,7 +627,7 @@ est séparé de ce qui ne l'est qu'en local.
 
 | Sujet | État |
 | --- | --- |
-| Fusion de la demande n° 1 dans `main` | **Faite** (commit de fusion `96b277d`, 291 commits conservés un par un ; CI de `main` **verte**, exécution n° 534 terminée avec succès à 09:06 UTC). Au moment de la fusion, `main` avait exactement le contenu de la branche. Depuis, la branche de travail porte deux commits de plus (origine d'une valeur sur Télémétrie, script de démonstration), à fusionner par une nouvelle demande ; elle est conservée car Railway la déploie. Leur CI est verte (exécutions n° 535 et n° 536). Reconstruire la branche sur `main` par une poussée forcée a été refusé par le contrôle de sécurité de la session : la branche reste donc telle quelle, et la prochaine demande de fusion vers `main` n'embarquera que ces commits (`991b5d2` est déjà un ancêtre de `main`) |
+| Fusion de la demande n° 1 dans `main` | **Faite** (commit de fusion `96b277d`, 291 commits conservés un par un ; CI de `main` **verte**, exécution n° 534 terminée avec succès à 09:06 UTC). Au moment de la fusion, `main` avait exactement le contenu de la branche. Le projet Railway a bien un environnement `production`, mais il ne contient qu'une base Postgres vide créée le 25/09/2026 : aucun déploiement n'y a suivi la fusion (vérifié le 24/10/2026). Depuis, la branche de travail porte deux commits de plus (origine d'une valeur sur Télémétrie, script de démonstration), à fusionner par une nouvelle demande ; elle est conservée car Railway la déploie. Leur CI est verte (exécutions n° 535 et n° 536). Reconstruire la branche sur `main` par une poussée forcée a été refusé par le contrôle de sécurité de la session : la branche reste donc telle quelle, et la prochaine demande de fusion vers `main` n'embarquera que ces commits (`991b5d2` est déjà un ancêtre de `main`) |
 | Archivage d'un site, cascade sur ses équipements | Migrations passées sur le staging (23/10/2026) ; vérifié de bout en bout avec le jeu de démonstration (voir ci-dessous) |
 | Origine d'une valeur sur Télémétrie | Déployée sur le staging (API et web) |
 
@@ -657,6 +657,39 @@ Pour mémoire, le blocage de la session précédente : ni le connecteur Railway 
 `KEYCLOAK_ADMIN_PASSWORD` n'étaient disponibles (vérifié le 24/10/2026) ; un connecteur n'est lu
 qu'au démarrage d'une session, d'où la nécessité d'ouvrir une nouvelle session après sa
 reconnexion.
+
+### Constats Railway du 24/10/2026 (lecture seule, connecteur reconnecté)
+
+Lus avec le connecteur Railway, dans le seul projet `virtuous-rebirth` (le compte Railway compte
+onze projets : les dix autres n'ont pas été touchés). Aucune valeur de variable n'a été lue : seuls les noms.
+
+| Sujet | Constat |
+| --- | --- |
+| Échec de construction de 09:27 UTC | **Panne de l'infrastructure de construction de Railway, pas de notre code.** Journal : « Build Failed: build daemon returned an error < listing workers for Build: failed to list workers: Unavailable: connection error … buildkitd.sock: use of closed network connection > » : le démon de construction est devenu indisponible avant d'exécuter notre Dockerfile. La construction suivante (09:33), avec les mêmes entrées, a réussi |
+| Chemins surveillés (`watchPatterns`) | **Validés par l'historique** : le commit de documentation seule de 09:47 donne un déploiement « SKIPPED » ; le commit suivant, qui modifie `services/api`, est déployé avec succès (09:58) |
+| Constructeur | Le tableau de bord indique « RAILPACK » pour les trois services ; `railway.json` (DOCKERFILE) l'emporte : les journaux du déploiement réussi montrent les étapes `COPY services/api/…` du Dockerfile |
+| Branche suivie | L'API (racine du dépôt) et le web (`/apps/web`) suivent `claude/asset-intelligence-os-setup-h234af`. Keycloak utilise l'image `quay.io/keycloak/keycloak:latest` |
+| Environnement `production` | Une base Postgres vide du 25/09/2026, rien d'autre |
+
+**À décider par Mohamed** (rien n'a été modifié) :
+
+1. **Épingler l'image de Keycloak.** `latest` signifie qu'un redémarrage ou un redéploiement peut tirer
+   une version plus récente, voire une version majeure, sans que personne l'ait choisi : risque de
+   panne du royaume. Lire la version en cours (console Keycloak, informations du serveur), puis
+   épingler cette version.
+2. **Faire suivre `main` à l'API et au web**, une fois les commits de suivi de la branche de travail
+   fusionnés dans `main` par une nouvelle demande de fusion : la branche de travail redeviendrait
+   libre, et `main` serait enfin la référence déployée.
+3. **Keycloak porte encore `KC_BOOTSTRAP_ADMIN_*`** (compte administrateur temporaire, que la console
+   signale elle-même par un bandeau jaune) : créer un administrateur permanent puis supprimer le
+   compte temporaire, plus tard.
+
+**`KEYCLOAK_ADMIN_PASSWORD` absente de la session (24/10/2026, 10:13 UTC).** Une session lancée
+après l'ajout de la variable ne la voyait pas, et deux sessions-sondes (`Soft` et `Default`,
+« réseau de confiance ») non plus : la variable n'existe dans aucun des trois environnements du
+compte (dont deux s'appellent « Default »), et aucune variable Keycloak n'y figure. Elle n'a donc pas été
+enregistrée comme **variable d'environnement** : la zone « Secrets réseau » (« identifiants API »)
+n'en est pas une. Seule une variable d'environnement est lisible par l'outil.
 
 ### Compte personnel du propriétaire (outil `staging_owner_account.py`)
 
